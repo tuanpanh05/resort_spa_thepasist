@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Leaf, Shield, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Leaf, CheckCircle2 } from 'lucide-react';
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1);
@@ -12,8 +12,9 @@ export default function ForgotPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(59);
-  const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
+
+  const canResend = timer === 0;
 
   // Handle countdown for OTP step
   useEffect(() => {
@@ -22,8 +23,6 @@ export default function ForgotPassword() {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
-    } else if (timer === 0) {
-      setCanResend(true);
     }
     return () => clearInterval(interval);
   }, [step, timer]);
@@ -39,7 +38,6 @@ export default function ForgotPassword() {
     // Mock sending OTP
     setStep(2);
     setTimer(59);
-    setCanResend(false);
   };
 
   // Step 2: Verify OTP
@@ -74,7 +72,6 @@ export default function ForgotPassword() {
   const handleResendOtp = () => {
     if (!canResend) return;
     setTimer(59);
-    setCanResend(false);
     setError('');
     alert(`Mã OTP mới đã được gửi lại thành công tới: ${contactInfo}`);
   };

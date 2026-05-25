@@ -15,6 +15,10 @@ import ScrollToTop from './components/ScrollToTop';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import AdminDashboard from './pages/AdminDashboard';
+import StaffDashboard from './pages/StaffDashboard';
+import ChefDashboard from './pages/ChefDashboard';
+import SpecialistDashboard from './pages/SpecialistDashboard';
 
 function App() {
   return (
@@ -39,6 +43,10 @@ function App() {
             <Route path="/dang-nhap" element={<Login />} />
             <Route path="/dang-ky" element={<Register />} />
             <Route path="/quen-mat-khau" element={<ForgotPassword />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/staff" element={<StaffDashboard />} />
+            <Route path="/chef" element={<ChefDashboard />} />
+            <Route path="/specialist" element={<SpecialistDashboard />} />
           </Routes>
         </main>
         

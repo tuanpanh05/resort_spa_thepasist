@@ -96,3 +96,9 @@
     @apply font-serif text-sage-900;
   }
 }
+
+/* Định dạng font chữ Inter nhẹ nhàng, hiện đại cho giao diện Admin */
+.admin-theme, 
+.admin-theme * {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}

@@ -19,7 +19,6 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +31,12 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const isAdminOrStaff = location.pathname.startsWith('/admin') || location.pathname.startsWith('/staff') || location.pathname.startsWith('/chef') || location.pathname.startsWith('/specialist');
+  if (isAdminOrStaff) {
+    return null;
+  }
+  const isHomePage = location.pathname === '/';
 
   // Header is glass and dark-text if scrolled OR if we are on any subpage
   const showGlass = isScrolled || !isHomePage;

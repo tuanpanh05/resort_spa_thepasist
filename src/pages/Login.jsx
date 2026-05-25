@@ -16,9 +16,38 @@ export default function Login() {
       return;
     }
     setError('');
-    // Mock successful login
-    alert('Đăng nhập thành công! Chào mừng bạn quay trở lại Ngũ Sơn Resort.');
-    navigate('/');
+    
+    // Kiểm tra tài khoản admin / staff (giả lập)
+    const normalizedEmail = email.toLowerCase();
+    
+    // Xóa phân quyền cũ trước khi đăng nhập mới
+    localStorage.removeItem('specialistRole');
+
+    if (normalizedEmail === 'admin@nguson.com' || normalizedEmail === 'admin') {
+      alert('Đăng nhập thành công với vai trò Quản lý!');
+      navigate('/admin');
+    } else if (normalizedEmail === 'staff@nguson.com' || normalizedEmail === 'staff') {
+      alert('Đăng nhập thành công với vai trò Nhân viên lễ tân/dọn dẹp!');
+      navigate('/staff');
+    } else if (normalizedEmail === 'chef@nguson.com' || normalizedEmail === 'chef') {
+      alert('Đăng nhập thành công với vai trò Bếp Trưởng!');
+      navigate('/chef');
+    } else if (normalizedEmail === 'spa@nguson.com' || normalizedEmail === 'spa') {
+      alert('Đăng nhập thành công với vai trò Nhân viên Spa!');
+      localStorage.setItem('specialistRole', 'spa');
+      navigate('/specialist');
+    } else if (normalizedEmail === 'yoga@nguson.com' || normalizedEmail === 'yoga') {
+      alert('Đăng nhập thành công với vai trò Huấn luyện viên Yoga!');
+      localStorage.setItem('specialistRole', 'yoga');
+      navigate('/specialist');
+    } else if (normalizedEmail === 'physio@nguson.com' || normalizedEmail === 'physio') {
+      alert('Đăng nhập thành công với vai trò Chuyên viên Vật lý trị liệu!');
+      localStorage.setItem('specialistRole', 'physio');
+      navigate('/specialist');
+    } else {
+      alert('Đăng nhập thành công! Chào mừng bạn quay trở lại Ngũ Sơn Resort.');
+      navigate('/');
+    }
   };
 
   return (
