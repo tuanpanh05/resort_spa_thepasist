@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f8faf0;
+  --color-primary-100: #f0f4e1;
+  --color-primary-200: #d9f99d;
+  --color-primary-300: #bef264;
+  --color-primary-400: #a3e635;
+  --color-primary-500: #84cc16;
+  --color-primary-600: #65a30d;
+  --color-primary-700: #4d7c0f;
+  --color-primary-800: #3f6212;
+  --color-primary-900: #1a2e05;
+  --color-primary-850: #274507;
+
+  --color-sage-50: #f4f6f4;
+  --color-sage-100: #e3e8e3;
+  --color-sage-200: #c7d1c7;
+  --color-sage-300: #9fae9f;
+  --color-sage-400: #758875;
+  --color-sage-500: #566a56;
+  --color-sage-600: #435343;
+  --color-sage-700: #354235;
+  --color-sage-800: #2c372c;
+  --color-sage-900: #192219;
+
+  --font-sans: 'Outfit', 'Inter', 'system-ui', 'sans-serif';
+  --font-serif: 'Playfair Display', 'Georgia', 'serif';
+
+  --animate-fade-in: fadeIn 1s ease-out forwards;
+  --animate-slide-up: slideUp 0.8s ease-out forwards;
+  --animate-pulse-subtle: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes slideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseSubtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+}
+
+@utility glass-header {
+  background: rgba(250, 251, 250, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(217, 249, 157, 0.3);
+}
+
+@utility glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(217, 249, 157, 0.2);
+}
+
+@utility bg-hero-overlay {
+  background: linear-gradient(to bottom, rgba(26, 46, 5, 0.4), rgba(26, 46, 5, 0.7));
+}
+
+@utility text-gradient {
+  background: linear-gradient(135deg, #4d7c0f 0%, #1a2e05 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(240, 244, 225, 0.5);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d9f99d;
+    border-radius: 9999px;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-[#fafbfa] text-sage-900 font-sans antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-sage-900;
+  }
+}
