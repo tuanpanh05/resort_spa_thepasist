@@ -1,21 +1,170 @@
-<<<<<<< HEAD
-# React + Vite
+#  <p align = "center"> 🌿Ngũ Sơn Resort & Spa🌿 <p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<p align="center">
+  <strong>Modern Resort & Spa Management System</strong><br/>
+  Built with React, Vite, TailwindCSS, and Spring Boot REST APIs.
+</p>
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- 🔐 Authentication & Authorization
+- 🏨 Room Booking System
+- 💆 Spa & Wellness Services
+- 🧘 Yoga & Therapy Reservation
+- 📱 Responsive UI/UX
+- 🔌 RESTful API Integration
+- 🛡 JWT Authentication
+- ⚡ Fast & Modern Frontend Architecture
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
-# SE2003_G3_SWP391_Hotel_Management
-Hotel Management System Project for SWP391 - Group 3 - SE2003.
->>>>>>> eec0294fc0d9fe5043603ab739df4a2dc134e5db
+| Frontend | Backend | Database |
+|---|---|---|
+| ReactJS | Spring Boot | SQL Server |
+| Vite | Spring Security | JWT |
+| TailwindCSS | RESTful API | |
+| Axios | Java | |
+
+---
+
+## 📂 Project Structure
+
+```bash
+src
+├── assets
+├── components
+├── context
+├── hooks
+├── layouts
+├── pages
+├── routes
+├── services
+├── utils
+└── App.jsx
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/dunganh8a/SWP391_Resort_Spa
+```
+
+### 2️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+### 3️⃣ Run Development Server
+
+```bash
+npm run dev
+```
+
+### 4️⃣ Build Production
+
+```bash
+npm run build
+```
+
+---
+
+## 🔐 Authentication Flow
+
+```text
+Register/Login
+       ↓
+Receive JWT Token
+       ↓
+Store Token
+       ↓
+Access Protected Routes
+```
+
+---
+
+## 🏨 Booking Workflow
+
+```text
+Browse Rooms & Services
+            ↓
+Choose Booking Option
+            ↓
+Submit Booking Request
+            ↓
+Backend Validation
+            ↓
+Booking Confirmation
+```
+
+---
+
+## 🔌 API Integration
+
+The frontend communicates with the backend using Axios:
+
+- JWT Authorization Headers
+- Axios Interceptors
+- Centralized Error Handling
+- Automatic Redirect on Unauthorized Requests
+
+
+## 📱 Responsive Design
+
+- Mobile-first UI
+- Tablet optimization
+- Desktop responsive layout
+- Modern organic-green design
+- Glassmorphism effects
+
+---
+
+## 📸 Preview
+
+| Home Page | Booking Page |
+|---|---|
+| Add Screenshot Here | Add Screenshot Here |
+
+---
+
+## 🧪 Testing
+
+### Run ESLint
+
+```bash
+npm run lint
+```
+
+### Verify Production Build
+
+```bash
+npm run build
+```
+
+---
+
+## 👨‍💻 Team Members
+
+- Phạm Anh Tuấn
+- Nguyễn Anh Dũng
+- Group 3 - SE2003
+
+---
+
+## 🚧 Project Status
+
+Currently under active development.
+
+---
+
+## 📄 License
+
+This project is developed for educational purposes only.
