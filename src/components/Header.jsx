@@ -42,27 +42,37 @@ export default function Header() {
   const showGlass = isScrolled || !isHomePage;
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showGlass ? 'glass-header shadow-sm py-3' : 'bg-transparent py-5'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showGlass ? 'glass-header shadow-md py-3' : 'bg-gradient-to-b from-black/75 via-black/30 to-transparent py-5'}`}>
       <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           {/* Left Side: Logo & Resort Name */}
-          <Link to="/" className="flex-shrink-0 flex items-center space-x-2 focus:outline-none">
-            <div className={`p-2 rounded-full transition-colors duration-300 ${showGlass ? 'bg-primary-100' : 'bg-white/20 backdrop-blur-md'}`}>
-              <Leaf className="h-6 w-6 text-primary-900" />
+          <Link to="/" className="flex-shrink-0 flex items-center space-x-3.5 group focus:outline-none">
+            <div className="relative flex items-center justify-center">
+              {/* Outer premium rotating border on hover */}
+              <div className={`absolute -inset-1 rounded-full border border-dashed transition-all duration-1000 ease-out group-hover:rotate-180 ${showGlass ? 'border-primary-900/30' : 'border-white/30 group-hover:border-primary-200/50'}`} />
+              {/* Inner emblem container */}
+              <div className={`relative p-2.5 rounded-full transition-all duration-500 group-hover:scale-110 ${showGlass ? 'bg-primary-100 text-primary-900' : 'bg-primary-200 text-primary-950 shadow-md shadow-primary-200/10'}`}>
+                <Leaf className="h-5 w-5 transition-transform duration-700 group-hover:rotate-[25deg] group-hover:scale-110" />
+              </div>
             </div>
-            <span className={`font-serif text-xl sm:text-2xl font-bold tracking-wide transition-colors duration-300 ${showGlass ? 'text-primary-900' : 'text-white drop-shadow-md'}`}>
-              Ngũ Sơn Resort
-            </span>
+            <div className="flex flex-col justify-center leading-none mt-0.5">
+              <span className={`font-serif text-lg sm:text-xl font-bold tracking-wider transition-colors duration-350 ${showGlass ? 'text-primary-900' : 'text-white drop-shadow-md group-hover:text-primary-200'}`}>
+                Ngũ Sơn
+              </span>
+              <span className={`font-sans text-[8px] sm:text-[9px] font-bold tracking-[0.3em] uppercase transition-colors duration-350 mt-1 ${showGlass ? 'text-sage-500' : 'text-primary-200/90'}`}>
+                Resort & Spa
+              </span>
+            </div>
           </Link>
 
           {/* Center Side: 10 Uppercase Menu Items */}
-          <nav className="hidden xl:flex space-x-3.5 2xl:space-x-5 font-bold text-[10px] 2xl:text-xs">
+          <nav className="hidden xl:flex space-x-4 2xl:space-x-6 font-bold text-[13px] 2xl:text-[15px] tracking-wide">
             {navItems.map((item, index) => (
               <Link
                 key={index}
                 to={item.href}
-                className={`transition-colors duration-200 hover:text-primary-800 ${showGlass ? 'text-sage-800' : 'text-white hover:text-primary-200 drop-shadow-sm'}`}
+                className={`relative py-1.5 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-current after:transition-all after:duration-300 ${showGlass ? 'text-sage-800 hover:text-primary-900' : 'text-white hover:text-primary-200 drop-shadow-sm'}`}
               >
                 {item.label}
               </Link>
@@ -70,11 +80,11 @@ export default function Header() {
           </nav>
 
           {/* Right Side: Separate Login / Register buttons (No divider line) */}
-          <div className="hidden xl:flex items-center space-x-4">
-            <Link to="/dang-nhap" className={`px-4 py-2 text-xs font-bold transition-colors duration-200 ${showGlass ? 'text-sage-800 hover:text-primary-900' : 'text-white hover:text-primary-200 drop-shadow-sm'}`}>
+          <div className="hidden xl:flex items-center space-x-5">
+            <Link to="/dang-nhap" className={`px-4 py-2 text-[13px] 2xl:text-[15px] font-bold transition-all duration-200 hover:scale-105 ${showGlass ? 'text-sage-800 hover:text-primary-900' : 'text-white hover:text-primary-200 drop-shadow-sm'}`}>
               ĐĂNG NHẬP
             </Link>
-            <Link to="/dang-ky" className={`px-5 py-2.5 rounded-full text-xs font-bold shadow-sm transition-all duration-300 hover:shadow-md hover:scale-105 ${showGlass ? 'bg-primary-900 hover:bg-primary-800 text-white' : 'bg-primary-200 text-sage-950 hover:bg-primary-300'}`}>
+            <Link to="/dang-ky" className={`px-6 py-2.5 rounded-full text-[13px] 2xl:text-[15px] font-bold shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 ${showGlass ? 'bg-primary-900 hover:bg-primary-850 text-white shadow-primary-900/10' : 'bg-primary-200 text-primary-950 hover:bg-primary-300 shadow-primary-200/20'}`}>
               ĐĂNG KÝ
             </Link>
           </div>

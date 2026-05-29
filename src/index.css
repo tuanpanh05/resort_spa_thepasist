@@ -14,6 +14,7 @@
   --color-primary-800: #3f6212;
   --color-primary-900: #1a2e05;
   --color-primary-850: #274507;
+  --color-primary-950: #0f1c02;
 
   --color-sage-50: #f4f6f4;
   --color-sage-100: #e3e8e3;
@@ -25,6 +26,9 @@
   --color-sage-700: #354235;
   --color-sage-800: #2c372c;
   --color-sage-900: #192219;
+  --color-sage-950: #0a0f0a;
+
+  --color-teal-350: #5eead4;
 
   --font-sans: 'Outfit', 'Inter', 'system-ui', 'sans-serif';
   --font-serif: 'Playfair Display', 'Georgia', 'serif';

@@ -302,7 +302,7 @@ export default function SpecialistDashboard() {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? 'bg-[#14b8a6] text-white shadow-md' : 'text-teal-200 hover:bg-[#0d524a]/50 hover:text-white'}`}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? 'bg-teal-300 text-[#073b35] shadow-md' : 'text-teal-200 hover:bg-[#0d524a]/50 hover:text-white'}`}
               >
                 <div className="flex items-center space-x-2.5">
                   <Icon className="h-4.5 w-4.5 flex-shrink-0" />
@@ -329,7 +329,7 @@ export default function SpecialistDashboard() {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? 'bg-[#14b8a6] text-white shadow-md' : 'text-teal-200 hover:bg-[#0d524a]/50 hover:text-white'}`}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? 'bg-teal-300 text-[#073b35] shadow-md' : 'text-teal-200 hover:bg-[#0d524a]/50 hover:text-white'}`}
               >
                 <div className="flex items-center space-x-2.5">
                   <Icon className="h-4.5 w-4.5 flex-shrink-0" />
@@ -351,7 +351,7 @@ export default function SpecialistDashboard() {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? 'bg-[#14b8a6] text-white shadow-md' : 'text-teal-200 hover:bg-[#0d524a]/50 hover:text-white'}`}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-[13px] font-bold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? 'bg-teal-300 text-[#073b35] shadow-md' : 'text-teal-200 hover:bg-[#0d524a]/50 hover:text-white'}`}
               >
                 <div className="flex items-center space-x-2.5">
                   <Icon className="h-4.5 w-4.5 flex-shrink-0" />
