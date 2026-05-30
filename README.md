@@ -1,75 +1,140 @@
-#  <p align = "center"> 🌿Ngũ Sơn Resort & Spa🌿 <p>
+# 🌿 Ngũ Sơn Resort & Spa Management System
 
-<p align="center">
-  <strong>Modern Resort & Spa Management System</strong><br/>
-  Built with React, Vite, TailwindCSS, and Spring Boot REST APIs.
-</p>
+A modern wellness resort management platform designed to streamline resort operations while delivering a premium guest experience.
 
----
-
-## ✨ Features
-
-- 🔐 Authentication & Authorization
-- 🏨 Room Booking System
-- 💆 Spa & Wellness Services
-- 🧘 Yoga & Therapy Reservation
-- 📱 Responsive UI/UX
-- 🔌 RESTful API Integration
-- 🛡 JWT Authentication
-- ⚡ Fast & Modern Frontend Architecture
+The system integrates accommodation management, spa services, yoga programs, physiotherapy sessions, dining experiences, staff operations, and administrative reporting into a unified platform.
 
 ---
 
-## 🛠 Tech Stack
+## ✨ Project Overview
 
-| Frontend | Backend | Database |
-|---|---|---|
-| ReactJS | Spring Boot | SQL Server |
-| Vite | Spring Security | JWT |
-| TailwindCSS | RESTful API | |
-| Axios | Java | |
+Ngũ Sơn Resort & Spa is a comprehensive management solution for wellness-focused resorts.
+
+The platform supports multiple roles including:
+
+* Guest / Customer
+* Reception Staff
+* Chef
+* Wellness Specialist
+* Administrator
+
+Our goal is to create a seamless digital experience that combines hospitality, wellness, and operational efficiency.
+
+---
+
+## 🎯 Key Features
+
+### 🏡 Resort & Accommodation
+
+* Browse available rooms and villas
+* View room details and amenities
+* Manage room status
+* Booking management
+* Check-in / Check-out support
+
+### 🧘 Wellness Services
+
+* Spa booking
+* Yoga scheduling
+* Physiotherapy appointments
+* Wellness package management
+
+### 🍽 Dining Experience
+
+* Daily menu management
+* Food allergy tracking
+* Special dietary requests
+* Customer meal feedback
+
+### 👨‍💼 Staff Management
+
+* Shift scheduling
+* Task assignment
+* Service request handling
+* Work status tracking
+
+### 📊 Administration
+
+* Dashboard overview
+* Revenue monitoring
+* Inventory management
+* Service management
+* Staff management
+* Reports & statistics
+
+
+## 🛠 Technology Stack
+
+### Frontend
+
+* ReactJS
+* Vite
+* React Router
+* Tailwind CSS
+* Lucide React Icons
+
+### Backend (Planned)
+
+* Java Spring Boot
+* Spring Security
+* JWT Authentication
+* RESTful API
+
+### Database (Planned)
+
+* SQL Server
+
+---
+
+## 📌 Current Development Status
+
+The current version focuses on:
+
+* Frontend user interface
+* Dashboard prototype
+* User experience design
+* Mock data simulation
+
+> Note: The current version uses mock data for demonstration purposes. Backend services and database integration are planned for the next development phase.
 
 ---
 
 ## 📂 Project Structure
 
-```bash
+```text
 src
 ├── assets
 ├── components
-├── context
-├── hooks
-├── layouts
 ├── pages
-├── routes
-├── services
-├── utils
-└── App.jsx
+├── styles
+├── mockData.js
+├── App.jsx
+└── main.jsx
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1️⃣ Clone Repository
+### Clone Repository
 
 ```bash
-git clone https://github.com/dunganh8a/SWP391_Resort_Spa
+git clone https://github.com/dunganh8a/SWP391_Resort_Spa.git
 ```
 
-### 2️⃣ Install Dependencies
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3️⃣ Run Development Server
+### Run Development Server
 
 ```bash
 npm run dev
 ```
 
-### 4️⃣ Build Production
+### Build Production Version
 
 ```bash
 npm run build
@@ -77,94 +142,44 @@ npm run build
 
 ---
 
-## 🔐 Authentication Flow
+## 👥 Team
 
-```text
-Register/Login
-       ↓
-Receive JWT Token
-       ↓
-Store Token
-       ↓
-Access Protected Routes
-```
+SWP391 – Resort & Spa Management System
 
----
+Development Team:
 
-## 🏨 Booking Workflow
+* HE181421 - Nguyễn Minh Hiếu 
+* HE176556 - Lê Xuân Dũng
+* HE191437 - Phạm Duy Nghĩa
+* HE191619 - Hoàng Tuấn Anh
+* HE198000 - Phạm Anh Tuấn - Team Leader
 
-```text
-Browse Rooms & Services
-            ↓
-Choose Booking Option
-            ↓
-Submit Booking Request
-            ↓
-Backend Validation
-            ↓
-Booking Confirmation
-```
+
 
 ---
 
-## 🔌 API Integration
+## 📈 Future Roadmap
 
-The frontend communicates with the backend using Axios:
+### Phase 1
 
-- JWT Authorization Headers
-- Axios Interceptors
-- Centralized Error Handling
-- Automatic Redirect on Unauthorized Requests
+* Frontend UI Development
+* Dashboard Design
+* Mock Data Integration
 
+### Phase 2
 
-## 📱 Responsive Design
+* Spring Boot Backend Development
+* REST API Integration
+* Authentication & Authorization
 
-- Mobile-first UI
-- Tablet optimization
-- Desktop responsive layout
-- Modern organic-green design
-- Glassmorphism effects
+### Phase 3
 
----
-
-## 📸 Preview
-
-| Home Page | Booking Page |
-|---|---|
-| Add Screenshot Here | Add Screenshot Here |
-
----
-
-## 🧪 Testing
-
-### Run ESLint
-
-```bash
-npm run lint
-```
-
-### Verify Production Build
-
-```bash
-npm run build
-```
-
----
-
-## 👨‍💻 Team Members
-
-- Phạm Anh Tuấn
-- Nguyễn Anh Dũng
-- Group 3 - SE2003
-
----
-
-## 🚧 Project Status
-
-Currently under active development.
+* Database Integration
+* Payment Gateway
+* Production Deployment
 
 ---
 
 ## 📄 License
 
-This project is developed for educational purposes only.
+This project is developed for educational purposes as part of the SWP391 Software Development Project course.
