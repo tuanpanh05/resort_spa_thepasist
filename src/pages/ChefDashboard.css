@@ -5,7 +5,13 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: #f7f8f6;
-  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    "Manrope",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   color: #192219;
   padding-top: 0;
   position: relative;
@@ -51,7 +57,7 @@
 }
 
 .chef-brand-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
@@ -146,7 +152,7 @@
 }
 
 .logo-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 19px;
   font-weight: 700;
   color: #ffffff;
@@ -337,7 +343,7 @@
 }
 
 .header-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 22px;
   font-weight: 700;
   color: #192219;
@@ -453,10 +459,20 @@
   display: block;
 }
 
-.stat-note.blue { color: #2563eb; }
-.stat-note.red { color: #dc2626; font-weight: 700; text-transform: uppercase; }
-.stat-note.orange { color: #d97706; }
-.stat-note.green { color: #059669; }
+.stat-note.blue {
+  color: #2563eb;
+}
+.stat-note.red {
+  color: #dc2626;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.stat-note.orange {
+  color: #d97706;
+}
+.stat-note.green {
+  color: #059669;
+}
 
 /* Allergy Broadcast Box */
 .allergy-broadcast {
@@ -604,7 +620,7 @@
 }
 
 .panel-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   color: #192219;
@@ -1135,7 +1151,7 @@
 }
 
 .disabled-items-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   color: #192219;
@@ -1292,7 +1308,7 @@
 }
 
 .kds-col-header-text {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 15px;
   font-weight: 900;
   display: flex;
@@ -1300,9 +1316,15 @@
   gap: 8px;
 }
 
-.kds-col.pending .kds-col-header-text { color: #1e3a8a; }
-.kds-col.cooking .kds-col-header-text { color: #78350f; }
-.kds-col.completed .kds-col-header-text { color: #065f46; }
+.kds-col.pending .kds-col-header-text {
+  color: #1e3a8a;
+}
+.kds-col.cooking .kds-col-header-text {
+  color: #78350f;
+}
+.kds-col.completed .kds-col-header-text {
+  color: #065f46;
+}
 
 .ping-indicator {
   width: 12px;
@@ -1311,9 +1333,17 @@
   display: block;
 }
 
-.kds-col.pending .ping-indicator { background-color: #2563eb; animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
-.kds-col.cooking .ping-indicator { background-color: #f59e0b; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-.kds-col.completed .ping-indicator { background-color: #059669; }
+.kds-col.pending .ping-indicator {
+  background-color: #2563eb;
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.kds-col.cooking .ping-indicator {
+  background-color: #f59e0b;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.kds-col.completed .ping-indicator {
+  background-color: #059669;
+}
 
 .kds-cards-stack {
   display: flex;
@@ -1381,8 +1411,12 @@
   color: #ffffff;
 }
 
-.kds-origin-pill.room-service { background-color: #9333ea; }
-.kds-origin-pill.restaurant { background-color: #2563eb; }
+.kds-origin-pill.room-service {
+  background-color: #9333ea;
+}
+.kds-origin-pill.restaurant {
+  background-color: #2563eb;
+}
 
 .btn-read-aloud {
   padding: 4px 8px;
@@ -1780,7 +1814,7 @@
 }
 
 .inventory-card-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   color: #192219;
@@ -1791,9 +1825,15 @@
   font-weight: 700;
 }
 
-.stock-cell-value.empty { color: #dc2626; }
-.stock-cell-value.warning { color: #d97706; }
-.stock-cell-value.ok { color: #192219; }
+.stock-cell-value.empty {
+  color: #dc2626;
+}
+.stock-cell-value.warning {
+  color: #d97706;
+}
+.stock-cell-value.ok {
+  color: #192219;
+}
 
 .status-tag-stock {
   padding: 2px 8px;
@@ -1803,9 +1843,18 @@
   text-transform: uppercase;
 }
 
-.status-tag-stock.full { background-color: #d1fae5; color: #065f46; }
-.status-tag-stock.warning { background-color: #fef3c7; color: #b45309; }
-.status-tag-stock.danger { background-color: #fee2e2; color: #991b1b; }
+.status-tag-stock.full {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.status-tag-stock.warning {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+.status-tag-stock.danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
 
 .procurements-list {
   display: flex;
@@ -1845,8 +1894,14 @@
   text-transform: uppercase;
 }
 
-.procurement-status-pill.pending { background-color: #fef3c7; color: #92400e; }
-.procurement-status-pill.approved { background-color: #d1fae5; color: #065f46; }
+.procurement-status-pill.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.procurement-status-pill.approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
 
 .procurement-card-details {
   display: flex;
@@ -1926,7 +1981,7 @@
 }
 
 .modal-title-row {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: #192219;
@@ -2072,11 +2127,20 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.85; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
 }

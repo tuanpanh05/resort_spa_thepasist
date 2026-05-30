@@ -1,41 +1,52 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Leaf } from 'lucide-react';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  Leaf,
+} from "lucide-react";
 
 export default function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name || !email || !phone || !password || !confirmPassword) {
-      setError('Vui lòng nhập đầy đủ tất cả các thông tin.');
+      setError("Vui lòng nhập đầy đủ tất cả các thông tin.");
       return;
     }
     if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
+      setError("Mật khẩu xác nhận không khớp.");
       return;
     }
     if (!agreeTerms) {
-      setError('Bạn cần đồng ý với các Điều khoản & Chính sách của Resort.');
+      setError("Bạn cần đồng ý với các Điều khoản & Chính sách của Resort.");
       return;
     }
-    setError('');
+    setError("");
     // Mock registration
-    alert('Đăng ký thành công! Chào mừng thành viên mới đến với Ngũ Sơn Resort.');
-    navigate('/dang-nhap');
+    alert(
+      "Đăng ký thành công! Chào mừng thành viên mới đến với Ngũ Sơn Resort.",
+    );
+    navigate("/dang-nhap");
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen relative flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-cover bg-center"
       style={{ backgroundImage: "url('/hero_bg.png')" }}
     >
@@ -44,10 +55,9 @@ export default function Register() {
 
       {/* Register Card */}
       <div className="relative z-10 w-full max-w-lg bg-white/90 backdrop-blur-md border border-primary-100/50 rounded-[32px] shadow-2xl p-8 sm:p-10 transition-all duration-300">
-        
         {/* Back button */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center space-x-2 text-xs font-semibold text-sage-600 hover:text-primary-900 transition-colors duration-200 mb-6 group"
         >
           <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
@@ -85,8 +95,8 @@ export default function Register() {
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
                 <User className="h-4.5 w-4.5" />
               </span>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nguyễn Văn A"
@@ -106,8 +116,8 @@ export default function Register() {
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
                   <Mail className="h-4.5 w-4.5" />
                 </span>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@gmail.com"
@@ -125,8 +135,8 @@ export default function Register() {
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
                   <Phone className="h-4.5 w-4.5" />
                 </span>
-                <input 
-                  type="tel" 
+                <input
+                  type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="0901234567"
@@ -147,8 +157,8 @@ export default function Register() {
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
                   <Lock className="h-4.5 w-4.5" />
                 </span>
-                <input 
-                  type={showPassword ? 'text' : 'password'}
+                <input
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -159,7 +169,11 @@ export default function Register() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
                 >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4.5 w-4.5" />
+                  ) : (
+                    <Eye className="h-4.5 w-4.5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -173,8 +187,8 @@ export default function Register() {
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
                   <Lock className="h-4.5 w-4.5" />
                 </span>
-                <input 
-                  type={showConfirmPassword ? 'text' : 'password'}
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
@@ -185,7 +199,11 @@ export default function Register() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4.5 w-4.5" />
+                  ) : (
+                    <Eye className="h-4.5 w-4.5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -194,18 +212,40 @@ export default function Register() {
           {/* Terms checkbox */}
           <div className="pt-2">
             <label className="flex items-start space-x-2 text-xs text-sage-700 cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
                 className="mt-0.5 rounded border-primary-300 text-primary-900 focus:ring-primary-900 cursor-pointer"
               />
               <span className="leading-normal">
-                Tôi đồng ý với các{' '}
-                <a href="#" onClick={(e) => { e.preventDefault(); alert('Chính sách bảo mật của Ngũ Sơn Resort bảo vệ tuyệt đối thông tin của hội viên.'); }} className="font-semibold text-primary-900 hover:underline">Chính sách bảo mật</a>
-                {' '}và{' '}
-                <a href="#" onClick={(e) => { e.preventDefault(); alert('Điều khoản hội viên bao gồm các quy định về tích điểm và đặt phòng.'); }} className="font-semibold text-primary-900 hover:underline">Điều khoản hội viên</a>
-                {' '}của khu nghỉ dưỡng.
+                Tôi đồng ý với các{" "}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert(
+                      "Chính sách bảo mật của Ngũ Sơn Resort bảo vệ tuyệt đối thông tin của hội viên.",
+                    );
+                  }}
+                  className="font-semibold text-primary-900 hover:underline"
+                >
+                  Chính sách bảo mật
+                </a>{" "}
+                và{" "}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert(
+                      "Điều khoản hội viên bao gồm các quy định về tích điểm và đặt phòng.",
+                    );
+                  }}
+                  className="font-semibold text-primary-900 hover:underline"
+                >
+                  Điều khoản hội viên
+                </a>{" "}
+                của khu nghỉ dưỡng.
               </span>
             </label>
           </div>
@@ -222,11 +262,13 @@ export default function Register() {
         {/* Link to Login */}
         <div className="text-center mt-8 pt-4 border-t border-primary-100/50 text-xs sm:text-sm">
           <span className="text-sage-600">Bạn đã có tài khoản? </span>
-          <Link to="/dang-nhap" className="font-bold text-primary-900 hover:underline">
+          <Link
+            to="/dang-nhap"
+            className="font-bold text-primary-900 hover:underline"
+          >
             Đăng nhập ngay
           </Link>
         </div>
-
       </div>
     </div>
   );

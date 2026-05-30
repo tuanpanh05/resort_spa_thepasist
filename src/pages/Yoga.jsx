@@ -1,14 +1,12 @@
-import React from 'react';
-import { Calendar, Heart, Award, ArrowRight, UserCheck } from 'lucide-react';
+import React from "react";
+import { Calendar, Heart, Award, ArrowRight, UserCheck } from "lucide-react";
 
-import { yogaPrograms as programs } from '../mockData';
-
+import { yogaPrograms as programs } from "../mockData";
 
 export default function Yoga() {
   return (
     <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Page Banner Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="text-xs font-semibold tracking-widest text-primary-900 uppercase bg-primary-200/60 px-3 py-1.5 rounded-full">
@@ -18,7 +16,9 @@ export default function Yoga() {
             Tìm Lại Sự Tĩnh Lặng Giữa Đại Ngàn
           </h1>
           <p className="text-sage-700 font-normal text-base leading-relaxed">
-            Các lớp học yoga ngoài trời và thiền chánh niệm tại Ngũ Sơn được thiết kế tỉ mỉ nhằm giúp bạn thanh lọc tâm trí, gia tăng dẻo dai và sạc đầy năng lượng tích cực từ tự nhiên.
+            Các lớp học yoga ngoài trời và thiền chánh niệm tại Ngũ Sơn được
+            thiết kế tỉ mỉ nhằm giúp bạn thanh lọc tâm trí, gia tăng dẻo dai và
+            sạc đầy năng lượng tích cực từ tự nhiên.
           </p>
         </div>
 
@@ -34,10 +34,16 @@ export default function Yoga() {
                 <UserCheck className="h-12 w-12" />
               </div>
               <div className="text-center sm:text-left space-y-2">
-                <span className="text-xs font-bold text-primary-900 uppercase tracking-widest bg-primary-100 px-2 py-0.5 rounded">Master Yoga</span>
-                <h4 className="font-serif text-lg font-bold text-sage-900">Master Kim Nguyễn</h4>
+                <span className="text-xs font-bold text-primary-900 uppercase tracking-widest bg-primary-100 px-2 py-0.5 rounded">
+                  Master Yoga
+                </span>
+                <h4 className="font-serif text-lg font-bold text-sage-900">
+                  Master Kim Nguyễn
+                </h4>
                 <p className="text-sage-700 text-xs font-light leading-relaxed">
-                  Học tập tại Rishikesh (Ấn Độ), hơn 15 năm đào tạo các liệu trình yoga trị liệu cột sống và phục hồi chấn thương sâu cho học viên quốc tế.
+                  Học tập tại Rishikesh (Ấn Độ), hơn 15 năm đào tạo các liệu
+                  trình yoga trị liệu cột sống và phục hồi chấn thương sâu cho
+                  học viên quốc tế.
                 </p>
               </div>
             </div>
@@ -47,10 +53,16 @@ export default function Yoga() {
                 <UserCheck className="h-12 w-12" />
               </div>
               <div className="text-center sm:text-left space-y-2">
-                <span className="text-xs font-bold text-primary-900 uppercase tracking-widest bg-primary-100 px-2 py-0.5 rounded">Thiền Sư</span>
-                <h4 className="font-serif text-lg font-bold text-sage-900">Thiền Sư Minh Đạo</h4>
+                <span className="text-xs font-bold text-primary-900 uppercase tracking-widest bg-primary-100 px-2 py-0.5 rounded">
+                  Thiền Sư
+                </span>
+                <h4 className="font-serif text-lg font-bold text-sage-900">
+                  Thiền Sư Minh Đạo
+                </h4>
                 <p className="text-sage-700 text-xs font-light leading-relaxed">
-                  Chuyên gia chánh niệm ứng dụng, hướng dẫn các khóa thiền thở hơi thở bụng Vipassana giúp chữa lành hội chứng lo âu, mất ngủ.
+                  Chuyên gia chánh niệm ứng dụng, hướng dẫn các khóa thiền thở
+                  hơi thở bụng Vipassana giúp chữa lành hội chứng lo âu, mất
+                  ngủ.
                 </p>
               </div>
             </div>
@@ -60,7 +72,7 @@ export default function Yoga() {
         {/* Yoga Programs List */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           {programs.map((prog, index) => (
-            <div 
+            <div
               key={index}
               className="bg-white rounded-3xl p-6 sm:p-8 border border-primary-100/50 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
             >
@@ -68,18 +80,24 @@ export default function Yoga() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-primary-900 bg-primary-100 px-2.5 py-1 rounded-md inline-block">
                   {prog.duration} / lớp
                 </span>
-                
+
                 <h3 className="font-serif text-xl font-bold text-sage-900">
                   {prog.title}
                 </h3>
-                
+
                 <p className="text-sage-800 text-sm font-normal leading-relaxed">
                   {prog.description}
                 </p>
-                
+
                 <div className="border-t border-primary-50 pt-4 space-y-2 text-xs text-sage-700 font-medium">
-                  <div className="flex items-center"><Award className="h-4 w-4 text-primary-700 mr-2" /> Trình độ: {prog.level}</div>
-                  <div className="flex items-center"><UserCheck className="h-4 w-4 text-primary-700 mr-2" /> Hướng dẫn: {prog.coach}</div>
+                  <div className="flex items-center">
+                    <Award className="h-4 w-4 text-primary-700 mr-2" /> Trình
+                    độ: {prog.level}
+                  </div>
+                  <div className="flex items-center">
+                    <UserCheck className="h-4 w-4 text-primary-700 mr-2" />{" "}
+                    Hướng dẫn: {prog.coach}
+                  </div>
                 </div>
               </div>
 
@@ -94,7 +112,6 @@ export default function Yoga() {
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );

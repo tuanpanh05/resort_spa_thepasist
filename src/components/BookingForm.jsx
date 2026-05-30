@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
-import { Calendar, Phone, User, Users, Compass, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Calendar,
+  Phone,
+  User,
+  Users,
+  Compass,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 
 export default function BookingForm() {
   const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    checkInDate: '',
-    guestsCount: '2',
-    interest: 'all',
-    note: ''
+    fullName: "",
+    phone: "",
+    checkInDate: "",
+    guestsCount: "2",
+    interest: "all",
+    note: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -17,10 +25,10 @@ export default function BookingForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.fullName || !formData.phone || !formData.checkInDate) {
-      alert('Vui lòng điền các thông tin bắt buộc.');
+      alert("Vui lòng điền các thông tin bắt buộc.");
       return;
     }
-    
+
     setIsLoading(true);
     // Simulate API request
     setTimeout(() => {
@@ -31,17 +39,19 @@ export default function BookingForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <section id="booking" className="py-24 bg-gradient-to-b from-[#f8faf7] to-[#f0f5ee] relative overflow-hidden">
+    <section
+      id="booking"
+      className="py-24 bg-gradient-to-b from-[#f8faf7] to-[#f0f5ee] relative overflow-hidden"
+    >
       {/* Decorative blurry gradients */}
       <div className="absolute top-1/2 left-0 w-80 h-80 bg-primary-200/20 rounded-full filter blur-3xl -translate-y-1/2" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary-100/30 rounded-full filter blur-3xl" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
         {/* Section Header */}
         <div className="text-center mb-12">
           <span className="text-xs font-semibold tracking-widest text-primary-900 uppercase bg-primary-200/60 px-3 py-1.5 rounded-full">
@@ -51,13 +61,14 @@ export default function BookingForm() {
             Khởi Đầu Hành Trình Chữa Lành
           </h2>
           <p className="text-sage-800 font-normal text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-            Để lại thông tin dưới đây, chuyên viên tư vấn sức khỏe của Ngũ Sơn Resort sẽ liên hệ hỗ trợ bạn thiết kế liệu trình phù hợp nhất trong 15 phút.
+            Để lại thông tin dưới đây, chuyên viên tư vấn sức khỏe của Ngũ Sơn
+            Resort sẽ liên hệ hỗ trợ bạn thiết kế liệu trình phù hợp nhất trong
+            15 phút.
           </p>
         </div>
 
         {/* Form Container */}
         <div className="bg-white/80 backdrop-blur-md rounded-3xl p-6 sm:p-10 shadow-xl border border-primary-200/30">
-          
           {isSubmitted ? (
             <div className="text-center py-12 px-4 animate-fade-in">
               <div className="inline-flex p-4 bg-primary-200/60 text-primary-900 rounded-full mb-6">
@@ -67,12 +78,29 @@ export default function BookingForm() {
                 Đăng Ký Thành Công!
               </h3>
               <p className="text-sage-800 max-w-md mx-auto font-normal text-base leading-relaxed">
-                Cảm ơn Quý khách <strong className="text-sage-900 font-bold">{formData.fullName}</strong>. Chúng tôi đã tiếp nhận yêu cầu đặt dịch vụ vào ngày {formData.checkInDate}. Chuyên viên tư vấn sẽ liên hệ lại qua số điện thoại <strong className="text-sage-900 font-bold">{formData.phone}</strong> sớm nhất có thể.
+                Cảm ơn Quý khách{" "}
+                <strong className="text-sage-900 font-bold">
+                  {formData.fullName}
+                </strong>
+                . Chúng tôi đã tiếp nhận yêu cầu đặt dịch vụ vào ngày{" "}
+                {formData.checkInDate}. Chuyên viên tư vấn sẽ liên hệ lại qua số
+                điện thoại{" "}
+                <strong className="text-sage-900 font-bold">
+                  {formData.phone}
+                </strong>{" "}
+                sớm nhất có thể.
               </p>
               <button
                 onClick={() => {
                   setIsSubmitted(false);
-                  setFormData({ fullName: '', phone: '', checkInDate: '', guestsCount: '2', interest: 'all', note: '' });
+                  setFormData({
+                    fullName: "",
+                    phone: "",
+                    checkInDate: "",
+                    guestsCount: "2",
+                    interest: "all",
+                    note: "",
+                  });
                 }}
                 className="mt-8 px-6 py-2.5 rounded-full text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white transition-all cursor-pointer shadow-md"
               >
@@ -82,10 +110,12 @@ export default function BookingForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 {/* Full name input */}
                 <div>
-                  <label htmlFor="fullName" className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                  <label
+                    htmlFor="fullName"
+                    className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2"
+                  >
                     Họ và tên <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -107,7 +137,10 @@ export default function BookingForm() {
 
                 {/* Phone input */}
                 <div>
-                  <label htmlFor="phone" className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                  <label
+                    htmlFor="phone"
+                    className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2"
+                  >
                     Số điện thoại <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -129,7 +162,10 @@ export default function BookingForm() {
 
                 {/* Arrival Date */}
                 <div>
-                  <label htmlFor="checkInDate" className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                  <label
+                    htmlFor="checkInDate"
+                    className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2"
+                  >
                     Ngày dự kiến đến <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -150,7 +186,10 @@ export default function BookingForm() {
 
                 {/* Guest select */}
                 <div>
-                  <label htmlFor="guestsCount" className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                  <label
+                    htmlFor="guestsCount"
+                    className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2"
+                  >
                     Số lượng khách
                   </label>
                   <div className="relative">
@@ -179,15 +218,15 @@ export default function BookingForm() {
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     {[
-                      { id: 'all', label: 'Tất cả dịch vụ' },
-                      { id: 'dining', label: 'Ẩm thực dinh dưỡng' },
-                      { id: 'spa', label: 'Spa trị liệu' },
-                      { id: 'yoga', label: 'Yoga & Thiền' },
-                      { id: 'therapy', label: 'Vật lý trị liệu' }
+                      { id: "all", label: "Tất cả dịch vụ" },
+                      { id: "dining", label: "Ẩm thực dinh dưỡng" },
+                      { id: "spa", label: "Spa trị liệu" },
+                      { id: "yoga", label: "Yoga & Thiền" },
+                      { id: "therapy", label: "Vật lý trị liệu" },
                     ].map((item) => (
-                      <label 
+                      <label
                         key={item.id}
-                        className={`flex items-center justify-center p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all text-center ${formData.interest === item.id ? 'bg-primary-200 border-primary-400 text-primary-900 shadow-sm' : 'bg-white border-primary-200/60 hover:bg-primary-50 text-sage-800'}`}
+                        className={`flex items-center justify-center p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all text-center ${formData.interest === item.id ? "bg-primary-200 border-primary-400 text-primary-900 shadow-sm" : "bg-white border-primary-200/60 hover:bg-primary-50 text-sage-800"}`}
                       >
                         <input
                           type="radio"
@@ -205,7 +244,10 @@ export default function BookingForm() {
 
                 {/* Message input */}
                 <div className="md:col-span-2">
-                  <label htmlFor="note" className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                  <label
+                    htmlFor="note"
+                    className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2"
+                  >
                     Yêu cầu đặc biệt hoặc Tình trạng sức khỏe cần lưu ý
                   </label>
                   <textarea
@@ -218,7 +260,6 @@ export default function BookingForm() {
                     className="block w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 rounded-2xl text-sage-900 placeholder-sage-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all text-sm resize-none font-medium"
                   />
                 </div>
-
               </div>
 
               {/* Submit Button */}
@@ -230,18 +271,17 @@ export default function BookingForm() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="animate-spin mr-2 h-5 w-5" /> Đang xử lý...
+                      <Loader2 className="animate-spin mr-2 h-5 w-5" /> Đang xử
+                      lý...
                     </>
                   ) : (
-                    'Đăng ký tư vấn ngay'
+                    "Đăng ký tư vấn ngay"
                   )}
                 </button>
               </div>
             </form>
           )}
-
         </div>
-
       </div>
     </section>
   );

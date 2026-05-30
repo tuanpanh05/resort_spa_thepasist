@@ -1,13 +1,16 @@
-import React from 'react';
-import { Calendar, Flower2, Armchair, ChevronDown } from 'lucide-react';
+import React from "react";
+import { Calendar, Flower2, Armchair, ChevronDown } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section
+      id="home"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+    >
       {/* Background Image with blur effect */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
-        style={{ 
+        style={{
           backgroundImage: "url('/hero_bg.png')",
         }}
       />
@@ -25,8 +28,9 @@ export default function Hero() {
         </h1>
 
         <p className="max-w-xl mx-auto text-sm sm:text-base md:text-lg text-white/80 font-light mb-12 leading-relaxed tracking-wide animate-slide-up">
-          Tìm lại sự cân bằng hoàn hảo cho Thân – Tâm – Trí trong không gian xanh nguyên bản, 
-          hòa quyện cùng các liệu trình spa thảo dược, yoga thiền định và vật lý trị liệu chuyên sâu.
+          Tìm lại sự cân bằng hoàn hảo cho Thân – Tâm – Trí trong không gian
+          xanh nguyên bản, hòa quyện cùng các liệu trình spa thảo dược, yoga
+          thiền định và vật lý trị liệu chuyên sâu.
         </p>
 
         {/* CTA Buttons */}

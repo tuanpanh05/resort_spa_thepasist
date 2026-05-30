@@ -1,24 +1,24 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Home from './pages/Home';
-import Blog from './pages/Blog';
-import Spa from './pages/Spa';
-import Restaurant from './pages/Restaurant';
-import Events from './pages/Events';
-import Yoga from './pages/Yoga';
-import Therapy from './pages/Therapy';
-import Promotions from './pages/Promotions';
-import RoomsPage from './pages/RoomsPage';
-import ScrollToTop from './components/ScrollToTop';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import AdminDashboard from './pages/AdminDashboard';
-import StaffDashboard from './pages/StaffDashboard';
-import ChefDashboard from './pages/ChefDashboard';
-import SpecialistDashboard from './pages/SpecialistDashboard';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import Blog from "./pages/Blog";
+import Spa from "./pages/Spa";
+import Restaurant from "./pages/Restaurant";
+import Events from "./pages/Events";
+import Yoga from "./pages/Yoga";
+import Therapy from "./pages/Therapy";
+import Promotions from "./pages/Promotions";
+import RoomsPage from "./pages/RoomsPage";
+import ScrollToTop from "./components/ScrollToTop";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import AdminDashboard from "./pages/AdminDashboard";
+import StaffDashboard from "./pages/StaffDashboard";
+import ChefDashboard from "./pages/ChefDashboard";
+import SpecialistDashboard from "./pages/SpecialistDashboard";
 
 function App() {
   return (
@@ -27,7 +27,7 @@ function App() {
       <div className="min-h-screen flex flex-col scroll-smooth selection:bg-primary-200 selection:text-sage-900">
         {/* Navigation Header (Shared across all pages) */}
         <Header />
-        
+
         {/* Main Routed Content */}
         <main className="flex-grow">
           <Routes>
@@ -49,7 +49,7 @@ function App() {
             <Route path="/specialist" element={<SpecialistDashboard />} />
           </Routes>
         </main>
-        
+
         {/* Footer Info (Shared across all pages) */}
         <Footer />
       </div>
