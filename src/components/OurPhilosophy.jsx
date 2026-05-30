@@ -2,7 +2,10 @@ import React from "react";
 
 export default function OurPhilosophy() {
   return (
-    <section className="py-24 bg-[#fafbfa] text-sage-950 font-sans border-b border-sage-200/50">
+    <section
+      id="philosophy"
+      className="py-24 bg-[#fafbfa] text-sage-950 font-sans border-b border-sage-200/50"
+    >
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
