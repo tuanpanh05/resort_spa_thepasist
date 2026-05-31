@@ -1,4 +1,5 @@
 import React from "react";
+import { Leaf } from "lucide-react";
 
 export default function WellnessExperiences() {
   const experiences = [
@@ -57,6 +58,10 @@ export default function WellnessExperiences() {
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal leading-tight">
             Liệu Trình Chăm Sóc Sức Khỏe
           </h2>
+          <div className="flex items-center space-x-3 mt-4">
+            <Leaf className="h-3.5 w-3.5 text-primary-600/80" />
+            <div className="h-[1px] w-12 bg-gradient-to-r from-primary-300 to-transparent" />
+          </div>
           <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed pt-2">
             Được thiết kế cá nhân hóa cho từng khách lưu trú nhằm nâng cao hệ
             miễn dịch tự nhiên, giải phóng độc tố và phục hồi năng lượng sống

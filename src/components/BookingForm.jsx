@@ -7,6 +7,7 @@ import {
   Compass,
   CheckCircle2,
   Loader2,
+  Leaf,
 } from "lucide-react";
 
 export default function BookingForm() {
@@ -60,6 +61,11 @@ export default function BookingForm() {
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-sage-900 mt-4 mb-4">
             Khởi Đầu Hành Trình Chữa Lành
           </h2>
+          <div className="flex items-center justify-center space-x-3 mt-4 mb-6">
+            <div className="h-[1px] w-8 bg-gradient-to-r from-transparent to-primary-300" />
+            <Leaf className="h-3.5 w-3.5 text-primary-600/80" />
+            <div className="h-[1px] w-8 bg-gradient-to-l from-transparent to-primary-300" />
+          </div>
           <p className="text-sage-800 font-normal text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
             Để lại thông tin dưới đây, chuyên viên tư vấn sức khỏe của Ngũ Sơn
             Resort sẽ liên hệ hỗ trợ bạn thiết kế liệu trình phù hợp nhất trong

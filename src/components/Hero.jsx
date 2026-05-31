@@ -1,17 +1,7 @@
 import React from "react";
-import { Calendar, Flower2, Armchair, ChevronDown } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
 
 export default function Hero() {
-  const handleScroll = () => {
-    const nextSection = document.getElementById("philosophy");
-
-    if (nextSection) {
-      nextSection.scrollIntoView({
-        behavior: "smooth",
-      });
-    }
-  };
   return (
     <section
       id="home"
@@ -57,16 +47,6 @@ export default function Hero() {
           >
             Tìm hiểu dịch vụ
           </a>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div
-          onClick={handleScroll}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/50 text-[10px] tracking-[0.3em] uppercase cursor-pointer hover:text-white transition-colors duration-200"
-        >
-          {" "}
-          <span className="mb-2">Cuộn xuống</span>
-          <ChevronDown className="h-4 w-4" />
         </div>
       </div>
     </section>
