@@ -2,14 +2,28 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Leaf } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
+import { signInWithPopup } from "firebase/auth";
 
+import { auth, googleProvider } from "../firebase";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const loginWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
 
+      console.log(result.user);
+
+      alert("Đăng nhập Google thành công!");
+    } catch (error) {
+      console.log(error);
+
+      alert("Đăng nhập thất bại!");
+    }
+  };
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -197,9 +211,7 @@ export default function Login() {
         {/* Social Login Buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() =>
-              alert("Đăng nhập bằng Google hiện chưa được kết nối.")
-            }
+            onClick={loginWithGoogle}
             className="flex items-center justify-center space-x-2 py-3 border border-primary-200/50 rounded-2xl bg-white/70 hover:bg-white text-xs font-semibold text-sage-800 hover:shadow-sm transition-all duration-200 cursor-pointer"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
