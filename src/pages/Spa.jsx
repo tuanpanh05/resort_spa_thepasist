@@ -79,7 +79,7 @@ export default function Spa() {
                       Đặt lịch trước để được chuẩn bị thảo dược tươi
                     </span>
                     <a
-                      href="/#booking"
+                      href="/dat-lich"
                       className="inline-flex items-center justify-center px-6 py-3.5 rounded-full text-sm font-semibold bg-primary-900 text-white hover:bg-primary-850 transition-all duration-300 shadow-md hover:scale-105"
                     >
                       Đăng ký tư vấn liệu trình

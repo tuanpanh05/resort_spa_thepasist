@@ -103,7 +103,7 @@ export default function Yoga() {
 
               <div className="mt-8 pt-4 border-t border-primary-50">
                 <a
-                  href="/#booking"
+                  href="/dat-lich"
                   className="inline-flex items-center text-xs font-bold uppercase tracking-wider text-primary-900 hover:text-primary-800"
                 >
                   Đăng ký lớp học <ArrowRight className="ml-1 h-3.5 w-3.5" />

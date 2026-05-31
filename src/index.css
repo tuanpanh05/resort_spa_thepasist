@@ -124,6 +124,12 @@
   h6 {
     @apply font-serif text-sage-900;
   }
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
 }
 
 /* Định dạng font chữ Inter nhẹ nhàng, hiện đại cho giao diện Admin */

@@ -143,7 +143,7 @@ export default function Rooms() {
                       </span>
                     </div>
                     <a
-                      href="#booking"
+                      href="/dat-lich"
                       className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 rounded-none text-xs font-semibold tracking-widest bg-primary-800 text-white hover:bg-primary-900 transition-all duration-300 uppercase cursor-pointer"
                     >
                       Liên hệ báo giá

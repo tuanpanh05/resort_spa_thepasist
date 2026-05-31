@@ -114,7 +114,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/#booking"
+                  to="/dat-lich"
                   className="hover:text-white transition-colors"
                 >
                   Đặt lịch tư vấn

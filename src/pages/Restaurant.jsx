@@ -113,7 +113,7 @@ export default function Restaurant() {
               tiếng.
             </p>
             <a
-              href="/#booking"
+              href="/dat-lich"
               className="inline-flex items-center justify-center px-8 py-3.5 rounded-full text-sm font-semibold bg-primary-200 text-sage-950 hover:bg-primary-300 transition-all duration-300 shadow-md hover:scale-105"
             >
               <Calendar className="mr-2 h-4.5 w-4.5 text-sage-950" /> Liên hệ
