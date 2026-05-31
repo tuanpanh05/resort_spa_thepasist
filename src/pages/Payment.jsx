@@ -234,10 +234,10 @@ export default function Payment() {
               <CheckCircle2 className="h-14 w-14" />
             </div>
 
-            <h1 className="font-serif text-3xl font-normal text-sage-900 mb-2">
+            <h1 className="text-resort-title text-sage-900 mb-2">
               Thanh Toán Thành Công!
             </h1>
-            <p className="text-sage-600 text-sm max-w-md mx-auto mb-8 font-light leading-relaxed">
+            <p className="text-resort-desc max-w-md mx-auto mb-8">
               Cảm ơn quý khách đã hoàn tất thanh toán. Phiếu xác nhận đặt lịch trải nghiệm đã được ghi nhận và đồng bộ vào hệ thống quản lý của resort.
             </p>
 
@@ -278,13 +278,13 @@ export default function Payment() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
                 to="/"
-                className="inline-flex items-center justify-center px-8 py-3 bg-primary-800 text-white text-xs font-semibold tracking-wider hover:bg-primary-900 transition-all uppercase rounded-none cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3 bg-primary-800 text-white text-resort-button tracking-wider hover:bg-primary-900 transition-all uppercase rounded-none cursor-pointer"
               >
                 Về trang chủ
               </Link>
               <button
                 onClick={() => window.print()}
-                className="inline-flex items-center justify-center px-8 py-3 border border-sage-800 text-sage-800 text-xs font-semibold tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none"
+                className="inline-flex items-center justify-center px-8 py-3 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none"
               >
                 In hóa đơn tạm tính
               </button>
@@ -305,7 +305,7 @@ export default function Payment() {
                 <span className="text-[10px] font-bold text-primary-750 uppercase tracking-widest block mb-1">
                   Ngũ Sơn Resort
                 </span>
-                <h2 className="font-serif text-xl sm:text-2xl font-normal text-sage-950">
+                <h2 className="text-resort-section text-sage-950 mb-1">
                   Tóm Tắt Đặt Lịch
                 </h2>
               </div>
@@ -398,7 +398,7 @@ export default function Payment() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("qr")}
-                  className={`py-4 px-2 text-center text-xs font-semibold tracking-wider uppercase border-b-2 flex flex-col items-center justify-center space-y-2 transition-all ${
+                  className={`py-4 px-2 text-center text-resort-button tracking-wider uppercase border-b-2 flex flex-col items-center justify-center space-y-2 transition-all ${
                     paymentMethod === "qr"
                       ? "border-primary-800 text-primary-900 bg-primary-50/20"
                       : "border-transparent text-sage-400 hover:text-sage-700 bg-white"
@@ -410,7 +410,7 @@ export default function Payment() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("card")}
-                  className={`py-4 px-2 text-center text-xs font-semibold tracking-wider uppercase border-b-2 flex flex-col items-center justify-center space-y-2 transition-all ${
+                  className={`py-4 px-2 text-center text-resort-button tracking-wider uppercase border-b-2 flex flex-col items-center justify-center space-y-2 transition-all ${
                     paymentMethod === "card"
                       ? "border-primary-800 text-primary-900 bg-primary-50/20"
                       : "border-transparent text-sage-400 hover:text-sage-700 bg-white"
@@ -422,7 +422,7 @@ export default function Payment() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("counter")}
-                  className={`py-4 px-2 text-center text-xs font-semibold tracking-wider uppercase border-b-2 flex flex-col items-center justify-center space-y-2 transition-all ${
+                  className={`py-4 px-2 text-center text-resort-button tracking-wider uppercase border-b-2 flex flex-col items-center justify-center space-y-2 transition-all ${
                     paymentMethod === "counter"
                       ? "border-primary-800 text-primary-900 bg-primary-50/20"
                       : "border-transparent text-sage-400 hover:text-sage-700 bg-white"
@@ -545,7 +545,7 @@ export default function Payment() {
                         type="button"
                         onClick={handlePaymentSubmit}
                         disabled={isProcessing}
-                        className="w-full sm:w-auto px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white font-semibold tracking-wider uppercase rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center"
+                        className="w-full sm:w-auto px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider uppercase rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center"
                       >
                         {isProcessing ? "Đang kiểm tra kết nối..." : "Tôi đã chuyển khoản"}
                       </button>
@@ -560,11 +560,11 @@ export default function Payment() {
                       Cung cấp thông tin thẻ tín dụng hoặc thẻ ghi nợ quốc tế Visa, Mastercard, JCB hoặc Amex để xử lý thanh toán trực tuyến bảo mật.
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm font-medium">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm">
                       
                       {/* Card Number field */}
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
                           Số thẻ
                         </label>
                         <div className="relative">
@@ -575,7 +575,7 @@ export default function Payment() {
                             value={cardData.number}
                             onChange={handleCardChange}
                             required
-                            className={`w-full px-4 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 font-mono tracking-widest text-sm ${
+                            className={`w-full px-4 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 font-mono tracking-widest text-resort-input ${
                               cardErrors.number ? "border-red-400" : "border-primary-200/50"
                             }`}
                           />
@@ -587,10 +587,10 @@ export default function Payment() {
                           <span className="text-red-500 text-[10px] mt-1 block font-normal">{cardErrors.number}</span>
                         )}
                       </div>
-
+ 
                       {/* Cardholder Name field */}
                       <div>
-                        <label className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
                           Tên trên thẻ
                         </label>
                         <input
@@ -600,7 +600,7 @@ export default function Payment() {
                           value={cardData.name}
                           onChange={handleCardChange}
                           required
-                          className={`w-full px-4 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
+                          className={`w-full px-4 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 text-resort-input ${
                             cardErrors.name ? "border-red-400" : "border-primary-200/50"
                           }`}
                         />
@@ -608,11 +608,11 @@ export default function Payment() {
                           <span className="text-red-500 text-[10px] mt-1 block font-normal">{cardErrors.name}</span>
                         )}
                       </div>
-
+ 
                       {/* Expiry & CVV fields grid split */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                          <label className="block text-resort-label uppercase text-sage-900 mb-2">
                             Hạn dùng (MM/YY)
                           </label>
                           <input
@@ -622,7 +622,7 @@ export default function Payment() {
                             value={cardData.expiry}
                             onChange={handleCardChange}
                             required
-                            className={`w-full px-3 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 text-center font-mono ${
+                            className={`w-full px-3 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 text-center font-mono text-resort-input ${
                               cardErrors.expiry ? "border-red-400" : "border-primary-200/50"
                             }`}
                           />
@@ -630,9 +630,9 @@ export default function Payment() {
                             <span className="text-red-500 text-[10px] mt-1 block font-normal">{cardErrors.expiry}</span>
                           )}
                         </div>
-
+ 
                         <div>
-                          <label className="block text-xs font-semibold text-sage-900 uppercase tracking-wider mb-2">
+                          <label className="block text-resort-label uppercase text-sage-900 mb-2">
                             Mã CVV / CVC
                           </label>
                           <input
@@ -642,7 +642,7 @@ export default function Payment() {
                             value={cardData.cvv}
                             onChange={handleCardChange}
                             required
-                            className={`w-full px-3 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 text-center font-mono ${
+                            className={`w-full px-3 py-3 bg-sage-50/50 border rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 text-center font-mono text-resort-input ${
                               cardErrors.cvv ? "border-red-400" : "border-primary-200/50"
                             }`}
                           />
@@ -652,7 +652,7 @@ export default function Payment() {
                         </div>
                       </div>
                     </div>
-
+ 
                     <div className="pt-4 border-t border-primary-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
                       <span className="text-sage-500 font-light flex items-center">
                         <ShieldCheck className="h-4.5 w-4.5 text-primary-600 mr-1.5 flex-shrink-0" />
@@ -661,7 +661,7 @@ export default function Payment() {
                       <button
                         type="submit"
                         disabled={isProcessing}
-                        className="w-full sm:w-auto px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white font-semibold tracking-wider uppercase rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center"
+                        className="w-full sm:w-auto px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider uppercase rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center"
                       >
                         {isProcessing ? "Đang xử lý giao dịch..." : `Thanh toán ${formatCurrency(total)}`}
                       </button>
@@ -705,7 +705,7 @@ export default function Payment() {
                         type="button"
                         onClick={handlePaymentSubmit}
                         disabled={isProcessing}
-                        className="w-full sm:w-auto px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white font-semibold tracking-wider uppercase rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center"
+                        className="w-full sm:w-auto px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider uppercase rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center"
                       >
                         {isProcessing ? "Đang ghi nhận..." : "Xác nhận đặt tại quầy"}
                       </button>

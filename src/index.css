@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap");
 
 @import "tailwindcss";
 
@@ -32,7 +32,7 @@
   --color-dark-forest: #0c2e28;
 
   --font-sans: "Inter", "system-ui", "sans-serif";
-  --font-serif: "Playfair Display", "Georgia", "serif";
+  --font-serif: "Cormorant Garamond", "Georgia", "serif";
 
   --animate-fade-in: fadeIn 1s ease-out forwards;
   --animate-slide-up: slideUp 0.8s ease-out forwards;
@@ -65,6 +65,51 @@
       opacity: 0.85;
     }
   }
+}
+
+@utility text-resort-title {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+@utility text-resort-section {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+@utility text-resort-stepper {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@utility text-resort-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+@utility text-resort-input {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+@utility text-resort-desc {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: #6B7280;
+}
+
+@utility text-resort-button {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 @utility glass-header {

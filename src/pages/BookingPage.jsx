@@ -323,6 +323,16 @@ export default function BookingPage() {
           </span>
         </div>
 
+        {/* Page Header Title */}
+        <div className="text-center mb-12">
+          <h1 className="text-resort-title text-sage-950 mb-3 uppercase tracking-wide">
+            Đặt Lịch Trị Liệu & Nghỉ Dưỡng
+          </h1>
+          <p className="text-resort-desc max-w-lg mx-auto">
+            Khởi động hành trình phục hồi thân-tâm tại không gian xanh thanh bình của Ngũ Sơn Resort.
+          </p>
+        </div>
+
         {/* Wizard Header (Steps Progress Bar) */}
         {bookingStatus !== "CONFIRMED" && (
           <div className="mb-12 max-w-4xl mx-auto">
@@ -356,8 +366,8 @@ export default function BookingPage() {
                       {step > s.number ? <Check className="h-4 w-4" /> : s.number}
                     </div>
                     <span
-                      className={`mt-2.5 text-[10px] sm:text-xs font-semibold tracking-wide transition-colors duration-300 hidden md:block ${
-                        isActive ? "text-sage-950 font-bold" : "text-sage-400"
+                      className={`mt-2.5 text-resort-stepper transition-colors duration-300 hidden md:block ${
+                        isActive ? "text-sage-950 font-medium" : "text-sage-400"
                       }`}
                     >
                       {s.label}
@@ -447,13 +457,13 @@ export default function BookingPage() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
                 to="/"
-                className="inline-flex items-center justify-center px-8 py-3 bg-primary-800 text-white text-xs font-semibold tracking-wider hover:bg-primary-900 transition-all uppercase rounded-none cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3 bg-primary-800 text-white text-resort-button tracking-wider hover:bg-primary-900 transition-all uppercase rounded-none cursor-pointer"
               >
                 Về trang chủ
               </Link>
               <button
                 onClick={() => window.print()}
-                className="inline-flex items-center justify-center px-8 py-3 border border-sage-800 text-sage-800 text-xs font-semibold tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none"
+                className="inline-flex items-center justify-center px-8 py-3 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none"
               >
                 In phiếu xác nhận
               </button>
@@ -475,19 +485,19 @@ export default function BookingPage() {
               {step === 1 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
-                    <h2 className="font-serif text-2xl font-normal text-sage-950">
+                    <h2 className="text-resort-section text-sage-950 mb-1">
                       Bước 1: Thông Tin Khách Hàng
                     </h2>
-                    <p className="text-xs text-sage-500 mt-1">
+                    <p className="text-resort-desc mt-1">
                       Vui lòng nhập các thông tin liên lạc chính xác để tạo hồ sơ khách lưu trú ban đầu.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm font-semibold">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm">
                     
                     {/* Full Name */}
                     <div>
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Họ và tên <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -499,7 +509,7 @@ export default function BookingPage() {
                             setGuestInfo({ ...guestInfo, fullName: e.target.value });
                             setFormErrors({ ...formErrors, fullName: "" });
                           }}
-                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
+                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
                             formErrors.fullName ? "border-red-400" : "border-primary-200/50"
                           }`}
                         />
@@ -510,7 +520,7 @@ export default function BookingPage() {
 
                     {/* Phone Number */}
                     <div>
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Số điện thoại <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -522,7 +532,7 @@ export default function BookingPage() {
                             setGuestInfo({ ...guestInfo, phone: e.target.value });
                             setFormErrors({ ...formErrors, phone: "" });
                           }}
-                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
+                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
                             formErrors.phone ? "border-red-400" : "border-primary-200/50"
                           }`}
                         />
@@ -533,7 +543,7 @@ export default function BookingPage() {
 
                     {/* Email Address */}
                     <div>
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Địa chỉ Email <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -545,7 +555,7 @@ export default function BookingPage() {
                             setGuestInfo({ ...guestInfo, email: e.target.value });
                             setFormErrors({ ...formErrors, email: "" });
                           }}
-                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
+                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
                             formErrors.email ? "border-red-400" : "border-primary-200/50"
                           }`}
                         />
@@ -556,14 +566,14 @@ export default function BookingPage() {
 
                     {/* Guests count */}
                     <div>
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Số lượng khách hàng
                       </label>
                       <div className="relative">
                         <select
                           value={guestInfo.guestsCount}
                           onChange={(e) => setGuestInfo({ ...guestInfo, guestsCount: Number(e.target.value) })}
-                          className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 appearance-none font-semibold"
+                          className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 appearance-none"
                         >
                           <option value="1">1 Khách nghỉ</option>
                           <option value="2">2 Khách nghỉ</option>
@@ -578,7 +588,7 @@ export default function BookingPage() {
 
                     {/* Check In Date */}
                     <div>
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Ngày nhận phòng dự kiến <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -589,7 +599,7 @@ export default function BookingPage() {
                             setGuestInfo({ ...guestInfo, checkInDate: e.target.value });
                             setFormErrors({ ...formErrors, checkInDate: "" });
                           }}
-                          className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 font-semibold"
+                          className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
                         />
                         <Calendar className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       </div>
@@ -597,7 +607,7 @@ export default function BookingPage() {
 
                     {/* Check Out Date */}
                     <div>
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Ngày trả phòng dự kiến <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -608,7 +618,7 @@ export default function BookingPage() {
                             setGuestInfo({ ...guestInfo, checkOutDate: e.target.value });
                             setFormErrors({ ...formErrors, checkOutDate: "" });
                           }}
-                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 font-semibold ${
+                          className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
                             formErrors.checkOutDate ? "border-red-400" : "border-primary-200/50"
                           }`}
                         />
@@ -619,7 +629,7 @@ export default function BookingPage() {
 
                     {/* Health Note / Allergies */}
                     <div className="sm:col-span-2">
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Lưu ý sức khỏe / dị ứng thức ăn (nếu có)
                       </label>
                       <div className="relative">
@@ -628,14 +638,14 @@ export default function BookingPage() {
                           rows="2.5"
                           value={guestInfo.healthNote}
                           onChange={(e) => setGuestInfo({ ...guestInfo, healthNote: e.target.value })}
-                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 font-medium"
+                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
                         />
                       </div>
                     </div>
 
                     {/* Special requests */}
                     <div className="sm:col-span-2">
-                      <label className="block text-[10px] tracking-wider uppercase text-sage-900 mb-2">
+                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
                         Yêu cầu đặc biệt khác
                       </label>
                       <div className="relative">
@@ -644,7 +654,7 @@ export default function BookingPage() {
                           rows="2"
                           value={guestInfo.specialRequest}
                           onChange={(e) => setGuestInfo({ ...guestInfo, specialRequest: e.target.value })}
-                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 font-medium"
+                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
                         />
                       </div>
                     </div>
@@ -654,7 +664,7 @@ export default function BookingPage() {
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
+                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
                     >
                       Chọn Villa & Dịch vụ <ChevronRight className="h-4 w-4 ml-1.5" />
                     </button>
@@ -666,10 +676,10 @@ export default function BookingPage() {
               {step === 2 && (
                 <div className="space-y-8 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
-                    <h2 className="font-serif text-2xl font-normal text-sage-950">
+                    <h2 className="text-resort-section text-sage-950 mb-1">
                       Bước 2: Chọn Không Gian & Trải Nghiệm
                     </h2>
-                    <p className="text-xs text-sage-500 mt-1">
+                    <p className="text-resort-desc">
                       Lựa chọn 1 biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
                     </p>
                   </div>
@@ -798,7 +808,7 @@ export default function BookingPage() {
                     <button
                       type="button"
                       onClick={handlePrevStep}
-                      className="px-6 py-3.5 border border-sage-800 text-sage-800 text-xs font-semibold tracking-widest uppercase rounded-none hover:bg-sage-50 transition-all flex items-center"
+                      className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
                     >
                       <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
                     </button>
@@ -806,7 +816,7 @@ export default function BookingPage() {
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
+                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider hover:bg-primary-950 transition-all uppercase rounded-none flex items-center cursor-pointer"
                     >
                       Kiểm tra đơn đặt <ChevronRight className="h-4 w-4 ml-1.5" />
                     </button>
@@ -818,10 +828,10 @@ export default function BookingPage() {
               {step === 3 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
-                    <h2 className="font-serif text-2xl font-normal text-sage-950">
+                    <h2 className="text-resort-section text-sage-950 mb-1">
                       Bước 3: Xác Nhận Đơn Đặt Lịch
                     </h2>
-                    <p className="text-xs text-sage-500 mt-1">
+                    <p className="text-resort-desc">
                       Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
                     </p>
                   </div>
@@ -933,7 +943,7 @@ export default function BookingPage() {
                       type="button"
                       disabled={isConfirming}
                       onClick={handlePrevStep}
-                      className="px-6 py-3.5 border border-sage-800 text-sage-800 text-xs font-semibold tracking-widest uppercase rounded-none hover:bg-sage-50 transition-all flex items-center disabled:opacity-50"
+                      className="px-6 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-widest uppercase rounded-none hover:bg-sage-50 transition-all flex items-center disabled:opacity-50"
                     >
                       <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
                     </button>
@@ -942,7 +952,7 @@ export default function BookingPage() {
                       type="button"
                       disabled={isConfirming}
                       onClick={handleConfirmBooking}
-                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer disabled:opacity-70"
+                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer disabled:opacity-70"
                     >
                       {isConfirming ? (
                         <>
@@ -962,10 +972,10 @@ export default function BookingPage() {
               {step === 4 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
-                    <h2 className="font-serif text-2xl font-normal text-sage-950">
+                    <h2 className="text-resort-section text-sage-950 mb-1">
                       Bước 4: Thanh Toán Đặt Cọc
                     </h2>
-                    <p className="text-xs text-sage-500 mt-1">
+                    <p className="text-resort-desc">
                       Vui lòng thanh toán khoản cọc 30% qua ngân hàng để kích hoạt trạng thái xác nhận đặt phòng tự động.
                     </p>
                   </div>
@@ -1079,7 +1089,7 @@ export default function BookingPage() {
                       type="button"
                       disabled={isVerifyingPayment}
                       onClick={handleVerifyPayment}
-                      className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold tracking-widest uppercase rounded-none transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-70"
+                      className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-70"
                     >
                       {isVerifyingPayment ? (
                         <>
