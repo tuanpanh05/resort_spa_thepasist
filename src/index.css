@@ -31,8 +31,8 @@
   --color-warm-beige: #f5f5f0;
   --color-dark-forest: #0c2e28;
 
-  --font-sans: "Inter", "system-ui", "sans-serif";
-  --font-serif: "Cormorant Garamond", "Georgia", "serif";
+  --font-sans: "Outfit", "system-ui", "sans-serif";
+  --font-serif: "Outfit", "system-ui", "sans-serif";
 
   --animate-fade-in: fadeIn 1s ease-out forwards;
   --animate-slide-up: slideUp 0.8s ease-out forwards;
@@ -167,7 +167,7 @@
   h4,
   h5,
   h6 {
-    @apply font-serif text-sage-900;
+    @apply font-sans text-sage-900;
   }
   input,
   select,
@@ -177,11 +177,11 @@
   }
 }
 
-/* Định dạng font chữ Inter nhẹ nhàng, hiện đại cho giao diện Admin */
+/* Định dạng font chữ Outfit nhẹ nhàng, hiện đại cho giao diện Admin */
 .admin-theme,
 .admin-theme * {
   font-family:
-    "Inter",
+    "Outfit",
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",

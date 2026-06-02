@@ -5,13 +5,7 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: #f7f8f6;
-  font-family:
-    "Manrope",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #192219;
   padding-top: 0;
   position: relative;
@@ -57,7 +51,6 @@
 }
 
 .chef-brand-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
@@ -152,7 +145,6 @@
 }
 
 .logo-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 19px;
   font-weight: 700;
   color: #ffffff;
@@ -343,7 +335,6 @@
 }
 
 .header-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 22px;
   font-weight: 700;
   color: #192219;
@@ -620,7 +611,6 @@
 }
 
 .panel-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   color: #192219;
@@ -1151,7 +1141,6 @@
 }
 
 .disabled-items-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   color: #192219;
@@ -1308,7 +1297,6 @@
 }
 
 .kds-col-header-text {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 15px;
   font-weight: 900;
   display: flex;
@@ -1814,7 +1802,6 @@
 }
 
 .inventory-card-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 18px;
   font-weight: 700;
   color: #192219;
@@ -1981,7 +1968,6 @@
 }
 
 .modal-title-row {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: #192219;
