@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 Ngũ Sơn Resort & Spa - API Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.4);
+            --card-bg: rgba(17, 25, 40, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1e293b 0%, var(--bg-color) 70%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 24px;
+            margin-bottom: 30px;
+        }
+
+        .logo-section h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(to right, #34d399, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--accent-green);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-green);
+            box-shadow: 0 0 15px var(--accent-green-glow);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 10px var(--accent-green); }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #10b981;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .endpoint-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.3);
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .method {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-right: 12px;
+            letter-spacing: 0.5px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .method.get { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .method.post { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .path {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <h1>🌿 NGŨ SƠN RESORT & SPA</h1>
+                <p>Payment & Folio API Microservice Skeletons</p>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                API ONLINE
+            </div>
+        </div>
+
+        <h2 class="section-title">Checkout & Payment Endpoints</h2>
+        
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method get">GET</span>
+                <span class="path">/api/invoices/{id}</span>
+            </div>
+            <p class="desc">Retrieve checkout details and invoice folio information by ID.</p>
+        </div>
+
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method get">GET</span>
+                <span class="path">/api/invoices/user/{userId}</span>
+            </div>
+            <p class="desc">Retrieve all checkout invoices associated with a specific customer ID.</p>
+        </div>
+
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="path">/api/invoices/create</span>
+            </div>
+            <p class="desc">Generate a new consolidated guest folio invoice from a room booking ID.</p>
+        </div>
+
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="path">/api/invoices/{id}/payment-url</span>
+            </div>
+            <p class="desc">Acquire VNPay payment link to process the online deposit or final checkout settlement.</p>
+        </div>
+
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <span class="method get">GET</span>
+                <span class="path">/api/invoices/vnpay-callback</span>
+            </div>
+            <p class="desc">Handler route for VNPay gateway webhook/IPN secure callback processing.</p>
+        </div>
+
+        <div class="footer">
+            SWP391 - G3 Resort & Spa Management System © 2026. Java Spring Boot backend active.
+        </div>
+    </div>
+</body>
+</html>
