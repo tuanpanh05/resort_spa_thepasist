@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Leaf } from "lucide-react";
 
 const navItems = [
-  { label: "Trang chủ", href: "/" },
+  { label: "Trang chủ.", href: "/" },
   { label: "Phòng nghỉ", href: "/phong-o" },
   { label: "Spa & Wellness", href: "/spa" },
   { label: "Ẩm thực", href: "/nha-hang" },

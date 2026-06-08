@@ -13,6 +13,7 @@ This document provides a high-level summary of the functional requirements, user
    - Order à la carte food and reserve additional spa services.
    - View invoice ledger and settle payments.
    - Submit service ratings and reviews.
+   -...
 2. **Receptionist**:
    - Manage room reservation statuses (check-in, check-out, confirmations).
    - Distribute health requirements to Chefs and Specialists.

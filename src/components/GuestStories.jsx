@@ -35,10 +35,10 @@ export default function GuestStories() {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
           <span className="text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase text-primary-600 block">
-            Cảm Nhận Thực Tế
+            Cảm Nhận Thực Tế.
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal leading-tight">
-            Nhật Ký Trải Nghiệm Khách Hàng
+            Nhật Ký Trải Nghiệm Khách Hàng.
           </h2>
           <div className="flex items-center justify-center space-x-3 mt-6">
             <div className="h-[1px] w-8 bg-gradient-to-r from-transparent to-primary-300" />

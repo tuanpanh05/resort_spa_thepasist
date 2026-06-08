@@ -16,7 +16,7 @@ export default function ManageAllergies({ allergies }) {
       <div className="bg-white border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h3 className="font-serif text-lg font-bold text-sage-950">
-            Theo Dõi Chi Tiết Dị Ứng Khách Hàng
+            Theo Dõi Chi Tiết Dị Ứng Khách Hàng.
           </h3>
           <p className="text-xs text-sage-500 mt-1">
             Giám sát các loại dị ứng đặc thù của khách lưu trú để lập thực đơn
