@@ -13,4 +13,11 @@ public interface RoomBookingRepository extends JpaRepository<RoomBooking, Intege
     
     @Query("SELECT rb FROM RoomBooking rb WHERE rb.user.userId = :userId AND rb.status IN ('CONFIRMED', 'CHECKED_IN') ORDER BY rb.checkInDate ASC")
     List<RoomBooking> findActiveBookingsByUserId(@Param("userId") Integer userId);
+
+    @Query(value = "SELECT r.room_number FROM room_booking rb " +
+            "JOIN room_booking_detail rbd ON rb.booking_id = rbd.booking_id " +
+            "JOIN room r ON rbd.room_id = r.room_id " +
+            "WHERE rb.user_id = :userId AND rb.status IN ('CONFIRMED', 'CHECKED_IN')",
+            nativeQuery = true)
+    List<String> findActiveRoomNumbersByUserId(@Param("userId") Integer userId);
 }

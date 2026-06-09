@@ -74,6 +74,18 @@ public class GuestMealController {
             bookingInfo.put("checkOutDate", activeBooking.getCheckOutDate());
             bookingInfo.put("status", activeBooking.getStatus());
             bookingInfo.put("packageId", activeBooking.getPackageId());
+            
+            // Fetch dynamic package food limits from database
+            List<Integer> includedFoodIds = new ArrayList<>();
+            if (activeBooking.getPackageId() != null) {
+                List<PackageFoodLimit> limits = packageFoodLimitRepository.findByPackageId(activeBooking.getPackageId());
+                if (limits != null) {
+                    includedFoodIds = limits.stream()
+                            .map(l -> l.getFoodMenu().getFoodId())
+                            .collect(Collectors.toList());
+                }
+            }
+            bookingInfo.put("includedFoodIds", includedFoodIds);
             response.put("booking", bookingInfo);
         } else {
             response.put("booking", null);
@@ -165,12 +177,13 @@ public class GuestMealController {
                 // If dish name or description or tags contain any keywords of allergies
                 String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags()).toLowerCase();
                 
-                // Segment keywords (e.g. "đậu phộng", "hải sản", "peanut", "shrimp", etc.)
-                String[] allergyWords = allergiesRaw.split("[,;\\s()]+");
-                for (String word : allergyWords) {
-                    if (word.length() >= 2 && contentToTest.contains(word)) {
+                // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to preserve multi-word allergies
+                String[] allergyItems = allergiesRaw.split("\\s*[,;]\\s*");
+                for (String allergyItem : allergyItems) {
+                    String trimmed = allergyItem.trim().toLowerCase();
+                    if (trimmed.length() >= 2 && contentToTest.contains(trimmed)) {
                         isAllergen = true;
-                        warningMsg = "Phát hiện thành phần gây dị ứng: " + word;
+                        warningMsg = "Phát hiện thành phần gây dị ứng: " + allergyItem.trim();
                         break;
                     }
                 }
@@ -304,10 +317,11 @@ public class GuestMealController {
                 guestAllergyMap.put("email", mp.getUser().getEmail());
                 guestAllergyMap.put("phone", mp.getUser().getPhone());
 
-                // Find active room number if any
+                // Find active room numbers using native DB lookup
                 List<RoomBooking> activeBookings = roomBookingRepository.findActiveBookingsByUserId(mp.getUser().getUserId());
+                List<String> roomNumbers = roomBookingRepository.findActiveRoomNumbersByUserId(mp.getUser().getUserId());
                 if (!activeBookings.isEmpty()) {
-                    guestAllergyMap.put("room", "Room-102"); // default placeholder or check-in room
+                    guestAllergyMap.put("room", roomNumbers.isEmpty() ? "N/A" : String.join(", ", roomNumbers));
                     guestAllergyMap.put("checkIn", activeBookings.get(0).getCheckInDate().toString().split("T")[0]);
                 } else {
                     guestAllergyMap.put("room", "N/A");
@@ -315,8 +329,9 @@ public class GuestMealController {
                 }
 
                 // Decrypt ONLY food allergies, do NOT decrypt or return physicalCondition clinical logs!
-                guestAllergyMap.put("allergies", AESUtil.decrypt(mp.getFoodAllergiesEncrypted()));
-                guestAllergyMap.put("dietary", mp.getFoodAllergiesEncrypted().contains("Chay") || mp.getFoodAllergiesEncrypted().contains("Vegan") ? "Vegan" : "Healthy");
+                String decryptedAllergies = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
+                guestAllergyMap.put("allergies", decryptedAllergies);
+                guestAllergyMap.put("dietary", decryptedAllergies.toLowerCase().contains("chay") || decryptedAllergies.toLowerCase().contains("vegan") ? "Vegan" : "Healthy");
 
                 resultList.add(guestAllergyMap);
             }

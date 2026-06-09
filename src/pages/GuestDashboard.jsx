@@ -41,6 +41,7 @@ export default function GuestDashboard() {
       checkOutDate: new Date(Date.now() + 86400000 * 5).toISOString().split("T")[0], // 5 days
       status: "CONFIRMED",
       packageId: 1,
+      includedFoodIds: [1, 3],
     },
     medicalProfile: {
       profileId: 1,
@@ -52,7 +53,7 @@ export default function GuestDashboard() {
 
   // Menu items list
   const [menuItems, setMenuItems] = useState([]);
-  
+
   // Daily selections state: { "yyyy-MM-dd": { "Breakfast": { foodId: qty, ... }, "Lunch": { ... }, "Dinner": { ... } } }
   const [selections, setSelections] = useState({});
   // Special notes: { "yyyy-MM-dd_Period_foodId": "note text" }
@@ -61,6 +62,7 @@ export default function GuestDashboard() {
   // Active step / date selection
   const [selectedDate, setSelectedDate] = useState("");
   const [consentCheckbox, setConsentCheckbox] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
 
   // Booking Dates Helper
   const [bookingDays, setBookingDays] = useState([]);
@@ -189,7 +191,7 @@ export default function GuestDashboard() {
       let isAllergen = false;
       let warningMessage = "";
       const content = `${item.dishName} ${item.description} ${item.dietaryTags}`.toLowerCase();
-      
+
       const words = cleanAllergies.split(/[,;\s()]+/);
       for (const word of words) {
         if (word.length >= 2 && content.includes(word)) {
@@ -226,7 +228,7 @@ export default function GuestDashboard() {
     try {
       await axiosClient.post(`/guest/consent?userId=${profileData.userId}&consent=${val}`);
       setConsentCheckbox(val);
-      
+
       // Re-fetch profile to get decrypted allergies!
       const res = await axiosClient.get(`/guest/profile?email=${profileData.email}`);
       setProfileData(res.data);
@@ -286,13 +288,10 @@ export default function GuestDashboard() {
     }));
   };
 
-  // Check if a dish is complimentary in the package
+  // Check if a dish is complimentary in the package dynamically based on database configuration
   const isIncludedInPackage = (foodId) => {
-    // 5-day Detox Journey package includes Green Detox Juice (3) and Avocado Quinoa Salad (1)
-    if (profileData.booking?.packageId === 1) {
-      return foodId === 1 || foodId === 3;
-    }
-    return false;
+    const includedFoodIds = profileData.booking?.includedFoodIds || [];
+    return includedFoodIds.includes(foodId);
   };
 
   // Calculations
@@ -338,7 +337,8 @@ export default function GuestDashboard() {
   };
 
   // Post Daily Selections to backend Database
-  const handleSubmitSelections = async () => {
+  // Helper to submit selected selections
+  const executeSubmitSelections = async () => {
     const formattedSelections = [];
     Object.entries(selections).forEach(([date, dateObj]) => {
       Object.entries(dateObj).forEach(([period, periodObj]) => {
@@ -405,6 +405,31 @@ export default function GuestDashboard() {
     }
   };
 
+  // Submit selections checking consent
+  const handleSubmitSelections = () => {
+    if (getSelectedItemsCount() === 0) {
+      alert("Vui lòng chọn ít nhất một món ăn trước khi gửi!");
+      return;
+    }
+
+    if (!consentCheckbox) {
+      setShowConsentModal(true);
+    } else {
+      executeSubmitSelections();
+    }
+  };
+
+  // Modal Actions
+  const handleAgreeAndFilter = async () => {
+    setShowConsentModal(false);
+    await handleConsentSubmit(true);
+  };
+
+  const handleIgnoreAndSubmit = () => {
+    setShowConsentModal(false);
+    executeSubmitSelections();
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-sage-50/20">
@@ -419,7 +444,7 @@ export default function GuestDashboard() {
   return (
     <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20 font-sans text-sage-950">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
-        
+
         {/* Navigation Breadcrumbs */}
         <div className="mb-8 flex items-center justify-between">
           <Link
@@ -504,10 +529,10 @@ export default function GuestDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* Left 4 Columns: Booking & Decree 356 Consent */}
             <div className="lg:col-span-4 space-y-6">
-              
+
               {/* Booking Info Card */}
               <div className="bg-white border border-primary-100 p-6 shadow-xs text-left">
                 <h3 className="font-serif text-base font-bold text-sage-950 mb-4 pb-2 border-b border-primary-50 uppercase tracking-wide">
@@ -631,13 +656,13 @@ export default function GuestDashboard() {
                     </h4>
                     <div className="space-y-2 text-xs font-semibold text-red-800">
                       {(() => {
-                        const allergies = !consentCheckbox 
+                        const allergies = !consentCheckbox
                           ? (profileData.email === "guest1@gmail.com" ? "đậu phộng" : "hải sản")
                           : (profileData.medicalProfile.foodAllergies || "");
-                        
+
                         const hasPeanut = allergies.toLowerCase().includes("đậu phộng") || allergies.toLowerCase().includes("peanut");
                         const hasSeafood = allergies.toLowerCase().includes("hải sản") || allergies.toLowerCase().includes("seafood") || allergies.toLowerCase().includes("tôm");
-                        
+
                         return (
                           <>
                             {hasPeanut && (
@@ -682,11 +707,10 @@ export default function GuestDashboard() {
                   <button
                     key={date}
                     onClick={() => setSelectedDate(date)}
-                    className={`px-4.5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border whitespace-nowrap rounded-none ${
-                      selectedDate === date
+                    className={`px-4.5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border whitespace-nowrap rounded-none ${selectedDate === date
                         ? "bg-primary-800 text-white border-primary-800"
                         : "bg-white border-primary-100 text-sage-600 hover:bg-primary-50"
-                    }`}
+                      }`}
                   >
                     Ngày {idx + 1} ({date.substring(5)})
                   </button>
@@ -699,10 +723,10 @@ export default function GuestDashboard() {
                   <div className="flex items-center space-x-2.5">
                     <Info className="h-4.5 w-4.5 text-primary-750 flex-shrink-0" />
                     <span>
-                      <strong>Menu filtered based on your dietary and allergy profile.</strong>{" "}
+                      <strong>Thực đơn đã được tự động quét theo hồ sơ bệnh lý & chế độ ăn uống.</strong>{" "}
                       {(() => {
                         const count = menuItems.filter(item => item.isAllergen).length;
-                        return `${count} incompatible dish${count !== 1 ? "es have" : " has"} been hidden.`;
+                        return `Phát hiện ${count} món ăn không phù hợp đã được cảnh báo và khóa tự động.`;
                       })()}
                     </span>
                   </div>
@@ -711,26 +735,32 @@ export default function GuestDashboard() {
                   </span>
                 </div>
               )}
- 
+
               {/* MEAL TIMELINE: SÁNG, TRƯA, TỐI */}
               {selectedDate && (
                 <div className="space-y-8">
                   {["Breakfast", "Lunch", "Dinner"].map((period) => {
                     // Filter items for this period case-insensitively to cover all dishes
                     const periodDishes = menuItems.filter(item => {
-                      if (consentCheckbox && item.isAllergen) {
-                        return false; // Completely exclude allergen dishes from list when consent is signed
-                      }
                       const name = (item.dishName || "").toLowerCase();
+
+                      // Categorization based on name matching
+                      const matchesBreakfast = name.includes("súp") || name.includes("soup") || name.includes("juice") || name.includes("avocado") || name.includes("bữa sáng") || name.includes("breakfast");
+                      const matchesLunch = name.includes("salad") || name.includes("mì căn") || name.includes("gỏi") || name.includes("chay") || name.includes("trưa") || name.includes("lunch");
+                      const matchesDinner = name.includes("nấm") || name.includes("tôm") || name.includes("shrimp") || name.includes("lẩu") || name.includes("chicken") || name.includes("cá") || name.includes("tối") || name.includes("dinner");
+
+                      // Fallback: if a dish is not categorized into any period, show it in Lunch and Dinner
+                      const isUncategorized = !matchesBreakfast && !matchesLunch && !matchesDinner;
+
                       if (period === "Breakfast") {
-                        return name.includes("súp") || name.includes("soup") || name.includes("juice") || name.includes("avocado");
+                        return matchesBreakfast;
                       } else if (period === "Lunch") {
-                        return name.includes("salad") || name.includes("mì căn") || name.includes("gỏi") || name.includes("chay");
-                      } else {
-                        return name.includes("nấm") || name.includes("tôm") || name.includes("shrimp") || name.includes("lẩu") || name.includes("chicken") || name.includes("cá");
+                        return matchesLunch || isUncategorized;
+                      } else { // Dinner
+                        return matchesDinner || isUncategorized;
                       }
                     });
- 
+
                     return (
                       <div key={period} className="space-y-4">
                         <div className="flex items-center space-x-2 border-l-2 border-primary-800 pl-3">
@@ -743,7 +773,7 @@ export default function GuestDashboard() {
                             {period === "Dinner" && "Bữa Tối (18:00 - 21:00)"}
                           </h3>
                         </div>
- 
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {periodDishes.map((dish) => {
                             const isAllergen = consentCheckbox && dish.isAllergen;
@@ -751,36 +781,34 @@ export default function GuestDashboard() {
                             const noteKey = `${selectedDate}_${period}_${dish.foodId}`;
                             const noteVal = specialNotes[noteKey] || "";
                             const isIncluded = isIncludedInPackage(dish.foodId);
- 
+
                             return (
                               <div
                                 key={dish.foodId}
                                 onClick={isAllergen ? () => handleSelectAllergen(dish.dishName, getAllergenName(dish)) : undefined}
-                                className={`border p-4.5 flex flex-col justify-between transition-all relative ${
-                                  isAllergen
+                                className={`border p-4.5 flex flex-col justify-between transition-all relative ${isAllergen
                                     ? "border-red-300 bg-red-50/20 cursor-pointer hover:bg-red-55/35"
                                     : "border-primary-100 bg-white"
-                                }`}
+                                  }`}
                               >
                                 <div>
                                   <div className="flex justify-between items-start">
                                     <h4 className={`font-serif text-sm font-bold text-sage-950 ${isAllergen ? "line-through text-red-900/60" : ""}`}>
                                       {dish.dishName}
                                     </h4>
-                                    <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${
-                                      isAllergen
+                                    <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${isAllergen
                                         ? "bg-red-200 text-red-850 border border-red-300 animate-pulse"
                                         : isIncluded
                                           ? "bg-green-100 text-green-800"
                                           : "bg-primary-100/50 text-primary-800"
-                                    }`}>
+                                      }`}>
                                       {isAllergen ? "Not Available" : isIncluded ? "Trong Gói" : "Phát Sinh"}
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-sage-500 font-light mt-1.5 leading-relaxed">
                                     {dish.description}
                                   </p>
- 
+
                                   <div className="mt-2 flex flex-wrap gap-1">
                                     {dish.dietaryTags.split(",").map((t, idx) => (
                                       <span key={idx} className="px-1.5 py-0.5 bg-primary-50/50 text-primary-800 text-[8px] font-semibold tracking-wide uppercase">
@@ -788,7 +816,7 @@ export default function GuestDashboard() {
                                       </span>
                                     ))}
                                   </div>
- 
+
                                   {/* Allergy warning alert */}
                                   {isAllergen && (
                                     <div className="mt-3.5 p-2 bg-red-50 border border-red-250 text-[10px] text-red-800 font-bold flex items-center space-x-1.5">
@@ -797,13 +825,13 @@ export default function GuestDashboard() {
                                     </div>
                                   )}
                                 </div>
- 
+
                                 <div className="mt-4 pt-3.5 border-t border-primary-50 flex flex-col gap-2.5">
                                   <div className="flex justify-between items-center">
                                     <span className="font-mono text-xs font-bold text-primary-950">
                                       {formatCurrency(dish.price)}
                                     </span>
- 
+
                                     {/* Action Selector buttons */}
                                     {isAllergen ? (
                                       <span className="text-[10px] text-red-650 font-bold bg-red-50 border border-red-200 px-2.5 py-1">
@@ -815,9 +843,8 @@ export default function GuestDashboard() {
                                           type="button"
                                           disabled={qty === 0}
                                           onClick={() => updateQuantity(selectedDate, period, dish.foodId, -1)}
-                                          className={`p-1 border rounded-none cursor-pointer transition-colors ${
-                                            qty === 0 ? "border-primary-100 text-primary-200" : "border-primary-350 text-primary-900 hover:bg-primary-50"
-                                          }`}
+                                          className={`p-1 border rounded-none cursor-pointer transition-colors ${qty === 0 ? "border-primary-100 text-primary-200" : "border-primary-350 text-primary-900 hover:bg-primary-50"
+                                            }`}
                                         >
                                           <Minus className="h-3 w-3" />
                                         </button>
@@ -834,7 +861,7 @@ export default function GuestDashboard() {
                                       </div>
                                     )}
                                   </div>
- 
+
                                   {/* Custom special notes for chef */}
                                   {qty > 0 && !isAllergen && (
                                     <input
@@ -874,11 +901,10 @@ export default function GuestDashboard() {
                   type="button"
                   disabled={getSelectedItemsCount() === 0 || submitting}
                   onClick={handleSubmitSelections}
-                  className={`px-8 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-xs rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    getSelectedItemsCount() === 0 || submitting
+                  className={`px-8 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-xs rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer ${getSelectedItemsCount() === 0 || submitting
                       ? "bg-sage-300 cursor-not-allowed"
                       : "bg-primary-850 hover:bg-primary-900"
-                  }`}
+                    }`}
                 >
                   {submitting ? (
                     <>
@@ -900,6 +926,63 @@ export default function GuestDashboard() {
         )}
 
       </div>
+
+      {/* Custom Premium Consent Modal */}
+      {showConsentModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-primary-200 w-full max-w-lg shadow-2xl relative rounded-none text-left p-6 sm:p-8 animate-fade-in">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-amber-500 to-red-500" />
+
+            <div className="flex items-start space-x-4 mb-6">
+              <div className="p-3 bg-red-50 border border-red-150 text-red-750 flex-shrink-0">
+                <AlertTriangle className="h-7 w-7 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg sm:text-xl font-bold text-sage-950 uppercase tracking-wide">
+                  Cảnh Báo An Toàn Sức Khỏe
+                </h3>
+                <span className="text-[9px] bg-red-100 border border-red-200 text-red-800 font-bold px-2 py-0.5 uppercase tracking-wider mt-1.5 inline-block">
+                  Nghị Định 356/2025/NĐ-CP Compliance
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs sm:text-sm text-sage-700 font-light leading-relaxed mb-8">
+              <p>
+                Quý khách chưa kích hoạt **Bộ lọc dị ứng tự động**. Dữ liệu về bệnh lý sức khỏe và dị ứng thực phẩm là thông tin y tế nhạy cảm.
+              </p>
+              <div className="p-4 bg-amber-50/50 border border-amber-250 text-amber-900 text-xs font-semibold leading-relaxed">
+                Nếu không kích hoạt lọc, quý khách có thể chọn nhầm các món ăn chứa thành phần gây dị ứng nguy hiểm (ví dụ: hải sản, đậu phộng) đã được lưu trong hồ sơ sức khỏe.
+              </div>
+              <p className="font-medium text-sage-950">
+                Quý khách muốn kích hoạt bộ lọc tự động an toàn hay tiếp tục gửi thực đơn mà không lọc?
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-primary-50">
+              <button
+                onClick={() => setShowConsentModal(false)}
+                className="px-5 py-2.5 border border-primary-250 hover:bg-primary-50 text-sage-600 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all rounded-none"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleIgnoreAndSubmit}
+                className="px-5 py-2.5 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all rounded-none"
+              >
+                Vẫn gửi (Không lọc)
+              </button>
+              <button
+                onClick={handleAgreeAndFilter}
+                className="px-6 py-2.5 bg-primary-850 hover:bg-primary-900 text-white text-xs font-bold uppercase tracking-widest cursor-pointer transition-all rounded-none"
+              >
+                Kích hoạt lọc (Khuyên dùng)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
