@@ -446,7 +446,9 @@ INSERT INTO dbo.spa_booking (user_id, room_booking_id, spa_id, therapist_id, tre
 INSERT INTO dbo.food_menu (dish_name, description, price, dietary_tags) VALUES
 (N'Organic Avocado Quinoa Salad', N'Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.', 180000.00, 'Vegan, Gluten-Free'),
 (N'Ginseng Chicken Soup', N'Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.', 320000.00, 'Keto, Healthy'),
-(N'Green Detox Juice', N'Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.', 95000.00, 'Vegan, Detox');
+(N'Green Detox Juice', N'Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.', 95000.00, 'Vegan, Detox'),
+(N'Nấm nướng lá lốt cốt dừa', N'Nấm đùi gà cuộn lá lốt nướng than hoa, đậu phộng rang giòn.', 320000.00, 'Vegan, Peanut'),
+(N'Tôm rim tỏi ớt (Món mặn)', N'Tôm sú biển tươi rim tỏi ớt thơm lừng, giàu protein.', 390000.00, 'Healthy, Seafood');
 
 -- 4.16 Insert Package Food Limits (detox package includes 1 detox juice per day and 1 avocado salad)
 INSERT INTO dbo.package_food_limit (package_id, food_id, quantity_per_day) VALUES
