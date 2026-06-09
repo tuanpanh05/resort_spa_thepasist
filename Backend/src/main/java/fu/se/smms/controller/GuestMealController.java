@@ -26,12 +26,12 @@ public class GuestMealController {
     private final PackageFoodLimitRepository packageFoodLimitRepository;
 
     public GuestMealController(UserRepository userRepository,
-                               RoomBookingRepository roomBookingRepository,
-                               MedicalProfileRepository medicalProfileRepository,
-                               FoodMenuRepository foodMenuRepository,
-                               FoodOrderRepository foodOrderRepository,
-                               FoodOrderDetailRepository foodOrderDetailRepository,
-                               PackageFoodLimitRepository packageFoodLimitRepository) {
+            RoomBookingRepository roomBookingRepository,
+            MedicalProfileRepository medicalProfileRepository,
+            FoodMenuRepository foodMenuRepository,
+            FoodOrderRepository foodOrderRepository,
+            FoodOrderDetailRepository foodOrderDetailRepository,
+            PackageFoodLimitRepository packageFoodLimitRepository) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.medicalProfileRepository = medicalProfileRepository;
@@ -74,11 +74,12 @@ public class GuestMealController {
             bookingInfo.put("checkOutDate", activeBooking.getCheckOutDate());
             bookingInfo.put("status", activeBooking.getStatus());
             bookingInfo.put("packageId", activeBooking.getPackageId());
-            
+
             // Fetch dynamic package food limits from database
             List<Integer> includedFoodIds = new ArrayList<>();
             if (activeBooking.getPackageId() != null) {
-                List<PackageFoodLimit> limits = packageFoodLimitRepository.findByPackageId(activeBooking.getPackageId());
+                List<PackageFoodLimit> limits = packageFoodLimitRepository
+                        .findByPackageId(activeBooking.getPackageId());
                 if (limits != null) {
                     includedFoodIds = limits.stream()
                             .map(l -> l.getFoodMenu().getFoodId())
@@ -95,8 +96,9 @@ public class GuestMealController {
             Map<String, Object> profileInfo = new HashMap<>();
             profileInfo.put("profileId", profile.getProfileId());
             profileInfo.put("explicitConsentSigned", profile.getExplicitConsentSigned());
-            
-            // Sensitive fields decrypted only if explicit consent is signed (Decree 356 Compliance)
+
+            // Sensitive fields decrypted only if explicit consent is signed (Decree 356
+            // Compliance)
             if (Boolean.TRUE.equals(profile.getExplicitConsentSigned())) {
                 profileInfo.put("foodAllergies", AESUtil.decrypt(profile.getFoodAllergiesEncrypted()));
                 profileInfo.put("physicalCondition", AESUtil.decrypt(profile.getPhysicalConditionEncrypted()));
@@ -113,7 +115,8 @@ public class GuestMealController {
     }
 
     /**
-     * Guest signs explicit consent for personal sensitive data processing (Decree 356).
+     * Guest signs explicit consent for personal sensitive data processing (Decree
+     * 356).
      */
     @PostMapping("/consent")
     public ResponseEntity<?> updateConsent(@RequestParam Integer userId, @RequestParam Boolean consent) {
@@ -139,11 +142,13 @@ public class GuestMealController {
                     .build();
         }
         medicalProfileRepository.save(profile);
-        return ResponseEntity.ok(Map.of("message", "Consent status updated successfully", "explicitConsentSigned", consent));
+        return ResponseEntity
+                .ok(Map.of("message", "Consent status updated successfully", "explicitConsentSigned", consent));
     }
 
     /**
-     * Retrieve food menu with automatic warning indicator flags based on the user's allergy profile.
+     * Retrieve food menu with automatic warning indicator flags based on the user's
+     * allergy profile.
      */
     @GetMapping("/menu")
     public ResponseEntity<?> getFilteredMenu(@RequestParam Integer userId) {
@@ -175,9 +180,11 @@ public class GuestMealController {
 
             if (consentSigned && !allergiesRaw.isEmpty()) {
                 // If dish name or description or tags contain any keywords of allergies
-                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags()).toLowerCase();
-                
-                // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to preserve multi-word allergies
+                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags())
+                        .toLowerCase();
+
+                // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to
+                // preserve multi-word allergies
                 String[] allergyItems = allergiesRaw.split("\\s*[,;]\\s*");
                 for (String allergyItem : allergyItems) {
                     String trimmed = allergyItem.trim().toLowerCase();
@@ -204,20 +211,20 @@ public class GuestMealController {
     public ResponseEntity<?> preselectMeals(@RequestBody MealPreselectionDTO dto) {
         Optional<User> userOpt = userRepository.findById(dto.getUserId());
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("User not found");
+            return ResponseEntity.status(404).body("User not found.");
         }
         User user = userOpt.get();
 
         Optional<RoomBooking> bookingOpt = roomBookingRepository.findById(dto.getBookingId());
         if (bookingOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Booking not found");
+            return ResponseEntity.status(404).body("Booking not found.");
         }
         RoomBooking booking = bookingOpt.get();
 
         // Retrieve package limits if any
         Integer packageId = booking.getPackageId();
-        List<PackageFoodLimit> limits = (packageId != null) ?
-                packageFoodLimitRepository.findByPackageId(packageId) : Collections.emptyList();
+        List<PackageFoodLimit> limits = (packageId != null) ? packageFoodLimitRepository.findByPackageId(packageId)
+                : Collections.emptyList();
 
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
@@ -233,7 +240,7 @@ public class GuestMealController {
                 .status("PENDING")
                 .totalAmount(BigDecimal.ZERO)
                 .build();
-        
+
         foodOrder = foodOrderRepository.save(foodOrder);
 
         BigDecimal totalExtraCharges = BigDecimal.ZERO;
@@ -241,7 +248,8 @@ public class GuestMealController {
 
         for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
             Optional<FoodMenu> menuOpt = foodMenuRepository.findById(item.getFoodId());
-            if (menuOpt.isEmpty()) continue;
+            if (menuOpt.isEmpty())
+                continue;
             FoodMenu dish = menuOpt.get();
 
             // Track daily limits for package inclusion
@@ -277,10 +285,11 @@ public class GuestMealController {
                     .foodMenu(dish)
                     .quantity(item.getQuantity())
                     .priceAtOrder(dish.getPrice())
-                    .specialNote(item.getSpecialNote() + " [Bữa: " + item.getPeriod() + ", Ngày: " + item.getDate() + "]")
+                    .specialNote(
+                            item.getSpecialNote() + " [Bữa: " + item.getPeriod() + ", Ngày: " + item.getDate() + "]")
                     .isPackageIncluded(isPackageIncluded)
                     .build();
-            
+
             detailsToSave.add(detail);
         }
 
@@ -301,7 +310,8 @@ public class GuestMealController {
 
     /**
      * Chef role specific endpoint (Data Minimization compliance - UC20 / RBAC)
-     * Retrieves guest allergen profiles without returning physical conditions or clinic diagnosis fields.
+     * Retrieves guest allergen profiles without returning physical conditions or
+     * clinic diagnosis fields.
      */
     @GetMapping("/chef/allergies")
     public ResponseEntity<?> getChefAllergies() {
@@ -318,8 +328,10 @@ public class GuestMealController {
                 guestAllergyMap.put("phone", mp.getUser().getPhone());
 
                 // Find active room numbers using native DB lookup
-                List<RoomBooking> activeBookings = roomBookingRepository.findActiveBookingsByUserId(mp.getUser().getUserId());
-                List<String> roomNumbers = roomBookingRepository.findActiveRoomNumbersByUserId(mp.getUser().getUserId());
+                List<RoomBooking> activeBookings = roomBookingRepository
+                        .findActiveBookingsByUserId(mp.getUser().getUserId());
+                List<String> roomNumbers = roomBookingRepository
+                        .findActiveRoomNumbersByUserId(mp.getUser().getUserId());
                 if (!activeBookings.isEmpty()) {
                     guestAllergyMap.put("room", roomNumbers.isEmpty() ? "N/A" : String.join(", ", roomNumbers));
                     guestAllergyMap.put("checkIn", activeBookings.get(0).getCheckInDate().toString().split("T")[0]);
@@ -328,10 +340,12 @@ public class GuestMealController {
                     guestAllergyMap.put("checkIn", "N/A");
                 }
 
-                // Decrypt ONLY food allergies, do NOT decrypt or return physicalCondition clinical logs!
+                // Decrypt ONLY food allergies, do NOT decrypt or return physicalCondition
+                // clinical logs!
                 String decryptedAllergies = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
                 guestAllergyMap.put("allergies", decryptedAllergies);
-                guestAllergyMap.put("dietary", decryptedAllergies.toLowerCase().contains("chay") || decryptedAllergies.toLowerCase().contains("vegan") ? "Vegan" : "Healthy");
+                guestAllergyMap.put("dietary", decryptedAllergies.toLowerCase().contains("chay")
+                        || decryptedAllergies.toLowerCase().contains("vegan") ? "Vegan" : "Healthy");
 
                 resultList.add(guestAllergyMap);
             }

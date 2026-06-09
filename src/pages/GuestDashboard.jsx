@@ -708,8 +708,8 @@ export default function GuestDashboard() {
                     key={date}
                     onClick={() => setSelectedDate(date)}
                     className={`px-4.5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border whitespace-nowrap rounded-none ${selectedDate === date
-                        ? "bg-primary-800 text-white border-primary-800"
-                        : "bg-white border-primary-100 text-sage-600 hover:bg-primary-50"
+                      ? "bg-primary-800 text-white border-primary-800"
+                      : "bg-white border-primary-100 text-sage-600 hover:bg-primary-50"
                       }`}
                   >
                     Ngày {idx + 1} ({date.substring(5)})
@@ -787,8 +787,8 @@ export default function GuestDashboard() {
                                 key={dish.foodId}
                                 onClick={isAllergen ? () => handleSelectAllergen(dish.dishName, getAllergenName(dish)) : undefined}
                                 className={`border p-4.5 flex flex-col justify-between transition-all relative ${isAllergen
-                                    ? "border-red-300 bg-red-50/20 cursor-pointer hover:bg-red-55/35"
-                                    : "border-primary-100 bg-white"
+                                  ? "border-red-300 bg-red-50/20 cursor-pointer hover:bg-red-55/35"
+                                  : "border-primary-100 bg-white"
                                   }`}
                               >
                                 <div>
@@ -797,10 +797,10 @@ export default function GuestDashboard() {
                                       {dish.dishName}
                                     </h4>
                                     <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${isAllergen
-                                        ? "bg-red-200 text-red-850 border border-red-300 animate-pulse"
-                                        : isIncluded
-                                          ? "bg-green-100 text-green-800"
-                                          : "bg-primary-100/50 text-primary-800"
+                                      ? "bg-red-200 text-red-850 border border-red-300 animate-pulse"
+                                      : isIncluded
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-primary-100/50 text-primary-800"
                                       }`}>
                                       {isAllergen ? "Not Available" : isIncluded ? "Trong Gói" : "Phát Sinh"}
                                     </span>
@@ -868,7 +868,7 @@ export default function GuestDashboard() {
                                       type="text"
                                       value={noteVal}
                                       onChange={(e) => handleNoteChange(selectedDate, period, dish.foodId, e.target.value)}
-                                      placeholder="Yêu cầu cho bếp: vd: ít muối, không hành..."
+                                      placeholder="Yêu cầu cho bếp: vd: ít muối, không hành...."
                                       className="w-full px-2.5 py-1.5 border border-primary-150 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500 rounded-none"
                                     />
                                   )}
@@ -902,8 +902,8 @@ export default function GuestDashboard() {
                   disabled={getSelectedItemsCount() === 0 || submitting}
                   onClick={handleSubmitSelections}
                   className={`px-8 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-xs rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer ${getSelectedItemsCount() === 0 || submitting
-                      ? "bg-sage-300 cursor-not-allowed"
-                      : "bg-primary-850 hover:bg-primary-900"
+                    ? "bg-sage-300 cursor-not-allowed"
+                    : "bg-primary-850 hover:bg-primary-900"
                     }`}
                 >
                   {submitting ? (
