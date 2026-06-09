@@ -14,7 +14,24 @@ const navItems = [
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else {
+      setUser(null);
+    }
+  }, [location]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("specialistRole");
+    setUser(null);
+    window.location.href = "/";
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,6 +57,10 @@ export default function Header() {
 
   // Header is glass and dark-text if scrolled OR if we are on any subpage
   const showGlass = isScrolled || !isHomePage;
+
+  const dynamicNavItems = user && user.role === "CUSTOMER"
+    ? [...navItems, { label: "Lên lịch ăn uống", href: "/guest-dashboard" }]
+    : navItems;
 
   return (
     <header
@@ -85,7 +106,7 @@ export default function Header() {
 
           {/* Center Side: Simplified Menu Items with Sliding Underlines */}
           <nav className="hidden xl:flex space-x-8 font-medium text-sm tracking-wide flex-shrink-0">
-            {navItems.map((item, index) => {
+            {dynamicNavItems.map((item, index) => {
               const isActive = location.pathname === item.href;
               return (
                 <Link
@@ -113,22 +134,50 @@ export default function Header() {
 
           {/* Right Side: Separate Login / Register / Book buttons */}
           <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
-            <Link
-              to="/dang-nhap"
-              className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-              }`}
-            >
-              Đăng nhập
-            </Link>
-            <Link
-              to="/dang-ky"
-              className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-              }`}
-            >
-              Đăng ký
-            </Link>
+            {user ? (
+              <>
+                <span className={`text-xs mr-2 font-serif italic ${showGlass ? "text-sage-700" : "text-white/80"}`}>
+                  Chào, {user.fullName}
+                </span>
+                {user.role !== "CUSTOMER" && (
+                  <Link
+                    to={user.role === "MANAGER" ? "/admin" : user.role === "CHEF" ? "/chef" : user.role === "RECEPTIONIST" ? "/staff" : "/specialist"}
+                    className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                      showGlass ? "text-primary-800 hover:text-primary-950 font-bold" : "text-white hover:text-white"
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 cursor-pointer ${
+                    showGlass ? "text-red-700 hover:text-red-900" : "text-red-300 hover:text-red-200"
+                  }`}
+                >
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/dang-nhap"
+                  className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  to="/dang-ky"
+                  className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  Đăng ký
+                </Link>
+              </>
+            )}
             <Link
               to="/dat-lich"
               className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${
@@ -173,7 +222,7 @@ export default function Header() {
         id="mobile-menu"
       >
         <div className="px-6 py-6 space-y-1 bg-white shadow-lg">
-          {navItems.map((item, index) => {
+          {dynamicNavItems.map((item, index) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
@@ -191,22 +240,51 @@ export default function Header() {
             );
           })}
           <div className="pt-4 border-t border-primary-50 flex flex-col space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                to="/dang-nhap"
-                onClick={() => setIsOpen(false)}
-                className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
-              >
-                Đăng nhập
-              </Link>
-              <Link
-                to="/dang-ky"
-                onClick={() => setIsOpen(false)}
-                className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
-              >
-                Đăng ký
-              </Link>
-            </div>
+            {user ? (
+              <div className="flex flex-col space-y-2">
+                <span className="text-xs text-sage-600 font-serif italic px-3">
+                  Chào, {user.fullName}
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {user.role !== "CUSTOMER" ? (
+                    <Link
+                      to={user.role === "MANAGER" ? "/admin" : user.role === "CHEF" ? "/chef" : user.role === "RECEPTIONIST" ? "/staff" : "/specialist"}
+                      onClick={() => setIsOpen(false)}
+                      className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
+                    >
+                      Dashboard
+                    </Link>
+                  ) : (
+                    <div className="text-center py-2.5 text-xs text-sage-500 font-serif italic border border-primary-100/50 select-none bg-primary-50/10 flex items-center justify-center">
+                      Khách Hàng
+                    </div>
+                  )}
+                  <button
+                    onClick={() => { setIsOpen(false); handleLogout(); }}
+                    className="text-center py-2.5 text-sm font-medium text-red-600 hover:text-red-800 transition-colors duration-200 border border-red-100/50 cursor-pointer"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to="/dang-nhap"
+                  onClick={() => setIsOpen(false)}
+                  className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  to="/dang-ky"
+                  onClick={() => setIsOpen(false)}
+                  className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
+                >
+                  Đăng ký
+                </Link>
+              </div>
+            )}
             <Link
               to="/dat-lich"
               onClick={() => setIsOpen(false)}

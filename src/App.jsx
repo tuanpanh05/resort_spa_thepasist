@@ -20,6 +20,7 @@ import StaffDashboard from "./pages/StaffDashboard";
 import ChefDashboard from "./pages/ChefDashboard";
 import SpecialistDashboard from "./pages/SpecialistDashboard";
 import BookingPage from "./pages/BookingPage";
+import GuestDashboard from "./pages/GuestDashboard";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
             <Route path="/chef" element={<ChefDashboard />} />
             <Route path="/specialist" element={<SpecialistDashboard />} />
             <Route path="/dat-lich" element={<BookingPage />} />
+            <Route path="/guest-dashboard" element={<GuestDashboard />} />
           </Routes>
         </main>
 

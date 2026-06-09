@@ -23,21 +23,40 @@ export default function Login() {
 
     // Xóa phân quyền cũ trước khi đăng nhập mới
     localStorage.removeItem("specialistRole");
+    localStorage.removeItem("user");
 
     if (normalizedEmail === "admin@nguson.com" || normalizedEmail === "admin") {
       alert("Đăng nhập thành công với vai trò Quản lý!");
+      localStorage.setItem("user", JSON.stringify({
+        email: "manager@nguson.vn",
+        fullName: "Nguyễn Quản Lý",
+        role: "MANAGER",
+        userId: 1
+      }));
       navigate("/admin");
     } else if (
       normalizedEmail === "staff@nguson.com" ||
       normalizedEmail === "staff"
     ) {
       alert("Đăng nhập thành công với vai trò Nhân viên lễ tân/dọn dẹp!");
+      localStorage.setItem("user", JSON.stringify({
+        email: "reception@nguson.vn",
+        fullName: "Lê Lễ Tân",
+        role: "RECEPTIONIST",
+        userId: 2
+      }));
       navigate("/staff");
     } else if (
       normalizedEmail === "chef@nguson.com" ||
       normalizedEmail === "chef"
     ) {
       alert("Đăng nhập thành công với vai trò Bếp Trưởng!");
+      localStorage.setItem("user", JSON.stringify({
+        email: "chef@nguson.vn",
+        fullName: "Phạm Bếp Trưởng",
+        role: "CHEF",
+        userId: 4
+      }));
       navigate("/chef");
     } else if (
       normalizedEmail === "spa@nguson.com" ||
@@ -45,6 +64,12 @@ export default function Login() {
     ) {
       alert("Đăng nhập thành công với vai trò Nhân viên Spa!");
       localStorage.setItem("specialistRole", "spa");
+      localStorage.setItem("user", JSON.stringify({
+        email: "therapist1@nguson.vn",
+        fullName: "Bác Sĩ Hải - Trị Liệu",
+        role: "THERAPIST",
+        userId: 3
+      }));
       navigate("/specialist");
     } else if (
       normalizedEmail === "yoga@nguson.com" ||
@@ -52,6 +77,12 @@ export default function Login() {
     ) {
       alert("Đăng nhập thành công với vai trò Huấn luyện viên Yoga!");
       localStorage.setItem("specialistRole", "yoga");
+      localStorage.setItem("user", JSON.stringify({
+        email: "therapist1@nguson.vn",
+        fullName: "Bác Sĩ Hải - Trị Liệu",
+        role: "THERAPIST",
+        userId: 3
+      }));
       navigate("/specialist");
     } else if (
       normalizedEmail === "physio@nguson.com" ||
@@ -59,9 +90,22 @@ export default function Login() {
     ) {
       alert("Đăng nhập thành công với vai trò Chuyên viên Vật lý trị liệu!");
       localStorage.setItem("specialistRole", "physio");
+      localStorage.setItem("user", JSON.stringify({
+        email: "therapist1@nguson.vn",
+        fullName: "Bác Sĩ Hải - Trị Liệu",
+        role: "THERAPIST",
+        userId: 3
+      }));
       navigate("/specialist");
     } else {
       alert("Đăng nhập thành công! Chào mừng bạn quay trở lại Ngũ Sơn Resort.");
+      const isGuest2 = normalizedEmail.includes("guest2");
+      localStorage.setItem("user", JSON.stringify({
+        email: normalizedEmail.includes("@") ? normalizedEmail : "guest1@gmail.com",
+        fullName: isGuest2 ? "Lê Minh Châu" : "Trần Khách Hàng",
+        role: "CUSTOMER",
+        userId: isGuest2 ? 6 : 5
+      }));
       navigate("/");
     }
   };
