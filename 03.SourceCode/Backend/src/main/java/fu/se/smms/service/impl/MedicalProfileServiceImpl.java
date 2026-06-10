@@ -50,9 +50,17 @@ public class MedicalProfileServiceImpl implements MedicalProfileService {
         MedicalProfile profile = profileOpt.get();
         MedicalProfileDTO dto = mapToDTO(profile);
 
-        // Access Control Rule 2: STAFF (Chef/Kitchen/Receptionist) can only view food allergies. Mask physical condition.
-        if ("STAFF".equals(currentActorRole)) {
+        // Access Control Rule 2: Limit data access based on strict roles
+        if ("CHEF".equals(currentActorRole)) {
+            // Chef only needs to see food allergies to prepare meals safely
             dto.setPhysicalCondition(null);
+        } else if ("THERAPIST".equals(currentActorRole)) {
+            // Therapist only needs to see physical condition for treatment
+            dto.setFoodAllergies(null);
+        } else if ("RECEPTIONIST".equals(currentActorRole) || "STAFF".equals(currentActorRole)) {
+            // Receptionist and general Staff do not need access to sensitive medical data
+            dto.setPhysicalCondition(null);
+            dto.setFoodAllergies(null);
         }
 
         return dto;

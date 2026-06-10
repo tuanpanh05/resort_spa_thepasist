@@ -12,7 +12,7 @@ public class AesEncryptor implements AttributeConverter<String, String> {
     private static String secretKey;
 
     // Use property injection with a fallback default key to prevent NullPointerException
-    @Value("${app.encryption.secret-key:mySecretKeyForAesEncryptionModule1}")
+    @Value("${app.encryption.secret-key:mySecretKeyForAesEncryptionModul}")
     public void setSecretKey(String key) {
         AesEncryptor.secretKey = key;
     }
@@ -22,7 +22,7 @@ public class AesEncryptor implements AttributeConverter<String, String> {
         if (attribute == null || attribute.isEmpty()) {
             return null;
         }
-        String key = (secretKey != null) ? secretKey : "mySecretKeyForAesEncryptionModule1";
+        String key = (secretKey != null) ? secretKey : "mySecretKeyForAesEncryptionModul";
         return EncryptionUtils.encrypt(attribute, key);
     }
 
@@ -31,7 +31,7 @@ public class AesEncryptor implements AttributeConverter<String, String> {
         if (dbData == null || dbData.isEmpty()) {
             return null;
         }
-        String key = (secretKey != null) ? secretKey : "mySecretKeyForAesEncryptionModule1";
+        String key = (secretKey != null) ? secretKey : "mySecretKeyForAesEncryptionModul";
         try {
             return EncryptionUtils.decrypt(dbData, key);
         } catch (Exception e) {
