@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { authApi } from "../api";
 import {
   Mail,
   Lock,
@@ -36,21 +37,25 @@ export default function ForgotPassword() {
     return () => clearInterval(interval);
   }, [step, timer]);
 
-  // Step 1: Send OTP
-  const handleSendOtp = (e) => {
+  // Step 1: Send OTP – calls POST /api/auth/forgot-password
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!contactInfo) {
       setError("Vui lòng nhập email hoặc số điện thoại của bạn.");
       return;
     }
     setError("");
-    // Mock sending OTP
-    setStep(2);
-    setTimer(59);
+    try {
+      await authApi.forgotPassword(contactInfo);
+      setStep(2);
+      setTimer(59);
+    } catch (err) {
+      setError(err.message || "Không thể gửi mã OTP. Vui lòng kiểm tra lại email.");
+    }
   };
 
-  // Step 2: Verify OTP
-  const handleVerifyOtp = (e) => {
+  // Step 2: Verify OTP – calls POST /api/auth/verify-otp
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     const code = otpCode.join("");
     if (code.length < 6) {
@@ -58,12 +63,16 @@ export default function ForgotPassword() {
       return;
     }
     setError("");
-    // Mock OTP verification (any 6 digit works for mockup, or say code "123456")
-    setStep(3);
+    try {
+      await authApi.verifyOtp(contactInfo, code);
+      setStep(3);
+    } catch (err) {
+      setError(err.message || "Mã OTP không đúng hoặc đã hết hạn.");
+    }
   };
 
-  // Step 3: Reset Password
-  const handleResetPassword = (e) => {
+  // Step 3: Reset Password – calls POST /api/auth/reset-password
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!newPassword || !confirmPassword) {
       setError("Vui lòng nhập đầy đủ mật khẩu mới.");
@@ -73,16 +82,30 @@ export default function ForgotPassword() {
       setError("Mật khẩu xác nhận không khớp.");
       return;
     }
+    if (newPassword.length < 6) {
+      setError("Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
     setError("");
-    // Mock password update
-    setStep(4);
+    try {
+      await authApi.resetPassword(contactInfo, otpCode.join(""), newPassword);
+      setStep(4);
+    } catch (err) {
+      setError(err.message || "Đặt lại mật khẩu thất bại. Vui lòng thử lại.");
+    }
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     if (!canResend) return;
-    setTimer(59);
     setError("");
-    alert(`Mã OTP mới đã được gửi lại thành công tới: ${contactInfo}`);
+    try {
+      await authApi.forgotPassword(contactInfo);
+      setTimer(59);
+      setOtpCode(["", "", "", "", "", ""]);
+      alert(`Mã OTP mới đã được gửi lại tới: ${contactInfo}`);
+    } catch (err) {
+      setError(err.message || "Không thể gửi lại mã OTP.");
+    }
   };
 
   const handleOtpChange = (element, index) => {

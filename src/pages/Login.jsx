@@ -24,7 +24,7 @@ export default function Login() {
       alert("Đăng nhập thất bại!");
     }
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Vui lòng điền đầy đủ các thông tin đăng nhập.");
@@ -32,51 +32,98 @@ export default function Login() {
     }
     setError("");
 
-    // Kiểm tra tài khoản admin / staff (giả lập)
     const normalizedEmail = email.toLowerCase();
+    
+    // Tự động thêm hậu tố email nếu người dùng chỉ gõ tên đăng nhập giả lập (như admin, staff...)
+    let loginEmail = email;
+    if (!email.includes("@")) {
+      if (email === "admin") loginEmail = "admin@nguson.com";
+      else if (email === "staff") loginEmail = "staff@nguson.com";
+      else if (email === "chef") loginEmail = "chef@nguson.com";
+      else if (email === "spa") loginEmail = "spa@nguson.com";
+      else if (email === "yoga") loginEmail = "yoga@nguson.com";
+      else if (email === "physio") loginEmail = "physio@nguson.com";
+    }
 
-    // Xóa phân quyền cũ trước khi đăng nhập mới
-    localStorage.removeItem("specialistRole");
+    try {
+      console.log("Đang kết nối tới Backend tại http://localhost:8080/api/auth/login ...");
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: loginEmail, password }),
+      });
 
-    if (normalizedEmail === "admin@nguson.com" || normalizedEmail === "admin") {
-      alert("Đăng nhập thành công với vai trò Quản lý!");
-      navigate("/admin");
-    } else if (
-      normalizedEmail === "staff@nguson.com" ||
-      normalizedEmail === "staff"
-    ) {
-      alert("Đăng nhập thành công với vai trò Nhân viên lễ tân/dọn dẹp!");
-      navigate("/staff");
-    } else if (
-      normalizedEmail === "chef@nguson.com" ||
-      normalizedEmail === "chef"
-    ) {
-      alert("Đăng nhập thành công với vai trò Bếp Trưởng!");
-      navigate("/chef");
-    } else if (
-      normalizedEmail === "spa@nguson.com" ||
-      normalizedEmail === "spa"
-    ) {
-      alert("Đăng nhập thành công với vai trò Nhân viên Spa!");
-      localStorage.setItem("specialistRole", "spa");
-      navigate("/specialist");
-    } else if (
-      normalizedEmail === "yoga@nguson.com" ||
-      normalizedEmail === "yoga"
-    ) {
-      alert("Đăng nhập thành công với vai trò Huấn luyện viên Yoga!");
-      localStorage.setItem("specialistRole", "yoga");
-      navigate("/specialist");
-    } else if (
-      normalizedEmail === "physio@nguson.com" ||
-      normalizedEmail === "physio"
-    ) {
-      alert("Đăng nhập thành công với vai trò Chuyên viên Vật lý trị liệu!");
-      localStorage.setItem("specialistRole", "physio");
-      navigate("/specialist");
-    } else {
-      alert("Đăng nhập thành công! Chào mừng bạn quay trở lại Ngũ Sơn Resort.");
-      navigate("/");
+      const data = await response.json();
+
+      if (response.ok) {
+        // Đăng nhập thành công từ backend thật
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", data.email);
+        localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userFullName", data.fullName);
+
+        alert(`Đăng nhập hệ thống thành công! Chào mừng ${data.fullName}`);
+        
+        // Điều hướng dựa trên vai trò từ backend
+        const role = data.role.toUpperCase();
+        localStorage.removeItem("specialistRole");
+
+        if (role === "ADMIN" || role === "MANAGER") {
+          navigate("/admin");
+        } else if (role === "RECEPTIONIST" || role === "STAFF") {
+          navigate("/staff");
+        } else if (role === "CHEF") {
+          navigate("/chef");
+        } else if (role === "SPA") {
+          localStorage.setItem("specialistRole", "spa");
+          navigate("/specialist");
+        } else if (role === "YOGA") {
+          localStorage.setItem("specialistRole", "yoga");
+          navigate("/specialist");
+        } else if (role === "PHYSIO" || role === "THERAPIST") {
+          localStorage.setItem("specialistRole", "physio");
+          navigate("/specialist");
+        } else {
+          navigate("/");
+        }
+        return;
+      } else {
+        // Backend trả về lỗi (ví dụ: sai mật khẩu, tài khoản không tồn tại)
+        setError(data.message || "Tên đăng nhập hoặc mật khẩu không đúng.");
+        return;
+      }
+    } catch (err) {
+      console.warn("Không kết nối được với Backend. Sử dụng giả lập dữ liệu offline để đăng nhập...", err);
+      // Chế độ dự phòng giả lập (Fallback)
+      localStorage.removeItem("specialistRole");
+
+      if (normalizedEmail === "admin@nguson.com" || normalizedEmail === "admin") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Quản lý!");
+        navigate("/admin");
+      } else if (normalizedEmail === "staff@nguson.com" || normalizedEmail === "staff") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Nhân viên lễ tân!");
+        navigate("/staff");
+      } else if (normalizedEmail === "chef@nguson.com" || normalizedEmail === "chef") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Bếp Trưởng!");
+        navigate("/chef");
+      } else if (normalizedEmail === "spa@nguson.com" || normalizedEmail === "spa") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Nhân viên Spa!");
+        localStorage.setItem("specialistRole", "spa");
+        navigate("/specialist");
+      } else if (normalizedEmail === "yoga@nguson.com" || normalizedEmail === "yoga") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Huấn luyện viên Yoga!");
+        localStorage.setItem("specialistRole", "yoga");
+        navigate("/specialist");
+      } else if (normalizedEmail === "physio@nguson.com" || normalizedEmail === "physio") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Chuyên viên Vật lý trị liệu!");
+        localStorage.setItem("specialistRole", "physio");
+        navigate("/specialist");
+      } else {
+        alert("Đăng nhập OFFLINE thành công! Chào mừng khách hàng quay lại.");
+        navigate("/");
+      }
     }
   };
 
