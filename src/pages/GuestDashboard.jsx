@@ -63,6 +63,7 @@ export default function GuestDashboard() {
   const [selectedDate, setSelectedDate] = useState("");
   const [consentCheckbox, setConsentCheckbox] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [activeMenuTab, setActiveMenuTab] = useState("package"); // "package" or "alacarte"
 
   // Booking Dates Helper
   const [bookingDays, setBookingDays] = useState([]);
@@ -221,6 +222,26 @@ export default function GuestDashboard() {
       return "seafood";
     }
     return "allergens";
+  };
+
+  const getFoodImage = (dish) => {
+    const name = (dish.dishName || "").toLowerCase();
+    if (name.includes("avocado") || name.includes("bơ") || name.includes("salad")) {
+      return "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80";
+    }
+    if (name.includes("chicken") || name.includes("gà") || name.includes("soup") || name.includes("súp") || name.includes("canh")) {
+      return "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80";
+    }
+    if (name.includes("juice") || name.includes("nước ép") || name.includes("nước uống") || name.includes("uống")) {
+      return "https://images.unsplash.com/photo-1610970881699-44a5587caa90?auto=format&fit=crop&w=600&q=80";
+    }
+    if (name.includes("nấm") || name.includes("mushroom") || name.includes("nướng")) {
+      return "https://images.unsplash.com/photo-1599021456807-25db0f974333?auto=format&fit=crop&w=600&q=80";
+    }
+    if (name.includes("tôm") || name.includes("shrimp") || name.includes("hải sản") || name.includes("seafood")) {
+      return "https://images.unsplash.com/photo-1559737607-3578909a3636?auto=format&fit=crop&w=600&q=80";
+    }
+    return "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80";
   };
 
   // Explicit Consent (Decree 356) Submit Handler
@@ -698,23 +719,58 @@ export default function GuestDashboard() {
                 Lên Lịch Thực Đơn Ẩm Thực Hằng Ngày
               </h2>
               <p className="text-xs text-sage-500 mb-6 font-light">
-                Chọn ngày lưu trú để chọn món. Đơn đặt món sẽ tự động tổng hợp phí phát sinh nếu vượt hạn mức hoặc gọi món ngoài gói.
+                {activeMenuTab === "package"
+                  ? "🥗 Chọn ngày lưu trú để lên lịch các bữa ăn đi kèm trong gói dịch vụ Detox của bạn (Miễn phí trong hạn mức)."
+                  : "🛎️ Đặt thêm các món ẩm thực dinh dưỡng hoặc đồ uống ngoài gói (Phụ phí sẽ tự động được tính tiền vào số phòng Villa)."}
               </p>
 
-              {/* Horizontal Date Tabs Selection Bar */}
-              <div className="flex items-center space-x-2 overflow-x-auto pb-4 mb-8 border-b border-primary-50 scrollbar-thin">
-                {bookingDays.map((date, idx) => (
-                  <button
-                    key={date}
-                    onClick={() => setSelectedDate(date)}
-                    className={`px-4.5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-all border whitespace-nowrap rounded-none ${selectedDate === date
-                      ? "bg-primary-800 text-white border-primary-800"
-                      : "bg-white border-primary-100 text-sage-600 hover:bg-primary-50"
-                      }`}
-                  >
-                    Ngày {idx + 1} ({date.substring(5)})
-                  </button>
-                ))}
+              {/* Modern Segmented Control Tab Switcher */}
+              <div className="flex p-1.5 bg-[#f2f4f2] rounded-full mb-8 shadow-inner border border-primary-100/50 max-w-xl mx-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveMenuTab("package")}
+                  className={`flex-1 py-3 px-5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${activeMenuTab === "package"
+                    ? "bg-gradient-to-r from-primary-800 to-primary-900 text-white shadow-md transform scale-[1.01]"
+                    : "text-sage-600 hover:text-primary-900"
+                    }`}
+                >
+                  <span>🥗 Thực đơn trong gói</span>
+                  <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full font-mono font-bold"></span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMenuTab("alacarte")}
+                  className={`flex-1 py-3 px-5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${activeMenuTab === "alacarte"
+                    ? "bg-gradient-to-r from-primary-800 to-primary-900 text-white shadow-md transform scale-[1.01]"
+                    : "text-sage-600 hover:text-primary-900"
+                    }`}
+                >
+                  <span>🛎️ Gọi món ngoài gói</span>
+                  <span className="text-[9px] bg-primary-900/10 text-primary-900 px-2 py-0.5 rounded-full font-mono font-bold"></span>
+                </button>
+              </div>
+
+              {/* Horizontal Date Selection Bar (Modern Pill Design) */}
+              <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-8 border-b border-primary-100/50 scrollbar-thin">
+                {bookingDays.map((date, idx) => {
+                  const isActive = selectedDate === date;
+                  const dateParts = date.split("-");
+                  const displayDate = `${dateParts[2]}/${dateParts[1]}`;
+                  return (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer ${isActive
+                        ? "bg-primary-850 border-primary-900 text-white shadow-md -translate-y-0.5"
+                        : "bg-white border-primary-100 text-sage-600 hover:border-primary-300 hover:bg-primary-50/30"
+                        }`}
+                      style={{ borderRadius: "16px" }}
+                    >
+                      <span className="text-[9px] opacity-75 font-semibold">Ngày {idx + 1}</span>
+                      <span className="font-mono mt-0.5 text-sm">{displayDate}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Auto Filter Banner */}
@@ -725,7 +781,12 @@ export default function GuestDashboard() {
                     <span>
                       <strong>Thực đơn đã được tự động quét theo hồ sơ bệnh lý & chế độ ăn uống.</strong>{" "}
                       {(() => {
-                        const count = menuItems.filter(item => item.isAllergen).length;
+                        const count = menuItems.filter(item => {
+                          const isIncluded = isIncludedInPackage(item.foodId);
+                          if (activeMenuTab === "package" && !isIncluded) return false;
+                          if (activeMenuTab === "alacarte" && isIncluded) return false;
+                          return item.isAllergen;
+                        }).length;
                         return `Phát hiện ${count} món ăn không phù hợp đã được cảnh báo và khóa tự động.`;
                       })()}
                     </span>
@@ -742,6 +803,11 @@ export default function GuestDashboard() {
                   {["Breakfast", "Lunch", "Dinner"].map((period) => {
                     // Filter items for this period case-insensitively to cover all dishes
                     const periodDishes = menuItems.filter(item => {
+                      // Filter by selected tab first
+                      const isIncluded = isIncludedInPackage(item.foodId);
+                      if (activeMenuTab === "package" && !isIncluded) return false;
+                      if (activeMenuTab === "alacarte" && isIncluded) return false;
+
                       const name = (item.dishName || "").toLowerCase();
 
                       // Categorization based on name matching
@@ -786,92 +852,114 @@ export default function GuestDashboard() {
                               <div
                                 key={dish.foodId}
                                 onClick={isAllergen ? () => handleSelectAllergen(dish.dishName, getAllergenName(dish)) : undefined}
-                                className={`border p-4.5 flex flex-col justify-between transition-all relative ${isAllergen
-                                  ? "border-red-300 bg-red-50/20 cursor-pointer hover:bg-red-55/35"
-                                  : "border-primary-100 bg-white"
+                                className={`flex flex-col justify-between transition-all duration-300 relative border transform overflow-hidden ${isAllergen
+                                  ? "border-red-200 bg-red-50/10 cursor-not-allowed opacity-80"
+                                  : "border-primary-100 bg-white hover:-translate-y-1 hover:shadow-md shadow-xs"
                                   }`}
+                                style={{ borderRadius: "20px" }}
                               >
-                                <div>
-                                  <div className="flex justify-between items-start">
-                                    <h4 className={`font-serif text-sm font-bold text-sage-950 ${isAllergen ? "line-through text-red-900/60" : ""}`}>
-                                      {dish.dishName}
-                                    </h4>
-                                    <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${isAllergen
-                                      ? "bg-red-200 text-red-850 border border-red-300 animate-pulse"
+                                {/* Card Image */}
+                                <div className="h-44 w-full relative overflow-hidden bg-sage-50">
+                                  <img
+                                    src={getFoodImage(dish)}
+                                    alt={dish.dishName}
+                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                  />
+                                  {/* Overlay for Allergen warning if any */}
+                                  {isAllergen && (
+                                    <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                                      <span className="bg-red-650 text-white font-bold text-[10px] px-3 py-1.5 uppercase tracking-widest shadow-md">
+                                        Blocked (Bị Khóa)
+                                      </span>
+                                    </div>
+                                  )}
+                                  {/* Top-Right Badge */}
+                                  <div className="absolute top-3 right-3 z-10">
+                                    <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-full shadow-md whitespace-nowrap ${isAllergen
+                                      ? "bg-gradient-to-r from-red-500 to-rose-600 text-white"
                                       : isIncluded
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-primary-100/50 text-primary-800"
+                                        ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+                                        : "bg-gradient-to-r from-amber-500 to-yellow-600 text-white"
                                       }`}>
                                       {isAllergen ? "Not Available" : isIncluded ? "Trong Gói" : "Phát Sinh"}
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-sage-500 font-light mt-1.5 leading-relaxed">
-                                    {dish.description}
-                                  </p>
-
-                                  <div className="mt-2 flex flex-wrap gap-1">
-                                    {dish.dietaryTags.split(",").map((t, idx) => (
-                                      <span key={idx} className="px-1.5 py-0.5 bg-primary-50/50 text-primary-800 text-[8px] font-semibold tracking-wide uppercase">
-                                        {t.trim()}
-                                      </span>
-                                    ))}
-                                  </div>
-
-                                  {/* Allergy warning alert */}
-                                  {isAllergen && (
-                                    <div className="mt-3.5 p-2 bg-red-50 border border-red-250 text-[10px] text-red-800 font-bold flex items-center space-x-1.5">
-                                      <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 animate-bounce" />
-                                      <span>[Not Available] Contains {getAllergenName(dish) === "peanuts" ? "Peanuts" : "Seafood"}</span>
-                                    </div>
-                                  )}
                                 </div>
 
-                                <div className="mt-4 pt-3.5 border-t border-primary-50 flex flex-col gap-2.5">
-                                  <div className="flex justify-between items-center">
-                                    <span className="font-mono text-xs font-bold text-primary-950">
-                                      {formatCurrency(dish.price)}
-                                    </span>
+                                {/* Card Content */}
+                                <div className="p-5 flex-1 flex flex-col justify-between">
+                                  <div>
+                                    <h4 className={`font-serif text-sm font-bold text-sage-950 ${isAllergen ? "line-through text-red-900/40" : ""}`}>
+                                      {dish.dishName}
+                                    </h4>
+                                    <p className="text-[11px] text-sage-500 font-light mt-2 leading-relaxed">
+                                      {dish.description}
+                                    </p>
 
-                                    {/* Action Selector buttons */}
-                                    {isAllergen ? (
-                                      <span className="text-[10px] text-red-650 font-bold bg-red-50 border border-red-200 px-2.5 py-1">
-                                        Blocked (Bị Khóa)
-                                      </span>
-                                    ) : (
-                                      <div className="flex items-center space-x-3.5">
-                                        <button
-                                          type="button"
-                                          disabled={qty === 0}
-                                          onClick={() => updateQuantity(selectedDate, period, dish.foodId, -1)}
-                                          className={`p-1 border rounded-none cursor-pointer transition-colors ${qty === 0 ? "border-primary-100 text-primary-200" : "border-primary-350 text-primary-900 hover:bg-primary-50"
-                                            }`}
-                                        >
-                                          <Minus className="h-3 w-3" />
-                                        </button>
-                                        <span className="font-mono font-bold text-xs w-4 text-center">
-                                          {qty}
+                                    <div className="mt-3 flex flex-wrap gap-1">
+                                      {dish.dietaryTags.split(",").map((t, idx) => (
+                                        <span key={idx} className="px-2 py-0.5 bg-sage-50 text-sage-600 text-[9px] font-bold rounded-full border border-sage-150 tracking-wide uppercase">
+                                          {t.trim()}
                                         </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => updateQuantity(selectedDate, period, dish.foodId, 1)}
-                                          className="p-1 border border-primary-350 text-primary-900 hover:bg-primary-50 rounded-none cursor-pointer"
-                                        >
-                                          <Plus className="h-3 w-3" />
-                                        </button>
+                                      ))}
+                                    </div>
+
+                                    {/* Allergy warning alert */}
+                                    {isAllergen && (
+                                      <div className="mt-3.5 p-2 bg-red-50 border border-red-200 text-[10px] text-red-800 font-bold flex items-center space-x-2 rounded-lg">
+                                        <AlertTriangle className="h-4.5 w-4.5 text-red-600 flex-shrink-0 animate-bounce" />
+                                        <span>[Cảnh báo] Có chứa: {getAllergenName(dish) === "peanuts" ? "Đậu phộng" : "Hải sản"}</span>
                                       </div>
                                     )}
                                   </div>
 
-                                  {/* Custom special notes for chef */}
-                                  {qty > 0 && !isAllergen && (
-                                    <input
-                                      type="text"
-                                      value={noteVal}
-                                      onChange={(e) => handleNoteChange(selectedDate, period, dish.foodId, e.target.value)}
-                                      placeholder="Yêu cầu cho bếp: vd: ít muối, không hành...."
-                                      className="w-full px-2.5 py-1.5 border border-primary-150 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500 rounded-none"
-                                    />
-                                  )}
+                                  <div className="mt-5 pt-3.5 border-t border-primary-50 flex flex-col gap-2.5">
+                                    <div className="flex justify-between items-center">
+                                      <span className="font-mono text-xs sm:text-sm font-bold text-primary-950">
+                                        {formatCurrency(dish.price)}
+                                      </span>
+
+                                      {/* Action Selector buttons */}
+                                      {isAllergen ? (
+                                        <span className="text-[9px] text-red-700 font-bold bg-red-50 border border-red-200 px-3 py-1.5 rounded-full uppercase tracking-wider">
+                                          Blocked (Bị Khóa)
+                                        </span>
+                                      ) : (
+                                        <div className="flex items-center space-x-2 bg-primary-50/50 p-0.5 rounded-full border border-primary-100">
+                                          <button
+                                            type="button"
+                                            disabled={qty === 0}
+                                            onClick={() => updateQuantity(selectedDate, period, dish.foodId, -1)}
+                                            className={`p-1.5 rounded-full cursor-pointer transition-all ${qty === 0 ? "text-primary-200" : "text-primary-850 hover:bg-white hover:shadow-xs"
+                                              }`}
+                                          >
+                                            <Minus className="h-3.5 w-3.5" />
+                                          </button>
+                                          <span className="font-mono font-bold text-xs w-6 text-center text-primary-950">
+                                            {qty}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => updateQuantity(selectedDate, period, dish.foodId, 1)}
+                                            className="p-1.5 rounded-full text-primary-850 hover:bg-white hover:shadow-xs transition-all cursor-pointer"
+                                          >
+                                            <Plus className="h-3.5 w-3.5" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Custom special notes for chef */}
+                                    {qty > 0 && !isAllergen && (
+                                      <input
+                                        type="text"
+                                        value={noteVal}
+                                        onChange={(e) => handleNoteChange(selectedDate, period, dish.foodId, e.target.value)}
+                                        placeholder="Yêu cầu cho bếp: vd: ít muối, không hành...."
+                                        className="w-full px-2.5 py-1.5 border border-primary-150 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary-500 rounded-none"
+                                      />
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             );
