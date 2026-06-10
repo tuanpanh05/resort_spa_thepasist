@@ -110,7 +110,7 @@ export default function GuestDashboard() {
 
       // 3. Fetch menu
       const menuRes = await axiosClient.get(`/guest/menu?userId=${data.userId}`);
-      setMenuItems(menuRes.data);
+      setMenuItems(menuRes.data.filter(item => item.isTodayMenu !== false));
 
     } catch (err) {
       console.warn("Could not connect to live backend, loading mock fallback data.", err);
@@ -176,7 +176,7 @@ export default function GuestDashboard() {
       ];
 
       const isConsented = profileData.medicalProfile?.explicitConsentSigned || false;
-      const allergiesString = profileData.medicalProfile?.foodAllergies || (email === "guest1@gmail.com" ? "đậu phộng" : "hải sản");
+      const allergiesString = profileData.medicalProfile?.foodAllergies || (email === "guest1@gmail.com" ? "peanut" : "seafood");
       setMenuItems(computeAllergenFlags(mockMenu, isConsented, allergiesString));
     } finally {
       setLoading(false);
@@ -267,7 +267,7 @@ export default function GuestDashboard() {
           explicitConsentSigned: val
         }
       }));
-      const allergiesString = profileData.medicalProfile?.foodAllergies || (profileData.email === "guest1@gmail.com" ? "đậu phộng" : "hải sản");
+      const allergiesString = profileData.medicalProfile?.foodAllergies || (profileData.email === "guest1@gmail.com" ? "peanut" : "seafood");
       setMenuItems(prev => computeAllergenFlags(prev, val, allergiesString));
     }
   };
@@ -355,6 +355,21 @@ export default function GuestDashboard() {
       style: "currency",
       currency: "VND",
     }).format(val);
+  };
+
+  const formatDateDisplay = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return dateStr;
+    }
   };
 
   // Post Daily Selections to backend Database
@@ -567,11 +582,11 @@ export default function GuestDashboard() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sage-500 font-light">Ngày nhận:</span>
-                      <span className="font-semibold">{profileData.booking.checkInDate}</span>
+                      <span className="font-semibold">{formatDateDisplay(profileData.booking.checkInDate)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sage-500 font-light">Ngày trả:</span>
-                      <span className="font-semibold">{profileData.booking.checkOutDate}</span>
+                      <span className="font-semibold">{formatDateDisplay(profileData.booking.checkOutDate)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sage-500 font-light">Gói dịch vụ:</span>
@@ -843,6 +858,7 @@ export default function GuestDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {periodDishes.map((dish) => {
                             const isAllergen = consentCheckbox && dish.isAllergen;
+                            const isSoldOut = dish.soldOut === true;
                             const qty = selections[selectedDate]?.[period]?.[dish.foodId] || 0;
                             const noteKey = `${selectedDate}_${period}_${dish.foodId}`;
                             const noteVal = specialNotes[noteKey] || "";
@@ -852,7 +868,7 @@ export default function GuestDashboard() {
                               <div
                                 key={dish.foodId}
                                 onClick={isAllergen ? () => handleSelectAllergen(dish.dishName, getAllergenName(dish)) : undefined}
-                                className={`flex flex-col justify-between transition-all duration-300 relative border transform overflow-hidden ${isAllergen
+                                className={`flex flex-col justify-between transition-all duration-300 relative border transform overflow-hidden ${(isAllergen || isSoldOut)
                                   ? "border-red-200 bg-red-50/10 cursor-not-allowed opacity-80"
                                   : "border-primary-100 bg-white hover:-translate-y-1 hover:shadow-md shadow-xs"
                                   }`}
@@ -865,23 +881,31 @@ export default function GuestDashboard() {
                                     alt={dish.dishName}
                                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                                   />
-                                  {/* Overlay for Allergen warning if any */}
-                                  {isAllergen && (
+                                  {/* Overlay for Allergen warning or Sold Out */}
+                                  {isAllergen ? (
                                     <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center">
                                       <span className="bg-red-650 text-white font-bold text-[10px] px-3 py-1.5 uppercase tracking-widest shadow-md">
                                         Blocked (Bị Khóa)
                                       </span>
                                     </div>
-                                  )}
+                                  ) : isSoldOut ? (
+                                    <div className="absolute inset-0 bg-gray-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                                      <span className="bg-gray-700 text-white font-bold text-[10px] px-3 py-1.5 uppercase tracking-widest shadow-md">
+                                        Sold Out (Hết Hàng)
+                                      </span>
+                                    </div>
+                                  ) : null}
                                   {/* Top-Right Badge */}
                                   <div className="absolute top-3 right-3 z-10">
                                     <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-full shadow-md whitespace-nowrap ${isAllergen
                                       ? "bg-gradient-to-r from-red-500 to-rose-600 text-white"
-                                      : isIncluded
-                                        ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-                                        : "bg-gradient-to-r from-amber-500 to-yellow-600 text-white"
+                                      : isSoldOut
+                                        ? "bg-gradient-to-r from-gray-500 to-slate-600 text-white"
+                                        : isIncluded
+                                          ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+                                          : "bg-gradient-to-r from-amber-500 to-yellow-600 text-white"
                                       }`}>
-                                      {isAllergen ? "Not Available" : isIncluded ? "Trong Gói" : "Phát Sinh"}
+                                      {isAllergen ? "Not Available" : isSoldOut ? "Hết Hàng" : isIncluded ? "Trong Gói" : "Phát Sinh"}
                                     </span>
                                   </div>
                                 </div>
@@ -889,7 +913,7 @@ export default function GuestDashboard() {
                                 {/* Card Content */}
                                 <div className="p-5 flex-1 flex flex-col justify-between">
                                   <div>
-                                    <h4 className={`font-serif text-sm font-bold text-sage-950 ${isAllergen ? "line-through text-red-900/40" : ""}`}>
+                                    <h4 className={`font-serif text-sm font-bold text-sage-950 ${(isAllergen || isSoldOut) ? "line-through text-red-900/40" : ""}`}>
                                       {dish.dishName}
                                     </h4>
                                     <p className="text-[11px] text-sage-500 font-light mt-2 leading-relaxed">
@@ -920,9 +944,9 @@ export default function GuestDashboard() {
                                       </span>
 
                                       {/* Action Selector buttons */}
-                                      {isAllergen ? (
-                                        <span className="text-[9px] text-red-700 font-bold bg-red-50 border border-red-200 px-3 py-1.5 rounded-full uppercase tracking-wider">
-                                          Blocked (Bị Khóa)
+                                      {isAllergen || isSoldOut ? (
+                                        <span className={`text-[9px] font-bold border px-3 py-1.5 rounded-full uppercase tracking-wider ${isAllergen ? "text-red-700 bg-red-50 border-red-200" : "text-gray-500 bg-gray-50 border-gray-200"}`}>
+                                          {isAllergen ? "Blocked (Bị Khóa)" : "Hết Hàng"}
                                         </span>
                                       ) : (
                                         <div className="flex items-center space-x-2 bg-primary-50/50 p-0.5 rounded-full border border-primary-100">
@@ -950,7 +974,7 @@ export default function GuestDashboard() {
                                     </div>
 
                                     {/* Custom special notes for chef */}
-                                    {qty > 0 && !isAllergen && (
+                                    {qty > 0 && !isAllergen && !isSoldOut && (
                                       <input
                                         type="text"
                                         value={noteVal}
