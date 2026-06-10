@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { PlusCircle, X, AlertTriangle } from "lucide-react";
+import axiosClient from "../../api/axiosClient";
 
 export default function ManageDishes({ dishes, setDishes }) {
   const [showAddDishModal, setShowAddDishModal] = useState(false);
@@ -17,18 +18,37 @@ export default function ManageDishes({ dishes, setDishes }) {
     isTodayMenu: true,
   });
 
-  const handleToggleEnabled = (id) => {
-    setDishes((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, enabled: !d.enabled } : d)),
-    );
+  const handleToggleEnabled = async (id) => {
+    const targetDish = dishes.find((d) => d.id === id);
+    if (!targetDish) return;
+    const foodId = targetDish.foodId;
+    try {
+      await axiosClient.put(`/chef/menu/${foodId}/toggle-enabled`);
+      setDishes((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, enabled: !d.enabled } : d)),
+      );
+    } catch (err) {
+      console.error("Failed to toggle enabled", err);
+      alert("Lỗi khi thay đổi trạng thái phục vụ món ăn.");
+    }
   };
 
-  const handleDeleteDish = (id) => {
+  const handleDeleteDish = async (id) => {
+    const targetDish = dishes.find((d) => d.id === id);
+    if (!targetDish) return;
+    const foodId = targetDish.foodId;
+
     if (
       window.confirm("Bạn có chắc chắn muốn xóa món này ra khỏi cơ sở dữ liệu?")
     ) {
-      setDishes((prev) => prev.filter((d) => d.id !== id));
-      alert("Đã xóa món ăn.");
+      try {
+        await axiosClient.delete(`/chef/menu/${foodId}`);
+        setDishes((prev) => prev.filter((d) => d.id !== id));
+        alert("Đã xóa món ăn khỏi cơ sở dữ liệu.");
+      } catch (err) {
+        console.error("Failed to delete dish", err);
+        alert("Lỗi khi xóa món ăn khỏi cơ sở dữ liệu (món ăn có thể đang có trong đơn đặt hàng của khách).");
+      }
     }
   };
 
@@ -55,66 +75,105 @@ export default function ManageDishes({ dishes, setDishes }) {
       description: dish.description,
       ingredients: dish.ingredients,
       allergens: dish.allergens.join(", "),
-      period: dish.period,
+      period: dish.period || "Lunch",
       isTodayMenu: dish.isTodayMenu,
     });
     setShowEditDishModal(true);
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
     if (!dishForm.name || !dishForm.price) {
       alert("Vui lòng điền đầy đủ tên và giá món ăn.");
       return;
     }
-    const newDish = {
-      id: `DSH-${Math.floor(10 + Math.random() * 90)}`,
+
+    const payload = {
       name: dishForm.name,
-      price: dishForm.price.includes("đ")
-        ? dishForm.price
-        : `${dishForm.price}đ`,
+      price: dishForm.price,
       category: dishForm.category,
       description: dishForm.description,
       ingredients: dishForm.ingredients,
-      allergens: dishForm.allergens
-        ? dishForm.allergens.split(",").map((s) => s.trim())
-        : [],
+      allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
       isTodayMenu: dishForm.isTodayMenu,
-      period: dishForm.period,
-      soldOut: false,
-      enabled: true,
+      enabled: true
     };
-    setDishes((prev) => [...prev, newDish]);
-    setShowAddDishModal(false);
-    alert(`Món ăn "${dishForm.name}" đã được lưu vào cơ sở dữ liệu.`);
+
+    try {
+      const res = await axiosClient.post("/chef/menu", payload);
+      if (res.data.success) {
+        const savedDish = res.data.dish;
+        const formatPrice = (p) => {
+          return new Intl.NumberFormat("en-US", { minimumFractionDigits: 0 }).format(p) + "đ";
+        };
+        const newDish = {
+          id: `DSH-${String(savedDish.foodId).padStart(2, '0')}`,
+          foodId: savedDish.foodId,
+          name: savedDish.dishName,
+          price: formatPrice(savedDish.price),
+          category: dishForm.category,
+          description: savedDish.description,
+          ingredients: savedDish.ingredients || "Thành phần dinh dưỡng tự nhiên",
+          allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
+          isTodayMenu: savedDish.isTodayMenu,
+          soldOut: savedDish.soldOut,
+          enabled: savedDish.enabled
+        };
+        setDishes((prev) => [...prev, newDish]);
+        setShowAddDishModal(false);
+        alert(`Món ăn "${dishForm.name}" đã được lưu vào cơ sở dữ liệu.`);
+      }
+    } catch (err) {
+      console.error("Failed to add dish", err);
+      alert("Lỗi khi lưu món ăn vào cơ sở dữ liệu.");
+    }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    setDishes((prev) =>
-      prev.map((d) =>
-        d.id === selectedDish.id
-          ? {
-              ...d,
-              name: dishForm.name,
-              price: dishForm.price.includes("đ")
-                ? dishForm.price
-                : `${dishForm.price}đ`,
-              category: dishForm.category,
-              description: dishForm.description,
-              ingredients: dishForm.ingredients,
-              allergens: dishForm.allergens
-                ? dishForm.allergens.split(",").map((s) => s.trim())
-                : [],
-              period: dishForm.period,
-              isTodayMenu: dishForm.isTodayMenu,
-            }
-          : d,
-      ),
-    );
-    setShowEditDishModal(false);
-    setSelectedDish(null);
-    alert("Đã cập nhật thông tin món ăn.");
+    const foodId = selectedDish.foodId;
+    const payload = {
+      name: dishForm.name,
+      price: dishForm.price,
+      category: dishForm.category,
+      description: dishForm.description,
+      ingredients: dishForm.ingredients,
+      allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
+      isTodayMenu: dishForm.isTodayMenu,
+      enabled: selectedDish.enabled
+    };
+
+    try {
+      const res = await axiosClient.put(`/chef/menu/${foodId}`, payload);
+      if (res.data.success) {
+        const savedDish = res.data.dish;
+        const formatPrice = (p) => {
+          return new Intl.NumberFormat("en-US", { minimumFractionDigits: 0 }).format(p) + "đ";
+        };
+        setDishes((prev) =>
+          prev.map((d) =>
+            d.id === selectedDish.id
+              ? {
+                ...d,
+                name: savedDish.dishName,
+                price: formatPrice(savedDish.price),
+                category: dishForm.category,
+                description: savedDish.description,
+                ingredients: savedDish.ingredients || "Thành phần dinh dưỡng tự nhiên",
+                allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
+                isTodayMenu: savedDish.isTodayMenu,
+              }
+              : d
+          )
+        );
+        setShowEditDishModal(false);
+        setSelectedDish(null);
+        alert("Đã cập nhật thông tin món ăn vào cơ sở dữ liệu.");
+      }
+    } catch (err) {
+      console.error("Failed to update dish", err);
+      alert("Lỗi khi cập nhật món ăn vào cơ sở dữ liệu.");
+    }
   };
 
   return (
@@ -203,11 +262,10 @@ export default function ManageDishes({ dishes, setDishes }) {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                        dish.enabled
+                      className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${dish.enabled
                           ? "bg-green-105 text-green-700 border border-green-150"
                           : "bg-sage-100 text-sage-400"
-                      }`}
+                        }`}
                     >
                       {dish.enabled ? "Phục vụ" : "Tạm khóa"}
                     </span>
@@ -228,11 +286,10 @@ export default function ManageDishes({ dishes, setDishes }) {
                       </button>
                       <button
                         onClick={() => handleToggleEnabled(dish.id)}
-                        className={`px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                          dish.enabled
+                        className={`px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${dish.enabled
                             ? "bg-amber-50 text-amber-800 border-amber-205 hover:bg-amber-100"
                             : "bg-green-50 text-green-800 border-green-155 hover:bg-green-100"
-                        }`}
+                          }`}
                       >
                         {dish.enabled ? "Tắt" : "Bật"}
                       </button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Utensils,
@@ -12,6 +12,7 @@ import {
   Flame,
 } from "lucide-react";
 
+import axiosClient from "../api/axiosClient";
 import {
   chefInitialAllergies as initialAllergies,
   chefInitialFeedbacks as initialFeedbacks,
@@ -34,12 +35,88 @@ export default function ChefDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Master System States
-  const [allergies] = useState(initialAllergies);
+  const [allergies, setAllergies] = useState([]);
   const [feedbacks] = useState(initialFeedbacks);
-  const [dishes, setDishes] = useState(initialDishes);
-  const [orders, setOrders] = useState(initialOrders);
+  const [dishes, setDishes] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [ingredients] = useState(initialIngredients);
   const [procurements, setProcurements] = useState(initialRequests);
+  const [loading, setLoading] = useState(true);
+
+  const fetchChefData = async () => {
+    setLoading(true);
+    try {
+      const [menuRes, ordersRes, allergiesRes] = await Promise.all([
+        axiosClient.get("/chef/menu"),
+        axiosClient.get("/chef/orders"),
+        axiosClient.get("/guest/chef/allergies")
+      ]);
+
+      const mappedAllergies = allergiesRes.data.map(item => {
+        const algs = [];
+        const raw = (item.allergies || "").toLowerCase();
+        if (raw.includes("đậu phộng") || raw.includes("peanut") || raw.includes("lạc")) algs.push("Đậu phộng");
+        if (raw.includes("hải sản") || raw.includes("seafood") || raw.includes("tôm")) algs.push("Hải sản");
+        if (raw.includes("ớt") || raw.includes("cay") || raw.includes("chili")) algs.push("Không ăn cay");
+        return {
+          id: "ALG-" + item.userId,
+          guest: item.fullName || "Khách Hàng",
+          room: item.room || "N/A",
+          allergies: algs,
+          dietary: item.dietary || "Healthy",
+          checkIn: item.checkIn || "N/A"
+        };
+      });
+
+      const mappedDishes = menuRes.data.map(item => {
+        return {
+          id: item.id || `DSH-${item.foodId}`,
+          foodId: item.foodId,
+          name: item.name,
+          price: item.price,
+          category: item.category || "Món chính",
+          description: item.description,
+          ingredients: item.ingredients || "Thành phần tự nhiên",
+          allergens: item.allergens || [],
+          isTodayMenu: item.isTodayMenu,
+          soldOut: item.soldOut,
+          enabled: true
+        };
+      });
+
+      const mappedOrders = ordersRes.data.map(item => {
+        return {
+          id: item.id || `ORD-${item.orderId}`,
+          orderId: item.orderId,
+          guestName: item.guestName,
+          room: item.room,
+          origin: item.origin || "Room Service",
+          items: item.items.map(it => ({
+            name: it.name,
+            qty: it.qty
+          })),
+          note: item.note,
+          status: item.status,
+          time: item.time
+        };
+      });
+
+      setAllergies(mappedAllergies);
+      setDishes(mappedDishes);
+      setOrders(mappedOrders);
+    } catch (err) {
+      console.warn("Could not fetch chef data from live server. Falling back to mock.", err);
+      setDishes(initialDishes);
+      setOrders(initialOrders);
+      setAllergies(initialAllergies);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchChefData();
+  }, []);
 
   // KDS Voice Synthesizer Alert
   const playVoiceAlert = (text) => {
@@ -53,39 +130,86 @@ export default function ChefDashboard() {
   };
 
   // Shared Handlers
-  const handleToggleTodayMenu = (id) => {
-    setDishes((prev) =>
-      prev.map((d) =>
-        d.id === id ? { ...d, isTodayMenu: !d.isTodayMenu } : d,
-      ),
-    );
+  const handleToggleTodayMenu = async (id) => {
+    const targetDish = dishes.find(d => d.id === id || d.foodId === id);
+    if (!targetDish) return;
+    const foodId = targetDish.foodId;
+    try {
+      await axiosClient.put(`/chef/menu/${foodId}/toggle-today`);
+      setDishes((prev) =>
+        prev.map((d) =>
+          d.id === id ? { ...d, isTodayMenu: !d.isTodayMenu } : d,
+        ),
+      );
+    } catch (err) {
+      console.warn("Failed to toggle today menu on backend", err);
+      setDishes((prev) =>
+        prev.map((d) =>
+          d.id === id ? { ...d, isTodayMenu: !d.isTodayMenu } : d,
+        ),
+      );
+    }
   };
 
-  const handleToggleSoldOut = (id) => {
-    setDishes((prev) =>
-      prev.map((d) => {
-        if (d.id === id) {
-          const nextState = !d.soldOut;
-          alert(
-            `Món ăn "${d.name}" đã được cập nhật thành: ${nextState ? "HẾT HÀNG" : "CÒN HÀNG"}`,
-          );
-          return { ...d, soldOut: nextState };
-        }
-        return d;
-      }),
-    );
+  const handleToggleSoldOut = async (id) => {
+    const targetDish = dishes.find(d => d.id === id || d.foodId === id);
+    if (!targetDish) return;
+    const foodId = targetDish.foodId;
+    try {
+      await axiosClient.put(`/chef/menu/${foodId}/toggle-sold-out`);
+      setDishes((prev) =>
+        prev.map((d) => {
+          if (d.id === id) {
+            const nextState = !d.soldOut;
+            alert(
+              `Món ăn "${d.name}" đã được cập nhật thành: ${nextState ? "HẾT HÀ5" : "CÒN HÀNG"}`.replace("HẾT HÀ5", "HẾT HÀNG")
+            );
+            return { ...d, soldOut: nextState };
+          }
+          return d;
+        }),
+      );
+    } catch (err) {
+      console.warn("Failed to toggle sold out on backend", err);
+      setDishes((prev) =>
+        prev.map((d) => {
+          if (d.id === id) {
+            const nextState = !d.soldOut;
+            alert(
+              `Món ăn "${d.name}" đã được cập nhật thành: ${nextState ? "HẾT HÀNG" : "CÒN HÀNG"}`
+            );
+            return { ...d, soldOut: nextState };
+          }
+          return d;
+        }),
+      );
+    }
   };
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    const numericId = typeof orderId === "string" ? orderId.replace("ORD-", "") : orderId;
+    try {
+      await axiosClient.put(`/chef/orders/${numericId}/status?status=${newStatus}`);
+      setOrders((prev) =>
+        prev.map((ord) => {
+          if (ord.id === orderId) {
+            return { ...ord, status: newStatus };
+          }
+          return ord;
+        }),
+      );
+    } catch (err) {
+      console.warn("Failed to update status on backend", err);
+      setOrders((prev) =>
+        prev.map((ord) => {
+          if (ord.id === orderId) {
+            return { ...ord, status: newStatus };
+          }
+          return ord;
+        }),
+      );
+    }
     const order = orders.find((ord) => ord.id === orderId);
-    setOrders((prev) =>
-      prev.map((ord) => {
-        if (ord.id === orderId) {
-          return { ...ord, status: newStatus };
-        }
-        return ord;
-      }),
-    );
     const nextStatusText =
       newStatus === "Cooking" ? "bắt đầu chuẩn bị" : "hoàn thành";
     const msg = `Đơn hàng ${orderId} của phòng ${order?.room || ""} đã ${nextStatusText}`;
@@ -311,47 +435,58 @@ export default function ChefDashboard() {
         </header>
 
         {/* Tab Render Router */}
-        {activeTab === "overview" && (
-          <ChefOverview
-            orders={orders}
-            allergies={allergies}
-            ingredients={ingredients}
-            dishes={dishes}
-            feedbacks={feedbacks}
-            setActiveTab={setActiveTab}
-            checkOrderAllergies={checkOrderAllergies}
-          />
-        )}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white border border-sage-200">
+            <span className="animate-spin h-8 w-8 border-4 border-sage-800 border-t-transparent rounded-full" />
+            <span className="mt-4 text-xs font-semibold text-sage-500 uppercase tracking-widest">
+              Đang tải dữ liệu nhà bếp trực tuyến...
+            </span>
+          </div>
+        ) : (
+          <>
+            {activeTab === "overview" && (
+              <ChefOverview
+                orders={orders}
+                allergies={allergies}
+                ingredients={ingredients}
+                dishes={dishes}
+                feedbacks={feedbacks}
+                setActiveTab={setActiveTab}
+                checkOrderAllergies={checkOrderAllergies}
+              />
+            )}
 
-        {activeTab === "allergies" && <ManageAllergies allergies={allergies} />}
+            {activeTab === "allergies" && <ManageAllergies allergies={allergies} />}
 
-        {activeTab === "menu" && (
-          <ManageMenu
-            dishes={dishes}
-            handleToggleSoldOut={handleToggleSoldOut}
-            handleToggleTodayMenu={handleToggleTodayMenu}
-          />
-        )}
+            {activeTab === "menu" && (
+              <ManageMenu
+                dishes={dishes}
+                handleToggleSoldOut={handleToggleSoldOut}
+                handleToggleTodayMenu={handleToggleTodayMenu}
+              />
+            )}
 
-        {activeTab === "orders" && (
-          <ManageOrders
-            orders={orders}
-            playVoiceAlert={playVoiceAlert}
-            handleUpdateOrderStatus={handleUpdateOrderStatus}
-            checkOrderAllergies={checkOrderAllergies}
-          />
-        )}
+            {activeTab === "orders" && (
+              <ManageOrders
+                orders={orders}
+                playVoiceAlert={playVoiceAlert}
+                handleUpdateOrderStatus={handleUpdateOrderStatus}
+                checkOrderAllergies={checkOrderAllergies}
+              />
+            )}
 
-        {activeTab === "dishes" && (
-          <ManageDishes dishes={dishes} setDishes={setDishes} />
-        )}
+            {activeTab === "dishes" && (
+              <ManageDishes dishes={dishes} setDishes={setDishes} />
+            )}
 
-        {activeTab === "inventory" && (
-          <ManageInventory
-            ingredients={ingredients}
-            procurements={procurements}
-            setProcurements={setProcurements}
-          />
+            {activeTab === "inventory" && (
+              <ManageInventory
+                ingredients={ingredients}
+                procurements={procurements}
+                setProcurements={setProcurements}
+              />
+            )}
+          </>
         )}
       </main>
     </div>
