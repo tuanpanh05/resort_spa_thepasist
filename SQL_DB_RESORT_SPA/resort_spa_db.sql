@@ -22,9 +22,9 @@ IF OBJECT_ID('dbo.blog', 'U') IS NOT NULL DROP TABLE dbo.blog;
 IF OBJECT_ID('dbo.invoice', 'U') IS NOT NULL DROP TABLE dbo.invoice;
 IF OBJECT_ID('dbo.food_order_detail', 'U') IS NOT NULL DROP TABLE dbo.food_order_detail;
 IF OBJECT_ID('dbo.food_order', 'U') IS NOT NULL DROP TABLE dbo.food_order;
+IF OBJECT_ID('dbo.cart_item', 'U') IS NOT NULL DROP TABLE dbo.cart_item;
 IF OBJECT_ID('dbo.package_food_limit', 'U') IS NOT NULL DROP TABLE dbo.package_food_limit;
 IF OBJECT_ID('dbo.food_menu', 'U') IS NOT NULL DROP TABLE dbo.food_menu;
-IF OBJECT_ID('dbo.cart_item', 'U') IS NOT NULL DROP TABLE dbo.cart_item;
 IF OBJECT_ID('dbo.spa_booking', 'U') IS NOT NULL DROP TABLE dbo.spa_booking;
 IF OBJECT_ID('dbo.treatment_room', 'U') IS NOT NULL DROP TABLE dbo.treatment_room;
 IF OBJECT_ID('dbo.package_spa_limit', 'U') IS NOT NULL DROP TABLE dbo.package_spa_limit;
@@ -573,9 +573,7 @@ SELECT
 FROM dbo.room_booking b
 LEFT JOIN dbo.retreat_package p ON p.package_id = b.package_id
 OUTER APPLY (
-    SELECT SUM(
-        d.price_at_booking * DATEDIFF(day, b.check_in_date, b.check_out_date)
-    ) AS room_subtotal
+    SELECT SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal
     FROM dbo.room_booking_detail d
     WHERE d.booking_id = b.booking_id
 ) room_charge

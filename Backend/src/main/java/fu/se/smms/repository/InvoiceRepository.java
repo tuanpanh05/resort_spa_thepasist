@@ -26,9 +26,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.room_booking b
             LEFT JOIN dbo.retreat_package p ON p.package_id = b.package_id
             OUTER APPLY (
-                SELECT SUM(
-                    d.price_at_booking * DATEDIFF(day, b.check_in_date, b.check_out_date)
-                ) AS room_subtotal
+                SELECT SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal
                 FROM dbo.room_booking_detail d
                 WHERE d.booking_id = b.booking_id
             ) room_charge

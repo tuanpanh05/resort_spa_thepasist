@@ -142,6 +142,13 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setStatus("PAID");
         invoice.setPaymentTime(LocalDateTime.now());
         invoice.setVnpayTranId(null);
+
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null) {
+            booking.setStatus("CONFIRMED");
+            roomBookingRepository.save(booking);
+        }
+
         return toDto(invoiceRepository.save(invoice));
     }
 
@@ -163,6 +170,12 @@ public class InvoiceServiceImpl implements InvoiceService {
             invoice.setStatus("PAID");
             invoice.setVnpayTranId(paymentResult.getTransactionNo());
             invoice.setPaymentTime(LocalDateTime.now());
+
+            RoomBooking booking = invoice.getRoomBooking();
+            if (booking != null) {
+                booking.setStatus("CONFIRMED");
+                roomBookingRepository.save(booking);
+            }
         }
 
         return toDto(invoiceRepository.save(invoice));
