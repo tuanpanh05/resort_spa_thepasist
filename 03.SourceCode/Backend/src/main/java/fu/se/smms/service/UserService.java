@@ -5,6 +5,7 @@ import java.util.List;
 
 public interface UserService {
     LoginResponse login(LoginRequest request);
+    LoginResponse loginWithGoogle(GoogleLoginRequest request);
     UserProfileDTO signUp(SignUpRequest request);
     UserProfileDTO getUserProfile(String email);
     UserProfileDTO updateUserProfile(String email, UserProfileRequest request);

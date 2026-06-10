@@ -61,6 +61,30 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+
+        if (user == null) {
+            // Tự động đăng ký tài khoản mới cho user đăng nhập qua Google
+            user = User.builder()
+                    .email(request.getEmail())
+                    .passwordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                    .fullName(request.getFullName())
+                    .role("GUEST") // Role mặc định
+                    .status("ACTIVE")
+                    .build();
+            user = userRepository.save(user);
+        }
+
+        if (!"ACTIVE".equals(user.getStatus())) {
+            throw new RuntimeException("Your account is " + user.getStatus());
+        }
+
+        String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
+        return new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public UserProfileDTO getUserProfile(String email) {
         User user = userRepository.findByEmail(email)

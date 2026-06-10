@@ -42,6 +42,17 @@ public class AuthController {
         }
     }
 
+    // Google Login
+    @PostMapping("/google")
+    public ResponseEntity<?> authenticateGoogleUser(@Valid @RequestBody GoogleLoginRequest request) {
+        try {
+            LoginResponse response = userService.loginWithGoogle(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     // UC01 – Forgot Password Step 1: Send OTP
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
