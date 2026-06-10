@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/guest")
+@RequestMapping("/guest")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class GuestMealController {
 
@@ -188,7 +188,35 @@ public class GuestMealController {
                 String[] allergyItems = allergiesRaw.split("\\s*[,;]\\s*");
                 for (String allergyItem : allergyItems) {
                     String trimmed = allergyItem.trim().toLowerCase();
-                    if (trimmed.length() >= 2 && contentToTest.contains(trimmed)) {
+                    boolean matches = false;
+
+                    if (trimmed.contains("đậu phộng") || trimmed.contains("peanut") || trimmed.contains("lạc")) {
+                        if (contentToTest.contains("đậu phộng") || contentToTest.contains("peanut")
+                                || contentToTest.contains("lạc")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("hải sản") || trimmed.contains("seafood") || trimmed.contains("tôm")
+                            || trimmed.contains("shrimp") || trimmed.contains("cua") || trimmed.contains("fish")
+                            || trimmed.contains("cá")) {
+                        if (contentToTest.contains("hải sản") || contentToTest.contains("seafood")
+                                || contentToTest.contains("tôm") || contentToTest.contains("shrimp")
+                                || contentToTest.contains("cua") || contentToTest.contains("fish")
+                                || contentToTest.contains("cá")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("ớt") || trimmed.contains("cay") || trimmed.contains("chili")
+                            || trimmed.contains("spicy")) {
+                        if (contentToTest.contains("ớt") || contentToTest.contains("cay")
+                                || contentToTest.contains("chili") || contentToTest.contains("spicy")) {
+                            matches = true;
+                        }
+                    } else {
+                        if (trimmed.length() >= 2 && contentToTest.contains(trimmed)) {
+                            matches = true;
+                        }
+                    }
+
+                    if (matches) {
                         isAllergen = true;
                         warningMsg = "Phát hiện thành phần gây dị ứng: " + allergyItem.trim();
                         break;
@@ -198,6 +226,8 @@ public class GuestMealController {
 
             map.put("isAllergen", isAllergen);
             map.put("warningMessage", warningMsg);
+            map.put("isTodayMenu", item.getIsTodayMenu() != null ? item.getIsTodayMenu() : true);
+            map.put("soldOut", item.getSoldOut() != null ? item.getSoldOut() : false);
             responseList.add(map);
         }
 
