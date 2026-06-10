@@ -6,6 +6,7 @@ import fu.se.smms.service.InvoiceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/invoices")
@@ -37,8 +38,23 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.createPaymentUrl(id));
     }
 
+    @PostMapping("/{id}/cash-payment")
+    public ResponseEntity<InvoiceDTO> markCashPayment(@PathVariable Integer id) {
+        return ResponseEntity.ok(invoiceService.markCashPayment(id));
+    }
+
+    @GetMapping("/vnpay-return")
+    public ResponseEntity<InvoiceDTO> paymentReturn(@RequestParam Map<String, String> callbackData) {
+        return ResponseEntity.ok(invoiceService.processVNPayCallback(callbackData));
+    }
+
     @GetMapping("/vnpay-callback")
-    public ResponseEntity<InvoiceDTO> paymentCallback(@ModelAttribute VNPayPaymentDTO callbackData) {
-        return ResponseEntity.ok(invoiceService.processPaymentCallback(callbackData));
+    public ResponseEntity<InvoiceDTO> paymentCallback(@RequestParam Map<String, String> callbackData) {
+        return ResponseEntity.ok(invoiceService.processVNPayCallback(callbackData));
+    }
+
+    @GetMapping("/vnpay-ipn")
+    public ResponseEntity<Map<String, String>> paymentIpn(@RequestParam Map<String, String> callbackData) {
+        return ResponseEntity.ok(invoiceService.processVNPayIpn(callbackData));
     }
 }

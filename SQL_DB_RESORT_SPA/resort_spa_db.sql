@@ -5,13 +5,13 @@
 -- File Location: SQL_DB_RESORT_SPA/resort_spa_db.sql
 -- =========================================================================
 
-/*
--- UNCOMMENT THIS BLOCK IF YOU WANT TO CREATE A NEW DATABASE
-CREATE DATABASE ResortSpaDB;
+IF DB_ID('ResortSpaDB') IS NULL
+BEGIN
+    CREATE DATABASE ResortSpaDB;
+END
 GO
 USE ResortSpaDB;
 GO
-*/
 
 -- ==========================================
 -- 1. DROP EXISTING TABLES (CHILDREN FIRST)
@@ -51,13 +51,15 @@ CREATE TABLE dbo.[User] (
     password_hash VARCHAR(255) NOT NULL,
     full_name NVARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    id_passport_encrypted VARCHAR(MAX) NOT NULL, -- AES-256 encrypted string for police declaration compliance
+    id_passport_encrypted VARCHAR(MAX) NULL, -- Encrypted passport (nullable, optional at signup)
     role VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
     created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
     
     CONSTRAINT CK_User_Role CHECK (role IN ('MANAGER', 'RECEPTIONIST', 'THERAPIST', 'CHEF', 'CUSTOMER')),
-    CONSTRAINT CK_User_Status CHECK (status IN ('ACTIVE', 'INACTIVE'))
+    CONSTRAINT CK_User_Status CHECK (status IN ('ACTIVE', 'INACTIVE')),
+    CONSTRAINT CK_User_Email CHECK (email LIKE '%_@_%._%'),
+    CONSTRAINT CK_User_Phone CHECK (phone LIKE '[0-9]%')
 );
 
 -- 2.2 [medical_profile] Table (Sensitive medical notes, 1-1 with User)
@@ -226,24 +228,13 @@ CREATE TABLE dbo.spa_booking (
     CONSTRAINT FK_spa_booking_room_booking FOREIGN KEY (room_booking_id) REFERENCES dbo.room_booking(booking_id) ON DELETE NO ACTION,
     CONSTRAINT FK_spa_booking_spa_service FOREIGN KEY (spa_id) REFERENCES dbo.spa_service(spa_id) ON DELETE NO ACTION,
     CONSTRAINT FK_spa_booking_therapist FOREIGN KEY (therapist_id) REFERENCES dbo.[User](user_id) ON DELETE NO ACTION,
-    CONSTRAINT FK_spa_booking_treatment_room FOREIGN KEY (treatment_room_id) REFERENCES dbo.treatment_room(treatment_room_id) ON DELETE NO ACTION
+    CONSTRAINT FK_spa_booking_treatment_room FOREIGN KEY (treatment_room_id) REFERENCES dbo.treatment_room(treatment_room_id) ON DELETE NO ACTION,
+    CONSTRAINT CK_spa_booking_package CHECK (
+        (is_package_included = 0) OR (is_package_included = 1 AND room_booking_id IS NOT NULL)
+    )
 );
 
--- 2.15 [cart_item] Table (Temporary customer shopping cart)
-CREATE TABLE dbo.cart_item (
-    cart_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT NOT NULL,
-    item_type VARCHAR(50) NOT NULL,
-    item_id INT NOT NULL, -- ID pointing to room_type, spa_service, or food_menu
-    quantity INT NOT NULL DEFAULT 1,
-    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-    
-    CONSTRAINT CK_cart_item_Type CHECK (item_type IN ('ROOM', 'SPA', 'FOOD')),
-    CONSTRAINT CK_cart_item_Qty CHECK (quantity > 0),
-    CONSTRAINT FK_cart_item_User FOREIGN KEY (user_id) REFERENCES dbo.[User](user_id) ON DELETE CASCADE
-);
-
--- 2.16 [food_menu] Table (Master Data: Healthy dietary items)
+-- 2.15 [food_menu] Table (Master Data: Healthy dietary items)
 CREATE TABLE dbo.food_menu (
     food_id INT IDENTITY(1,1) PRIMARY KEY,
     dish_name NVARCHAR(255) NOT NULL,
@@ -252,6 +243,28 @@ CREATE TABLE dbo.food_menu (
     dietary_tags NVARCHAR(255) NOT NULL, -- e.g., 'Vegan, Keto, Gluten-Free'
     
     CONSTRAINT CK_food_menu_Price CHECK (price >= 0)
+);
+
+-- 2.16 [cart_item] Table (Temporary customer shopping cart with referential integrity)
+CREATE TABLE dbo.cart_item (
+    cart_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    room_type_id INT NULL,
+    spa_id INT NULL,
+    food_id INT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT CK_cart_item_Qty CHECK (quantity > 0),
+    CONSTRAINT FK_cart_item_User FOREIGN KEY (user_id) REFERENCES dbo.[User](user_id) ON DELETE CASCADE,
+    CONSTRAINT FK_cart_item_room_type FOREIGN KEY (room_type_id) REFERENCES dbo.room_type(room_type_id) ON DELETE CASCADE,
+    CONSTRAINT FK_cart_item_spa FOREIGN KEY (spa_id) REFERENCES dbo.spa_service(spa_id) ON DELETE CASCADE,
+    CONSTRAINT FK_cart_item_food FOREIGN KEY (food_id) REFERENCES dbo.food_menu(food_id) ON DELETE CASCADE,
+    CONSTRAINT CK_cart_item_one_item CHECK (
+        (room_type_id IS NOT NULL AND spa_id IS NULL AND food_id IS NULL) OR
+        (room_type_id IS NULL AND spa_id IS NOT NULL AND food_id IS NULL) OR
+        (room_type_id IS NULL AND spa_id IS NULL AND food_id IS NOT NULL)
+    )
 );
 
 -- 2.17 [package_food_limit] Table (Configures complimentary daily food allowances bundled in packages)
@@ -306,7 +319,9 @@ CREATE TABLE dbo.invoice (
     spa_subtotal DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Sum of spa services where is_package_included = 0
     food_subtotal DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Sum of à la carte food items
     tax_and_fees DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    final_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    final_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Gross folio total before deposit deduction
+    deposit_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Deposit already collected during booking
+    amount_due DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Outstanding settlement amount to collect at checkout/payment gateway
     status VARCHAR(50) NOT NULL,
     vnpay_tran_id VARCHAR(100) NULL, -- Payment gateway ID
     payment_time DATETIME2 NULL,
@@ -316,7 +331,12 @@ CREATE TABLE dbo.invoice (
     CONSTRAINT CK_invoice_Food CHECK (food_subtotal >= 0),
     CONSTRAINT CK_invoice_Tax CHECK (tax_and_fees >= 0),
     CONSTRAINT CK_invoice_Final CHECK (final_amount >= 0),
+    CONSTRAINT CK_invoice_Deposit CHECK (deposit_amount >= 0),
+    CONSTRAINT CK_invoice_Due CHECK (amount_due >= 0),
+    CONSTRAINT CK_invoice_Deposit_Not_Over_Final CHECK (deposit_amount <= final_amount),
+    CONSTRAINT CK_invoice_Due_Equals_Final_Minus_Deposit CHECK (amount_due = final_amount - deposit_amount),
     CONSTRAINT CK_invoice_Status CHECK (status IN ('UNPAID', 'PAID', 'CANCELLED')),
+    CONSTRAINT UQ_invoice_room_booking UNIQUE (room_booking_id),
     CONSTRAINT FK_invoice_User FOREIGN KEY (user_id) REFERENCES dbo.[User](user_id) ON DELETE NO ACTION,
     CONSTRAINT FK_invoice_room_booking FOREIGN KEY (room_booking_id) REFERENCES dbo.room_booking(booking_id) ON DELETE NO ACTION
 );
@@ -358,6 +378,33 @@ CREATE INDEX IX_spa_booking_Therapist ON dbo.spa_booking(therapist_id);
 CREATE INDEX IX_food_order_User ON dbo.food_order(user_id);
 CREATE INDEX IX_invoice_Booking ON dbo.invoice(room_booking_id);
 
+-- Performance tuning indexes on foreign keys
+CREATE INDEX IX_refresh_token_User ON dbo.refresh_token(user_id);
+CREATE INDEX IX_work_schedule_User ON dbo.work_schedule(staff_id);
+CREATE INDEX IX_room_room_type ON dbo.room(room_type_id);
+CREATE INDEX IX_room_booking_Package ON dbo.room_booking(package_id);
+CREATE INDEX IX_room_booking_detail_Booking ON dbo.room_booking_detail(booking_id);
+CREATE INDEX IX_room_booking_detail_Room ON dbo.room_booking_detail(room_id);
+CREATE INDEX IX_room_guest_declaration_Detail ON dbo.room_guest_declaration(booking_detail_id);
+CREATE INDEX IX_package_spa_limit_Package ON dbo.package_spa_limit(package_id);
+CREATE INDEX IX_package_spa_limit_Spa ON dbo.package_spa_limit(spa_id);
+CREATE INDEX IX_spa_booking_User ON dbo.spa_booking(user_id);
+CREATE INDEX IX_spa_booking_RoomBooking ON dbo.spa_booking(room_booking_id);
+CREATE INDEX IX_spa_booking_SpaService ON dbo.spa_booking(spa_id);
+CREATE INDEX IX_spa_booking_TreatmentRoom ON dbo.spa_booking(treatment_room_id);
+CREATE INDEX IX_cart_item_User ON dbo.cart_item(user_id);
+CREATE INDEX IX_cart_item_RoomType ON dbo.cart_item(room_type_id);
+CREATE INDEX IX_cart_item_Spa ON dbo.cart_item(spa_id);
+CREATE INDEX IX_cart_item_Food ON dbo.cart_item(food_id);
+CREATE INDEX IX_package_food_limit_Package ON dbo.package_food_limit(package_id);
+CREATE INDEX IX_package_food_limit_Food ON dbo.package_food_limit(food_id);
+CREATE INDEX IX_food_order_RoomBooking ON dbo.food_order(room_booking_id);
+CREATE INDEX IX_food_order_detail_Order ON dbo.food_order_detail(order_id);
+CREATE INDEX IX_food_order_detail_Food ON dbo.food_order_detail(food_id);
+CREATE INDEX IX_invoice_User ON dbo.invoice(user_id);
+CREATE INDEX IX_blog_Author ON dbo.blog(author_id);
+CREATE INDEX IX_feedback_User ON dbo.feedback(user_id);
+
 GO
 
 -- =========================================================================
@@ -371,7 +418,8 @@ INSERT INTO dbo.[User] (email, password_hash, full_name, phone, id_passport_encr
 ('therapist1@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Bác Sĩ Hải - Trị Liệu', '0912345678', 'U2FsdGVkX19rN0g3YjhkOTM0OGRlM2Qx', 'THERAPIST', 'ACTIVE'),
 ('chef@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Bếp Trưởng', '0987654321', 'U2FsdGVkX1+zNTRjMmVkNDhjOGE5MmEx', 'CHEF', 'ACTIVE'),
 ('guest1@gmail.com', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Khách Hàng', '0933333333', 'U2FsdGVkX1+1MGZhYjI5ZGNkYThmMDEx', 'CUSTOMER', 'ACTIVE'),
-('guest2@gmail.com', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Minh Châu', '0944444444', 'U2FsdGVkX1/bNzU0MDNkZWEwOGYxZTIz', 'CUSTOMER', 'ACTIVE');
+('guest2@gmail.com', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Minh Châu', '0944444444', 'U2FsdGVkX1/bNzU0MDNkZWEwOGYxZTIz', 'CUSTOMER', 'ACTIVE'),
+('guest3@gmail.com', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Nam Anh', '0955555555', NULL, 'CUSTOMER', 'ACTIVE');
 
 -- 4.2 Insert Medical Profiles (Decree 356/2025 Explicit consent signed)
 INSERT INTO dbo.medical_profile (user_id, physical_condition_encrypted, food_allergies_encrypted, explicit_consent_signed) VALUES
@@ -467,15 +515,97 @@ INSERT INTO dbo.food_order_detail (order_id, food_id, quantity, price_at_order, 
 (2, 3, 1, 95000.00, NULL, 0); -- Extra charge
 
 -- 4.19 Insert Invoices (AHLEI Folio calculated upon check-out)
--- Note: guest 5 is currently booked, invoice will be calculated on check-out. Let's record a mock invoice for an earlier past guest.
-INSERT INTO dbo.invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, status, vnpay_tran_id, payment_time) VALUES
-(5, 1, 12500000.00, 0.00, 320000.00, 1282000.00, 14102000.00, 'UNPAID', NULL, NULL);
+-- Booking 1 uses package base price (12.5M), not the physical villa line item alone.
+INSERT INTO dbo.invoice (
+    user_id,
+    room_booking_id,
+    room_subtotal,
+    spa_subtotal,
+    food_subtotal,
+    tax_and_fees,
+    final_amount,
+    deposit_amount,
+    amount_due,
+    status,
+    vnpay_tran_id,
+    payment_time
+) VALUES
+(5, 1, 12500000.00, 0.00, 320000.00, 1282000.00, 14102000.00, 3750000.00, 10352000.00, 'UNPAID', NULL, NULL);
+
+-- 4.19.1 Payment calculation verification queries
+-- Expected booking 1: room=12,500,000; spa=0; food=320,000; tax=1,282,000; final=14,102,000; due=10,352,000.
+-- Expected booking 2: room=9,000,000; spa=1,500,000; food=415,000; tax=1,091,500; final=12,006,500; due=9,306,500.
+SELECT
+    b.booking_id,
+    CASE
+        WHEN b.package_id IS NOT NULL THEN p.base_price
+        ELSE COALESCE(room_charge.room_subtotal, 0)
+    END AS expected_room_subtotal,
+    COALESCE(spa_charge.spa_subtotal, 0) AS expected_spa_subtotal,
+    COALESCE(food_charge.food_subtotal, 0) AS expected_food_subtotal,
+    (
+        CASE
+            WHEN b.package_id IS NOT NULL THEN p.base_price
+            ELSE COALESCE(room_charge.room_subtotal, 0)
+        END
+        + COALESCE(spa_charge.spa_subtotal, 0)
+        + COALESCE(food_charge.food_subtotal, 0)
+    ) * 0.10 AS expected_tax_and_fees,
+    (
+        CASE
+            WHEN b.package_id IS NOT NULL THEN p.base_price
+            ELSE COALESCE(room_charge.room_subtotal, 0)
+        END
+        + COALESCE(spa_charge.spa_subtotal, 0)
+        + COALESCE(food_charge.food_subtotal, 0)
+    ) * 1.10 AS expected_final_amount,
+    b.total_deposit AS expected_deposit_amount,
+    (
+        (
+            CASE
+                WHEN b.package_id IS NOT NULL THEN p.base_price
+                ELSE COALESCE(room_charge.room_subtotal, 0)
+            END
+            + COALESCE(spa_charge.spa_subtotal, 0)
+            + COALESCE(food_charge.food_subtotal, 0)
+        ) * 1.10
+    ) - b.total_deposit AS expected_amount_due
+FROM dbo.room_booking b
+LEFT JOIN dbo.retreat_package p ON p.package_id = b.package_id
+OUTER APPLY (
+    SELECT SUM(
+        d.price_at_booking * DATEDIFF(day, b.check_in_date, b.check_out_date)
+    ) AS room_subtotal
+    FROM dbo.room_booking_detail d
+    WHERE d.booking_id = b.booking_id
+) room_charge
+OUTER APPLY (
+    SELECT SUM(price_at_booking) AS spa_subtotal
+    FROM dbo.spa_booking s
+    WHERE s.room_booking_id = b.booking_id
+      AND s.is_package_included = 0
+      AND s.status IN ('CONFIRMED', 'COMPLETED')
+) spa_charge
+OUTER APPLY (
+    SELECT SUM(od.quantity * od.price_at_order) AS food_subtotal
+    FROM dbo.food_order fo
+    INNER JOIN dbo.food_order_detail od ON od.order_id = fo.order_id
+    WHERE fo.room_booking_id = b.booking_id
+      AND od.is_package_included = 0
+      AND fo.status IN ('READY', 'DELIVERED')
+) food_charge;
 
 -- 4.20 Insert Blogs
 INSERT INTO dbo.blog (author_id, title, content, status) VALUES
 (1, N'Lợi ích trị liệu của việc tắm lá thuốc Dao Đỏ', N'Tắm lá thuốc người Dao Đỏ là một nét văn hóa y học bản địa đặc sắc, giúp lưu thông tuần hoàn máu, hỗ trợ điều trị đau nhức xương khớp và hồi phục sức khỏe nhanh chóng...', 'PUBLISHED');
 
--- 4.21 Insert Feedback
+-- 4.21 Insert Cart Items (Polymorphic shopping cart demo)
+INSERT INTO dbo.cart_item (user_id, room_type_id, spa_id, food_id, quantity) VALUES
+(5, 2, NULL, NULL, 1), -- Guest 5 has Vip Villa (room_type 2) in cart
+(5, NULL, 1, NULL, 1), -- Guest 5 has Hot Volcanic Stone Massage (spa 1) in cart
+(5, NULL, NULL, 2, 2); -- Guest 5 has 2 portions of Ginseng Chicken Soup (food 2) in cart
+
+-- 4.22 Insert Feedback
 INSERT INTO dbo.feedback (user_id, room_booking_id, rating, comment, is_toxic) VALUES
 (5, 1, 5, N'Dịch vụ nghỉ dưỡng trị liệu tuyệt vời! Đội ngũ nhân viên y tế chu đáo, thực đơn sạch sẽ và chuyên sâu.', 0);
 
