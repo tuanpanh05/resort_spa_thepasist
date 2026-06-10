@@ -1,17 +1,71 @@
-import React from "react";
-import { Calendar, Flower2, Armchair, ChevronDown } from "lucide-react";
+import React, { useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import Modal from "./ui/Modal";
 import heroBg from "../assets/hero_bg.png";
 
 export default function Hero() {
-  const handleScroll = () => {
-    const nextSection = document.getElementById("philosophy");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    interest: "spa",
+    message: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-    if (nextSection) {
-      nextSection.scrollIntoView({
-        behavior: "smooth",
-      });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const newErrors = {};
+    if (!formData.fullName.trim()) newErrors.fullName = "Vui lòng nhập họ và tên.";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Vui lòng nhập số điện thoại.";
+    } else if (!/^[0-9+-\s]{9,12}$/.test(formData.phone)) {
+      newErrors.phone = "Số điện thoại không đúng định dạng.";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "Vui lòng nhập địa chỉ email.";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Địa chỉ email không hợp lệ.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsLoading(true);
+    // Simulate API request
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsSubmitted(true);
+    }, 1500);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsSubmitted(false);
+    setFormData({
+      fullName: "",
+      phone: "",
+      email: "",
+      interest: "spa",
+      message: "",
+    });
+    setErrors({});
+  };
+
   return (
     <section
       id="home"
@@ -28,7 +82,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-hero-overlay" />
 
       {/* Content */}
-      <div className="relative max-w-5xl mx-auto px-6 sm:px-8 text-center text-white z-10 pt-32">
+      <div className="relative max-w-5xl mx-auto px-6 sm:px-8 text-center text-white z-10 pt-32 font-sans">
         <span className="block text-xs sm:text-sm font-semibold tracking-[0.25em] text-primary-200 uppercase mb-6 animate-fade-in">
           Khu Nghỉ Dưỡng Trị Liệu Thiên Nhiên
         </span>
@@ -46,50 +100,172 @@ export default function Hero() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-6 animate-slide-up">
           <a
-            href="#booking"
+            href="/dat-lich"
             className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-xs font-semibold tracking-widest bg-white text-primary-950 hover:bg-white/90 transition-all duration-300 uppercase cursor-pointer"
           >
             Đặt lịch trải nghiệm
           </a>
-          <a
-            href="#services"
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-xs font-semibold tracking-widest border border-white/40 text-white hover:bg-white/10 transition-all duration-300 uppercase"
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-xs font-semibold tracking-widest border border-white/40 text-white hover:bg-white/10 transition-all duration-300 uppercase cursor-pointer bg-transparent"
           >
             Tìm hiểu dịch vụ
-          </a>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div
-          onClick={handleScroll}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/50 text-[10px] tracking-[0.3em] uppercase cursor-pointer hover:text-white transition-colors duration-200"
-        >
-          {" "}
-          <span className="mb-2">Cuộn xuống</span>
-          <ChevronDown className="h-4 w-4" />
+          </button>
         </div>
       </div>
-    </section>
-  );
-}
 
-// Simple Helper Leaf Icon for this file
-function Leaf(props) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 2 8a7 7 0 0 1-10 10Z" />
-      <path d="M9.8 6.1C10.5 9 12 11.5 15 13" />
-    </svg>
+      {/* Consultation Request Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title="Yêu Cầu Tư Vấn Dịch Vụ"
+      >
+        {isSubmitted ? (
+          <div className="text-center py-6 px-4 animate-fade-in font-sans">
+            <div className="inline-flex p-3 bg-primary-100 text-primary-800 rounded-full mb-4">
+              <CheckCircle2 className="h-10 w-10" />
+            </div>
+            <h4 className="font-serif text-lg font-bold text-sage-900 mb-2">
+              Gửi Yêu Cầu Thành Công!
+            </h4>
+            <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed mb-6">
+              Cảm ơn quý khách **{formData.fullName}** đã đăng ký. Đội ngũ chuyên viên tư vấn trị liệu của Ngũ Sơn Resort sẽ liên hệ hỗ trợ bạn qua SĐT **{formData.phone}** trong vòng 15 phút.
+            </p>
+            <button
+              onClick={handleCloseModal}
+              className="px-6 py-2 bg-primary-800 text-white hover:bg-primary-900 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer"
+            >
+              Đóng hộp thoại
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs sm:text-sm text-sage-900">
+            <p className="text-[11px] text-sage-500 font-light leading-relaxed">
+              Vui lòng điền thông tin bên dưới để đăng ký nhận tư vấn lộ trình chăm sóc sức khỏe cá nhân hóa miễn phí.
+            </p>
+            
+            {/* Full Name */}
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-sage-800 mb-1.5">
+                Họ và tên <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Nguyễn Văn A"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2.5 bg-sage-50/50 border rounded-none text-sage-900 focus:outline-none focus:ring-1 focus:ring-primary-450 ${
+                  errors.fullName ? "border-red-400" : "border-primary-200/50"
+                }`}
+              />
+              {errors.fullName && (
+                <span className="text-[10px] text-red-500 font-normal mt-1 block">{errors.fullName}</span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Phone */}
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-sage-800 mb-1.5">
+                  Số điện thoại <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="0901234567"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2.5 bg-sage-50/50 border rounded-none text-sage-900 focus:outline-none focus:ring-1 focus:ring-primary-450 ${
+                    errors.phone ? "border-red-400" : "border-primary-200/50"
+                  }`}
+                />
+                {errors.phone && (
+                  <span className="text-[10px] text-red-500 font-normal mt-1 block">{errors.phone}</span>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-sage-800 mb-1.5">
+                  Địa chỉ Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="khach@gmail.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2.5 bg-sage-50/50 border rounded-none text-sage-900 focus:outline-none focus:ring-1 focus:ring-primary-450 ${
+                    errors.email ? "border-red-400" : "border-primary-200/50"
+                  }`}
+                />
+                {errors.email && (
+                  <span className="text-[10px] text-red-500 font-normal mt-1 block">{errors.email}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Interest Selection */}
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-sage-800 mb-1.5">
+                Dịch vụ cần tư vấn chính
+              </label>
+              <select
+                name="interest"
+                value={formData.interest}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2.5 bg-sage-50/50 border border-primary-200/50 text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-450 appearance-none font-semibold"
+              >
+                <option value="spa">Spa & Trị Liệu Thảo Dược</option>
+                <option value="yoga">Yoga & Thiền Định Phục Hồi</option>
+                <option value="physio">Vật Lý Trị Liệu Cột Sống</option>
+                <option value="meals">Ẩm Thực Dinh Dưỡng Thực Dưỡng</option>
+                <option value="general">Tư vấn chọn Villa & Đặt phòng</option>
+              </select>
+            </div>
+
+            {/* Message Area */}
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-sage-800 mb-1.5">
+                Nội dung câu hỏi / tình trạng sức khỏe cần lưu ý
+              </label>
+              <textarea
+                name="message"
+                placeholder="VD: Muốn đặt phòng nghỉ dưỡng kết hợp chữa đau vai gáy trị liệu..."
+                rows="3"
+                value={formData.message}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 bg-sage-50/50 border border-primary-200/50 text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-450 font-medium resize-none"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="pt-2 flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-5 py-2.5 border border-primary-200 text-sage-700 hover:bg-sage-50 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer flex items-center"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-1.5 h-4 w-4" /> Đang gửi...
+                  </>
+                ) : (
+                  "Gửi yêu cầu"
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+    </section>
   );
 }

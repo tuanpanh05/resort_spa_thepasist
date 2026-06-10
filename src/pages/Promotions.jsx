@@ -65,7 +65,7 @@ export default function Promotions() {
 
               <div className="mt-8 pt-4 border-t border-primary-50">
                 <a
-                  href="/#booking"
+                  href="/dat-lich"
                   className="w-full inline-flex items-center justify-center py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-900 text-white hover:bg-primary-850 transition-all shadow-sm"
                 >
                   Nhận báo giá ưu đãi

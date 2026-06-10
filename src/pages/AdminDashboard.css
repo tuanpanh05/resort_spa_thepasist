@@ -5,13 +5,7 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: #fafbfa;
-  font-family:
-    "Manrope",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #2c372c;
   padding-top: 0;
   position: relative;
@@ -69,7 +63,6 @@
 }
 
 .logo-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 19px;
   font-weight: 700;
   color: #ffffff;
@@ -254,7 +247,6 @@
 }
 
 .header-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 26px;
   font-weight: 700;
   color: #192219;
@@ -381,7 +373,6 @@
 }
 
 .chart-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: #192219;
@@ -480,7 +471,6 @@
 }
 
 .warnings-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: #192219;
@@ -889,7 +879,6 @@
 }
 
 .room-type-text {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 14px;
   font-weight: 700;
   color: #192219;
@@ -956,7 +945,6 @@
 }
 
 .support-panel-title {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: #192219;
@@ -1115,7 +1103,6 @@
 }
 
 .modal-title-row {
-  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: #192219;

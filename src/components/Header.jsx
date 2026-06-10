@@ -121,6 +121,7 @@ export default function Header() {
             })}
           </nav>
 
+<<<<<<< HEAD
           {/* Right Side: Auth buttons or user menu */}
           <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
             {isLoggedIn ? (
@@ -168,6 +169,36 @@ export default function Header() {
                 </Link>
               </>
             )}
+=======
+          {/* Right Side: Separate Login / Register / Book buttons */}
+          <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
+            <Link
+              to="/dang-nhap"
+              className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+              }`}
+            >
+              Đăng nhập
+            </Link>
+            <Link
+              to="/dang-ky"
+              className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+              }`}
+            >
+              Đăng ký
+            </Link>
+            <Link
+              to="/dat-lich"
+              className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${
+                showGlass
+                  ? "bg-primary-800 hover:bg-primary-900 text-white"
+                  : "bg-white hover:bg-white/95 text-primary-950"
+              }`}
+            >
+              Đặt lịch
+            </Link>
+>>>>>>> c79004c4877ab5e16abda75f0cb2b029d32c5b3e
           </div>
 
           {/* Mobile Menu Button */}
@@ -220,19 +251,28 @@ export default function Header() {
             );
           })}
           <div className="pt-4 border-t border-primary-50 flex flex-col space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                to="/dang-nhap"
+                onClick={() => setIsOpen(false)}
+                className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/dang-ky"
+                onClick={() => setIsOpen(false)}
+                className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
+              >
+                Đăng ký
+              </Link>
+            </div>
             <Link
-              to="/dang-nhap"
-              onClick={() => setIsOpen(false)}
-              className="w-full text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200"
-            >
-              Đăng nhập
-            </Link>
-            <Link
-              to="/dang-ky"
+              to="/dat-lich"
               onClick={() => setIsOpen(false)}
               className="w-full text-center py-2.5 rounded-none text-sm font-medium bg-primary-800 hover:bg-primary-900 text-white shadow-sm transition-all duration-200"
             >
-              Đăng ký
+              Đặt lịch trải nghiệm
             </Link>
           </div>
         </div>

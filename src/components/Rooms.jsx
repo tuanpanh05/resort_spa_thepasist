@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Eye, Coffee, Maximize, User, ArrowRight } from "lucide-react";
+import { Eye, Coffee, Maximize, User, ArrowRight, Leaf } from "lucide-react";
 
 import { mainRoomsList as rooms } from "../mockData";
 
@@ -17,6 +17,10 @@ export default function Rooms() {
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-sage-950 mt-4 leading-tight">
               Nơi Trú Ẩn Yên Bình Giữa Đại Ngàn
             </h2>
+            <div className="flex items-center space-x-3 mt-4">
+              <Leaf className="h-3.5 w-3.5 text-primary-600/80" />
+              <div className="h-[1px] w-12 bg-gradient-to-r from-primary-300 to-transparent" />
+            </div>
           </div>
           <p className="text-sage-700 font-light text-sm sm:text-base max-w-md mt-6 md:mt-0 leading-relaxed">
             Mỗi căn phòng đều được xây dựng từ vật liệu tự nhiên như gỗ tuyết
@@ -139,7 +143,7 @@ export default function Rooms() {
                       </span>
                     </div>
                     <a
-                      href="#booking"
+                      href="/dat-lich"
                       className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 rounded-none text-xs font-semibold tracking-widest bg-primary-800 text-white hover:bg-primary-900 transition-all duration-300 uppercase cursor-pointer"
                     >
                       Liên hệ báo giá
