@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-# Logs
+# ===== Node / Frontend =====
 logs
 *.log
 npm-debug.log*
@@ -8,35 +7,27 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+node_modules/
+dist/
+dist-ssr/
 *.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-=======
+
+# ===== Java / Maven / Spring Boot =====
 # Compiled class file
 *.class
 
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.nar
@@ -45,14 +36,26 @@ dist-ssr
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Maven build output
+Backend/target/
+target/
+
+# virtual machine crash logs
 hs_err_pid*
 replay_pid*
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
 # NetBeans specific
 nbproject/private/
 build/
 nbbuild/
-dist/
 nbdist/
 .nb-gradle/
->>>>>>> eec0294fc0d9fe5043603ab739df4a2dc134e5db
+
+# ===== Vite cache =====
+node_modules/.vite/
