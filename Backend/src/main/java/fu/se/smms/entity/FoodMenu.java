@@ -29,4 +29,20 @@ public class FoodMenu {
 
     @Column(name = "dietary_tags", nullable = false)
     private String dietaryTags;
+
+    @Column(name = "is_today_menu", nullable = false)
+    @Builder.Default
+    private Boolean isTodayMenu = true;
+
+    @Column(name = "sold_out", nullable = false)
+    @Builder.Default
+    private Boolean soldOut = false;
+
+    @Column(name = "ingredients")
+    private String ingredients;
+
+    @Column(name = "enabled", nullable = false)
+    @Builder.Default
+    private Boolean enabled = true;
 }
+
