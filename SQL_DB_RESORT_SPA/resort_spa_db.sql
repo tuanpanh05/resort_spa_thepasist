@@ -64,8 +64,8 @@ CREATE TABLE dbo.[User] (
 CREATE TABLE dbo.medical_profile (
     profile_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL UNIQUE,
-    physical_condition_encrypted VARCHAR(MAX) NULL, -- Sensitive diagnosis details encrypted
-    food_allergies_encrypted VARCHAR(MAX) NULL, -- Allergy details encrypted
+    physical_condition_encrypted NVARCHAR(MAX) NULL, -- Sensitive diagnosis details encrypted
+    food_allergies_encrypted NVARCHAR(MAX) NULL, -- Allergy details encrypted
     explicit_consent_signed BIT NOT NULL DEFAULT 0, -- Decree 356/2025/ND-CP compliance flag
     updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
     
@@ -250,6 +250,10 @@ CREATE TABLE dbo.food_menu (
     description NVARCHAR(MAX) NOT NULL,
     price DECIMAL(15,2) NOT NULL, -- Retail price if ordered à la carte
     dietary_tags NVARCHAR(255) NOT NULL, -- e.g., 'Vegan, Keto, Gluten-Free'
+    is_today_menu BIT NOT NULL DEFAULT 1,
+    sold_out BIT NOT NULL DEFAULT 0,
+    ingredients NVARCHAR(MAX) NULL,
+    enabled BIT NOT NULL DEFAULT 1,
     
     CONSTRAINT CK_food_menu_Price CHECK (price >= 0)
 );
@@ -374,9 +378,11 @@ INSERT INTO dbo.[User] (email, password_hash, full_name, phone, id_passport_encr
 ('guest2@gmail.com', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Minh Châu', '0944444444', 'U2FsdGVkX1/bNzU0MDNkZWEwOGYxZTIz', 'CUSTOMER', 'ACTIVE');
 
 -- 4.2 Insert Medical Profiles (Decree 356/2025 Explicit consent signed)
+-- NOTE: food_allergies_encrypted uses English keywords in parentheses to avoid sqlcmd NVARCHAR encoding issues.
+-- AESUtil.decrypt() extracts the text inside parentheses; backend matching logic checks for 'peanut'/'seafood'.
 INSERT INTO dbo.medical_profile (user_id, physical_condition_encrypted, food_allergies_encrypted, explicit_consent_signed) VALUES
-(5, 'U2FsdGVkX19oQ1Z0M2o0U1hVdk82UT09 (Đau cột sống thắt lưng nhẹ)', 'U2FsdGVkX19MOG85TjBkNmJkWT09 (Dị ứng đậu phộng)', 1),
-(6, 'U2FsdGVkX19hdmRjMTIzNGE4Zjk4ZDAw (Căng thẳng thần kinh, mất ngủ)', 'U2FsdGVkX19zZGYzMjRhOGY5OGQwMDk4 (Dị ứng hải sản vỏ cứng)', 1);
+(5, N'U2FsdGVkX19oQ1Z0M2o0U1hVdk82UT09 (lower back pain)', N'U2FsdGVkX19MOG85TjBkNmJkWT09 (peanut)', 1),
+(6, N'U2FsdGVkX19hdmRjMTIzNGE4Zjk4ZDAw (stress and insomnia)', N'U2FsdGVkX19zZGYzMjRhOGY5OGQwMDk4 (seafood)', 1);
 
 -- 4.3 Insert Refresh Token
 INSERT INTO dbo.refresh_token (user_id, token, expires_at, used) VALUES
@@ -443,12 +449,12 @@ INSERT INTO dbo.spa_booking (user_id, room_booking_id, spa_id, therapist_id, tre
 (6, 2, 3, 3, 2, DATEADD(hour, 10, DATEADD(day, 3, GETDATE())), DATEADD(hour, 11, DATEADD(day, 3, GETDATE())), 'CONFIRMED', 1500000.00, 0); -- A-la-carte paying
 
 -- 4.15 Insert Food Menu
-INSERT INTO dbo.food_menu (dish_name, description, price, dietary_tags) VALUES
-(N'Organic Avocado Quinoa Salad', N'Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.', 180000.00, 'Vegan, Gluten-Free'),
-(N'Ginseng Chicken Soup', N'Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.', 320000.00, 'Keto, Healthy'),
-(N'Green Detox Juice', N'Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.', 95000.00, 'Vegan, Detox'),
-(N'Nấm nướng lá lốt cốt dừa', N'Nấm đùi gà cuộn lá lốt nướng than hoa, đậu phộng rang giòn.', 320000.00, 'Vegan, Peanut'),
-(N'Tôm rim tỏi ớt (Món mặn)', N'Tôm sú biển tươi rim tỏi ớt thơm lừng, giàu protein.', 390000.00, 'Healthy, Seafood');
+INSERT INTO dbo.food_menu (dish_name, description, price, dietary_tags, is_today_menu, sold_out) VALUES
+(N'Organic Avocado Quinoa Salad', N'Salad diem mach huu co voi bo sap cat lat, hat bi ngo va sot chanh mat ong.', 180000.00, 'Vegan, Gluten-Free', 1, 0),
+(N'Ginseng Chicken Soup', N'Canh ga ham sam va tao do bo trung ich khi, ho tro phuc hoi suc khoe.', 320000.00, 'Keto, Healthy', 1, 0),
+(N'Green Detox Juice', N'Nuoc ep giai doc gan tu can tay huu co, tao xanh, cai xoan va gung.', 95000.00, 'Vegan, Detox', 1, 0),
+(N'Nam nuong la lot cot dua', N'Nam dui ga cuon la lot nuong than hoa, dau phong rang gion.', 320000.00, 'Vegan, Peanut', 1, 0),
+(N'Tom rim toi ot (Mon man)', N'Tom su bien tuoi rim toi ot thom lung, giau protein.', 390000.00, 'Healthy, Seafood', 1, 0);
 
 -- 4.16 Insert Package Food Limits (detox package includes 1 detox juice per day and 1 avocado salad)
 INSERT INTO dbo.package_food_limit (package_id, food_id, quantity_per_day) VALUES
