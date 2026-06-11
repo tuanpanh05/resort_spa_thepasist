@@ -166,14 +166,14 @@ for /F "usebackq delims=" %%a in ("%MAVEN_PROJECTBASEDIR%\.mvn\jvm.config") do s
 
 :endReadAdditionalConfig
 
-for %%i in ("%MAVEN_HOME%"\boot\plexus-classworlds-*) do set "CLASSWORLDS_JAR=%%~i"
+for %%i in ("%MAVEN_HOME%"\boot\plexus-classworlds-*) do set CLASSWORLDS_JAR="%%i"
 set CLASSWORLDS_LAUNCHER=org.codehaus.plexus.classworlds.launcher.Launcher
 
 "%JAVACMD%" ^
   %JVM_CONFIG_MAVEN_PROPS% ^
   %MAVEN_OPTS% ^
   %MAVEN_DEBUG_OPTS% ^
-  -classpath "%CLASSWORLDS_JAR%" ^
+  -classpath %CLASSWORLDS_JAR% ^
   "-Dclassworlds.conf=%MAVEN_HOME%\bin\m2.conf" ^
   "-Dmaven.home=%MAVEN_HOME%" ^
   "-Dlibrary.jansi.path=%MAVEN_HOME%\lib\jansi-native" ^

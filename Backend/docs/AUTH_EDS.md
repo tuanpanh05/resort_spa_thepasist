@@ -4,11 +4,11 @@
 * **Document ID:** SMMS-AUTH-IMP-001
 * **Version:** 1.0
 * **Date:** 2026-06-11
-* **Status:** Draft
+* **Status:** Approved
 * **Document Owner:** Student 1 - Full-stack Engineer
-* **Author:** Codex - AI Architect & Student 1
+* **Author:** Hoang Tuan Anh
 * **DPO Sign-off:** [ ] Pending (Requires check for sensitive PII)
-* **Approved by:** Principal Architect
+* **Approved by:** Pham Anh Tuan
 * **Last Review:** 2026-06-11
 * **Based on EDS:** v2.0
 

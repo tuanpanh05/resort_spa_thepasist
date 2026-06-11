@@ -3,9 +3,9 @@
 * **Document ID:** SMMS-AUTH-TDD-001
 * **Version:** 1.0
 * **Date:** 2026-06-11
-* **Status:** Draft
+  * **Status:** Approved
 * **Standard:** ISO/IEC/IEEE 29119-3:2021 aligned
-* **Author:** Student 1 - Full-stack Engineer
+* **Author:** Pham Anh Tuan
 * **Classification:** Internal
 
 ---
