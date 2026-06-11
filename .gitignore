@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Logs
 logs
 *.log
@@ -23,7 +23,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-=======
+
 # Compiled class file
 *.class
 
@@ -55,4 +55,4 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
->>>>>>> eec0294fc0d9fe5043603ab739df4a2dc134e5db
+

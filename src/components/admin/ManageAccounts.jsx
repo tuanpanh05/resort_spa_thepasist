@@ -1,126 +1,338 @@
-import React, { useState } from "react";
-import { PlusCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { PlusCircle, RefreshCw, ShieldCheck, Ban, Trash2, Edit2, AlertTriangle } from "lucide-react";
 import SectionHeader from "../ui/SectionHeader";
 import Button from "../ui/Button";
-import AccountTable from "./AccountTable";
-import { AccountModalForm } from "./ModalForm";
+import { adminApi } from "../../api";
 
-export default function ManageAccounts({
-  accounts,
-  setAccounts,
-  handleToggleAccountStatus,
-  handleResetPassword,
-}) {
-  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
-  const [showEditAccountModal, setShowEditAccountModal] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState(null);
-  const [accountForm, setAccountForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    role: "Staff",
-    status: "Active",
-    department: "",
+const ROLE_OPTIONS = ["ADMIN", "STAFF", "THERAPIST", "CHEF", "RECEPTIONIST", "MANAGER"];
+const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BANNED"];
+
+const ROLE_BADGE = {
+  ADMIN: "bg-purple-100 text-purple-800",
+  STAFF: "bg-blue-100 text-blue-800",
+  THERAPIST: "bg-teal-100 text-teal-800",
+  CHEF: "bg-orange-100 text-orange-800",
+  RECEPTIONIST: "bg-sky-100 text-sky-800",
+  MANAGER: "bg-indigo-100 text-indigo-800",
+  GUEST: "bg-gray-100 text-gray-600",
+};
+
+const STATUS_BADGE = {
+  ACTIVE: "bg-green-100 text-green-800",
+  INACTIVE: "bg-yellow-100 text-yellow-800",
+  BANNED: "bg-red-100 text-red-800",
+};
+
+export default function ManageAccounts() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [formData, setFormData] = useState({
+    fullName: "", email: "", phone: "", password: "", role: "STAFF", status: "ACTIVE",
   });
+  const [saving, setSaving] = useState(false);
 
-  const triggerAddModal = () => {
-    setAccountForm({
-      name: "",
-      email: "",
-      phone: "",
-      role: "Staff",
-      status: "Active",
-      department: "",
-    });
-    setShowAddAccountModal(true);
-  };
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const triggerEditModal = (acc) => {
-    setSelectedAccount(acc);
-    setAccountForm({
-      name: acc.name,
-      email: acc.email,
-      phone: acc.phone,
-      role: acc.role,
-      status: acc.status,
-      department: acc.department || "",
-    });
-    setShowEditAccountModal(true);
-  };
-
-  const localSubmitCreate = (e) => {
-    e.preventDefault();
-    if (!accountForm.name || !accountForm.email || !accountForm.phone) {
-      alert("Vui lòng điền đầy đủ thông tin tài khoản.");
-      return;
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminApi.getAllUsers();
+      setUsers(data);
+    } catch (err) {
+      setError("Không thể tải danh sách tài khoản: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    const newAcc = {
-      id: `ACC-${Math.floor(100 + Math.random() * 900)}`,
-      ...accountForm,
-      dateCreated: new Date().toISOString().split("T")[0],
-    };
-    setAccounts((prev) => [...prev, newAcc]);
-    setShowAddAccountModal(false);
-    alert("Tài khoản mới đã được tạo thành công.");
   };
 
-  const localSubmitUpdate = (e) => {
+  const openCreateModal = () => {
+    setEditingUser(null);
+    setFormData({ fullName: "", email: "", phone: "", password: "", role: "STAFF", status: "ACTIVE" });
+    setShowModal(true);
+  };
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setFormData({ fullName: user.fullName, email: user.email, phone: user.phone || "", password: "", role: user.role, status: user.status });
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === selectedAccount.id ? { ...acc, ...accountForm } : acc,
-      ),
-    );
-    setShowEditAccountModal(false);
-    alert("Thông tin tài khoản đã được cập nhật.");
+    setSaving(true);
+    setError("");
+    try {
+      if (editingUser) {
+        // UC03: Update role and status
+        await adminApi.updateUser(editingUser.userId, formData.role, formData.status);
+      } else {
+        // UC03: Create new staff account
+        if (!formData.password || formData.password.length < 6) {
+          setError("Mật khẩu phải có ít nhất 6 ký tự.");
+          setSaving(false);
+          return;
+        }
+        await adminApi.createUser({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        }, formData.role);
+      }
+      setShowModal(false);
+      await fetchUsers();
+    } catch (err) {
+      setError(err.message || "Lưu thất bại.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleStatus = async (user) => {
+    const newStatus = user.status === "ACTIVE" ? "BANNED" : "ACTIVE";
+    const action = newStatus === "BANNED" ? "khóa" : "mở khóa";
+    if (!window.confirm(`Bạn có chắc chắn muốn ${action} tài khoản ${user.fullName}?`)) return;
+    try {
+      await adminApi.updateUser(user.userId, user.role, newStatus);
+      await fetchUsers();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (user) => {
+    if (!window.confirm(`Xóa vĩnh viễn tài khoản "${user.fullName}" (${user.email})? Hành động này không thể hoàn tác.`)) return;
+    try {
+      await adminApi.deleteUser(user.userId);
+      await fetchUsers();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-left">
-      {/* Header controls */}
+    <div className="space-y-6 animate-fade-in">
       <SectionHeader
         title="Phân Phối & Giám Sát Tài Khoản"
-        description="Tạo tài khoản mới, phân chia cấp bậc quyền hạn, khóa hoặc mở khóa tài khoản thành viên."
+        description="Tạo tài khoản nhân sự mới, phân chia quyền hạn (RBAC) và giám sát trạng thái tài khoản."
       >
-        <Button
-          onClick={triggerAddModal}
-          variant="primary"
-          className="flex items-center space-x-1.5 w-full sm:w-auto"
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span>Tạo Tài Khoản Mới</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={fetchUsers} variant="outline" className="flex items-center gap-1.5">
+            <RefreshCw className="h-4 w-4" />
+            <span>Tải lại</span>
+          </Button>
+          <Button onClick={openCreateModal} variant="primary" className="flex items-center gap-1.5">
+            <PlusCircle className="h-4 w-4" />
+            <span>Tạo Tài Khoản Mới</span>
+          </Button>
+        </div>
       </SectionHeader>
 
-      {/* Account List view */}
-      <AccountTable
-        accounts={accounts}
-        triggerEditModal={triggerEditModal}
-        handleToggleAccountStatus={handleToggleAccountStatus}
-        handleResetPassword={handleResetPassword}
-      />
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
 
-      {/* Add Account Modal */}
-      <AccountModalForm
-        isOpen={showAddAccountModal}
-        onClose={() => setShowAddAccountModal(false)}
-        title="Tạo Tài Khoản Nhân Sự Mới"
-        formState={accountForm}
-        setFormState={setAccountForm}
-        onSubmit={localSubmitCreate}
-        isEdit={false}
-      />
+      {loading ? (
+        <div className="flex justify-center items-center h-48">
+          <div className="w-8 h-8 border-4 border-primary-800 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-sm border border-primary-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-primary-50 border-b border-primary-100">
+                <tr>
+                  <th className="text-left py-3 px-4 font-semibold text-sage-700 text-xs uppercase tracking-wider">ID</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sage-700 text-xs uppercase tracking-wider">Họ tên</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sage-700 text-xs uppercase tracking-wider">Email</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sage-700 text-xs uppercase tracking-wider">Vai trò</th>
+                  <th className="text-left py-3 px-4 font-semibold text-sage-700 text-xs uppercase tracking-wider">Trạng thái</th>
+                  <th className="text-center py-3 px-4 font-semibold text-sage-700 text-xs uppercase tracking-wider">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-primary-50">
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-12 text-sage-400 text-sm">
+                      Chưa có tài khoản nhân sự nào.
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.userId} className="hover:bg-primary-50/30 transition-colors">
+                      <td className="py-3 px-4 text-sage-500 text-xs font-mono">#{user.userId}</td>
+                      <td className="py-3 px-4">
+                        <p className="font-semibold text-sage-900">{user.fullName}</p>
+                        <p className="text-xs text-sage-500">{user.phone || "—"}</p>
+                      </td>
+                      <td className="py-3 px-4 text-sage-600">{user.email}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${ROLE_BADGE[user.role] || "bg-gray-100 text-gray-600"}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${STATUS_BADGE[user.status] || ""}`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => openEditModal(user)}
+                            title="Chỉnh sửa vai trò"
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            title={user.status === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                            className={`p-1.5 rounded-lg transition cursor-pointer ${user.status === "ACTIVE" ? "text-amber-500 hover:bg-amber-50" : "text-green-500 hover:bg-green-50"}`}
+                          >
+                            {user.status === "ACTIVE" ? <Ban className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user)}
+                            title="Xóa tài khoản"
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-      {/* Edit Account Modal */}
-      <AccountModalForm
-        isOpen={showEditAccountModal}
-        onClose={() => setShowEditAccountModal(false)}
-        title={`Chỉnh Sửa Tài Khoản: ${selectedAccount?.id}`}
-        formState={accountForm}
-        setFormState={setAccountForm}
-        onSubmit={localSubmitUpdate}
-        isEdit={true}
-      />
+      {/* Create / Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="font-serif text-xl font-bold text-sage-900 mb-6">
+              {editingUser ? `Chỉnh sửa: ${editingUser.fullName}` : "Tạo Tài Khoản Nhân Sự Mới"}
+            </h2>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!editingUser && (
+                <>
+                  <div>
+                    <label className="text-xs font-semibold text-sage-700 uppercase tracking-wider block mb-1">Họ và Tên *</label>
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      required
+                      className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800"
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-sage-700 uppercase tracking-wider block mb-1">Email *</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                      className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800"
+                      placeholder="staff@nguson.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-sage-700 uppercase tracking-wider block mb-1">Số Điện Thoại</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800"
+                      placeholder="0901234567"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-sage-700 uppercase tracking-wider block mb-1">Mật Khẩu *</label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800"
+                      placeholder="Tối thiểu 6 ký tự"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="text-xs font-semibold text-sage-700 uppercase tracking-wider block mb-1">Vai Trò (Role) *</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800 bg-white"
+                >
+                  {ROLE_OPTIONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-sage-500 mt-1">
+                  RBAC: Chef chỉ xem dị ứng thực phẩm | Therapist chỉ xem tình trạng thể lý | Receptionist không xem dữ liệu sức khỏe.
+                </p>
+              </div>
+
+              {editingUser && (
+                <div>
+                  <label className="text-xs font-semibold text-sage-700 uppercase tracking-wider block mb-1">Trạng Thái</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800 bg-white"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowModal(false); setError(""); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-sage-300 text-sage-700 hover:bg-sage-50 transition cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (editingUser ? "Cập Nhật" : "Tạo Tài Khoản")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

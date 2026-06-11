@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Leaf } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Leaf, Heart, LogOut } from "lucide-react";
 
 const navItems = [
   { label: "Trang chủ", href: "/" },
@@ -15,6 +15,16 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("token");
+  const userFullName = localStorage.getItem("userFullName") || "";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userFullName");
+    localStorage.removeItem("userRole");
+    navigate("/dang-nhap");
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -111,24 +121,50 @@ export default function Header() {
             })}
           </nav>
 
-          {/* Right Side: Separate Login / Register / Book buttons */}
+          {/* Right Side: Auth buttons or user menu */}
           <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
-            <Link
-              to="/dang-nhap"
-              className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-              }`}
-            >
-              Đăng nhập
-            </Link>
-            <Link
-              to="/dang-ky"
-              className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-              }`}
-            >
-              Đăng ký
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/ho-so-suc-khoe"
+                  className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  <Heart className="h-3.5 w-3.5" />
+                  Hồ Sơ Sức Khỏe
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 cursor-pointer ${
+                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/dang-nhap"
+                  className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  to="/dang-ky"
+                  className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
+                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  Đăng ký
+                </Link>
+              </>
+            )}
+            
             <Link
               to="/dat-lich"
               className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${

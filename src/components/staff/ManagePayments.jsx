@@ -1,19 +1,36 @@
 import React, { useState } from "react";
 import { CreditCard, Printer, X } from "lucide-react";
+import { paymentApi } from "../../api";
 
 export default function ManagePayments({ payments, setPayments }) {
   const [showInvoicePrintModal, setShowInvoicePrintModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const handleConfirmCashPayment = (invoiceId) => {
-    setPayments((prev) =>
-      prev.map((p) =>
-        p.id === invoiceId
-          ? { ...p, status: "Paid", method: "Tiền mặt tại quầy" }
-          : p,
-      ),
-    );
-    alert(`Đã xác nhận thanh toán tiền mặt cho hóa đơn ${invoiceId}.`);
+    if (!window.confirm(`Xác nhận thanh toán tiền mặt cho hóa đơn #${invoiceId}?`)) {
+      return;
+    }
+
+    paymentApi.markCashPayment(invoiceId)
+      .then((updatedInvoice) => {
+        paymentApi.performCheckout(invoiceId)
+          .then(() => {
+            setPayments((prev) =>
+              prev.map((p) =>
+                p.id === invoiceId
+                  ? { ...p, status: "Paid", method: "Tiền mặt tại quầy" }
+                  : p
+              )
+            );
+            alert(`Đã xác nhận thanh toán tiền mặt và hoàn tất check-out cho hóa đơn #${invoiceId}. Phòng đã chuyển sang trạng thái DIRTY (đang dọn dẹp).`);
+          })
+          .catch((err) => {
+            alert(`Thanh toán tiền mặt thành công nhưng gặp lỗi khi làm thủ tục Check-out: ${err.message}`);
+          });
+      })
+      .catch((err) => {
+        alert(`Không thể thực hiện thanh toán tiền mặt: ${err.message}`);
+      });
   };
 
   const handlePrintInvoice = (invoice) => {

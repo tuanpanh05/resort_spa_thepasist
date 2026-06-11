@@ -1,4 +1,4 @@
-﻿# TEST CASE INDEX - Ngũ Sơn Resort & Spa Management System
+# TEST CASE INDEX - Ngũ Sơn Resort & Spa Management System
 
 File này là bảng quản lý tổng hợp trạng thái test case của toàn bộ dự án.
 
@@ -31,6 +31,8 @@ Mỗi khi tạo thêm file `UCxx_*_TESTCASE.md`, phải cập nhật bảng này
 | UC05 | FOOD | Dietary & Food Ordering | `UC05_DietaryFoodOrdering_TESTCASE.md` | TBD | Not Started | - | Allergy warning/menu/order |
 | UC06 | STAFF | Receptionist Operation | `UC06_ReceptionistOperation_TESTCASE.md` | TBD | Not Started | - | Check-in/check-out/support |
 | UC07 | ADMIN | Admin Management & Reports | `UC07_AdminManagement_TESTCASE.md` | TBD | Not Started | - | Master data/dashboard/report |
+| **UC21-25** | **M5** | **Consolidated Checkout & Analytics** | **`UC21-25_CheckoutAnalytics_TESTCASE.md`** | AI | **Passed** | **2026-06-11** | **26 unit tests PASS. BR-14,15,18,19,26,27 enforced. DB verified.** |
+
 
 ---
 

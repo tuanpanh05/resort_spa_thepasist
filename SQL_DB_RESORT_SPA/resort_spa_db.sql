@@ -19,6 +19,7 @@ GO
 
 IF OBJECT_ID('dbo.feedback', 'U') IS NOT NULL DROP TABLE dbo.feedback;
 IF OBJECT_ID('dbo.blog', 'U') IS NOT NULL DROP TABLE dbo.blog;
+IF OBJECT_ID('dbo.payment_transaction_log', 'U') IS NOT NULL DROP TABLE dbo.payment_transaction_log;
 IF OBJECT_ID('dbo.invoice', 'U') IS NOT NULL DROP TABLE dbo.invoice;
 IF OBJECT_ID('dbo.food_order_detail', 'U') IS NOT NULL DROP TABLE dbo.food_order_detail;
 IF OBJECT_ID('dbo.food_order', 'U') IS NOT NULL DROP TABLE dbo.food_order;
@@ -340,6 +341,26 @@ CREATE TABLE dbo.invoice (
     CONSTRAINT FK_invoice_User FOREIGN KEY (user_id) REFERENCES dbo.[User](user_id) ON DELETE NO ACTION,
     CONSTRAINT FK_invoice_room_booking FOREIGN KEY (room_booking_id) REFERENCES dbo.room_booking(booking_id) ON DELETE NO ACTION
 );
+GO
+
+-- 2.20b [payment_transaction_log] Table (BR-26: Transaction Audit Trail)
+CREATE TABLE dbo.payment_transaction_log (
+    log_id              INT IDENTITY(1,1) PRIMARY KEY,
+    invoice_id          INT NOT NULL,
+    payment_method      VARCHAR(50)     NOT NULL,  -- 'VNPAY' | 'CASH' | 'STRIPE' | 'PAYPAL'
+    amount              DECIMAL(15,2)   NOT NULL,
+    gateway_ref         VARCHAR(100)    NULL,       -- VNPay transaction ID (null for CASH)
+    response_code       VARCHAR(10)     NULL,       -- '00' = success, VNPay codes
+    status              VARCHAR(20)     NOT NULL,   -- 'PAID' | 'FAILED' | 'REFUNDED'
+    transaction_time    DATETIME2       NOT NULL DEFAULT GETDATE(),
+    client_ip           VARCHAR(45)     NULL,
+
+    CONSTRAINT CK_ptl_Method CHECK (payment_method IN ('VNPAY', 'CASH', 'STRIPE', 'PAYPAL')),
+    CONSTRAINT CK_ptl_Status CHECK (status IN ('PAID', 'FAILED', 'REFUNDED')),
+    CONSTRAINT CK_ptl_Amount CHECK (amount >= 0),
+    CONSTRAINT FK_ptl_invoice FOREIGN KEY (invoice_id) REFERENCES dbo.invoice(invoice_id) ON DELETE NO ACTION
+);
+GO
 
 -- 2.21 [blog] Table (Promotional articles written by managers)
 CREATE TABLE dbo.blog (
@@ -353,12 +374,13 @@ CREATE TABLE dbo.blog (
     CONSTRAINT CK_blog_Status CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')),
     CONSTRAINT FK_blog_User FOREIGN KEY (author_id) REFERENCES dbo.[User](user_id) ON DELETE CASCADE
 );
+GO
 
 -- 2.22 [feedback] Table (Customer review ratings and text feedback)
 CREATE TABLE dbo.feedback (
     feedback_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
-    room_booking_id INT NOT NULL,
+    room_booking_id INT NOT NULL UNIQUE, -- Enforce BR-19: One feedback per booking
     rating INT NOT NULL,
     comment NVARCHAR(MAX) NULL,
     is_toxic BIT NOT NULL DEFAULT 0, -- Sentiment filter flag
@@ -368,6 +390,7 @@ CREATE TABLE dbo.feedback (
     CONSTRAINT FK_feedback_User FOREIGN KEY (user_id) REFERENCES dbo.[User](user_id) ON DELETE CASCADE,
     CONSTRAINT FK_feedback_room_booking FOREIGN KEY (room_booking_id) REFERENCES dbo.room_booking(booking_id) ON DELETE NO ACTION
 );
+GO
 
 -- =========================================================================
 -- 3. INDEXES FOR PERFORMANCE OPTIMIZATION
@@ -377,6 +400,9 @@ CREATE INDEX IX_spa_booking_Dates ON dbo.spa_booking(start_datetime, end_datetim
 CREATE INDEX IX_spa_booking_Therapist ON dbo.spa_booking(therapist_id);
 CREATE INDEX IX_food_order_User ON dbo.food_order(user_id);
 CREATE INDEX IX_invoice_Booking ON dbo.invoice(room_booking_id);
+CREATE INDEX IX_ptl_invoice ON dbo.payment_transaction_log(invoice_id);
+CREATE INDEX IX_ptl_gateway_ref ON dbo.payment_transaction_log(gateway_ref);
+CREATE INDEX IX_ptl_transaction_time ON dbo.payment_transaction_log(transaction_time);
 
 -- Performance tuning indexes on foreign keys
 CREATE INDEX IX_refresh_token_User ON dbo.refresh_token(user_id);

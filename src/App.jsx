@@ -19,7 +19,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import ChefDashboard from "./pages/ChefDashboard";
 import SpecialistDashboard from "./pages/SpecialistDashboard";
+import HealthProfile from "./pages/HealthProfile";
 import BookingPage from "./pages/BookingPage";
+import Payment from "./pages/Payment";
+import PaymentResult from "./pages/PaymentResult";
 
 function App() {
   return (
@@ -48,7 +51,10 @@ function App() {
             <Route path="/staff" element={<StaffDashboard />} />
             <Route path="/chef" element={<ChefDashboard />} />
             <Route path="/specialist" element={<SpecialistDashboard />} />
+            <Route path="/ho-so-suc-khoe" element={<HealthProfile />} />
             <Route path="/dat-lich" element={<BookingPage />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/payment-result" element={<PaymentResult />} />
           </Routes>
         </main>
 

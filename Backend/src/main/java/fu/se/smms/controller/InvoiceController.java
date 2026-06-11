@@ -57,4 +57,28 @@ public class InvoiceController {
     public ResponseEntity<Map<String, String>> paymentIpn(@RequestParam Map<String, String> callbackData) {
         return ResponseEntity.ok(invoiceService.processVNPayIpn(callbackData));
     }
+
+    /**
+     * UC21/UC22 - Consolidated Billing Constraint check.
+     * Receptionist calls this BEFORE attempting checkout.
+     * Returns 200 OK if all orders are settled, 409 CONFLICT if pending orders exist.
+     * GET /api/invoices/booking/{bookingId}/validate-checkout
+     */
+    @GetMapping("/booking/{bookingId}/validate-checkout")
+    public ResponseEntity<Void> validateCheckout(@PathVariable Integer bookingId) {
+        invoiceService.validateCheckoutLock(bookingId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * UC22 - Process Payment & Check-out (BR-14).
+     * After invoice is PAID, performs final checkout:
+     * - Sets booking status to CHECKED_OUT
+     * - Marks rooms as DIRTY (Vacant/Needs Cleaning)
+     * POST /api/invoices/{id}/perform-checkout
+     */
+    @PostMapping("/{id}/perform-checkout")
+    public ResponseEntity<InvoiceDTO> performCheckout(@PathVariable Integer id) {
+        return ResponseEntity.ok(invoiceService.performCheckout(id));
+    }
 }

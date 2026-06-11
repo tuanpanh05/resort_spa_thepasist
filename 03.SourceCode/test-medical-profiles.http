@@ -1,0 +1,76 @@
+# File test nhanh API phân quyền hồ sơ sức khỏe (Medical Profile)
+# Bạn có thể dùng extension "REST Client" trong VS Code hoặc copy sang Postman.
+
+@baseUrl = http://localhost:8080/api
+
+### -------------------------------------------------------------
+### BƯỚC 1: ĐĂNG NHẬP LẤY TOKEN (Thay đổi email/password tương ứng)
+### -------------------------------------------------------------
+
+# 1. Đăng nhập tài khoản ADMIN / MANAGER
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "tuananh1122hy@gmail.com",
+  "password": "TestPassword123!"
+}
+
+###
+
+# 2. Đăng nhập tài khoản CHEF
+# @name chefLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "chef@example.com",
+  "password": "password123"
+}
+
+###
+
+# 3. Đăng nhập tài khoản THERAPIST
+# @name therapistLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "therapist@example.com",
+  "password": "password123"
+}
+
+###
+
+# 4. Đăng nhập tài khoản RECEPTIONIST hoặc STAFF
+# @name staffLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "staff@example.com",
+  "password": "password123"
+}
+
+###
+
+# 5. Đăng nhập tài khoản GUEST khác
+# @name guestLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "guest2@example.com",
+  "password": "password123"
+}
+
+
+### -------------------------------------------------------------
+### BƯỚC 2: TEST TRUY VẤN HỒ SƠ SỨC KHỎE CỦA MỘT KHÁCH HÀNG (Ví dụ userId = 3)
+### Thay thế <YOUR_JWT_TOKEN> bằng token lấy được từ bước đăng nhập ở trên.
+### -------------------------------------------------------------
+
+GET {{baseUrl}}/medical-profiles/user/3
+Authorization: Bearer <YOUR_JWT_TOKEN>
+Content-Type: application/json

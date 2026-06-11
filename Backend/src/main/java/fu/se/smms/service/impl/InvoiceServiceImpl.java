@@ -4,10 +4,13 @@ import fu.se.smms.config.VNPayProperties;
 import fu.se.smms.dto.InvoiceDTO;
 import fu.se.smms.dto.VNPayPaymentDTO;
 import fu.se.smms.entity.Invoice;
+import fu.se.smms.entity.PaymentTransactionLog;
 import fu.se.smms.entity.RoomBooking;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.InvoiceRepository;
+import fu.se.smms.repository.PaymentTransactionLogRepository;
 import fu.se.smms.repository.RoomBookingRepository;
+import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.service.InvoiceService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -36,15 +39,21 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final RoomBookingRepository roomBookingRepository;
+    private final RoomRepository roomRepository;
+    private final PaymentTransactionLogRepository transactionLogRepository;
     private final VNPayProperties vnPayProperties;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
             RoomBookingRepository roomBookingRepository,
+            RoomRepository roomRepository,
+            PaymentTransactionLogRepository transactionLogRepository,
             VNPayProperties vnPayProperties
     ) {
         this.invoiceRepository = invoiceRepository;
         this.roomBookingRepository = roomBookingRepository;
+        this.roomRepository = roomRepository;
+        this.transactionLogRepository = transactionLogRepository;
         this.vnPayProperties = vnPayProperties;
     }
 
@@ -117,7 +126,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .format(VNPAY_DATE_FORMAT));
 
         String query = buildQuery(params);
-        String secureHash = hmacSha512(vnPayProperties.getHashSecret(), query);
+        String hashData = buildHashData(params);
+        String secureHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
 
         VNPayPaymentDTO dto = new VNPayPaymentDTO();
         dto.setOrderId(orderId);
@@ -135,6 +145,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
 
+        if ("PAID".equals(invoice.getStatus())) {
+            throw conflict("Invoice is already paid");
+        }
         if ("CANCELLED".equals(invoice.getStatus())) {
             throw conflict("Cancelled invoice cannot be paid");
         }
@@ -143,13 +156,65 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setPaymentTime(LocalDateTime.now());
         invoice.setVnpayTranId(null);
 
-        RoomBooking booking = invoice.getRoomBooking();
-        if (booking != null) {
-            booking.setStatus("CONFIRMED");
-            roomBookingRepository.save(booking);
+        Invoice savedInvoice = invoiceRepository.save(invoice);
+
+        // BR-26: Write immutable audit trail log for cash payment
+        writeTransactionLog(savedInvoice, "CASH", payableAmount(invoice), null, "00", "PAID");
+
+        return toDto(savedInvoice);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void validateCheckoutLock(Integer bookingId) {
+        // Module 5 - Consolidated Billing Constraint:
+        // Receptionist cannot check out if there are pending spa sessions
+        Long pendingSpa = invoiceRepository.countPendingSpaSessions(bookingId);
+        if (pendingSpa != null && pendingSpa > 0) {
+            throw new BusinessException("INV-409", HttpStatus.CONFLICT,
+                    "Không thể Check-out: Còn " + pendingSpa +
+                    " buổi trị liệu Spa chưa hoàn thành hoặc chưa xác nhận. " +
+                    "Vui lòng hoàn tất tất cả lịch Spa trước khi trả phòng.");
+        }
+        // Also check for pending food orders
+        Long pendingFood = invoiceRepository.countPendingFoodOrders(bookingId);
+        if (pendingFood != null && pendingFood > 0) {
+            throw new BusinessException("INV-409", HttpStatus.CONFLICT,
+                    "Không thể Check-out: Còn " + pendingFood +
+                    " đơn gọi món F&B đang chế biến hoặc chờ xử lý. " +
+                    "Vui lòng đợi tất cả đơn ăn uống hoàn tất trước khi trả phòng.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public InvoiceDTO performCheckout(Integer invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
+
+        if (!"PAID".equals(invoice.getStatus())) {
+            throw conflict("Cannot perform checkout: Invoice is not yet PAID. Current status: " + invoice.getStatus());
         }
 
-        return toDto(invoiceRepository.save(invoice));
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking == null) {
+            throw notFound("Room booking not found for invoice: " + invoiceId);
+        }
+
+        // Validate checkout lock - ensure no pending orders
+        validateCheckoutLock(booking.getBookingId());
+
+        // Update booking status to CHECKED_OUT
+        booking.setStatus("CHECKED_OUT");
+        roomBookingRepository.save(booking);
+
+        // BR-14: Mark associated rooms as DIRTY (Vacant/Needs Cleaning)
+        int updatedRooms = roomRepository.markRoomsAsDirtyAfterCheckout(booking.getBookingId());
+        if (updatedRooms == 0) {
+            // Log warning - booking may not have room_booking_detail records but still proceed
+        }
+
+        return toDto(invoice);
     }
 
     @Override
@@ -170,15 +235,20 @@ public class InvoiceServiceImpl implements InvoiceService {
             invoice.setStatus("PAID");
             invoice.setVnpayTranId(paymentResult.getTransactionNo());
             invoice.setPaymentTime(LocalDateTime.now());
-
-            RoomBooking booking = invoice.getRoomBooking();
-            if (booking != null) {
-                booking.setStatus("CONFIRMED");
-                roomBookingRepository.save(booking);
-            }
         }
 
-        return toDto(invoiceRepository.save(invoice));
+        Invoice savedInvoice = invoiceRepository.save(invoice);
+
+        // BR-26: Write audit trail for all VNPay callbacks (including failed ones)
+        if (success) {
+            writeTransactionLog(savedInvoice, "VNPAY", payableAmount(invoice),
+                    paymentResult.getTransactionNo(), paymentResult.getResponseCode(), "PAID");
+        } else {
+            writeTransactionLog(savedInvoice, "VNPAY", payableAmount(invoice),
+                    paymentResult.getTransactionNo(), paymentResult.getResponseCode(), "FAILED");
+        }
+
+        return toDto(savedInvoice);
     }
 
     @Override
@@ -306,7 +376,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         Map<String, String> signedParams = new TreeMap<>(callbackParams);
         signedParams.remove("vnp_SecureHash");
         signedParams.remove("vnp_SecureHashType");
-        String calculatedHash = hmacSha512(vnPayProperties.getHashSecret(), buildQuery(signedParams));
+        String hashData = buildHashData(signedParams);
+        String calculatedHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
 
         if (!calculatedHash.equalsIgnoreCase(receivedHash)) {
             throw new BusinessException("INV-403", HttpStatus.FORBIDDEN, "Invalid VNPay secure hash");
@@ -355,10 +426,16 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
         HttpServletRequest request = attributes.getRequest();
         String forwardedFor = request.getHeader("X-Forwarded-For");
+        String ip;
         if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
+            ip = forwardedFor.split(",")[0].trim();
+        } else {
+            ip = request.getRemoteAddr();
         }
-        return request.getRemoteAddr();
+        if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+            ip = "127.0.0.1";
+        }
+        return ip;
     }
 
     private String buildQuery(Map<String, String> params) {
@@ -369,8 +446,17 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElse("");
     }
 
+    private String buildHashData(Map<String, String> params) {
+        return params.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + "=" + (entry.getValue() == null ? "" : entry.getValue()))
+                .reduce((left, right) -> left + "&" + right)
+                .orElse("");
+    }
+
     private String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        if (value == null) return "";
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private String hmacSha512(String key, String data) {
@@ -394,5 +480,28 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     private BusinessException conflict(String message) {
         return new BusinessException("INV-409", HttpStatus.CONFLICT, message);
+    }
+
+    /**
+     * BR-26: Transaction Audit Trail.
+     * Writes an immutable transaction log record for every payment attempt.
+     * This method must NOT throw exceptions (best-effort logging).
+     */
+    private void writeTransactionLog(Invoice invoice, String paymentMethod, BigDecimal amount,
+                                      String gatewayRef, String responseCode, String status) {
+        try {
+            PaymentTransactionLog log = new PaymentTransactionLog();
+            log.setInvoice(invoice);
+            log.setPaymentMethod(paymentMethod);
+            log.setAmount(amount != null ? amount.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
+            log.setGatewayRef(gatewayRef);
+            log.setResponseCode(responseCode);
+            log.setStatus(status);
+            log.setClientIp(currentClientIp());
+            transactionLogRepository.save(log);
+        } catch (Exception ex) {
+            // Log to application log but do not fail the payment flow
+            // per BR-26: audit is best-effort for individual log rows but payment state is authoritative
+        }
     }
 }

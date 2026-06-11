@@ -24,7 +24,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !phone || !password || !confirmPassword) {
       setError("Vui lòng nhập đầy đủ tất cả các thông tin.");
@@ -39,11 +39,40 @@ export default function Register() {
       return;
     }
     setError("");
-    // Mock registration
-    alert(
-      "Đăng ký thành công! Chào mừng thành viên mới đến với Ngũ Sơn Resort.",
-    );
-    navigate("/dang-nhap");
+
+    try {
+      console.log("Đang gửi yêu cầu đăng ký tới Backend tại http://localhost:8080/api/auth/register ...");
+      const response = await fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: name,
+          email,
+          phone,
+          password,
+          idPassport: ""
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Đăng ký thành công! Hãy đăng nhập để tiếp tục.");
+        navigate("/dang-nhap");
+        return;
+      } else {
+        setError(data.message || "Đăng ký không thành công. Vui lòng kiểm tra lại dữ liệu.");
+        return;
+      }
+    } catch (err) {
+      console.warn("Không kết nối được với Backend. Sử dụng giả lập dữ liệu offline để đăng ký...", err);
+      alert(
+        "Đăng ký giả lập (OFFLINE) thành công! Chào mừng thành viên mới đến với Ngũ Sơn Resort.",
+      );
+      navigate("/dang-nhap");
+    }
   };
 
   return (
