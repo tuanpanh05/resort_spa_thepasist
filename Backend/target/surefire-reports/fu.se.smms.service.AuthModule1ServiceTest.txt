@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: fu.se.smms.service.AuthModule1ServiceTest
+-------------------------------------------------------------------------------
+Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.038 s -- in fu.se.smms.service.AuthModule1ServiceTest
