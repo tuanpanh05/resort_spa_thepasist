@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import ChefDashboard from "./pages/ChefDashboard";
 import SpecialistDashboard from "./pages/SpecialistDashboard";
+import HealthProfile from "./pages/HealthProfile";
 import BookingPage from "./pages/BookingPage";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
             <Route path="/staff" element={<StaffDashboard />} />
             <Route path="/chef" element={<ChefDashboard />} />
             <Route path="/specialist" element={<SpecialistDashboard />} />
+            <Route path="/ho-so-suc-khoe" element={<HealthProfile />} />
             <Route path="/dat-lich" element={<BookingPage />} />
           </Routes>
         </main>

@@ -168,13 +168,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "users" && (
-            <ManageAccounts
-              accounts={accounts}
-              setAccounts={setAccounts}
-              handleToggleAccountStatus={true}
-              handleResetPassword={true}
-              handleUpdateAccount={true}
-            />
+            <ManageAccounts />
           )}
 
           {activeTab === "rooms" && (
@@ -186,7 +180,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "services" && (
-            <ManageServices services={services} setServices={setServices} />
+            <ManageServices />
           )}
 
           {activeTab === "support" && (

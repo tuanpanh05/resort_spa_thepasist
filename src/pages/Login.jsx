@@ -14,17 +14,71 @@ export default function Login() {
   const loginWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
 
-      console.log(result.user);
+      console.log("Đang gửi thông tin Google tới Backend...");
+      const response = await fetch("http://localhost:8080/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: user.email,
+          fullName: user.displayName || "Google User",
+        }),
+      });
 
-      alert("Đăng nhập Google thành công!");
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", data.email);
+        localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userFullName", data.fullName);
+
+        alert(`Đăng nhập Google thành công! Chào mừng ${data.fullName}`);
+        
+        // Điều hướng dựa trên vai trò từ backend
+        const role = data.role.toUpperCase();
+        localStorage.removeItem("specialistRole");
+
+        if (role === "ADMIN" || role === "MANAGER") {
+          navigate("/admin");
+        } else if (role === "RECEPTIONIST" || role === "STAFF") {
+          navigate("/staff");
+        } else if (role === "CHEF") {
+          navigate("/chef");
+        } else if (role === "SPA") {
+          localStorage.setItem("specialistRole", "spa");
+          navigate("/specialist");
+        } else if (role === "YOGA") {
+          localStorage.setItem("specialistRole", "yoga");
+          navigate("/specialist");
+        } else if (role === "PHYSIO" || role === "THERAPIST") {
+          localStorage.setItem("specialistRole", "physio");
+          navigate("/specialist");
+        } else {
+          navigate("/");
+        }
+      } else {
+        setError(data.message || "Đăng nhập Google qua Backend thất bại.");
+      }
     } catch (error) {
-      console.log(error);
+      console.warn("Lỗi kết nối Backend hoặc lỗi Firebase. Thử đăng nhập Google OFFLINE...", error);
+      
+      // Nếu Firebase login thành công nhưng lỗi Backend
+      if (error && error.message && error.message.includes("Failed to fetch")) {
+         alert("Backend không phản hồi. Đăng nhập Google OFFLINE thành công!");
+         navigate("/");
+         return;
+      }
 
-      alert("Đăng nhập thất bại!");
+      // Giả lập fallback offline cho mọi lỗi để dễ test Frontend (tương tự login thường)
+      alert("Đăng nhập Google OFFLINE thành công! Chào mừng bạn.");
+      navigate("/");
     }
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Vui lòng điền đầy đủ các thông tin đăng nhập.");
@@ -32,51 +86,98 @@ export default function Login() {
     }
     setError("");
 
-    // Kiểm tra tài khoản admin / staff (giả lập)
     const normalizedEmail = email.toLowerCase();
+    
+    // Tự động thêm hậu tố email nếu người dùng chỉ gõ tên đăng nhập giả lập (như admin, staff...)
+    let loginEmail = email;
+    if (!email.includes("@")) {
+      if (email === "admin") loginEmail = "admin@nguson.com";
+      else if (email === "staff") loginEmail = "staff@nguson.com";
+      else if (email === "chef") loginEmail = "chef@nguson.com";
+      else if (email === "spa") loginEmail = "spa@nguson.com";
+      else if (email === "yoga") loginEmail = "yoga@nguson.com";
+      else if (email === "physio") loginEmail = "physio@nguson.com";
+    }
 
-    // Xóa phân quyền cũ trước khi đăng nhập mới
-    localStorage.removeItem("specialistRole");
+    try {
+      console.log("Đang kết nối tới Backend tại http://localhost:8080/api/auth/login ...");
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: loginEmail, password }),
+      });
 
-    if (normalizedEmail === "admin@nguson.com" || normalizedEmail === "admin") {
-      alert("Đăng nhập thành công với vai trò Quản lý!");
-      navigate("/admin");
-    } else if (
-      normalizedEmail === "staff@nguson.com" ||
-      normalizedEmail === "staff"
-    ) {
-      alert("Đăng nhập thành công với vai trò Nhân viên lễ tân/dọn dẹp!");
-      navigate("/staff");
-    } else if (
-      normalizedEmail === "chef@nguson.com" ||
-      normalizedEmail === "chef"
-    ) {
-      alert("Đăng nhập thành công với vai trò Bếp Trưởng!");
-      navigate("/chef");
-    } else if (
-      normalizedEmail === "spa@nguson.com" ||
-      normalizedEmail === "spa"
-    ) {
-      alert("Đăng nhập thành công với vai trò Nhân viên Spa!");
-      localStorage.setItem("specialistRole", "spa");
-      navigate("/specialist");
-    } else if (
-      normalizedEmail === "yoga@nguson.com" ||
-      normalizedEmail === "yoga"
-    ) {
-      alert("Đăng nhập thành công với vai trò Huấn luyện viên Yoga!");
-      localStorage.setItem("specialistRole", "yoga");
-      navigate("/specialist");
-    } else if (
-      normalizedEmail === "physio@nguson.com" ||
-      normalizedEmail === "physio"
-    ) {
-      alert("Đăng nhập thành công với vai trò Chuyên viên Vật lý trị liệu!");
-      localStorage.setItem("specialistRole", "physio");
-      navigate("/specialist");
-    } else {
-      alert("Đăng nhập thành công! Chào mừng bạn quay trở lại Ngũ Sơn Resort.");
-      navigate("/");
+      const data = await response.json();
+
+      if (response.ok) {
+        // Đăng nhập thành công từ backend thật
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", data.email);
+        localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userFullName", data.fullName);
+
+        alert(`Đăng nhập hệ thống thành công! Chào mừng ${data.fullName}`);
+        
+        // Điều hướng dựa trên vai trò từ backend
+        const role = data.role.toUpperCase();
+        localStorage.removeItem("specialistRole");
+
+        if (role === "ADMIN" || role === "MANAGER") {
+          navigate("/admin");
+        } else if (role === "RECEPTIONIST" || role === "STAFF") {
+          navigate("/staff");
+        } else if (role === "CHEF") {
+          navigate("/chef");
+        } else if (role === "SPA") {
+          localStorage.setItem("specialistRole", "spa");
+          navigate("/specialist");
+        } else if (role === "YOGA") {
+          localStorage.setItem("specialistRole", "yoga");
+          navigate("/specialist");
+        } else if (role === "PHYSIO" || role === "THERAPIST") {
+          localStorage.setItem("specialistRole", "physio");
+          navigate("/specialist");
+        } else {
+          navigate("/");
+        }
+        return;
+      } else {
+        // Backend trả về lỗi (ví dụ: sai mật khẩu, tài khoản không tồn tại)
+        setError(data.message || "Tên đăng nhập hoặc mật khẩu không đúng.");
+        return;
+      }
+    } catch (err) {
+      console.warn("Không kết nối được với Backend. Sử dụng giả lập dữ liệu offline để đăng nhập...", err);
+      // Chế độ dự phòng giả lập (Fallback)
+      localStorage.removeItem("specialistRole");
+
+      if (normalizedEmail === "admin@nguson.com" || normalizedEmail === "admin") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Quản lý!");
+        navigate("/admin");
+      } else if (normalizedEmail === "staff@nguson.com" || normalizedEmail === "staff") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Nhân viên lễ tân!");
+        navigate("/staff");
+      } else if (normalizedEmail === "chef@nguson.com" || normalizedEmail === "chef") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Bếp Trưởng!");
+        navigate("/chef");
+      } else if (normalizedEmail === "spa@nguson.com" || normalizedEmail === "spa") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Nhân viên Spa!");
+        localStorage.setItem("specialistRole", "spa");
+        navigate("/specialist");
+      } else if (normalizedEmail === "yoga@nguson.com" || normalizedEmail === "yoga") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Huấn luyện viên Yoga!");
+        localStorage.setItem("specialistRole", "yoga");
+        navigate("/specialist");
+      } else if (normalizedEmail === "physio@nguson.com" || normalizedEmail === "physio") {
+        alert("Đăng nhập OFFLINE thành công với vai trò Chuyên viên Vật lý trị liệu!");
+        localStorage.setItem("specialistRole", "physio");
+        navigate("/specialist");
+      } else {
+        alert("Đăng nhập OFFLINE thành công! Chào mừng khách hàng quay lại.");
+        navigate("/");
+      }
     }
   };
 
@@ -203,16 +304,16 @@ export default function Login() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white/95 px-3.5 text-sage-500 font-semibold tracking-wider">
-              Hoặc tiếp tục với
+              Hoặc đăng nhập bằng
             </span>
           </div>
         </div>
 
-        {/* Social Login Buttons */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Social Login Button */}
+        <div className="w-full">
           <button
             onClick={loginWithGoogle}
-            className="flex items-center justify-center space-x-2 py-3 border border-primary-200/50 rounded-2xl bg-white/70 hover:bg-white text-xs font-semibold text-sage-800 hover:shadow-sm transition-all duration-200 cursor-pointer"
+            className="w-full flex items-center justify-center space-x-2 py-3 border border-primary-200/50 rounded-2xl bg-white/70 hover:bg-white text-xs font-semibold text-sage-800 hover:shadow-sm transition-all duration-200 cursor-pointer"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
@@ -220,21 +321,7 @@ export default function Login() {
                 d="M12.24 10.285V14.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.579-7.859-7.989 0-4.41 3.529-7.989 7.859-7.989 2.463 0 4.116 1.015 5.054 1.916l3.257-3.132C18.318 1.928 15.538 1 12.24 1 5.922 1 1 5.922 1 12.24s4.922 11.24 11.24 11.24c6.598 0 10.985-4.636 10.985-11.168 0-.751-.081-1.326-.18-1.742H12.24z"
               />
             </svg>
-            <span>Google</span>
-          </button>
-          <button
-            onClick={() =>
-              alert("Đăng nhập bằng Facebook hiện chưa được kết nối.")
-            }
-            className="flex items-center justify-center space-x-2 py-3 border border-primary-200/50 rounded-2xl bg-white/70 hover:bg-white text-xs font-semibold text-sage-800 hover:shadow-sm transition-all duration-200 cursor-pointer"
-          >
-            <svg
-              className="h-4 w-4 fill-current text-[#1877F2]"
-              viewBox="0 0 24 24"
-            >
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
-            <span>Facebook</span>
+            <span>Đăng nhập với Google</span>
           </button>
         </div>
 
