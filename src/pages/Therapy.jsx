@@ -109,7 +109,7 @@ export default function Therapy() {
                       Lưu ý mang theo hồ sơ bệnh án cũ (nếu có) khi khám
                     </span>
                     <a
-                      href="/#booking"
+                      href="/dat-lich"
                       className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-full text-sm font-semibold bg-primary-900 text-white hover:bg-primary-850 transition-all duration-300 shadow-md hover:scale-105"
                     >
                       Đặt lịch bác sĩ khám

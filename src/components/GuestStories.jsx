@@ -1,4 +1,5 @@
 import React from "react";
+import { Leaf } from "lucide-react";
 
 export default function GuestStories() {
   const stories = [
@@ -39,7 +40,11 @@ export default function GuestStories() {
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal leading-tight">
             Nhật Ký Trải Nghiệm Khách Hàng
           </h2>
-          <div className="h-[1px] w-12 bg-primary-300 mx-auto mt-6" />
+          <div className="flex items-center justify-center space-x-3 mt-6">
+            <div className="h-[1px] w-8 bg-gradient-to-r from-transparent to-primary-300" />
+            <Leaf className="h-3.5 w-3.5 text-primary-600/80" />
+            <div className="h-[1px] w-8 bg-gradient-to-l from-transparent to-primary-300" />
+          </div>
           <p className="text-sm sm:text-base text-sage-600 font-light leading-relaxed pt-2">
             Những chia sẻ chân thực từ những tâm hồn đã tìm lại sự cân bằng,
             phục hồi sức khỏe thể chất và tâm trí sau kỳ nghỉ tại Ngũ Sơn.

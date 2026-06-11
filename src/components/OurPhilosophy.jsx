@@ -1,4 +1,5 @@
 import React from "react";
+import { Leaf } from "lucide-react";
 
 export default function OurPhilosophy() {
   return (
@@ -15,7 +16,11 @@ export default function OurPhilosophy() {
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal leading-tight">
             Thân – Tâm – Trí Khỏe Mạnh
           </h2>
-          <div className="h-[1px] w-12 bg-primary-300 mx-auto mt-6" />
+          <div className="flex items-center justify-center space-x-3 mt-6">
+            <div className="h-[1px] w-8 bg-gradient-to-r from-transparent to-primary-300" />
+            <Leaf className="h-3.5 w-3.5 text-primary-600/80" />
+            <div className="h-[1px] w-8 bg-gradient-to-l from-transparent to-primary-300" />
+          </div>
           <p className="text-sm sm:text-base text-sage-600 font-light leading-relaxed pt-2">
             Tại Ngũ Sơn, chúng tôi tin rằng sự thư thái đích thực chỉ đạt được
             khi ba yếu tố cốt lõi của con người được nuôi dưỡng trong sự hòa hợp
