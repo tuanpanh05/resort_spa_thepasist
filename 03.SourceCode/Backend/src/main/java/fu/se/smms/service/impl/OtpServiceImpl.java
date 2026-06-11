@@ -4,6 +4,7 @@ import fu.se.smms.entity.OtpToken;
 import fu.se.smms.entity.User;
 import fu.se.smms.repository.OtpTokenRepository;
 import fu.se.smms.repository.UserRepository;
+import fu.se.smms.service.EmailService;
 import fu.se.smms.service.OtpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +33,14 @@ public class OtpServiceImpl implements OtpService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
     @Override
     public void generateAndSendOtp(String email) {
         // Verify the email belongs to an existing user
         userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này. Vui lòng kiểm tra lại."));
 
         // Invalidate all previous OTPs for this email
         otpTokenRepository.deleteAllByEmail(email);
@@ -48,12 +52,9 @@ public class OtpServiceImpl implements OtpService {
         OtpToken token = new OtpToken(email, otpCode, expiresAt);
         otpTokenRepository.save(token);
 
-        // DEV MODE: Print OTP to console. In production, replace with actual email sending.
-        log.warn("===== [DEV MODE] OTP for {} is: {} (expires in {} minutes) =====",
-                email, otpCode, OTP_EXPIRY_MINUTES);
-        System.out.println("===================================================");
-        System.out.println(" OTP for " + email + " : " + otpCode);
-        System.out.println("===================================================");
+        // Send OTP via email (falls back to console log if email is not configured)
+        emailService.sendOtpEmail(email, otpCode);
+        log.info("OTP generated and sent for email: {}", email);
     }
 
     @Override
