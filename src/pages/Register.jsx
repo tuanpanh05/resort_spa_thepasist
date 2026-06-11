@@ -11,6 +11,7 @@ import {
   Leaf,
 } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
+import PolicyModal from "../components/PolicyModal";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -22,6 +23,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [policyModal, setPolicyModal] = useState(null); // "privacy" | "terms" | null
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -76,6 +78,7 @@ export default function Register() {
   };
 
   return (
+    <>
     <div
       className="min-h-screen relative flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-cover bg-center"
       style={{ backgroundImage: `url(${heroBg})` }}
@@ -250,31 +253,21 @@ export default function Register() {
               />
               <span className="leading-normal">
                 Tôi đồng ý với các{" "}
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert(
-                      "Chính sách bảo mật của Ngũ Sơn Resort bảo vệ tuyệt đối thông tin của hội viên.",
-                    );
-                  }}
-                  className="font-semibold text-primary-900 hover:underline"
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal("privacy")}
+                  className="font-semibold text-primary-900 hover:underline bg-transparent border-none p-0 cursor-pointer"
                 >
                   Chính sách bảo mật
-                </a>{" "}
+                </button>{" "}
                 và{" "}
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert(
-                      "Điều khoản hội viên bao gồm các quy định về tích điểm và đặt phòng.",
-                    );
-                  }}
-                  className="font-semibold text-primary-900 hover:underline"
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal("terms")}
+                  className="font-semibold text-primary-900 hover:underline bg-transparent border-none p-0 cursor-pointer"
                 >
                   Điều khoản hội viên
-                </a>{" "}
+                </button>{" "}
                 của khu nghỉ dưỡng.
               </span>
             </label>
@@ -301,5 +294,13 @@ export default function Register() {
         </div>
       </div>
     </div>
-  );
+
+    {/* Policy Modal */}
+    {policyModal && (
+      <PolicyModal
+        type={policyModal}
+        onClose={() => setPolicyModal(null)}
+      />
+    )}
+  </>);
 }
