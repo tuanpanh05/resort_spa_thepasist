@@ -99,6 +99,13 @@ export default function Login() {
       else if (email === "physio") loginEmail = "physio@nguson.com";
     }
 
+    // Kiểm tra định dạng email hợp lệ
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(loginEmail)) {
+      setError("Định dạng Email không hợp lệ (ví dụ: example@gmail.com).");
+      return;
+    }
+
     try {
       console.log("Đang kết nối tới Backend tại http://localhost:8080/api/auth/login ...");
       const response = await fetch("http://localhost:8080/api/auth/login", {
