@@ -74,6 +74,12 @@ public class UserServiceImpl implements UserService {
                     .status("ACTIVE")
                     .build();
             user = userRepository.save(user);
+        } else {
+            // Cập nhật lại fullName nếu tên từ Google có thay đổi (hoặc để sửa lỗi font chữ cũ)
+            if (request.getFullName() != null && !request.getFullName().equals(user.getFullName())) {
+                user.setFullName(request.getFullName());
+                user = userRepository.save(user);
+            }
         }
 
         if (!"ACTIVE".equals(user.getStatus())) {

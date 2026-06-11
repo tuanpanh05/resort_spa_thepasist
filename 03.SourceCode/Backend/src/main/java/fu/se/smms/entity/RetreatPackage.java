@@ -13,7 +13,7 @@ public class RetreatPackage {
     @Column(name = "package_id")
     private Integer packageId;
 
-    @Column(name = "name", nullable = false, length = 200)
+    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(200)")
     private String name;
 
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")

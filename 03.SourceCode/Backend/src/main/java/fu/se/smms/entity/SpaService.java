@@ -13,7 +13,7 @@ public class SpaService {
     @Column(name = "service_id")
     private Integer serviceId;
 
-    @Column(name = "name", nullable = false, length = 150)
+    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(150)")
     private String name;
 
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")

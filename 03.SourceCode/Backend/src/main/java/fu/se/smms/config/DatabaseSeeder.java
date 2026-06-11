@@ -16,8 +16,22 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @Override
     public void run(String... args) throws Exception {
+        // Fix font/Unicode issues in existing database by altering columns to NVARCHAR
+        try {
+            System.out.println("[DB Seeder] Altering columns to NVARCHAR to fix font/Unicode issues...");
+            jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN full_name NVARCHAR(255) NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE retreat_packages ALTER COLUMN name NVARCHAR(200) NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE spa_services ALTER COLUMN name NVARCHAR(150) NOT NULL");
+            System.out.println("[DB Seeder] Successfully upgraded database columns to NVARCHAR.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not alter database columns. Reason: " + e.getMessage());
+        }
+
         seedUser("admin@nguson.com", "Administrator", "0900000000", "ADMIN");
         seedUser("staff@nguson.com", "Staff Member", "0900000001", "STAFF");
         seedUser("chef@nguson.com", "Chef Specialist", "0900000002", "CHEF");
