@@ -995,8 +995,31 @@ export const chefInitialOrders = [
     origin: "Room Service",
     items: [{ name: "Nấm nướng lá lốt cốt dừa", qty: 1 }],
     note: "Mang kèm muỗng nĩa",
+    status: "Delivering",
+    time: "45 phút trước",
+  },
+  {
+    id: "ORD-5504",
+    guestName: "Phan Thanh Thủy",
+    room: "104",
+    origin: "Room Service",
+    items: [
+      { name: "Súp sâm yến mạch thực dưỡng", qty: 1 },
+      { name: "Salad bơ hạt diêm mạch", qty: 1 },
+    ],
+    note: "",
     status: "Completed",
     time: "1 giờ trước",
+  },
+  {
+    id: "ORD-5505",
+    guestName: "Nguyễn Bích Liên",
+    room: "202",
+    origin: "Restaurant",
+    items: [{ name: "Lẩu nấm Ngũ Sơn chay", qty: 1 }],
+    note: "Bàn 7, không cần đồ tráng miệng",
+    status: "Completed",
+    time: "2 giờ trước",
   },
 ];
 

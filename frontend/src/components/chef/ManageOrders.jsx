@@ -6,6 +6,7 @@ import {
   ShieldAlert,
   CheckCircle2,
   Check,
+  Truck,
 } from "lucide-react";
 
 export default function ManageOrders({
@@ -16,6 +17,7 @@ export default function ManageOrders({
 }) {
   const pendingOrders = orders.filter((o) => o.status === "Pending");
   const cookingOrders = orders.filter((o) => o.status === "Cooking");
+  const deliveringOrders = orders.filter((o) => o.status === "Delivering");
   const completedOrders = orders.filter((o) => o.status === "Completed");
 
   const speakOrder = (ord, alertInfo) => {
@@ -53,7 +55,7 @@ export default function ManageOrders({
       </div>
 
       {/* KDS Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
         {/* Column 1: Pending */}
         <div className="bg-blue-50/40 border border-blue-200/80 p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-blue-200/50 pb-2">
@@ -266,7 +268,7 @@ export default function ManageOrders({
                     <button
                       type="button"
                       onClick={() =>
-                        handleUpdateOrderStatus(ord.id, "Completed")
+                        handleUpdateOrderStatus(ord.id, "Delivering")
                       }
                       className="px-3.5 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
                     >
@@ -284,12 +286,102 @@ export default function ManageOrders({
           </div>
         </div>
 
-        {/* Column 3: Completed */}
+        {/* Column 3: Delivering */}
+        <div className="bg-violet-50/40 border border-violet-200/80 p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-violet-200/50 pb-2">
+            <h4 className="font-serif text-sm font-bold text-violet-900 flex items-center space-x-2">
+              <span className="h-2 w-2 bg-violet-500 animate-pulse" />
+              <span>3. ĐANG GIAO ({deliveringOrders.length})</span>
+            </h4>
+          </div>
+
+          <div className="space-y-4">
+            {deliveringOrders.map((ord) => (
+              <div
+                key={ord.id}
+                className="bg-white border border-sage-200 p-5 flex flex-col justify-between min-h-[260px]"
+              >
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-sage-100 pb-2.5">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold font-mono bg-sage-950 text-white px-2.5 py-1">
+                        P.{ord.room}
+                      </span>
+                      <span className="text-[9px] font-bold tracking-wider uppercase bg-violet-50 text-violet-700 px-1.5 py-0.5 border border-violet-100">
+                        {ord.origin}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="flex justify-between items-center text-[10px] text-sage-400 font-mono">
+                    <span>Mã: {ord.id}</span>
+                    <span>
+                      Khách:{" "}
+                      <strong className="text-sage-800 font-semibold">
+                        {ord.guestName}
+                      </strong>
+                    </span>
+                  </div>
+
+                  {/* Items */}
+                  <div className="py-2 border-t border-b border-sage-50 space-y-1.5">
+                    {ord.items.map((it, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2 bg-sage-50/50 border border-sage-100/50"
+                      >
+                        <div className="flex items-center">
+                          <span className="flex items-center justify-center h-6 w-6 bg-violet-700 text-white font-mono font-bold text-xs mr-2">
+                            x{it.qty}
+                          </span>
+                          <span className="text-xs font-semibold text-sage-900">
+                            {it.name}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Delivering Status Label */}
+                  <div className="text-[10px] text-violet-700 bg-violet-50/50 p-2 border border-violet-150 font-bold flex items-center space-x-1.5">
+                    <Truck className="h-4 w-4 text-violet-600 flex-shrink-0 animate-pulse" />
+                    <span>Nhân viên đang giao đến phòng khách...</span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-sage-100 flex justify-between items-center mt-4">
+                  <span className="text-[10px] text-sage-400 font-mono flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {ord.time}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleUpdateOrderStatus(ord.id, "Completed")
+                    }
+                    className="px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  >
+                    Đã giao thành công
+                  </button>
+                </div>
+              </div>
+            ))}
+            {deliveringOrders.length === 0 && (
+              <p className="text-xs text-sage-400 italic text-center py-12">
+                Không có đơn nào đang giao.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Column 4: Completed */}
         <div className="bg-sage-50/50 border border-sage-200 p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-sage-200/50 pb-2">
             <h4 className="font-serif text-sm font-bold text-sage-800 flex items-center space-x-2">
               <span className="h-2 w-2 bg-green-650" />
-              <span>3. HOÀN THÀNH ({completedOrders.length})</span>
+              <span>4. HOÀN THÀNH ({completedOrders.length})</span>
             </h4>
           </div>
 

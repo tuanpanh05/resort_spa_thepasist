@@ -18,6 +18,12 @@ import {
   Loader2,
   Heart,
   Leaf,
+  UtensilsCrossed,
+  Coffee,
+  Sun,
+  Moon,
+  Plus,
+  Minus,
   AlertTriangle,
 } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
@@ -127,6 +133,69 @@ const servicesList = [
   },
 ];
 
+// Mock data: Package menu items (Module 4 - Dietary F&B)
+const packageMenuItems = [
+  {
+    foodId: 1,
+    dishName: "Organic Avocado Quinoa Salad",
+    description: "Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.",
+    price: 180000,
+    dietaryTags: "Vegan, Gluten-Free",
+    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
+    isPackageIncluded: true,
+  },
+  {
+    foodId: 2,
+    dishName: "Ginseng Chicken Soup",
+    description: "Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.",
+    price: 320000,
+    dietaryTags: "Keto, Healthy",
+    image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+    isPackageIncluded: false,
+  },
+  {
+    foodId: 3,
+    dishName: "Green Detox Juice",
+    description: "Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.",
+    price: 95000,
+    dietaryTags: "Vegan, Detox",
+    image: "https://images.unsplash.com/photo-1610970881699-44a5587caa90?auto=format&fit=crop&w=600&q=80",
+    isPackageIncluded: true,
+  },
+  {
+    foodId: 4,
+    dishName: "Nấm nướng lá lốt cốt dừa",
+    description: "Nấm đùi gà cuộn lá lốt nướng than hoa, đậu phộng rang giòn.",
+    price: 320000,
+    dietaryTags: "Vegan, Peanut",
+    image: "https://images.unsplash.com/photo-1599021456807-25db0f974333?auto=format&fit=crop&w=600&q=80",
+    isPackageIncluded: false,
+  },
+  {
+    foodId: 5,
+    dishName: "Tôm rim tỏi ớt (Món mặn)",
+    description: "Tôm sú biển tươi rim tỏi ớt thơm lừng, giàu protein.",
+    price: 390000,
+    dietaryTags: "Healthy, Seafood",
+    image: "https://images.unsplash.com/photo-1559737607-3578909a3636?auto=format&fit=crop&w=600&q=80",
+    isPackageIncluded: false,
+  },
+];
+
+const mealPeriods = [
+  { key: "Breakfast", label: "Bữa Sáng", time: "06:30 - 09:30", icon: Coffee },
+  { key: "Lunch", label: "Bữa Trưa", time: "11:30 - 14:00", icon: Sun },
+  { key: "Dinner", label: "Bữa Tối", time: "18:00 - 21:00", icon: Moon },
+];
+
+const detectAllergens = (healthNote) => {
+  const note = (healthNote || "").toLowerCase();
+  const allergens = [];
+  if (note.includes("đậu phộng") || note.includes("peanut") || note.includes("lạc")) allergens.push("peanut");
+  if (note.includes("hải sản") || note.includes("seafood") || note.includes("tôm")) allergens.push("seafood");
+  return allergens;
+};
+
 export default function BookingPage() {
   const navigate = useNavigate();
 
@@ -169,6 +238,11 @@ export default function BookingPage() {
   const [selectedVillaId, setSelectedVillaId] = useState(villasList[0].id);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
 
+  // Step 3: Meal Selections { "yyyy-MM-dd": { "Breakfast": { foodId: qty }, ... } }
+  const [mealSelections, setMealSelections] = useState({});
+  const [selectedMealDate, setSelectedMealDate] = useState("");
+  const [mealBookingDays, setMealBookingDays] = useState([]);
+
   // Copy helper
   const [copiedField, setCopiedField] = useState(null);
 
@@ -191,6 +265,24 @@ export default function BookingPage() {
     }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
+  // Calculate booking days for meal selection
+  useEffect(() => {
+    const checkIn = new Date(guestInfo.checkInDate);
+    const checkOut = new Date(guestInfo.checkOutDate);
+    if (checkOut > checkIn) {
+      const days = [];
+      let curr = new Date(checkIn);
+      while (curr < checkOut) {
+        days.push(curr.toISOString().split("T")[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+      setMealBookingDays(days);
+      if (days.length > 0 && !selectedMealDate) setSelectedMealDate(days[0]);
+    } else {
+      setMealBookingDays([]);
+    }
+  }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
+
   // Selected Villa Info
   const selectedVilla = villasList.find((v) => v.id === selectedVillaId);
 
@@ -206,12 +298,54 @@ export default function BookingPage() {
     } else if (s.type === "per-guest-per-night") {
       servicesTotal += s.price * guestInfo.guestsCount * nightsCount;
     } else {
-      // flat fee
       servicesTotal += s.price;
     }
   });
 
-  const totalAmount = villaTotal + servicesTotal;
+  // Meal total calculation
+  const calculateMealTotal = () => {
+    let extra = 0;
+    Object.entries(mealSelections).forEach(([date, dateObj]) => {
+      Object.entries(dateObj).forEach(([period, periodObj]) => {
+        Object.entries(periodObj).forEach(([foodId, qty]) => {
+          const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
+          if (item) {
+            if (item.isPackageIncluded) {
+              if (qty > 1) extra += item.price * (qty - 1);
+            } else {
+              extra += item.price * qty;
+            }
+          }
+        });
+      });
+    });
+    return extra;
+  };
+  const mealTotal = calculateMealTotal();
+
+  const getMealSelectedCount = () => {
+    let count = 0;
+    Object.values(mealSelections).forEach((dateObj) => {
+      Object.values(dateObj).forEach((periodObj) => {
+        Object.values(periodObj).forEach((qty) => { count += qty; });
+      });
+    });
+    return count;
+  };
+
+  const updateMealQty = (date, period, foodId, change) => {
+    setMealSelections((prev) => {
+      const dateSel = prev[date] || {};
+      const periodSel = dateSel[period] || {};
+      const currentQty = periodSel[foodId] || 0;
+      const newQty = Math.max(0, currentQty + change);
+      const nextPeriodSel = { ...periodSel };
+      if (newQty === 0) { delete nextPeriodSel[foodId]; } else { nextPeriodSel[foodId] = newQty; }
+      return { ...prev, [date]: { ...dateSel, [period]: nextPeriodSel } };
+    });
+  };
+
+  const totalAmount = villaTotal + servicesTotal + mealTotal;
   const depositAmount = totalAmount * 0.3; // 30% deposit
   const remainingAmount = totalAmount * 0.7; // 70% paid at counter
 
@@ -250,19 +384,23 @@ export default function BookingPage() {
     return Object.keys(errors).length === 0;
   };
 
-  // Navigations between steps
+  // Navigations between steps (6-step wizard)
   const handleNextStep = () => {
     if (step === 1) {
       if (validateStep1()) setStep(2);
     } else if (step === 2) {
+<<<<<<< Updated upstream:frontend/src/pages/BookingPage.jsx
       if (validateStep2()) setStep(3);
+=======
+      setStep(3);
+>>>>>>> Stashed changes:src/pages/BookingPage.jsx
     } else if (step === 3) {
       setStep(4);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1 && step < 5) {
+    if (step > 1 && step < 6) {
       setStep(step - 1);
     }
   };
@@ -274,7 +412,7 @@ export default function BookingPage() {
       setIsConfirming(false);
       setBookingStatus("PENDING_PAYMENT");
       setPaymentStatus("PENDING");
-      setStep(5);
+      setStep(6);
     }, 1800);
   };
 
@@ -392,7 +530,7 @@ export default function BookingPage() {
               <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary-100 z-0" />
               <div
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary-600 transition-all duration-500 z-0"
-                style={{ width: `${((step - 1) / 4) * 100}%` }}
+                style={{ width: `${((step - 1) / 5) * 100}%` }}
               />
 
               {/* Step indicator node points */}
@@ -400,8 +538,9 @@ export default function BookingPage() {
                 { number: 1, label: "Thông tin khách" },
                 { number: 2, label: "Hồ sơ sức khỏe" },
                 { number: 3, label: "Chọn Villa & Dịch vụ" },
-                { number: 4, label: "Xác nhận đơn" },
-                { number: 5, label: "Thanh toán cọc" },
+                { number: 4, label: "Thực đơn trong gói" },
+                { number: 5, label: "Xác nhận đơn" },
+                { number: 6, label: "Thanh toán cọc" },
               ].map((s) => {
                 const isActive = step >= s.number;
                 const isCurrent = step === s.number;
@@ -1011,18 +1150,173 @@ export default function BookingPage() {
                       onClick={handleNextStep}
                       className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider hover:bg-primary-950 transition-all uppercase rounded-none flex items-center cursor-pointer"
                     >
+                      Chọn thực đơn <ChevronRight className="h-4 w-4 ml-1.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4 Page Content Panel - Thực Đơn Trong Gói */}
+              {step === 4 && (
+                <div className="space-y-6 text-left animate-fade-in">
+                  <div className="border-b border-primary-50 pb-3 mb-6">
+                    <h2 className="text-resort-section text-sage-950 mb-1">
+                      Bước 4: Chọn Thực Đơn Trong Gói
+                    </h2>
+                    <p className="text-resort-desc">
+                      Lựa chọn các bữa ăn dinh dưỡng đi kèm trong gói dịch vụ nghỉ dưỡng. Món trong gói miễn phí (1 phần/ngày).
+                    </p>
+                  </div>
+
+                  {/* Date Selection Bar */}
+                  <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-4 border-b border-primary-100/50">
+                    {mealBookingDays.map((date, idx) => {
+                      const isActive = selectedMealDate === date;
+                      const dateParts = date.split("-");
+                      const displayDate = `${dateParts[2]}/${dateParts[1]}`;
+                      return (
+                        <button
+                          key={date}
+                          onClick={() => setSelectedMealDate(date)}
+                          className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer ${
+                            isActive
+                              ? "bg-primary-850 border-primary-900 text-white shadow-md -translate-y-0.5"
+                              : "bg-white border-primary-100 text-sage-600 hover:border-primary-300 hover:bg-primary-50/30"
+                          }`}
+                          style={{ borderRadius: "16px" }}
+                        >
+                          <span className="text-[9px] opacity-75 font-semibold">Ngày {idx + 1}</span>
+                          <span className="font-mono mt-0.5 text-sm">{displayDate}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Meal Periods */}
+                  {mealPeriods.map((period) => {
+                    const PeriodIcon = period.icon;
+                    return (
+                      <div key={period.key} className="space-y-4 mb-6">
+                        <div className="flex items-center space-x-2 border-l-2 border-primary-700 pl-3">
+                          <PeriodIcon className="h-5 w-5 text-primary-800" />
+                          <h3 className="font-serif text-base font-bold text-sage-900">
+                            {period.label} ({period.time})
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {packageMenuItems.map((dish) => {
+                            const currentQty = (mealSelections[selectedMealDate]?.[period.key]?.[dish.foodId]) || 0;
+                            const userAllergens = detectAllergens(guestInfo.healthNote);
+                            const isAllergen =
+                              (dish.dietaryTags.toLowerCase().includes("peanut") && userAllergens.includes("peanut")) ||
+                              (dish.dietaryTags.toLowerCase().includes("seafood") && userAllergens.includes("seafood"));
+
+                            return (
+                              <div
+                                key={dish.foodId}
+                                className={`border transition-all duration-300 overflow-hidden ${
+                                  isAllergen
+                                    ? "border-red-200 bg-red-50/20 opacity-60"
+                                    : currentQty > 0
+                                    ? "border-primary-300 bg-primary-50/10"
+                                    : "border-primary-100 bg-white hover:border-primary-200"
+                                }`}
+                              >
+                                <div className="relative h-32 overflow-hidden">
+                                  <img src={dish.image} alt={dish.dishName} className="w-full h-full object-cover" />
+                                  {dish.isPackageIncluded && (
+                                    <span className="absolute top-2 left-2 bg-green-700 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
+                                      Trong Gói
+                                    </span>
+                                  )}
+                                  {isAllergen && (
+                                    <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 flex items-center gap-1 shadow-sm">
+                                      <AlertTriangle className="h-3 w-3" /> Dị ứng
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="p-4 space-y-2">
+                                  <h4 className="font-serif text-sm font-bold text-sage-950">{dish.dishName}</h4>
+                                  <p className="text-[11px] text-sage-500 font-light leading-relaxed line-clamp-2">{dish.description}</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {dish.dietaryTags.split(",").map((tag) => (
+                                      <span key={tag.trim()} className="text-[9px] font-bold uppercase tracking-wider border border-primary-200 text-primary-800 px-2 py-0.5 bg-primary-50/30">
+                                        {tag.trim()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div className="flex items-center justify-between pt-2 border-t border-primary-50">
+                                    <span className="font-serif text-sm font-bold text-sage-950">
+                                      {formatCurrency(dish.price)}
+                                    </span>
+                                    <div className="flex items-center space-x-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => updateMealQty(selectedMealDate, period.key, dish.foodId, -1)}
+                                        disabled={currentQty === 0}
+                                        className="h-7 w-7 flex items-center justify-center border border-primary-200 text-sage-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                                      >
+                                        <Minus className="h-3.5 w-3.5" />
+                                      </button>
+                                      <span className="font-mono text-sm font-bold text-sage-950 w-6 text-center">{currentQty}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateMealQty(selectedMealDate, period.key, dish.foodId, 1)}
+                                        className="h-7 w-7 flex items-center justify-center border border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer transition-colors"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Footer Summary */}
+                  <div className="bg-primary-50/30 border border-primary-100 p-4 space-y-1">
+                    <div className="text-xs text-sage-700">
+                      Tổng cộng chọn: <strong>{getMealSelectedCount()} món</strong>
+                    </div>
+                    <div className="text-sm font-semibold text-sage-900">
+                      Phụ phí dự kiến ngoài gói: <span className="text-primary-900 font-bold font-serif">{formatCurrency(mealTotal)}</span>
+                    </div>
+                    <div className="text-[10px] text-sage-400 italic">
+                      * Các món Green Juice & Salad được tính 0đ trong giới hạn gói Detox (1 phần/ngày).
+                    </div>
+                  </div>
+
+                  {/* Navigation */}
+                  <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider transition-all uppercase rounded-none flex items-center cursor-pointer"
+                    >
                       Kiểm tra đơn đặt <ChevronRight className="h-4 w-4 ml-1.5" />
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Step 4 Page Content Panel */}
-              {step === 4 && (
+              {/* Step 5 Page Content Panel */}
+              {step === 5 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
                     <h2 className="text-resort-section text-sage-950 mb-1">
-                      Bước 4: Xác Nhận Đơn Đặt Lịch
+                      Bước 5: Xác Nhận Đơn Đặt Lịch
                     </h2>
                     <p className="text-resort-desc">
                       Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
@@ -1183,12 +1477,12 @@ export default function BookingPage() {
                 </div>
               )}
 
-              {/* Step 5 Page Content Panel */}
-              {step === 5 && (
+              {/* Step 6 Page Content Panel */}
+              {step === 6 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
                     <h2 className="text-resort-section text-sage-950 mb-1">
-                      Bước 5: Thanh Toán Đặt Cọc
+                      Bước 6: Thanh Toán Đặt Cọc
                     </h2>
                     <p className="text-resort-desc">
                       Vui lòng thanh toán khoản cọc 30% qua ngân hàng để kích hoạt trạng thái xác nhận đặt phòng tự động.
@@ -1332,6 +1626,14 @@ export default function BookingPage() {
                     <span className="text-sage-800">Biệt thự ({nightsCount} đêm):</span>
                     <span className="text-sage-950 font-mono">{formatCurrency(villaTotal)}</span>
                   </div>
+
+                  {/* Meal costs */}
+                  {mealTotal > 0 && (
+                    <div className="flex justify-between font-medium pt-2 border-t border-primary-50">
+                      <span className="text-sage-800 flex items-center gap-1"><UtensilsCrossed className="h-3.5 w-3.5" /> Thực đơn ngoài gói:</span>
+                      <span className="text-sage-950 font-mono">{formatCurrency(mealTotal)}</span>
+                    </div>
+                  )}
 
                   {/* Addon list */}
                   {selectedServices.length > 0 && (

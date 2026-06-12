@@ -211,7 +211,7 @@ export default function ChefDashboard() {
     }
     const order = orders.find((ord) => ord.id === orderId);
     const nextStatusText =
-      newStatus === "Cooking" ? "bắt đầu chuẩn bị" : "hoàn thành";
+      newStatus === "Cooking" ? "bắt đầu chuẩn bị" : newStatus === "Delivering" ? "xong món, đang giao" : "hoàn thành giao hàng";
     const msg = `Đơn hàng ${orderId} của phòng ${order?.room || ""} đã ${nextStatusText}`;
     playVoiceAlert(msg);
   };
