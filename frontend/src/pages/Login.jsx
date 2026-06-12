@@ -16,8 +16,9 @@ export default function Login() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
       console.log("Đang gửi thông tin Google tới Backend...");
-      const response = await fetch("http://localhost:8080/api/auth/google", {
+      const response = await fetch(`${apiBaseUrl}/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -97,8 +98,9 @@ export default function Login() {
     }
 
     try {
-      console.log("Đang kết nối tới Backend tại http://localhost:8080/api/auth/login ...");
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+      console.log(`Đang kết nối tới Backend tại ${apiBaseUrl}/auth/login ...`);
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

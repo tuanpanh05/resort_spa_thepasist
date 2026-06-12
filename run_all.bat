@@ -26,17 +26,17 @@ if %errorlevel% neq 0 (
 
 :: Khoi dong Backend trong mot cua so CMD moi
 echo 1. Dang khoi dong Backend (Spring Boot)...
-if exist "Backend\target\smms-0.0.1-SNAPSHOT.jar" (
-    start "NSRMS Backend - Spring Boot" cmd /c "cd Backend && title Backend - Spring Boot && java -jar target\smms-0.0.1-SNAPSHOT.jar"
+if exist "backend\target\smms-0.0.1-SNAPSHOT.jar" (
+    start "NSRMS Backend - Spring Boot" cmd /c "cd backend && title Backend - Spring Boot && java -jar target\smms-0.0.1-SNAPSHOT.jar"
 ) else (
-    echo [WARNING] Khong tim thay file JAR trong Backend/target.
-    echo Thu chay bang lenh 'mvn spring-boot:run' neu he thong co Maven...
-    start "NSRMS Backend (Maven)" cmd /c "cd Backend && title Backend - Spring Boot && mvn spring-boot:run"
+    echo [WARNING] Khong tim thay file JAR trong backend/target.
+    echo Thu chay bang lenh local Maven spring-boot:run...
+    start "NSRMS Backend (Maven)" cmd /c "cd backend && title Backend - Spring Boot && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run"
 )
 
 :: Khoi dong Frontend (Vite) trong mot cua so CMD moi
 echo 2. Dang khoi dong Frontend (Vite)...
-start "NSRMS Frontend - Vite" cmd /c "title Frontend - Vite && npm run dev"
+start "NSRMS Frontend - Vite" cmd /c "cd frontend && title Frontend - Vite && npm run dev"
 
 echo.
 echo ===================================================

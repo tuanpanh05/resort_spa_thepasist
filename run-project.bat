@@ -36,11 +36,11 @@ echo.
 
 :: 3. Khoi dong Backend
 echo [1/2] Dang khoi dong Backend (Spring Boot)...
-start "Backend - Spring Boot (Port 8080)" cmd /k "cd 03.SourceCode\Backend && .\maven\apache-maven-3.9.9\bin\mvn.cmd spring-boot:run"
+start "Backend - Spring Boot (Port 8080)" cmd /k "cd backend && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run"
 
 :: 4. Khoi dong Frontend
 echo [2/2] Dang khoi dong Frontend (Vite - React)...
-start "Frontend - Vite (Port 5173)" cmd /k "npm run dev"
+start "Frontend - Vite (Port 5173)" cmd /k "cd frontend && npm run dev"
 
 echo.
 echo ==========================================================

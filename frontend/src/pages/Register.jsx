@@ -43,8 +43,9 @@ export default function Register() {
     setError("");
 
     try {
-      console.log("Đang gửi yêu cầu đăng ký tới Backend tại http://localhost:8080/api/auth/register ...");
-      const response = await fetch("http://localhost:8080/api/auth/register", {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+      console.log(`Đang gửi yêu cầu đăng ký tới Backend tại ${apiBaseUrl}/auth/register ...`);
+      const response = await fetch(`${apiBaseUrl}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
