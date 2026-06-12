@@ -200,7 +200,7 @@ export default function ForgotPassword() {
       <div className="absolute inset-0 bg-[#233827]/40 backdrop-blur-sm" />
 
       {/* Main Glassmorphism Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-md border border-primary-100/50 rounded-[32px] shadow-2xl p-8 sm:p-10 transition-all duration-300">
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-md rounded-md shadow-xl p-8 sm:p-10 transition-all duration-300">
 
         {/* Back button */}
         {step < 4 && (
@@ -225,7 +225,7 @@ export default function ForgotPassword() {
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  className={`w-7 h-7 rounded-sm flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                     step > s
                       ? "bg-primary-900 text-white"
                       : step === s
@@ -237,7 +237,7 @@ export default function ForgotPassword() {
                 </div>
                 {s < 3 && (
                   <div
-                    className={`h-0.5 w-8 rounded transition-all duration-500 ${
+                    className={`h-0.5 w-8 transition-all duration-500 ${
                       step > s ? "bg-primary-900" : "bg-primary-100"
                     }`}
                   />
@@ -250,11 +250,11 @@ export default function ForgotPassword() {
         {/* Branding Header */}
         <div className="text-center mb-8">
           {step < 4 ? (
-            <div className="inline-flex p-3 bg-primary-100 rounded-full text-primary-900 mb-3 shadow-sm">
+            <div className="inline-flex p-3 bg-primary-100 rounded-md text-primary-900 mb-3">
               <Leaf className="h-6 w-6" />
             </div>
           ) : (
-            <div className="inline-flex p-4 bg-green-100 rounded-full text-green-600 mb-3 shadow-sm">
+            <div className="inline-flex p-4 bg-green-100 rounded-md text-green-600 mb-3">
               <CheckCircle2 className="h-10 w-10" />
             </div>
           )}
@@ -311,7 +311,7 @@ export default function ForgotPassword() {
 
         {/* Error message */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 text-xs sm:text-sm border border-red-100 flex items-start gap-2">
+          <div className="mb-6 p-4 rounded-md bg-red-50 text-red-700 text-xs sm:text-sm border border-red-100 flex items-start gap-2">
             <span className="mt-0.5 shrink-0">⚠️</span>
             <span>{error}</span>
           </div>
@@ -319,7 +319,7 @@ export default function ForgotPassword() {
 
         {/* Success message */}
         {successMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-green-50 text-green-700 text-xs sm:text-sm border border-green-100 flex items-center gap-2">
+          <div className="mb-6 p-4 rounded-md bg-green-50 text-green-700 text-xs sm:text-sm border border-green-100 flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
@@ -333,7 +333,7 @@ export default function ForgotPassword() {
                 Địa Chỉ Email
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
+                <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
                   <Mail className="h-4.5 w-4.5" />
                 </span>
                 <input
@@ -342,7 +342,7 @@ export default function ForgotPassword() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@gmail.com"
                   autoComplete="email"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-primary-200/50 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-900 focus:border-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                  className="w-full pl-9 pr-4 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
                 />
               </div>
             </div>
@@ -350,7 +350,7 @@ export default function ForgotPassword() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-2xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -386,7 +386,7 @@ export default function ForgotPassword() {
                     onChange={(e) => handleOtpChange(e, index)}
                     onKeyDown={(e) => handleOtpKeyDown(e, index)}
                     onFocus={(e) => e.target.select()}
-                    className="w-11 h-13 text-center text-xl font-bold text-primary-950 bg-white border-2 border-primary-200/60 rounded-2xl focus:border-primary-900 focus:ring-2 focus:ring-primary-900/20 focus:outline-none transition-all duration-150 shadow-sm"
+                    className="w-11 h-13 text-center text-xl font-bold text-primary-950 bg-white border border-primary-300 rounded-md focus:border-primary-900 focus:ring-2 focus:ring-primary-900/20 focus:outline-none transition-all duration-150 shadow-sm"
                     style={{ height: "52px" }}
                   />
                 ))}
@@ -417,7 +417,7 @@ export default function ForgotPassword() {
             <button
               type="submit"
               disabled={isLoading || otpCode.join("").length < 6}
-              className="w-full py-3.5 rounded-2xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -440,7 +440,7 @@ export default function ForgotPassword() {
                 Mật Khẩu Mới
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
+                <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
                   <Lock className="h-4.5 w-4.5" />
                 </span>
                 <input
@@ -449,12 +449,12 @@ export default function ForgotPassword() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Ít nhất 6 ký tự"
                   autoComplete="new-password"
-                  className="w-full pl-11 pr-11 py-3.5 rounded-2xl border border-primary-200/50 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-900 focus:border-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                  className="w-full pl-9 pr-11 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4.5 w-4.5" />
@@ -489,7 +489,7 @@ export default function ForgotPassword() {
                 Nhập Lại Mật Khẩu Mới
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
+                <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
                   <Lock className="h-4.5 w-4.5" />
                 </span>
                 <input
@@ -498,12 +498,12 @@ export default function ForgotPassword() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="new-password"
-                  className="w-full pl-11 pr-11 py-3.5 rounded-2xl border border-primary-200/50 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-900 focus:border-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                  className="w-full pl-9 pr-11 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4.5 w-4.5" />
@@ -531,7 +531,7 @@ export default function ForgotPassword() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-2xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-6"
+              className="w-full py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-6"
             >
               {isLoading ? (
                 <>
@@ -548,7 +548,7 @@ export default function ForgotPassword() {
         {/* STEP 4: Success */}
         {step === 4 && (
           <div className="mt-4 space-y-4">
-            <div className="p-4 rounded-2xl bg-green-50 border border-green-100 text-center">
+            <div className="p-4 rounded-md bg-green-50 border border-green-100 text-center">
               <p className="text-sm text-green-700 font-medium">
                 🎉 Mật khẩu đã được đặt lại thành công!
               </p>
@@ -558,7 +558,7 @@ export default function ForgotPassword() {
             </div>
             <Link
               to="/dang-nhap"
-              className="w-full inline-flex items-center justify-center py-3.5 rounded-2xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+              className="w-full inline-flex items-center justify-center py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer"
             >
               Đăng Nhập Ngay
             </Link>

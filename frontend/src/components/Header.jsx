@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays } from "lucide-react";
+import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard } from "lucide-react";
 
 const navItems = [
   { label: "Trang chủ", href: "/" },
@@ -22,8 +22,10 @@ export default function Header() {
   const userFullName = localStorage.getItem("userFullName") || "";
 
   // Compute initials from full name
-  const getInitials = (name = "") =>
-    name.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase() || "KH";
+  const getInitials = (name) => {
+    if (!name || typeof name !== "string") return "KH";
+    return name.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase() || "KH";
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -178,17 +180,22 @@ export default function Header() {
                         <Link to="/tai-khoan" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <User className="h-3.5 w-3.5 text-primary-600" />
-                          Tài khoản của tôi
+                          Thông tin cá nhân
                         </Link>
-                        <Link to="/tai-khoan" state={{ tab: "history" }} onClick={() => setDropdownOpen(false)}
+                        <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <CalendarDays className="h-3.5 w-3.5 text-primary-600" />
-                          Lịch sử dịch vụ
+                          Lịch sử đặt hàng
                         </Link>
-                        <Link to="/tai-khoan" state={{ tab: "health" }} onClick={() => setDropdownOpen(false)}
+                        <Link to="/tai-khoan/suc-khoe" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <Heart className="h-3.5 w-3.5 text-rose-500" />
                           Hồ sơ sức khỏe
+                        </Link>
+                        <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                          <CreditCard className="h-3.5 w-3.5 text-primary-600" />
+                          Lịch sử thanh toán
                         </Link>
                         <div className="border-t border-primary-100 my-1" />
                         <button onClick={handleLogout}
@@ -289,11 +296,19 @@ export default function Header() {
               <>
                 <Link to="/tai-khoan" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary-600" /> Tài khoản của tôi
+                  <User className="h-4 w-4 text-primary-600" /> Thông tin cá nhân
                 </Link>
-                <Link to="/ho-so-suc-khoe" onClick={() => setIsOpen(false)}
+                <Link to="/tai-khoan/suc-khoe" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
                   <Heart className="h-4 w-4 text-rose-500" /> Hồ sơ sức khỏe
+                </Link>
+                <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary-600" /> Lịch sử đặt hàng
+                </Link>
+                <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary-600" /> Lịch sử thanh toán
                 </Link>
                 <button onClick={() => { setIsOpen(false); handleLogout(); }}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition cursor-pointer">

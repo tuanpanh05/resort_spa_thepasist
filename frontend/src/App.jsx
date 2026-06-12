@@ -52,7 +52,7 @@ function App() {
             <Route path="/specialist" element={<SpecialistDashboard />} />
             <Route path="/ho-so-suc-khoe" element={<HealthProfile />} />
             <Route path="/dat-lich" element={<BookingPage />} />
-            <Route path="/tai-khoan" element={<ProfilePage />} />
+            <Route path="/tai-khoan/*" element={<ProfilePage />} />
           </Routes>
         </main>
 
