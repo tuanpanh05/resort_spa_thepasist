@@ -27,14 +27,15 @@ public class FeedbackController {
      * UC23: Submit a review for a checked-out booking.
      * POST /api/feedback/submit
      *
-     * Request body: { "bookingId": 1, "userId": 5, "rating": 5, "comment": "Great service!" }
+     * Request body: { "bookingId": 1, "userId": 5, "rating": 5, "comment": "Great
+     * service!" }
      */
     @PostMapping("/submit")
     public ResponseEntity<FeedbackDTO> submitFeedback(@RequestBody Map<String, Object> request) {
         Integer bookingId = (Integer) request.get("bookingId");
-        Integer userId    = (Integer) request.get("userId");
-        Integer rating    = (Integer) request.get("rating");
-        String comment    = (String)  request.get("comment");
+        Integer userId = (Integer) request.get("userId");
+        Integer rating = (Integer) request.get("rating");
+        String comment = (String) request.get("comment");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(feedbackService.submitFeedback(bookingId, userId, rating, comment));
     }
