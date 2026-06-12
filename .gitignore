@@ -1,4 +1,5 @@
 # ===== Node / Frontend =====
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -8,9 +9,27 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules/
+node_modules
+.vite/
 dist/
+dist
 dist-ssr/
+dist-ssr
 *.local
+.env
+.env.local
+.env.*.local
+application-local.properties
+
+# Environment variables (contains sensitive secrets)
+.env
+.env.local
+.env.*.local
+*.env
+frontend/.env
+backend/.env
+backend-old/
+backend-old/**
 
 # Editor directories and files
 .vscode/*
@@ -39,6 +58,7 @@ dist-ssr/
 # Maven build output
 Backend/target/
 target/
+**/target/
 
 # virtual machine crash logs
 hs_err_pid*
@@ -59,3 +79,4 @@ nbdist/
 
 # ===== Vite cache =====
 node_modules/.vite/
+
