@@ -80,4 +80,8 @@ public class RoomBooking {
 
     public List<RoomBookingDetail> getDetails() { return details; }
     public void setDetails(List<RoomBookingDetail> details) { this.details = details; }
+
+    public Integer getPackageId() {
+        return retreatPackage != null ? retreatPackage.getPackageId() : null;
+    }
 }
