@@ -12,6 +12,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.local
+.env.*.local
+application-local.properties
 
 # Editor directories and files
 .vscode/*
@@ -55,4 +59,9 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+
+# Maven target directories
+target/
+**/target/
+
 

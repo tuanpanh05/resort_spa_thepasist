@@ -1,0 +1,566 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f7f8f6;
+  --color-primary-100: #bdc5b4;
+  --color-primary-200: #9ca790;
+  --color-primary-300: #7b886f;
+  --color-primary-400: #637057;
+  --color-primary-500: #4d5743;
+  --color-primary-600: #394032;
+  --color-primary-700: #2c3227;
+  --color-primary-800: #1f231b;
+  --color-primary-850: #141712;
+  --color-primary-900: #0f110d;
+  --color-primary-950: #080907;
+
+  --color-sage-50: #f4f6f4;
+  --color-sage-100: #c7d1c7;
+  --color-sage-200: #9fae9f;
+  --color-sage-300: #758875;
+  --color-sage-400: #758875;
+  --color-sage-500: #566a56;
+  --color-sage-600: #435343;
+  --color-sage-700: #354235;
+  --color-sage-800: #2c372c;
+  --color-sage-900: #192219;
+  --color-sage-950: #0a0f0a;
+
+  --color-warm-beige: #f5f5f0;
+  --color-dark-forest: #0c2e28;
+
+  --font-sans: "Outfit", "system-ui", "sans-serif";
+  --font-serif: "Cormorant Garamond", "Georgia", "serif";
+
+  --animate-fade-in: fadeIn 1s ease-out forwards;
+  --animate-slide-up: slideUp 0.8s ease-out forwards;
+  --animate-pulse-subtle: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pulseSubtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+}
+
+/* Unified Typography Utilities */
+@utility page-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+}
+
+@utility section-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+}
+
+@utility card-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+@utility body-text {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+@utility muted-text {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: #6B7280;
+}
+
+@utility nav-text {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+@utility button-text {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@utility dashboard-title {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility dashboard-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+@utility form-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Backward compatibility / Aliases for resort styling */
+@utility text-resort-title {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+@utility text-resort-section {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+@utility text-resort-stepper {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@utility text-resort-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+@utility text-resort-input {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+@utility text-resort-desc {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: #6B7280;
+}
+
+@utility text-resort-button {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@utility glass-header {
+  background: rgba(250, 251, 250, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(217, 249, 157, 0.3);
+}
+
+@utility glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(217, 249, 157, 0.2);
+}
+
+@utility bg-hero-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(26, 46, 5, 0.4),
+    rgba(26, 46, 5, 0.7)
+  );
+}
+
+@utility text-gradient {
+  background: linear-gradient(135deg, #4d7c0f 0%, #1a2e05 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(240, 244, 225, 0.5);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d9f99d;
+    border-radius: 9999px;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-[#fafbfa] text-sage-900 font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif text-sage-900;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+}
+
+/* Định dạng font chữ Outfit nhẹ nhàng, hiện đại cho giao diện Admin */
+.admin-theme,
+.admin-theme * {
+  font-family:
+    "Outfit",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif !important;
+}
+
+/* Fix header navigation wrapping and squeeze issues */
+header nav,
+header div {
+  flex-shrink: 0 !important;
+}
+
+header nav a,
+header div a {
+  white-space: nowrap !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   POLICY MODAL  –  Chính sách bảo mật & Điều khoản hội viên
+   ══════════════════════════════════════════════════════════ */
+
+.policy-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(9, 17, 8, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: policyFadeIn 0.2s ease-out;
+}
+
+@keyframes policyFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.policy-modal-container {
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 32px 80px rgba(9, 17, 8, 0.35), 0 0 0 1px rgba(189, 197, 180, 0.3);
+  animation: policySlideUp 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
+  overflow: hidden;
+}
+
+@keyframes policySlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ── */
+.policy-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 1rem;
+  background: linear-gradient(135deg, #0f110d 0%, #2c3227 100%);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.policy-modal-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.policy-header-svg {
+  width: 24px;
+  height: 24px;
+  color: #bdc5b4;
+}
+
+.policy-modal-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.policy-modal-title {
+  font-family: "Cormorant Garamond", Georgia, serif !important;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff !important;
+  margin: 0 0 0.25rem;
+  line-height: 1.2;
+}
+
+.policy-modal-subtitle {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.policy-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.policy-modal-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* ── Meta badge ── */
+.policy-modal-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.5rem;
+  background: #f4f6f4;
+  border-bottom: 1px solid #e5e9e0;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.policy-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #394032;
+  background: #bdc5b4;
+  padding: 0.2rem 0.65rem;
+  border-radius: 99px;
+  letter-spacing: 0.03em;
+}
+
+.policy-meta-date {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+/* ── Body (scrollable) ── */
+.policy-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  scroll-behavior: smooth;
+}
+
+.policy-modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+.policy-modal-body::-webkit-scrollbar-track {
+  background: #f4f6f4;
+}
+.policy-modal-body::-webkit-scrollbar-thumb {
+  background: #bdc5b4;
+  border-radius: 99px;
+}
+
+/* ── Section ── */
+.policy-section {
+  border: 1px solid #e5e9e0;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.policy-section:hover {
+  box-shadow: 0 4px 16px rgba(9, 17, 8, 0.07);
+}
+
+.policy-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #f7f8f6 0%, #eef0eb 100%);
+  border-bottom: 1px solid #e5e9e0;
+}
+
+.policy-section-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.policy-section-title {
+  font-family: "Outfit", system-ui, sans-serif !important;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2c3227 !important;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.policy-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.6rem 1rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: #fff;
+}
+
+.policy-section-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #435343;
+  line-height: 1.55;
+}
+
+.policy-item-arrow {
+  color: #637057;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+/* ── Footer ── */
+.policy-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e9e0;
+  background: #f7f8f6;
+  flex-shrink: 0;
+  gap: 0.75rem;
+}
+
+.policy-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #394032;
+}
+
+.policy-footer-brand svg {
+  color: #637057;
+}
+
+.policy-footer-close-btn {
+  padding: 0.55rem 1.4rem;
+  border-radius: 99px;
+  border: none;
+  background: linear-gradient(135deg, #2c3227 0%, #4d5743 100%);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.policy-footer-close-btn:hover {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .policy-modal-container {
+    border-radius: 18px;
+    max-height: 96vh;
+  }
+  .policy-modal-header {
+    padding: 1.1rem 1rem 0.75rem;
+  }
+  .policy-modal-body {
+    padding: 1rem;
+  }
+  .policy-modal-footer {
+    padding: 0.75rem 1rem;
+  }
+  .policy-modal-title {
+    font-size: 1.2rem;
+  }
+}
