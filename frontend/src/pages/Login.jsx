@@ -6,9 +6,10 @@ import { signInWithPopup } from "firebase/auth";
 
 import { auth, googleProvider } from "../firebase";
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("rememberedEmail"));
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const loginWithGoogle = async () => {
@@ -32,16 +33,24 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userEmail", data.email);
-        localStorage.setItem("userRole", data.role);
-        localStorage.setItem("userFullName", data.fullName);
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", data.token);
+        storage.setItem("userEmail", data.email);
+        storage.setItem("userRole", data.role);
+        storage.setItem("userFullName", data.fullName);
+
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", user.email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
 
         alert(`Đăng nhập Google thành công! Chào mừng ${data.fullName}`);
         
         // Điều hướng dựa trên vai trò từ backend
         const role = data.role.toUpperCase();
         localStorage.removeItem("specialistRole");
+        sessionStorage.removeItem("specialistRole");
 
         if (role === "ADMIN" || role === "MANAGER") {
           navigate("/admin");
@@ -50,13 +59,13 @@ export default function Login() {
         } else if (role === "CHEF") {
           navigate("/chef");
         } else if (role === "SPA") {
-          localStorage.setItem("specialistRole", "spa");
+          storage.setItem("specialistRole", "spa");
           navigate("/specialist");
         } else if (role === "YOGA") {
-          localStorage.setItem("specialistRole", "yoga");
+          storage.setItem("specialistRole", "yoga");
           navigate("/specialist");
         } else if (role === "PHYSIO" || role === "THERAPIST") {
-          localStorage.setItem("specialistRole", "physio");
+          storage.setItem("specialistRole", "physio");
           navigate("/specialist");
         } else {
           navigate("/");
@@ -112,16 +121,24 @@ export default function Login() {
 
       if (response.ok) {
         // Đăng nhập thành công từ backend thật
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userEmail", data.email);
-        localStorage.setItem("userRole", data.role);
-        localStorage.setItem("userFullName", data.fullName);
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", data.token);
+        storage.setItem("userEmail", data.email);
+        storage.setItem("userRole", data.role);
+        storage.setItem("userFullName", data.fullName);
+
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
 
         alert(`Đăng nhập hệ thống thành công! Chào mừng ${data.fullName}`);
         
         // Điều hướng dựa trên vai trò từ backend
         const role = data.role.toUpperCase();
         localStorage.removeItem("specialistRole");
+        sessionStorage.removeItem("specialistRole");
 
         if (role === "ADMIN" || role === "MANAGER") {
           navigate("/admin");
@@ -130,13 +147,13 @@ export default function Login() {
         } else if (role === "CHEF") {
           navigate("/chef");
         } else if (role === "SPA") {
-          localStorage.setItem("specialistRole", "spa");
+          storage.setItem("specialistRole", "spa");
           navigate("/specialist");
         } else if (role === "YOGA") {
-          localStorage.setItem("specialistRole", "yoga");
+          storage.setItem("specialistRole", "yoga");
           navigate("/specialist");
         } else if (role === "PHYSIO" || role === "THERAPIST") {
-          localStorage.setItem("specialistRole", "physio");
+          storage.setItem("specialistRole", "physio");
           navigate("/specialist");
         } else {
           navigate("/");
@@ -248,6 +265,8 @@ export default function Login() {
             <label className="flex items-center space-x-2 text-sage-700 cursor-pointer">
               <input
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="rounded-sm border-primary-300 text-primary-900 focus:ring-primary-900 cursor-pointer"
               />
               <span>Ghi nhớ đăng nhập</span>

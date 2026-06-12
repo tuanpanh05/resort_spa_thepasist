@@ -9,7 +9,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api
  * Returns Authorization header with JWT token from localStorage.
  */
 export function getAuthHeaders() {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

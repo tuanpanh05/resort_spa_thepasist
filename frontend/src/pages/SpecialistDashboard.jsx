@@ -40,10 +40,10 @@ import ManageRecords from "../components/specialist/ManageRecords";
 export default function SpecialistDashboard() {
   // Active Role switcher: 'spa' | 'yoga' | 'physio'
   const [activeRole, setActiveRole] = useState(() => {
-    return localStorage.getItem("specialistRole") || "spa";
+    return localStorage.getItem("specialistRole") || sessionStorage.getItem("specialistRole") || "spa";
   });
 
-  const isLocked = !!localStorage.getItem("specialistRole");
+  const isLocked = !!(localStorage.getItem("specialistRole") || sessionStorage.getItem("specialistRole"));
   const [activeTab, setActiveTab] = useState("overview");
 
   // Mobile navigation drawer
@@ -347,6 +347,7 @@ export default function SpecialistDashboard() {
             onClick={() => {
               if (window.confirm("Bạn muốn quay lại trang đăng nhập?")) {
                 localStorage.removeItem("specialistRole");
+                sessionStorage.removeItem("specialistRole");
                 window.location.href = "/dang-nhap";
               }
             }}

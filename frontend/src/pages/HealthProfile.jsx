@@ -38,7 +38,7 @@ const DIET_OPTIONS = [
 
 export default function HealthProfile() {
   const navigate = useNavigate();
-  const userFullName = localStorage.getItem("userFullName") || "Khách hàng";
+  const userFullName = localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "Khách hàng";
 
   // Form state
   const [selectedAllergies, setSelectedAllergies] = useState([]);
@@ -58,7 +58,7 @@ export default function HealthProfile() {
 
   // Check authentication
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       navigate("/dang-nhap");
       return;

@@ -120,8 +120,9 @@ function PersonalInfoTab({ profile, onProfileUpdate }) {
     try {
       const updated = await userApi.updateProfile({ fullName, phone, idPassport });
       onProfileUpdate(updated);
-      // sync localStorage name for Header
+      // sync localStorage/sessionStorage name for Header
       localStorage.setItem("userFullName", updated.fullName || fullName);
+      sessionStorage.setItem("userFullName", updated.fullName || fullName);
       setInfoMsg({ type: "success", text: "Thông tin đã được cập nhật thành công!" });
     } catch (err) {
       setInfoMsg({ type: "error", text: err.message || "Không thể lưu thông tin. Vui lòng thử lại." });
@@ -259,9 +260,6 @@ function PersonalInfoTab({ profile, onProfileUpdate }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TAB 2 – Service History
-// ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB 2 – Service & Order History
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -882,18 +880,18 @@ export default function ProfilePage() {
   // CONNECTION POINT: Fetch user profile from GET /api/users/me
   // DATABASE RELATION: Reads columns from table [User]
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) { navigate("/dang-nhap"); return; }
     userApi.getProfile()
       .then(setProfile)
       .catch(() => {
         // Fallback: build from localStorage
         setProfile({
-          fullName: localStorage.getItem("userFullName") || "Khách hàng",
+          fullName: localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "Khách hàng",
           email: "",
           phone: "",
           idPassport: "",
-          role: localStorage.getItem("userRole") || "GUEST",
+          role: localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "GUEST",
           createdAt: null,
         });
       })

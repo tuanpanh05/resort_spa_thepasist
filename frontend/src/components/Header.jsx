@@ -18,8 +18,8 @@ export default function Header() {
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem("token");
-  const userFullName = localStorage.getItem("userFullName") || "";
+  const isLoggedIn = !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
+  const userFullName = localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "";
 
   // Compute initials from full name
   const getInitials = (name) => {
@@ -31,6 +31,9 @@ export default function Header() {
     localStorage.removeItem("token");
     localStorage.removeItem("userFullName");
     localStorage.removeItem("userRole");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("userFullName");
+    sessionStorage.removeItem("userRole");
     setDropdownOpen(false);
     navigate("/dang-nhap");
   };

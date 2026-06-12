@@ -16,8 +16,33 @@ import {
   Info,
   ChevronRight,
   Loader2,
+  Heart,
+  Leaf,
+  AlertTriangle,
 } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
+
+// Food allergy options matching SRS
+const ALLERGY_OPTIONS = [
+  { key: "peanuts", label: "Đậu phộng (Peanuts)" },
+  { key: "gluten", label: "Gluten / Lúa mì" },
+  { key: "shellfish", label: "Hải sản có vỏ (Shellfish)" },
+  { key: "dairy", label: "Sữa / Lactose" },
+  { key: "eggs", label: "Trứng" },
+  { key: "soy", label: "Đậu nành (Soy)" },
+  { key: "treenuts", label: "Hạt cây (Tree nuts)" },
+  { key: "fish", label: "Cá" },
+];
+
+// Dietary preference options
+const DIET_OPTIONS = [
+  { key: "omnivore", label: "Ăn tạp (Omnivore)" },
+  { key: "vegetarian", label: "Chay (Vegetarian)" },
+  { key: "vegan", label: "Thuần chay (Vegan)" },
+  { key: "pescatarian", label: "Ăn cá (Pescatarian)" },
+  { key: "keto", label: "Keto" },
+  { key: "halal", label: "Halal" },
+];
 
 // Mock data list for Villas (matching room items from mockData.js or rooms page)
 const villasList = [
@@ -126,7 +151,21 @@ export default function BookingPage() {
 
   const [formErrors, setFormErrors] = useState({});
 
-  // Step 2: Selected Room & Services
+  // Step 2: Health Profile
+  const [selectedAllergies, setSelectedAllergies] = useState([]);
+  const [otherAllergy, setOtherAllergy] = useState("");
+  const [dietaryPreference, setDietaryPreference] = useState("omnivore");
+  const [physicalCondition, setPhysicalCondition] = useState("");
+  const [consentDataProcessing, setConsentDataProcessing] = useState(false);
+  const [consentSharing, setConsentSharing] = useState(false);
+
+  const toggleAllergy = (key) => {
+    setSelectedAllergies((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  // Step 3: Selected Room & Services
   const [selectedVillaId, setSelectedVillaId] = useState(villasList[0].id);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
 
@@ -202,17 +241,28 @@ export default function BookingPage() {
     return Object.keys(errors).length === 0;
   };
 
+  const validateStep2 = () => {
+    const errors = {};
+    if (!consentDataProcessing || !consentSharing) {
+      errors.consent = "Bạn phải đồng ý với cả hai điều khoản xử lý và chia sẻ dữ liệu sức khỏe để tiếp tục (theo Nghị định 356/2025/NĐ-CP).";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Navigations between steps
   const handleNextStep = () => {
     if (step === 1) {
       if (validateStep1()) setStep(2);
     } else if (step === 2) {
-      setStep(3);
+      if (validateStep2()) setStep(3);
+    } else if (step === 3) {
+      setStep(4);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1 && step < 4) {
+    if (step > 1 && step < 5) {
       setStep(step - 1);
     }
   };
@@ -224,7 +274,7 @@ export default function BookingPage() {
       setIsConfirming(false);
       setBookingStatus("PENDING_PAYMENT");
       setPaymentStatus("PENDING");
-      setStep(4);
+      setStep(5);
     }, 1800);
   };
 
@@ -342,15 +392,16 @@ export default function BookingPage() {
               <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary-100 z-0" />
               <div
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary-600 transition-all duration-500 z-0"
-                style={{ width: `${((step - 1) / 3) * 100}%` }}
+                style={{ width: `${((step - 1) / 4) * 100}%` }}
               />
 
               {/* Step indicator node points */}
               {[
                 { number: 1, label: "Thông tin khách" },
-                { number: 2, label: "Chọn Villa & Dịch vụ" },
-                { number: 3, label: "Xác nhận đơn" },
-                { number: 4, label: "Thanh toán cọc" },
+                { number: 2, label: "Hồ sơ sức khỏe" },
+                { number: 3, label: "Chọn Villa & Dịch vụ" },
+                { number: 4, label: "Xác nhận đơn" },
+                { number: 5, label: "Thanh toán cọc" },
               ].map((s) => {
                 const isActive = step >= s.number;
                 const isCurrent = step === s.number;
@@ -627,21 +678,7 @@ export default function BookingPage() {
                       {formErrors.checkOutDate && <span className="text-[10px] text-red-500 font-normal mt-1 block">{formErrors.checkOutDate}</span>}
                     </div>
 
-                    {/* Health Note / Allergies */}
-                    <div className="sm:col-span-2">
-                      <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                        Lưu ý sức khỏe / dị ứng thức ăn (nếu có)
-                      </label>
-                      <div className="relative">
-                        <textarea
-                          placeholder="VD: Dị ứng tôm cua ghẹ, bị đau lưng cột sống, cần hạn chế vận động mạnh..."
-                          rows="2.5"
-                          value={guestInfo.healthNote}
-                          onChange={(e) => setGuestInfo({ ...guestInfo, healthNote: e.target.value })}
-                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
-                        />
-                      </div>
-                    </div>
+                    {/* Removed Health Note from here as it is now in Step 2 */}
 
                     {/* Special requests */}
                     <div className="sm:col-span-2">
@@ -666,7 +703,7 @@ export default function BookingPage() {
                       onClick={handleNextStep}
                       className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
                     >
-                      Chọn Villa & Dịch vụ <ChevronRight className="h-4 w-4 ml-1.5" />
+                      Khai báo sức khỏe <ChevronRight className="h-4 w-4 ml-1.5" />
                     </button>
                   </div>
                 </div>
@@ -677,7 +714,163 @@ export default function BookingPage() {
                 <div className="space-y-8 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
                     <h2 className="text-resort-section text-sage-950 mb-1">
-                      Bước 2: Chọn Không Gian & Trải Nghiệm
+                      Bước 2: Hồ Sơ Sức Khỏe & Chế Độ Ăn
+                    </h2>
+                    <p className="text-resort-desc">
+                      Thông tin sức khỏe giúp chúng tôi cá nhân hóa dịch vụ Spa, thực đơn và trị liệu dành riêng cho bạn. Dữ liệu sẽ được mã hóa và bảo mật.
+                    </p>
+                  </div>
+
+                  {formErrors.consent && (
+                    <div className="mb-6 p-4 bg-red-50 text-red-700 text-sm border border-red-100 flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <span>{formErrors.consent}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-8">
+                    {/* Section 1: Dietary Preference */}
+                    <div>
+                      <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <Leaf className="h-4 w-4 text-primary-700" />
+                        Chế Độ Ăn Uống
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {DIET_OPTIONS.map((opt) => (
+                          <label
+                            key={opt.key}
+                            className={`flex items-center justify-center p-3 rounded-none border cursor-pointer text-xs font-semibold transition-all ${
+                              dietaryPreference === opt.key
+                                ? "border-primary-800 bg-primary-50 text-primary-900"
+                                : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="dietaryPreference"
+                              value={opt.key}
+                              checked={dietaryPreference === opt.key}
+                              onChange={() => setDietaryPreference(opt.key)}
+                              className="sr-only"
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Section 2: Food Allergies */}
+                    <div>
+                      <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        Dị Ứng Thực Phẩm
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        {ALLERGY_OPTIONS.map((opt) => (
+                          <label
+                            key={opt.key}
+                            className={`flex items-center gap-2 p-3 rounded-none border cursor-pointer text-xs font-medium transition-all ${
+                              selectedAllergies.includes(opt.key)
+                                ? "border-amber-400 bg-amber-50 text-amber-800"
+                                : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedAllergies.includes(opt.key)}
+                              onChange={() => toggleAllergy(opt.key)}
+                              className="w-4 h-4 accent-amber-500"
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                      <input
+                        type="text"
+                        value={otherAllergy}
+                        onChange={(e) => setOtherAllergy(e.target.value)}
+                        placeholder="Dị ứng khác (nếu có)..."
+                        className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
+                      />
+                    </div>
+
+                    {/* Section 3: Physical Condition */}
+                    <div>
+                      <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-rose-500" />
+                        Tình Trạng Thể Chất
+                      </h3>
+                      <p className="text-xs text-sage-500 mb-3">
+                        Ví dụ: Đau lưng, huyết áp cao, đang mang thai... Thông tin này chỉ Kỹ thuật viên trị liệu mới được xem.
+                      </p>
+                      <textarea
+                        value={physicalCondition}
+                        onChange={(e) => setPhysicalCondition(e.target.value)}
+                        rows={3}
+                        placeholder="Mô tả tình trạng sức khỏe thể chất của bạn..."
+                        className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 resize-none"
+                      />
+                    </div>
+
+                    {/* Section 4: Explicit Consent */}
+                    <div className="bg-amber-50/70 p-5 space-y-4 border-l-4 border-amber-500 rounded-sm">
+                      <div className="flex items-center gap-2 mb-1">
+                        <ShieldCheck className="h-5 w-5 text-amber-600" />
+                        <h3 className="text-sm font-bold text-amber-800">
+                          Cam Kết Thu Thập Dữ Liệu (Nghị định 356/2025/NĐ-CP)
+                        </h3>
+                      </div>
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={consentDataProcessing}
+                          onChange={(e) => setConsentDataProcessing(e.target.checked)}
+                          className="w-4 h-4 mt-1 accent-amber-600 flex-shrink-0"
+                        />
+                        <span className="text-xs text-amber-900">
+                          <strong>Đồng ý Xử lý Dữ liệu Sức khỏe:</strong> Tôi đồng ý cho Ngũ Sơn Resort lưu trữ và xử lý thông tin sức khỏe của tôi (được mã hóa AES-256) nhằm cung cấp dịch vụ phù hợp.
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={consentSharing}
+                          onChange={(e) => setConsentSharing(e.target.checked)}
+                          className="w-4 h-4 mt-1 accent-amber-600 flex-shrink-0"
+                        />
+                        <span className="text-xs text-amber-900">
+                          <strong>Đồng ý Chia sẻ Có Giới hạn:</strong> Tôi đồng ý chia sẻ thông tin dị ứng với bộ phận Bếp và thông tin thể chất với Kỹ thuật viên Spa.
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider hover:bg-primary-950 transition-all uppercase rounded-none flex items-center cursor-pointer"
+                    >
+                      Chọn Villa & Dịch vụ <ChevronRight className="h-4 w-4 ml-1.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3 Page Content Panel */}
+              {step === 3 && (
+                <div className="space-y-8 text-left animate-fade-in">
+                  <div className="border-b border-primary-50 pb-3 mb-6">
+                    <h2 className="text-resort-section text-sage-950 mb-1">
+                      Bước 3: Chọn Không Gian & Trải Nghiệm
                     </h2>
                     <p className="text-resort-desc">
                       Lựa chọn 1 biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
@@ -824,12 +1017,12 @@ export default function BookingPage() {
                 </div>
               )}
 
-              {/* Step 3 Page Content Panel */}
-              {step === 3 && (
+              {/* Step 4 Page Content Panel */}
+              {step === 4 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
                     <h2 className="text-resort-section text-sage-950 mb-1">
-                      Bước 3: Xác Nhận Đơn Đặt Lịch
+                      Bước 4: Xác Nhận Đơn Đặt Lịch
                     </h2>
                     <p className="text-resort-desc">
                       Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
@@ -867,22 +1060,44 @@ export default function BookingPage() {
                         </div>
                       </div>
 
-                      {(guestInfo.healthNote || guestInfo.specialRequest) && (
+                      {guestInfo.specialRequest && (
                         <div className="pt-2 border-t border-primary-100/50 space-y-2">
-                          {guestInfo.healthNote && (
-                            <div>
-                              <span className="text-red-650 block text-[9px] uppercase tracking-wider mb-0.5">Lưu ý sức khỏe / dị ứng</span>
-                              <span className="text-sage-700 italic font-medium">{guestInfo.healthNote}</span>
-                            </div>
-                          )}
-                          {guestInfo.specialRequest && (
-                            <div>
-                              <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Yêu cầu đặc biệt</span>
-                              <span className="text-sage-700 italic font-medium">{guestInfo.specialRequest}</span>
-                            </div>
-                          )}
+                          <div>
+                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Yêu cầu đặc biệt</span>
+                            <span className="text-sage-700 italic font-medium">{guestInfo.specialRequest}</span>
+                          </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* Part 1.5: Health Profile */}
+                    <div className="bg-primary-50/15 border border-primary-100 p-6 space-y-4">
+                      <h3 className="text-[10px] font-bold text-primary-800 uppercase tracking-widest border-b border-primary-100 pb-2 flex items-center gap-2">
+                        <Heart className="h-3 w-3" /> Hồ sơ sức khỏe & Dị ứng
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Chế độ ăn uống</span>
+                          <span className="font-semibold text-sage-900">
+                            {DIET_OPTIONS.find(d => d.key === dietaryPreference)?.label || dietaryPreference}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Dị ứng thực phẩm</span>
+                          <span className="font-semibold text-amber-700">
+                            {selectedAllergies.length > 0 || otherAllergy ? (
+                              [
+                                ...selectedAllergies.map(a => ALLERGY_OPTIONS.find(opt => opt.key === a)?.label),
+                                otherAllergy
+                              ].filter(Boolean).join(", ")
+                            ) : "Không có"}
+                          </span>
+                        </div>
+                        <div className="md:col-span-2">
+                          <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Tình trạng thể chất</span>
+                          <span className="font-semibold text-rose-700 whitespace-pre-line">{physicalCondition || "Bình thường"}</span>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Part 2: Selected services lists */}
@@ -968,12 +1183,12 @@ export default function BookingPage() {
                 </div>
               )}
 
-              {/* Step 4 Page Content Panel */}
-              {step === 4 && (
+              {/* Step 5 Page Content Panel */}
+              {step === 5 && (
                 <div className="space-y-6 text-left animate-fade-in">
                   <div className="border-b border-primary-50 pb-3 mb-6">
                     <h2 className="text-resort-section text-sage-950 mb-1">
-                      Bước 4: Thanh Toán Đặt Cọc
+                      Bước 5: Thanh Toán Đặt Cọc
                     </h2>
                     <p className="text-resort-desc">
                       Vui lòng thanh toán khoản cọc 30% qua ngân hàng để kích hoạt trạng thái xác nhận đặt phòng tự động.
