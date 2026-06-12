@@ -16,8 +16,9 @@ export default function Login() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
       console.log("Đang gửi thông tin Google tới Backend...");
-      const response = await fetch("http://localhost:8080/api/auth/google", {
+      const response = await fetch(`${apiBaseUrl}/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -97,8 +98,9 @@ export default function Login() {
     }
 
     try {
-      console.log("Đang kết nối tới Backend tại http://localhost:8080/api/auth/login ...");
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+      console.log(`Đang kết nối tới Backend tại ${apiBaseUrl}/auth/login ...`);
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -160,7 +162,7 @@ export default function Login() {
       <div className="absolute inset-0 bg-[#233827]/40 backdrop-blur-sm" />
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-md border border-primary-100/50 rounded-[32px] shadow-2xl p-8 sm:p-10 transition-all duration-300">
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-md rounded-md shadow-xl p-8 sm:p-10 transition-all duration-300">
         {/* Back button */}
         <Link
           to="/"
@@ -172,7 +174,7 @@ export default function Login() {
 
         {/* Branding Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex p-3 bg-primary-100 rounded-full text-primary-900 mb-3 shadow-sm">
+          <div className="inline-flex p-3 bg-primary-100 rounded-md text-primary-900 mb-3">
             <Leaf className="h-6 w-6" />
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-sage-900">
@@ -185,7 +187,7 @@ export default function Login() {
 
         {/* Error message */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 text-xs sm:text-sm border border-red-100">
+          <div className="mb-6 p-4 rounded-md bg-red-50 text-red-700 text-xs sm:text-sm border border-red-100">
             {error}
           </div>
         )}
@@ -198,7 +200,7 @@ export default function Login() {
               Email / Số Điện Thoại
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
+              <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
                 <Mail className="h-4.5 w-4.5" />
               </span>
               <input
@@ -206,7 +208,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@gmail.com"
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-primary-200/50 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-900 focus:border-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                className="w-full pl-9 pr-4 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
               />
             </div>
           </div>
@@ -217,7 +219,7 @@ export default function Login() {
               Mật Khẩu
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sage-400">
+              <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
                 <Lock className="h-4.5 w-4.5" />
               </span>
               <input
@@ -225,12 +227,12 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-11 pr-11 py-3 rounded-2xl border border-primary-200/50 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-900 focus:border-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                className="w-full pl-9 pr-11 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
+                className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-600 focus:outline-none"
               >
                 {showPassword ? (
                   <EyeOff className="h-4.5 w-4.5" />
@@ -246,7 +248,7 @@ export default function Login() {
             <label className="flex items-center space-x-2 text-sage-700 cursor-pointer">
               <input
                 type="checkbox"
-                className="rounded border-primary-300 text-primary-900 focus:ring-primary-900 cursor-pointer"
+                className="rounded-sm border-primary-300 text-primary-900 focus:ring-primary-900 cursor-pointer"
               />
               <span>Ghi nhớ đăng nhập</span>
             </label>
@@ -261,7 +263,7 @@ export default function Login() {
           {/* Submit button */}
           <button
             type="submit"
-            className="w-full py-3.5 rounded-2xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer mt-6"
+            className="w-full py-3 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer mt-6"
           >
             Đăng Nhập
           </button>
@@ -283,7 +285,7 @@ export default function Login() {
         <div className="w-full">
           <button
             onClick={loginWithGoogle}
-            className="w-full flex items-center justify-center space-x-2 py-3 border border-primary-200/50 rounded-2xl bg-white/70 hover:bg-white text-xs font-semibold text-sage-800 hover:shadow-sm transition-all duration-200 cursor-pointer"
+            className="w-full flex items-center justify-center space-x-2 py-3 rounded-md bg-primary-50 hover:bg-primary-100 text-xs font-semibold text-sage-800 hover:shadow-sm transition-all duration-200 cursor-pointer"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path

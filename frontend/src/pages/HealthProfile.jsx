@@ -72,6 +72,8 @@ export default function HealthProfile() {
       const profile = await medicalApi.getMyProfile();
       if (profile && profile.explicitConsentSigned) {
         setExistingProfile(profile);
+        setConsentDataProcessing(true);
+        setConsentSharing(true);
         // Restore data to form
         if (profile.foodAllergies) {
           try {
@@ -185,9 +187,9 @@ export default function HealthProfile() {
         </Link>
 
         {/* Header */}
-        <div className="bg-white/90 backdrop-blur-md rounded-[32px] shadow-2xl p-8">
+        <div className="bg-white/95 backdrop-blur-md rounded-md shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex p-3 bg-primary-100 rounded-full text-primary-900 mb-3">
+            <div className="inline-flex p-3 bg-primary-100 rounded-md text-primary-900 mb-3">
               <Heart className="h-6 w-6" />
             </div>
             <h1 className="font-serif text-2xl font-bold text-sage-900">
@@ -200,7 +202,7 @@ export default function HealthProfile() {
 
           {/* Existing profile indicator */}
           {existingProfile && (
-            <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 flex items-start gap-3">
+            <div className="mb-6 p-4 rounded-md bg-green-50 border border-green-200 flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-green-800">Hồ sơ đã được lưu</p>
@@ -211,13 +213,13 @@ export default function HealthProfile() {
 
           {/* Error / Success messages */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 text-sm border border-red-100 flex items-start gap-2">
+            <div className="mb-6 p-4 rounded-md bg-red-50 text-red-700 text-sm border border-red-100 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
           {success && (
-            <div className="mb-6 p-4 rounded-xl bg-green-50 text-green-700 text-sm border border-green-100 flex items-start gap-2">
+            <div className="mb-6 p-4 rounded-md bg-green-50 text-green-700 text-sm border border-green-100 flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span>{success}</span>
             </div>
@@ -234,7 +236,7 @@ export default function HealthProfile() {
                 {DIET_OPTIONS.map((opt) => (
                   <label
                     key={opt.key}
-                    className={`flex items-center justify-center p-3 rounded-xl border-2 cursor-pointer text-xs font-semibold transition-all ${
+                    className={`flex items-center justify-center p-3 rounded-md border cursor-pointer text-xs font-semibold transition-all ${
                       dietaryPreference === opt.key
                         ? "border-primary-800 bg-primary-50 text-primary-900"
                         : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
@@ -264,7 +266,7 @@ export default function HealthProfile() {
                 {ALLERGY_OPTIONS.map((opt) => (
                   <label
                     key={opt.key}
-                    className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer text-xs font-medium transition-all ${
+                    className={`flex items-center gap-2 p-3 rounded-md border cursor-pointer text-xs font-medium transition-all ${
                       selectedAllergies.includes(opt.key)
                         ? "border-amber-400 bg-amber-50 text-amber-800"
                         : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
@@ -285,7 +287,7 @@ export default function HealthProfile() {
                 value={otherAllergy}
                 onChange={(e) => setOtherAllergy(e.target.value)}
                 placeholder="Dị ứng khác (nếu có)..."
-                className="w-full px-4 py-2.5 rounded-xl border border-primary-200 bg-white text-sm text-sage-800 focus:outline-none focus:ring-2 focus:ring-primary-800"
+                className="w-full px-2 py-2.5 border-b border-primary-200 bg-transparent text-sm text-sage-800 focus:outline-none focus:border-primary-800 rounded-none transition-all duration-200"
               />
             </div>
 
@@ -303,12 +305,12 @@ export default function HealthProfile() {
                 onChange={(e) => setPhysicalCondition(e.target.value)}
                 rows={4}
                 placeholder="Mô tả tình trạng sức khỏe thể chất của bạn..."
-                className="w-full px-4 py-3 rounded-xl border border-primary-200 bg-white text-sm text-sage-800 focus:outline-none focus:ring-2 focus:ring-primary-800 resize-none"
+                className="w-full px-2 py-3 border-b border-primary-200 bg-transparent text-sm text-sage-800 focus:outline-none focus:border-primary-800 rounded-none resize-none transition-all duration-200"
               />
             </div>
 
             {/* Section 4: Explicit Consent Checkboxes (Decree 356/2025) */}
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-4">
+            <div className="bg-amber-50/70 rounded-md p-5 space-y-4 border-l-4 border-amber-500">
               <div className="flex items-center gap-2 mb-1">
                 <ShieldCheck className="h-5 w-5 text-amber-600" />
                 <h3 className="text-sm font-bold text-amber-800">
@@ -359,7 +361,7 @@ export default function HealthProfile() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-2xl text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -389,13 +391,13 @@ export default function HealthProfile() {
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full py-3 rounded-2xl text-sm font-semibold border-2 border-red-300 text-red-600 hover:bg-red-50 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-md text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
                   Xóa Vĩnh Viễn Hồ Sơ Sức Khỏe
                 </button>
               ) : (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-5 space-y-4">
+                <div className="bg-red-50/70 border-l-4 border-red-500 rounded-md p-5 space-y-4">
                   <p className="text-sm font-semibold text-red-800 text-center">
                     ⚠️ Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ sức khỏe?
                   </p>
@@ -406,7 +408,7 @@ export default function HealthProfile() {
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="py-2.5 rounded-xl text-sm font-semibold border border-sage-300 text-sage-700 hover:bg-sage-50 transition cursor-pointer"
+                      className="py-2.5 rounded-md text-sm font-semibold border border-sage-300 text-sage-700 hover:bg-sage-50 transition cursor-pointer"
                     >
                       Hủy Bỏ
                     </button>
@@ -414,7 +416,7 @@ export default function HealthProfile() {
                       type="button"
                       onClick={handleDeleteConfirm}
                       disabled={loading}
-                      className="py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="py-2.5 rounded-md text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {loading ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

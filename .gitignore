@@ -9,6 +9,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.vite/
 dist
 dist-ssr
 *.local
@@ -16,6 +17,16 @@ dist-ssr
 .env.local
 .env.*.local
 application-local.properties
+
+# Environment variables (contains sensitive secrets)
+.env
+.env.local
+.env.*.local
+*.env
+frontend/.env
+backend/.env
+backend-old/
+backend-old/**
 
 # Editor directories and files
 .vscode/*

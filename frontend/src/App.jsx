@@ -56,7 +56,7 @@ function App() {
             <Route path="/dat-lich" element={<BookingPage />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-result" element={<PaymentResult />} />
-            <Route path="/tai-khoan" element={<ProfilePage />} />
+            <Route path="/tai-khoan/*" element={<ProfilePage />} />
           </Routes>
         </main>
 
