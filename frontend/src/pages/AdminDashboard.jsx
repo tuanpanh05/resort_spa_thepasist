@@ -31,7 +31,7 @@ import {
 } from "../mockData";
 
 // Import sub-components
-import AdminSidebar from "../components/admin/AdminSidebar";
+import OperationLayout from "../layouts/OperationLayout";
 import AdminOverview from "../components/admin/AdminOverview";
 import ManageAccounts from "../components/admin/ManageAccounts";
 import ManageRooms from "../components/admin/ManageRooms";
@@ -96,122 +96,82 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="admin-theme min-h-screen bg-primary-50 flex flex-col lg:flex-row text-left relative">
-      {/* Mobile Top Navbar */}
-      <div className="lg:hidden flex items-center justify-between p-4 bg-primary-950 text-white sticky top-0 z-40 shadow-md">
-        <div className="flex items-center space-x-2">
-          <div className="p-1 bg-primary-850 rounded text-white">
-            <ShieldCheck className="h-4 w-4" />
-          </div>
-          <span className="font-serif text-sm font-normal tracking-wide">
-            Ngũ Sơn Admin
-          </span>
-        </div>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 focus:outline-none cursor-pointer"
-        >
-          <Menu className="h-5 w-5 text-white" />
-        </button>
-      </div>
+    <OperationLayout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      handleLogout={handleLogout}
+      sidebarItems={sidebarItems}
+      isMobileMenuOpen={isMobileMenuOpen}
+      setIsMobileMenuOpen={setIsMobileMenuOpen}
+      userRoleLabel="Admin"
+      headerTitle={
+        activeTab === "dashboard" ? "1. Bảng Tổng Quan Vận Hành Resort" :
+        activeTab === "users" ? "2. Quản Lý Tài Khoản (User Management)" :
+        activeTab === "rooms" ? "3. Quản Lý Phòng & Loại Phòng Resort" :
+        activeTab === "services" ? "4. Danh Mục Dịch Vụ Resort & Yoga" :
+        activeTab === "support" ? "5. Cổng Tiếp Nhận & Hỗ Trợ Khách Hàng" :
+        activeTab === "payments" ? "6. Sổ Nhật Ký Hóa Đơn & Giao Dịch" :
+        activeTab === "shifts" ? "7. Điều Hành Ca Làm Việc & Attendance" :
+        activeTab === "inventory" ? "8. Quản Lý Kho & Vật Tư Resort" : "Quản trị hệ thống"
+      }
+    >
+      {activeTab === "dashboard" && (
+        <AdminOverview
+          accounts={accounts}
+          rooms={rooms}
+          warnings={warnings}
+          occupancyRate={occupancyRate}
+          occupiedRoomsCount={occupiedRoomsCount}
+          setActiveTab={setActiveTab}
+          occupancyChartData={occupancyChartData}
+          payments={payments}
+          swapRequests={swapRequests}
+        />
+      )}
 
-      {/* Sidebar Layout */}
-      <AdminSidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        handleLogout={handleLogout}
-        sidebarItems={sidebarItems}
-        isMobileMenuOpen={isMobileMenuOpen}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
-      />
+      {activeTab === "users" && (
+        <ManageAccounts />
+      )}
 
-      {/* Main Content Area */}
-      <main className="flex-grow flex flex-col overflow-y-auto max-h-screen custom-scrollbar min-w-0">
-        {/* Top Header navbar */}
-        <header className="h-16 bg-white border-b border-primary-100 flex items-center justify-between px-8 flex-shrink-0">
-          <div>
-            <h1 className="font-serif text-lg font-normal text-sage-950">
-              {activeTab === "dashboard" && "1. Bảng Tổng Quan Vận Hành Resort"}
-              {activeTab === "users" &&
-                "2. Quản Lý Tài Khoản (User Management)"}
-              {activeTab === "rooms" && "3. Quản Lý Phòng & Loại Phòng Resort"}
-              {activeTab === "services" && "4. Danh Mục Dịch Vụ Resort & Yoga"}
-              {activeTab === "support" &&
-                "5. Cổng Tiếp Nhận & Hỗ Trợ Khách Hàng"}
-              {activeTab === "payments" && "6. Sổ Nhật Ký Hóa Đơn & Giao Dịch"}
-              {activeTab === "shifts" &&
-                "7. Điều Hành Ca Làm Việc & Attendance"}
-              {activeTab === "inventory" && "8. Quản Lý Kho & Vật Tư Resort"}
-            </h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-[10px] font-bold text-primary-900 bg-primary-100 px-3 py-1 uppercase tracking-wider">
-              Phiên trực: System Admin
-            </span>
-          </div>
-        </header>
+      {activeTab === "rooms" && (
+        <ManageRooms
+          rooms={rooms}
+          setRooms={setRooms}
+          handleDeleteRoom={handleDeleteRoom}
+        />
+      )}
 
-        {/* Scrollable views content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          {activeTab === "dashboard" && (
-            <AdminOverview
-              accounts={accounts}
-              rooms={rooms}
-              warnings={warnings}
-              occupancyRate={occupancyRate}
-              occupiedRoomsCount={occupiedRoomsCount}
-              setActiveTab={setActiveTab}
-              occupancyChartData={occupancyChartData}
-              payments={payments}
-              swapRequests={swapRequests}
-            />
-          )}
+      {activeTab === "services" && (
+        <ManageServices />
+      )}
 
-          {activeTab === "users" && (
-            <ManageAccounts />
-          )}
+      {activeTab === "support" && (
+        <ManageSupport
+          feedbacks={feedbacks}
+          setFeedbacks={setFeedbacks}
+          complaints={complaints}
+          setComplaints={setComplaints}
+        />
+      )}
 
-          {activeTab === "rooms" && (
-            <ManageRooms
-              rooms={rooms}
-              setRooms={setRooms}
-              handleDeleteRoom={handleDeleteRoom}
-            />
-          )}
+      {activeTab === "payments" && (
+        <ManagePayments payments={payments} setPayments={setPayments} />
+      )}
 
-          {activeTab === "services" && (
-            <ManageServices />
-          )}
+      {activeTab === "shifts" && (
+        <ManageShifts
+          shifts={shifts}
+          swapRequests={swapRequests}
+          setSwapRequests={setSwapRequests}
+        />
+      )}
 
-          {activeTab === "support" && (
-            <ManageSupport
-              feedbacks={feedbacks}
-              setFeedbacks={setFeedbacks}
-              complaints={complaints}
-              setComplaints={setComplaints}
-            />
-          )}
-
-          {activeTab === "payments" && (
-            <ManagePayments payments={payments} setPayments={setPayments} />
-          )}
-
-          {activeTab === "shifts" && (
-            <ManageShifts
-              shifts={shifts}
-              swapRequests={swapRequests}
-              setSwapRequests={setSwapRequests}
-            />
-          )}
-
-          {activeTab === "inventory" && (
-            <ManageInventory
-              inventory={inventory}
-              setInventory={setInventory}
-            />
-          )}
-        </div>
-      </main>
-    </div>
+      {activeTab === "inventory" && (
+        <ManageInventory
+          inventory={inventory}
+          setInventory={setInventory}
+        />
+      )}
+    </OperationLayout>
   );
 }
