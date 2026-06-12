@@ -9,6 +9,7 @@ const navItems = [
   { label: "Ẩm thực", href: "/nha-hang" },
   { label: "Khuyến mãi", href: "/khuyen-mai" },
   { label: "Blog", href: "/blog" },
+  { label: "Đặt đồ ăn", href: "/guest-dashboard" },
 ];
 
 export default function Header() {
@@ -77,11 +78,10 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        showGlass
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showGlass
           ? "glass-header shadow-[0_2px_15px_rgba(0,0,0,0.03)] py-3.5"
           : "bg-gradient-to-b from-black/60 to-transparent py-6"
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
         <div className="flex items-center justify-between h-12">
@@ -91,26 +91,23 @@ export default function Header() {
             className="flex-shrink-0 flex items-center space-x-3 group focus:outline-none"
           >
             <div
-              className={`relative p-2 rounded-full transition-all duration-500 ease-out group-hover:scale-110 ${
-                showGlass
+              className={`relative p-2 rounded-full transition-all duration-500 ease-out group-hover:scale-110 ${showGlass
                   ? "bg-primary-100 text-primary-800 group-hover:bg-primary-200"
                   : "bg-white/10 text-white group-hover:bg-white/20"
-              }`}
+                }`}
             >
               <Leaf className="h-5 w-5 transition-transform duration-500 ease-out group-hover:rotate-[15deg]" />
             </div>
             <div className="flex flex-col justify-center leading-none mt-0.5">
               <span
-                className={`font-serif text-lg font-normal tracking-wider transition-colors duration-350 ${
-                  showGlass ? "text-primary-900" : "text-white"
-                }`}
+                className={`font-serif text-lg font-normal tracking-wider transition-colors duration-350 ${showGlass ? "text-primary-900" : "text-white"
+                  }`}
               >
                 Ngũ Sơn
               </span>
               <span
-                className={`font-sans text-[8px] font-semibold tracking-[0.3em] uppercase transition-colors duration-350 mt-1 ${
-                  showGlass ? "text-primary-600" : "text-primary-100/80"
-                }`}
+                className={`font-sans text-[8px] font-semibold tracking-[0.3em] uppercase transition-colors duration-350 mt-1 ${showGlass ? "text-primary-600" : "text-primary-100/80"
+                  }`}
               >
                 Resort & Spa
               </span>
@@ -125,19 +122,15 @@ export default function Header() {
                 <Link
                   key={index}
                   to={item.href}
-                  className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${
-                    isActive
+                  className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${isActive
                       ? "after:scale-x-100"
                       : "after:scale-x-0 hover:after:scale-x-100"
-                  } ${
-                    showGlass
-                      ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${
-                          isActive ? "text-primary-900 font-semibold" : ""
-                        }`
-                      : `text-white/80 hover:text-white after:bg-white ${
-                          isActive ? "text-white font-semibold" : ""
-                        }`
-                  }`}
+                    } ${showGlass
+                      ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${isActive ? "text-primary-900 font-semibold" : ""
+                      }`
+                      : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white font-semibold" : ""
+                      }`
+                    }`}
                 >
                   {item.label}
                 </Link>
@@ -153,16 +146,14 @@ export default function Header() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((prev) => !prev)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 cursor-pointer ${
-                      showGlass
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 cursor-pointer ${showGlass
                         ? "bg-primary-100 hover:bg-primary-200 text-primary-900"
                         : "bg-white/15 hover:bg-white/25 text-white"
-                    }`}
+                      }`}
                   >
                     {/* Initials avatar */}
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                      showGlass ? "bg-primary-800 text-white" : "bg-white/90 text-primary-900"
-                    }`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${showGlass ? "bg-primary-800 text-white" : "bg-white/90 text-primary-900"
+                      }`}>
                       {getInitials(userFullName)}
                     </span>
                     <span className="text-xs font-semibold tracking-wide max-w-[100px] truncate hidden 2xl:block">
@@ -223,30 +214,27 @@ export default function Header() {
               <>
                 <Link
                   to="/dang-nhap"
-                  className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-                  }`}
+                  className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                    }`}
                 >
                   Đăng nhập
                 </Link>
                 <Link
                   to="/dang-ky"
-                  className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-                  }`}
+                  className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
+                    }`}
                 >
                   Đăng ký
                 </Link>
               </>
             )}
-            
+
             <Link
               to="/dat-lich"
-              className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${
-                showGlass
+              className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${showGlass
                   ? "bg-primary-800 hover:bg-primary-900 text-white"
                   : "bg-white hover:bg-white/95 text-primary-950"
-              }`}
+                }`}
             >
               Đặt lịch
             </Link>
@@ -257,11 +245,10 @@ export default function Header() {
             <button
               onClick={() => setIsOpen(!isOpen)}
               type="button"
-              className={`inline-flex items-center justify-center p-2 rounded-md transition-colors ${
-                showGlass
+              className={`inline-flex items-center justify-center p-2 rounded-md transition-colors ${showGlass
                   ? "text-sage-800 hover:bg-primary-50"
                   : "text-white hover:bg-white/10"
-              }`}
+                }`}
               aria-controls="mobile-menu"
               aria-expanded={isOpen}
             >
@@ -278,9 +265,8 @@ export default function Header() {
 
       {/* Mobile Navigation Menu */}
       <div
-        className={`xl:hidden absolute top-20 left-0 right-0 transition-all duration-300 ease-in-out border-b border-primary-100 ${
-          isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-        }`}
+        className={`xl:hidden absolute top-20 left-0 right-0 transition-all duration-300 ease-in-out border-b border-primary-100 ${isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+          }`}
         id="mobile-menu"
       >
         <div className="px-6 py-6 space-y-1 bg-white shadow-lg">
@@ -291,11 +277,10 @@ export default function Header() {
                 key={index}
                 to={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`block px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 hover:translate-x-1.5 ${
-                  isActive
+                className={`block px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 hover:translate-x-1.5 ${isActive
                     ? "bg-primary-50 text-primary-900 font-semibold border-l-2 border-primary-800"
                     : "text-sage-800 hover:bg-primary-50 hover:text-primary-900"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>

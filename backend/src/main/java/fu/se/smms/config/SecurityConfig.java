@@ -45,6 +45,8 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 // Public read-only Master Data endpoints (Guest can browse)
                 .requestMatchers(HttpMethod.GET, "/spa-services", "/retreat-packages", "/room-types").permitAll()
+                // Chef and Kitchen Hub endpoints
+                .requestMatchers("/chef/**", "/guest/**").permitAll()
                 // Admin-only endpoints (UC03, UC04)
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Medical profiles – Authenticated users only (UC02, UC05)

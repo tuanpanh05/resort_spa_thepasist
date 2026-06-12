@@ -63,7 +63,7 @@ export default function GuestDashboard() {
   const [selectedDate, setSelectedDate] = useState("");
   const [consentCheckbox, setConsentCheckbox] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
-  const [activeMenuTab, setActiveMenuTab] = useState("package"); // "package" or "alacarte"
+
 
   // Booking Dates Helper
   const [bookingDays, setBookingDays] = useState([]);
@@ -106,6 +106,9 @@ export default function GuestDashboard() {
         }
         setBookingDays(days);
         if (days.length > 0) setSelectedDate(days[0]);
+      } else {
+        // Fallback to today's date just to show the menu
+        setSelectedDate(new Date().toISOString().split("T")[0]);
       }
 
       // 3. Fetch menu
@@ -731,39 +734,11 @@ export default function GuestDashboard() {
             {/* Right 8 Columns: Dynamic Daily Meal selection wizard */}
             <div className="lg:col-span-8 bg-white border border-primary-100 p-6 sm:p-8 shadow-xs text-left">
               <h2 className="font-serif text-lg font-bold text-sage-950 mb-1.5 uppercase tracking-wide border-b border-primary-50 pb-3">
-                Lên Lịch Thực Đơn Ẩm Thực Hằng Ngày
+                Đặt Thêm Món Ăn
               </h2>
               <p className="text-xs text-sage-500 mb-6 font-light">
-                {activeMenuTab === "package"
-                  ? "🥗 Chọn ngày lưu trú để lên lịch các bữa ăn đi kèm trong gói dịch vụ Detox của bạn (Miễn phí trong hạn mức)."
-                  : "🛎️ Đặt thêm các món ẩm thực dinh dưỡng hoặc đồ uống ngoài gói (Phụ phí sẽ tự động được tính tiền vào số phòng Villa)."}
+                🛎️ Đặt thêm các món ẩm thực dinh dưỡng hoặc đồ uống ngoài gói (Phụ phí sẽ tự động được tính tiền vào số phòng Villa).
               </p>
-
-              {/* Modern Segmented Control Tab Switcher */}
-              <div className="flex p-1.5 bg-[#f2f4f2] rounded-full mb-8 shadow-inner border border-primary-100/50 max-w-xl mx-auto">
-                <button
-                  type="button"
-                  onClick={() => setActiveMenuTab("package")}
-                  className={`flex-1 py-3 px-5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${activeMenuTab === "package"
-                    ? "bg-gradient-to-r from-primary-800 to-primary-900 text-white shadow-md transform scale-[1.01]"
-                    : "text-sage-600 hover:text-primary-900"
-                    }`}
-                >
-                  <span>🥗 Thực đơn trong gói</span>
-                  <span className="text-[9px] bg-white/20 text-white px-2 py-0.5 rounded-full font-mono font-bold"></span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveMenuTab("alacarte")}
-                  className={`flex-1 py-3 px-5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${activeMenuTab === "alacarte"
-                    ? "bg-gradient-to-r from-primary-800 to-primary-900 text-white shadow-md transform scale-[1.01]"
-                    : "text-sage-600 hover:text-primary-900"
-                    }`}
-                >
-                  <span>🛎️ Gọi món ngoài gói</span>
-                  <span className="text-[9px] bg-primary-900/10 text-primary-900 px-2 py-0.5 rounded-full font-mono font-bold"></span>
-                </button>
-              </div>
 
               {/* Horizontal Date Selection Bar (Modern Pill Design) */}
               <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-8 border-b border-primary-100/50 scrollbar-thin">
@@ -797,9 +772,6 @@ export default function GuestDashboard() {
                       <strong>Thực đơn đã được tự động quét theo hồ sơ bệnh lý & chế độ ăn uống.</strong>{" "}
                       {(() => {
                         const count = menuItems.filter(item => {
-                          const isIncluded = isIncludedInPackage(item.foodId);
-                          if (activeMenuTab === "package" && !isIncluded) return false;
-                          if (activeMenuTab === "alacarte" && isIncluded) return false;
                           return item.isAllergen;
                         }).length;
                         return `Phát hiện ${count} món ăn không phù hợp đã được cảnh báo và khóa tự động.`;
@@ -818,11 +790,6 @@ export default function GuestDashboard() {
                   {["Breakfast", "Lunch", "Dinner"].map((period) => {
                     // Filter items for this period case-insensitively to cover all dishes
                     const periodDishes = menuItems.filter(item => {
-                      // Filter by selected tab first
-                      const isIncluded = isIncludedInPackage(item.foodId);
-                      if (activeMenuTab === "package" && !isIncluded) return false;
-                      if (activeMenuTab === "alacarte" && isIncluded) return false;
-
                       const name = (item.dishName || "").toLowerCase();
 
                       // Categorization based on name matching
@@ -1011,17 +978,22 @@ export default function GuestDashboard() {
 
                 <button
                   type="button"
-                  disabled={getSelectedItemsCount() === 0 || submitting}
+                  disabled={!profileData.booking || getSelectedItemsCount() === 0 || submitting}
                   onClick={handleSubmitSelections}
-                  className={`px-8 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-xs rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer ${getSelectedItemsCount() === 0 || submitting
+                  className={`px-8 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-xs rounded-none transition-all flex items-center justify-center gap-2 ${!profileData.booking || getSelectedItemsCount() === 0 || submitting
                     ? "bg-sage-300 cursor-not-allowed"
-                    : "bg-primary-850 hover:bg-primary-900"
+                    : "bg-primary-850 hover:bg-primary-900 cursor-pointer"
                     }`}
                 >
                   {submitting ? (
                     <>
                       <Loader2 className="h-4.5 w-4.5 animate-spin" />
                       <span>Đang lưu...</span>
+                    </>
+                  ) : !profileData.booking ? (
+                    <>
+                      <UtensilsCrossed className="h-4 w-4" />
+                      <span>Cần đặt phòng trước</span>
                     </>
                   ) : (
                     <>

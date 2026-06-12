@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/guest")
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class GuestMealController {
 
     private final UserRepository userRepository;
@@ -259,81 +258,101 @@ public class GuestMealController {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
-        // Group selections by date to track daily consumption
-        Map<String, Map<Integer, Integer>> dailySelectedCounts = new HashMap<>();
-
-        // Create the FoodOrder (as PENDING status)
-        FoodOrder foodOrder = FoodOrder.builder()
-                .user(user)
-                .roomBooking(booking)
-                .orderTime(LocalDateTime.now())
-                .status("PENDING")
-                .totalAmount(BigDecimal.ZERO)
-                .build();
-
-        foodOrder = foodOrderRepository.save(foodOrder);
-
-        BigDecimal totalExtraCharges = BigDecimal.ZERO;
-        List<FoodOrderDetail> detailsToSave = new ArrayList<>();
-
+        // Group selections by date
+        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDate = new HashMap<>();
         for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
-            Optional<FoodMenu> menuOpt = foodMenuRepository.findById(item.getFoodId());
-            if (menuOpt.isEmpty())
-                continue;
-            FoodMenu dish = menuOpt.get();
-
-            // Track daily limits for package inclusion
-            String dateKey = item.getDate();
-            dailySelectedCounts.putIfAbsent(dateKey, new HashMap<>());
-            Map<Integer, Integer> currentDayCounts = dailySelectedCounts.get(dateKey);
-            int previousQty = currentDayCounts.getOrDefault(item.getFoodId(), 0);
-            int newQty = previousQty + item.getQuantity();
-            currentDayCounts.put(item.getFoodId(), newQty);
-
-            boolean isPackageIncluded = false;
-            BigDecimal itemCost = BigDecimal.ZERO;
-
-            if (packageLimitMap.containsKey(item.getFoodId())) {
-                int limitPerDay = packageLimitMap.get(item.getFoodId());
-                if (newQty <= limitPerDay) {
-                    isPackageIncluded = true;
-                } else {
-                    // Over limit: only partial quantity is included, rest is charged
-                    int overQty = newQty - limitPerDay;
-                    int billableQty = Math.min(item.getQuantity(), overQty);
-                    itemCost = dish.getPrice().multiply(new BigDecimal(billableQty));
-                }
-            } else {
-                // Not in package at all: pay full price
-                itemCost = dish.getPrice().multiply(new BigDecimal(item.getQuantity()));
-            }
-
-            totalExtraCharges = totalExtraCharges.add(itemCost);
-
-            FoodOrderDetail detail = FoodOrderDetail.builder()
-                    .foodOrder(foodOrder)
-                    .foodMenu(dish)
-                    .quantity(item.getQuantity())
-                    .priceAtOrder(dish.getPrice())
-                    .specialNote(
-                            item.getSpecialNote() + " [Bữa: " + item.getPeriod() + ", Ngày: " + item.getDate() + "]")
-                    .isPackageIncluded(isPackageIncluded)
-                    .build();
-
-            detailsToSave.add(detail);
+            itemsByDate.computeIfAbsent(item.getDate(), k -> new ArrayList<>()).add(item);
         }
 
-        foodOrderDetailRepository.saveAll(detailsToSave);
+        List<Integer> createdOrderIds = new ArrayList<>();
+        BigDecimal grandTotalExtraCharges = BigDecimal.ZERO;
+        int totalItemCount = 0;
 
-        // Update total extra charge on the master food order
-        foodOrder.setTotalAmount(totalExtraCharges);
-        foodOrderRepository.save(foodOrder);
+        for (Map.Entry<String, List<MealPreselectionDTO.MealSelectionItem>> entry : itemsByDate.entrySet()) {
+            String dateKey = entry.getKey();
+            List<MealPreselectionDTO.MealSelectionItem> items = entry.getValue();
+
+            // Create a FoodOrder for this specific date
+            // Parse dateKey (e.g. "2026-06-20") to LocalDateTime at 08:00 AM
+            LocalDateTime mealTime;
+            try {
+                mealTime = java.time.LocalDate.parse(dateKey).atTime(8, 0);
+            } catch (Exception e) {
+                mealTime = LocalDateTime.now();
+            }
+
+            FoodOrder foodOrder = FoodOrder.builder()
+                    .user(user)
+                    .roomBooking(booking)
+                    .orderTime(mealTime)
+                    .status("PENDING")
+                    .totalAmount(BigDecimal.ZERO)
+                    .build();
+
+            foodOrder = foodOrderRepository.save(foodOrder);
+            createdOrderIds.add(foodOrder.getOrderId());
+
+            BigDecimal totalExtraCharges = BigDecimal.ZERO;
+            List<FoodOrderDetail> detailsToSave = new ArrayList<>();
+            Map<Integer, Integer> dailySelectedCounts = new HashMap<>(); // Track counts within this day
+
+            for (MealPreselectionDTO.MealSelectionItem item : items) {
+                Optional<FoodMenu> menuOpt = foodMenuRepository.findById(item.getFoodId());
+                if (menuOpt.isEmpty())
+                    continue;
+                FoodMenu dish = menuOpt.get();
+
+                int previousQty = dailySelectedCounts.getOrDefault(item.getFoodId(), 0);
+                int newQty = previousQty + item.getQuantity();
+                dailySelectedCounts.put(item.getFoodId(), newQty);
+
+                boolean isPackageIncluded = false;
+                BigDecimal itemCost = BigDecimal.ZERO;
+
+                if (packageLimitMap.containsKey(item.getFoodId())) {
+                    int limitPerDay = packageLimitMap.get(item.getFoodId());
+                    if (newQty <= limitPerDay) {
+                        isPackageIncluded = true;
+                    } else {
+                        // Over limit
+                        int overQty = newQty - limitPerDay;
+                        int billableQty = Math.min(item.getQuantity(), overQty);
+                        itemCost = dish.getPrice().multiply(new BigDecimal(billableQty));
+                    }
+                } else {
+                    itemCost = dish.getPrice().multiply(new BigDecimal(item.getQuantity()));
+                }
+
+                totalExtraCharges = totalExtraCharges.add(itemCost);
+
+                FoodOrderDetail detail = FoodOrderDetail.builder()
+                        .foodOrder(foodOrder)
+                        .foodMenu(dish)
+                        .quantity(item.getQuantity())
+                        .priceAtOrder(dish.getPrice())
+                        .specialNote(
+                                item.getSpecialNote() + " [Bữa: " + item.getPeriod() + ", Ngày: " + item.getDate() + "]")
+                        .isPackageIncluded(isPackageIncluded)
+                        .build();
+
+                detailsToSave.add(detail);
+            }
+
+            foodOrderDetailRepository.saveAll(detailsToSave);
+            totalItemCount += detailsToSave.size();
+
+            // Update total extra charge on the daily food order
+            foodOrder.setTotalAmount(totalExtraCharges);
+            foodOrderRepository.save(foodOrder);
+
+            grandTotalExtraCharges = grandTotalExtraCharges.add(totalExtraCharges);
+        }
 
         Map<String, Object> result = new HashMap<>();
-        result.put("orderId", foodOrder.getOrderId());
-        result.put("status", foodOrder.getStatus());
-        result.put("totalAmount", totalExtraCharges);
-        result.put("itemCount", detailsToSave.size());
+        result.put("orderIds", createdOrderIds);
+        result.put("status", "PENDING");
+        result.put("totalAmount", grandTotalExtraCharges);
+        result.put("itemCount", totalItemCount);
 
         return ResponseEntity.ok(result);
     }
@@ -362,6 +381,24 @@ public class GuestMealController {
                         .findActiveBookingsByUserId(mp.getUser().getUserId());
                 List<String> roomNumbers = roomBookingRepository
                         .findActiveRoomNumbersByUserId(mp.getUser().getUserId());
+                
+                boolean isStayingToday = false;
+                java.time.LocalDate today = java.time.LocalDate.now();
+                if (!activeBookings.isEmpty()) {
+                    for (RoomBooking b : activeBookings) {
+                        java.time.LocalDate checkIn = b.getCheckInDate().toLocalDate();
+                        java.time.LocalDate checkOut = b.getCheckOutDate().toLocalDate();
+                        if (!checkIn.isAfter(today) && !checkOut.isBefore(today)) {
+                            isStayingToday = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isStayingToday) {
+                    continue; // Skip guests not currently staying
+                }
+
                 if (!activeBookings.isEmpty()) {
                     guestAllergyMap.put("room", roomNumbers.isEmpty() ? "N/A" : String.join(", ", roomNumbers));
                     guestAllergyMap.put("checkIn", activeBookings.get(0).getCheckInDate().toString().split("T")[0]);

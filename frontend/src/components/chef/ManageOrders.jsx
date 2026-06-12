@@ -41,17 +41,7 @@ export default function ManageOrders({
             ứng bằng giọng nói tiếng Việt chuẩn.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            playVoiceAlert(
-              "Hệ thống âm thanh nhà bếp Ngũ Sơn Resort đã sẵn sàng phục vụ.",
-            )
-          }
-          className="px-4 py-2.5 bg-sage-950 hover:bg-sage-800 text-white text-xs font-bold uppercase tracking-wider flex items-center space-x-2 cursor-pointer shadow-sm"
-        >
-          <span>🔊 Test Âm Thanh</span>
-        </button>
+
       </div>
 
       {/* KDS Column Layout */}
@@ -71,11 +61,10 @@ export default function ManageOrders({
               return (
                 <div
                   key={ord.id}
-                  className={`bg-white border p-5 flex flex-col justify-between min-h-[260px] ${
-                    alertInfo.hasAllergyAlert
+                  className={`bg-white border p-5 flex flex-col justify-between min-h-[260px] ${alertInfo.hasAllergyAlert
                       ? "border-red-400 ring-2 ring-red-100 bg-red-50/10"
                       : "border-sage-200"
-                  }`}
+                    }`}
                 >
                   <div className="space-y-3">
                     {/* Header */}
@@ -185,11 +174,10 @@ export default function ManageOrders({
               return (
                 <div
                   key={ord.id}
-                  className={`bg-white border p-5 flex flex-col justify-between min-h-[260px] ${
-                    alertInfo.hasAllergyAlert
+                  className={`bg-white border p-5 flex flex-col justify-between min-h-[260px] ${alertInfo.hasAllergyAlert
                       ? "border-red-400 ring-2 ring-red-100 bg-red-50/10"
                       : "border-sage-200"
-                  }`}
+                    }`}
                 >
                   <div className="space-y-3">
                     {/* Header */}

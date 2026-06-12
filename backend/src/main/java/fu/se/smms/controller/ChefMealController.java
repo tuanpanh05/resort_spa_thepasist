@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/chef")
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ChefMealController {
 
     private final FoodMenuRepository foodMenuRepository;
@@ -239,7 +238,10 @@ public class ChefMealController {
 
     @GetMapping("/orders")
     public ResponseEntity<?> getOrders() {
-        List<FoodOrder> orders = foodOrderRepository.findAll();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        List<FoodOrder> orders = foodOrderRepository.findAll().stream()
+                .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(today))
+                .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", "ORD-" + order.getOrderId());
@@ -275,12 +277,13 @@ public class ChefMealController {
                     .collect(Collectors.joining("; "));
             map.put("note", note);
 
-            // Map Status: PENDING -> Pending, PREPARING -> Cooking, READY/DELIVERED ->
-            // Completed
+            // Map Status: PENDING -> Pending, PREPARING -> Cooking, READY -> Delivering, DELIVERED -> Completed
             String mappedStatus = "Pending";
             if ("PREPARING".equalsIgnoreCase(order.getStatus())) {
                 mappedStatus = "Cooking";
-            } else if ("READY".equalsIgnoreCase(order.getStatus()) || "DELIVERED".equalsIgnoreCase(order.getStatus())) {
+            } else if ("READY".equalsIgnoreCase(order.getStatus())) {
+                mappedStatus = "Delivering";
+            } else if ("DELIVERED".equalsIgnoreCase(order.getStatus())) {
                 mappedStatus = "Completed";
             } else if ("CANCELLED".equalsIgnoreCase(order.getStatus())) {
                 mappedStatus = "Cancelled";
@@ -308,6 +311,8 @@ public class ChefMealController {
         String dbStatus = "PENDING";
         if ("Cooking".equalsIgnoreCase(status)) {
             dbStatus = "PREPARING";
+        } else if ("Delivering".equalsIgnoreCase(status)) {
+            dbStatus = "READY";
         } else if ("Completed".equalsIgnoreCase(status)) {
             dbStatus = "DELIVERED";
         } else if ("Cancelled".equalsIgnoreCase(status)) {
