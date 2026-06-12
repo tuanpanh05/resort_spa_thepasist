@@ -2,13 +2,18 @@ package fu.se.smms.service.impl;
 
 import fu.se.smms.config.JwtUtils;
 import fu.se.smms.dto.*;
+import fu.se.smms.entity.RoomBooking;
+import fu.se.smms.entity.SpaBooking;
 import fu.se.smms.entity.User;
+import fu.se.smms.repository.RoomBookingRepository;
+import fu.se.smms.repository.SpaBookingRepository;
 import fu.se.smms.repository.UserRepository;
 import fu.se.smms.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -22,6 +27,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private RoomBookingRepository roomBookingRepository;
+
+    @Autowired
+    private SpaBookingRepository spaBookingRepository;
 
     @Override
     public UserProfileDTO signUp(SignUpRequest request) {
@@ -170,5 +181,80 @@ public class UserServiceImpl implements UserService {
                 .status("ACTIVE")
                 .build();
         return mapToProfileDTO(userRepository.save(user));
+    }
+
+    // ---------------------------------------------------------------
+    // Profile – Booking history
+    // ---------------------------------------------------------------
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<BookingHistoryDTO> getMyRoomBookings(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return roomBookingRepository.findAllByUserIdWithDetails(user.getUserId())
+                .stream()
+                .map(this::mapToBookingHistoryDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<SpaBookingHistoryDTO> getMySpaBookings(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return spaBookingRepository.findAllByUserIdWithService(user.getUserId())
+                .stream()
+                .map(this::mapToSpaBookingHistoryDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void changePassword(String email, ChangePasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng.");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    // ---------------------------------------------------------------
+    // Private mappers for new DTOs
+    // ---------------------------------------------------------------
+
+    private BookingHistoryDTO mapToBookingHistoryDTO(RoomBooking rb) {
+        java.util.List<BookingHistoryDTO.RoomDetailDTO> roomDetails = rb.getDetails() == null
+                ? java.util.Collections.emptyList()
+                : rb.getDetails().stream().map(d -> new BookingHistoryDTO.RoomDetailDTO(
+                        d.getRoom() != null ? d.getRoom().getRoomNumber() : "N/A",
+                        d.getRoom() != null && d.getRoom().getRoomType() != null
+                                ? d.getRoom().getRoomType().getTypeName() : "N/A",
+                        d.getPriceAtBooking())).collect(Collectors.toList());
+
+        return BookingHistoryDTO.builder()
+                .bookingId(rb.getBookingId())
+                .checkInDate(rb.getCheckInDate())
+                .checkOutDate(rb.getCheckOutDate())
+                .status(rb.getStatus())
+                .totalDeposit(rb.getTotalDeposit())
+                .createdAt(rb.getCreatedAt())
+                .packageName(rb.getRetreatPackage() != null ? rb.getRetreatPackage().getName() : null)
+                .rooms(roomDetails)
+                .build();
+    }
+
+    private SpaBookingHistoryDTO mapToSpaBookingHistoryDTO(SpaBooking sb) {
+        return SpaBookingHistoryDTO.builder()
+                .spaBookingId(sb.getSpaBookingId())
+                .serviceName(sb.getSpaService() != null ? sb.getSpaService().getName() : "N/A")
+                .serviceCategory(sb.getSpaService() != null ? sb.getSpaService().getCategory() : null)
+                .startDatetime(sb.getStartDatetime())
+                .endDatetime(sb.getEndDatetime())
+                .status(sb.getStatus())
+                .priceAtBooking(sb.getPriceAtBooking())
+                .isPackageIncluded(sb.getIsPackageIncluded())
+                .build();
     }
 }

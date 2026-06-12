@@ -89,6 +89,35 @@ export const medicalApi = {
 };
 
 // ============================================================
+// USER PROFILE APIs (Customer Profile Dashboard)
+// ============================================================
+export const userApi = {
+  /** GET /users/me — Lấy thông tin tài khoản */
+  getProfile: () => apiRequest("/users/me"),
+
+  /** PUT /users/me — Cập nhật tên, SĐT, CCCD */
+  updateProfile: (dto) =>
+    apiRequest("/users/me", {
+      method: "PUT",
+      body: JSON.stringify(dto),
+    }),
+
+  /** POST /users/me/change-password — Đổi mật khẩu */
+  changePassword: (currentPassword, newPassword) =>
+    apiRequest("/users/me/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
+  /** GET /users/me/bookings — Lịch sử đặt phòng */
+  getMyBookings: () => apiRequest("/users/me/bookings"),
+
+  /** GET /users/me/spa-bookings — Lịch hẹn Spa */
+  getMySpaBookings: () => apiRequest("/users/me/spa-bookings"),
+};
+
+
+// ============================================================
 // ADMIN APIs (UC03)
 // ============================================================
 export const adminApi = {

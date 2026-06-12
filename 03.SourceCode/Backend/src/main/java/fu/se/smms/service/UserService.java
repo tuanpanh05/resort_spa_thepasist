@@ -10,6 +10,13 @@ public interface UserService {
     UserProfileDTO getUserProfile(String email);
     UserProfileDTO updateUserProfile(String email, UserProfileRequest request);
 
+    // Profile – Booking history (Customer Profile Dashboard)
+    List<BookingHistoryDTO> getMyRoomBookings(String email);
+    List<SpaBookingHistoryDTO> getMySpaBookings(String email);
+
+    // Profile – Change password
+    void changePassword(String email, ChangePasswordRequest request);
+
     // Admin methods (UC03)
     List<UserProfileDTO> getAllStaffUsers();
     UserProfileDTO updateUserRoleAndStatus(Integer userId, String role, String status);

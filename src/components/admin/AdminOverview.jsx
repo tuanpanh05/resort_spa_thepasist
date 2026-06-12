@@ -1,18 +1,30 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  DollarSign,
-  Bed,
-  Users,
   AlertTriangle,
   ArrowRight,
   CheckSquare,
 } from "lucide-react";
 import AdminStats from "./AdminStats";
+import { adminApi } from "../../api";
+
+// TODO: Replace with real API when backend provides GET /api/admin/operational-warnings
+const MOCK_WARNINGS = [
+  {
+    id: 1,
+    text: "Phòng 303: Điều hòa chảy nước, cần kỹ thuật xử lý gấp.",
+    type: "maintenance",
+    time: "10 phút trước",
+  },
+  {
+    id: 2,
+    text: "Phòng 104: Đang dọn vệ sinh kéo dài quá 2 tiếng.",
+    type: "cleaning",
+    time: "45 phút trước",
+  },
+];
 
 export default function AdminOverview({
-  accounts,
   rooms,
-  warnings,
   occupancyRate,
   occupiedRoomsCount,
   setActiveTab,
@@ -20,11 +32,24 @@ export default function AdminOverview({
   payments,
   swapRequests,
 }) {
+  // Fetch real staff count from API
+  const [activeStaff, setActiveStaff] = useState(0);
+
+  useEffect(() => {
+    adminApi.getAllUsers()
+      .then((users) => {
+        const count = users.filter(
+          (u) => u.role === "STAFF" || u.role === "RECEPTIONIST"
+        ).length;
+        setActiveStaff(count);
+      })
+      .catch(() => {
+        // silently fail – stats will show 0
+      });
+  }, []);
+
   const pendingPayments = payments.filter((p) => p.status === "Unpaid").length;
   const pendingSwaps = swapRequests.length;
-  const activeStaff = accounts.filter(
-    (acc) => acc.role === "Staff" && acc.status === "Active",
-  ).length;
 
   return (
     <div className="space-y-8 animate-fade-in text-left">
@@ -34,7 +59,7 @@ export default function AdminOverview({
         totalRoomsCount={rooms.length}
         occupancyRate={occupancyRate}
         activeStaff={activeStaff}
-        warningsCount={warnings.length}
+        warningsCount={MOCK_WARNINGS.length}
       />
 
       {/* Grid: Actions Checklist & Alerts */}
@@ -169,13 +194,13 @@ export default function AdminOverview({
             </div>
           </div>
 
-          {/* Active alerts log feed */}
+          {/* Active alerts log feed – TODO: Replace with real GET /api/admin/warnings */}
           <div className="bg-white border border-primary-100 p-6 space-y-4">
             <h3 className="font-serif text-sm font-bold text-sage-950 uppercase tracking-wider mb-2">
               Cảnh Báo Vận Hành
             </h3>
             <div className="space-y-3">
-              {warnings.slice(0, 3).map((w) => (
+              {MOCK_WARNINGS.slice(0, 3).map((w) => (
                 <div
                   key={w.id}
                   className="p-3 bg-red-50/20 border border-red-150 flex items-start space-x-2 text-[11px]"

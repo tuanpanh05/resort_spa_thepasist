@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, Heart, LogOut } from "lucide-react";
+import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays } from "lucide-react";
 
 const navItems = [
   { label: "Trang chủ", href: "/" },
@@ -14,17 +14,35 @@ const navItems = [
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const isLoggedIn = !!localStorage.getItem("token");
   const userFullName = localStorage.getItem("userFullName") || "";
 
+  // Compute initials from full name
+  const getInitials = (name = "") =>
+    name.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase() || "KH";
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userFullName");
     localStorage.removeItem("userRole");
+    setDropdownOpen(false);
     navigate("/dang-nhap");
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -121,28 +139,67 @@ export default function Header() {
             })}
           </nav>
 
-          {/* Right Side: Auth buttons or user menu */}
+          {/* Right Side: Auth buttons or user avatar dropdown */}
           <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
             {isLoggedIn ? (
               <>
-                <Link
-                  to="/ho-so-suc-khoe"
-                  className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${
-                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-                  }`}
-                >
-                  <Heart className="h-3.5 w-3.5" />
-                  Hồ Sơ Sức Khỏe
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 cursor-pointer ${
-                    showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-                  }`}
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  Đăng xuất
-                </button>
+                {/* Avatar Dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setDropdownOpen((prev) => !prev)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 cursor-pointer ${
+                      showGlass
+                        ? "bg-primary-100 hover:bg-primary-200 text-primary-900"
+                        : "bg-white/15 hover:bg-white/25 text-white"
+                    }`}
+                  >
+                    {/* Initials avatar */}
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                      showGlass ? "bg-primary-800 text-white" : "bg-white/90 text-primary-900"
+                    }`}>
+                      {getInitials(userFullName)}
+                    </span>
+                    <span className="text-xs font-semibold tracking-wide max-w-[100px] truncate hidden 2xl:block">
+                      {userFullName || "Tài khoản"}
+                    </span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {dropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-primary-100 overflow-hidden z-50 animate-[fadeIn_0.15s_ease-out]">
+                      {/* User info header */}
+                      <div className="px-4 py-3 bg-primary-50 border-b border-primary-100">
+                        <p className="text-xs font-bold text-sage-900 truncate">{userFullName || "Khách hàng"}</p>
+                        <p className="text-[10px] text-sage-500 mt-0.5">Hội viên Ngũ Sơn Resort</p>
+                      </div>
+                      {/* Menu items */}
+                      <div className="py-1">
+                        <Link to="/tai-khoan" onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                          <User className="h-3.5 w-3.5 text-primary-600" />
+                          Tài khoản của tôi
+                        </Link>
+                        <Link to="/tai-khoan" state={{ tab: "history" }} onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                          <CalendarDays className="h-3.5 w-3.5 text-primary-600" />
+                          Lịch sử dịch vụ
+                        </Link>
+                        <Link to="/tai-khoan" state={{ tab: "health" }} onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                          <Heart className="h-3.5 w-3.5 text-rose-500" />
+                          Hồ sơ sức khỏe
+                        </Link>
+                        <div className="border-t border-primary-100 my-1" />
+                        <button onClick={handleLogout}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                          <LogOut className="h-3.5 w-3.5" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -226,23 +283,35 @@ export default function Header() {
               </Link>
             );
           })}
+          {/* Mobile auth */}
           <div className="pt-4 border-t border-primary-50 flex flex-col space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                to="/dang-nhap"
-                onClick={() => setIsOpen(false)}
-                className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
-              >
-                Đăng nhập
-              </Link>
-              <Link
-                to="/dang-ky"
-                onClick={() => setIsOpen(false)}
-                className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50"
-              >
-                Đăng ký
-              </Link>
-            </div>
+            {isLoggedIn ? (
+              <>
+                <Link to="/tai-khoan" onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary-600" /> Tài khoản của tôi
+                </Link>
+                <Link to="/ho-so-suc-khoe" onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-rose-500" /> Hồ sơ sức khỏe
+                </Link>
+                <button onClick={() => { setIsOpen(false); handleLogout(); }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition cursor-pointer">
+                  <LogOut className="h-4 w-4" /> Đăng xuất
+                </button>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link to="/dang-nhap" onClick={() => setIsOpen(false)}
+                  className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50">
+                  Đăng nhập
+                </Link>
+                <Link to="/dang-ky" onClick={() => setIsOpen(false)}
+                  className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50">
+                  Đăng ký
+                </Link>
+              </div>
+            )}
             <Link
               to="/dat-lich"
               onClick={() => setIsOpen(false)}

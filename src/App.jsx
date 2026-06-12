@@ -21,6 +21,7 @@ import ChefDashboard from "./pages/ChefDashboard";
 import SpecialistDashboard from "./pages/SpecialistDashboard";
 import HealthProfile from "./pages/HealthProfile";
 import BookingPage from "./pages/BookingPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
             <Route path="/specialist" element={<SpecialistDashboard />} />
             <Route path="/ho-so-suc-khoe" element={<HealthProfile />} />
             <Route path="/dat-lich" element={<BookingPage />} />
+            <Route path="/tai-khoan" element={<ProfilePage />} />
           </Routes>
         </main>
 

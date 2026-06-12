@@ -64,18 +64,8 @@ export default function Login() {
         setError(data.message || "Đăng nhập Google qua Backend thất bại.");
       }
     } catch (error) {
-      console.warn("Lỗi kết nối Backend hoặc lỗi Firebase. Thử đăng nhập Google OFFLINE...", error);
-      
-      // Nếu Firebase login thành công nhưng lỗi Backend
-      if (error && error.message && error.message.includes("Failed to fetch")) {
-         alert("Backend không phản hồi. Đăng nhập Google OFFLINE thành công!");
-         navigate("/");
-         return;
-      }
-
-      // Giả lập fallback offline cho mọi lỗi để dễ test Frontend (tương tự login thường)
-      alert("Đăng nhập Google OFFLINE thành công! Chào mừng bạn.");
-      navigate("/");
+      console.error("Lỗi đăng nhập Google:", error);
+      setError(error.message || "Lỗi kết nối hệ thống. Không thể đăng nhập bằng Google.");
     }
   };
   const handleSubmit = async (e) => {
@@ -156,35 +146,8 @@ export default function Login() {
         return;
       }
     } catch (err) {
-      console.warn("Không kết nối được với Backend. Sử dụng giả lập dữ liệu offline để đăng nhập...", err);
-      // Chế độ dự phòng giả lập (Fallback)
-      localStorage.removeItem("specialistRole");
-
-      if (normalizedEmail === "admin@nguson.com" || normalizedEmail === "admin") {
-        alert("Đăng nhập OFFLINE thành công với vai trò Quản lý!");
-        navigate("/admin");
-      } else if (normalizedEmail === "staff@nguson.com" || normalizedEmail === "staff") {
-        alert("Đăng nhập OFFLINE thành công với vai trò Nhân viên lễ tân!");
-        navigate("/staff");
-      } else if (normalizedEmail === "chef@nguson.com" || normalizedEmail === "chef") {
-        alert("Đăng nhập OFFLINE thành công với vai trò Bếp Trưởng!");
-        navigate("/chef");
-      } else if (normalizedEmail === "spa@nguson.com" || normalizedEmail === "spa") {
-        alert("Đăng nhập OFFLINE thành công với vai trò Nhân viên Spa!");
-        localStorage.setItem("specialistRole", "spa");
-        navigate("/specialist");
-      } else if (normalizedEmail === "yoga@nguson.com" || normalizedEmail === "yoga") {
-        alert("Đăng nhập OFFLINE thành công với vai trò Huấn luyện viên Yoga!");
-        localStorage.setItem("specialistRole", "yoga");
-        navigate("/specialist");
-      } else if (normalizedEmail === "physio@nguson.com" || normalizedEmail === "physio") {
-        alert("Đăng nhập OFFLINE thành công với vai trò Chuyên viên Vật lý trị liệu!");
-        localStorage.setItem("specialistRole", "physio");
-        navigate("/specialist");
-      } else {
-        alert("Đăng nhập OFFLINE thành công! Chào mừng khách hàng quay lại.");
-        navigate("/");
-      }
+      console.error("Không kết nối được với Backend:", err);
+      setError("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.");
     }
   };
 

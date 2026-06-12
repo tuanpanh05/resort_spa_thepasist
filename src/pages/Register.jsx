@@ -69,11 +69,8 @@ export default function Register() {
         return;
       }
     } catch (err) {
-      console.warn("Không kết nối được với Backend. Sử dụng giả lập dữ liệu offline để đăng ký...", err);
-      alert(
-        "Đăng ký giả lập (OFFLINE) thành công! Chào mừng thành viên mới đến với Ngũ Sơn Resort.",
-      );
-      navigate("/dang-nhap");
+      console.error("Không kết nối được với Backend:", err);
+      setError("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.");
     }
   };
 
