@@ -38,7 +38,10 @@ const DIET_OPTIONS = [
 
 export default function HealthProfile() {
   const navigate = useNavigate();
-  const userFullName = localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "Khách hàng";
+  const hasLocalToken = !!localStorage.getItem("token");
+  const userFullName = hasLocalToken
+    ? (localStorage.getItem("userFullName") || "Khách hàng")
+    : (sessionStorage.getItem("userFullName") || "Khách hàng");
 
   // Form state
   const [selectedAllergies, setSelectedAllergies] = useState([]);

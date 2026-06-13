@@ -84,6 +84,46 @@ const MOCK_SPA_BOOKINGS  = [];
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB 1 – Personal Info
 // ═══════════════════════════════════════════════════════════════════════════════
+const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", readOnly = false }) => (
+  <div className="space-y-1.5">
+    <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
+    <div className="relative">
+      <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
+        <Icon className="h-4 w-4" />
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        className={`w-full pl-8 pr-4 py-2.5 border-b ${readOnly ? "border-sage-200 text-sage-400 bg-transparent cursor-not-allowed" : "border-primary-200 focus:border-primary-800 bg-transparent"} text-sm text-sage-900 placeholder-sage-400 outline-none transition-all`}
+      />
+    </div>
+  </div>
+);
+
+const PwdInput = ({ label, value, onChange, show, onToggle }) => (
+  <div className="space-y-1.5">
+    <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
+    <div className="relative">
+      <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
+        <Lock className="h-4 w-4" />
+      </span>
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-8 pr-8 py-2.5 border-b border-primary-200 bg-transparent focus:border-primary-800 text-sm text-sage-900 outline-none transition-all"
+      />
+      <button type="button" onClick={onToggle}
+        className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-700 transition-colors">
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  </div>
+);
+
 function PersonalInfoTab({ profile, onProfileUpdate }) {
   const [fullName, setFullName] = useState(profile?.fullName || "");
   const [phone, setPhone]       = useState(profile?.phone || "");
@@ -138,8 +178,8 @@ function PersonalInfoTab({ profile, onProfileUpdate }) {
       setPwdMsg({ type: "error", text: "Mật khẩu mới và xác nhận không khớp." });
       return;
     }
-    if (newPwd.length < 8) {
-      setPwdMsg({ type: "error", text: "Mật khẩu mới phải có ít nhất 8 ký tự." });
+    if (newPwd.length < 6) {
+      setPwdMsg({ type: "error", text: "Mật khẩu mới phải có ít nhất 6 ký tự." });
       return;
     }
     setPwdSaving(true);
@@ -153,46 +193,6 @@ function PersonalInfoTab({ profile, onProfileUpdate }) {
       setPwdSaving(false);
     }
   };
-
-  const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", readOnly = false }) => (
-    <div className="space-y-1.5">
-      <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
-          <Icon className="h-4 w-4" />
-        </span>
-        <input
-          type={type}
-          value={value}
-          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-          placeholder={placeholder}
-          readOnly={readOnly}
-          className={`w-full pl-8 pr-4 py-2.5 border-b ${readOnly ? "border-sage-200 text-sage-400 bg-transparent cursor-not-allowed" : "border-primary-200 focus:border-primary-800 bg-transparent"} text-sm text-sage-900 placeholder-sage-400 outline-none transition-all`}
-        />
-      </div>
-    </div>
-  );
-
-  const PwdInput = ({ label, value, onChange, show, onToggle }) => (
-    <div className="space-y-1.5">
-      <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
-          <Lock className="h-4 w-4" />
-        </span>
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-8 pr-8 py-2.5 border-b border-primary-200 bg-transparent focus:border-primary-800 text-sm text-sage-900 outline-none transition-all"
-        />
-        <button type="button" onClick={onToggle}
-          className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-700 transition-colors">
-          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-8">
@@ -885,13 +885,18 @@ export default function ProfilePage() {
     userApi.getProfile()
       .then(setProfile)
       .catch(() => {
-        // Fallback: build from localStorage
+        // Fallback: build from active storage
+        const hasLocalToken = !!localStorage.getItem("token");
         setProfile({
-          fullName: localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "Khách hàng",
+          fullName: hasLocalToken
+            ? (localStorage.getItem("userFullName") || "Khách hàng")
+            : (sessionStorage.getItem("userFullName") || "Khách hàng"),
           email: "",
           phone: "",
           idPassport: "",
-          role: localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "GUEST",
+          role: hasLocalToken
+            ? (localStorage.getItem("userRole") || "GUEST")
+            : (sessionStorage.getItem("userRole") || "GUEST"),
           createdAt: null,
         });
       })

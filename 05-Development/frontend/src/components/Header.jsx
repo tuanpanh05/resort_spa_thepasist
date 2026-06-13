@@ -18,8 +18,11 @@ export default function Header() {
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const isLoggedIn = !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
-  const userFullName = localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "";
+  const hasLocalToken = !!localStorage.getItem("token");
+  const isLoggedIn = hasLocalToken || !!sessionStorage.getItem("token");
+  const userFullName = hasLocalToken
+    ? (localStorage.getItem("userFullName") || "")
+    : (sessionStorage.getItem("userFullName") || "");
 
   // Compute initials from full name
   const getInitials = (name) => {
