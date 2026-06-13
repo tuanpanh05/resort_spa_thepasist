@@ -50,3 +50,13 @@
   - Hồ sơ bệnh lý (`physical_condition_encrypted`) và thông tin Hộ chiếu/CCCD (`id_passport_encrypted`) bắt buộc phải được mã hóa dạng AES-256 trước khi lưu xuống SQL Server để bảo mật thông tin cá nhân của khách hàng.
 * **Xác thực và ủy quyền:**
   - Các API nhạy cảm phải luôn kiểm tra quyền hạn của User (ví dụ: chỉ `MANAGER` mới được xem báo cáo doanh thu, chỉ `RECEPTIONIST` mới được cập nhật trạng thái tiền mặt hóa đơn).
+
+## 5. Extra AI Directives
+- AI must read Policy, Planning, Requirement, Design before coding
+- AI cannot modify Requirement or Design documents without approval
+- Every implementation requires a report
+- Every database change requires migration documentation
+- All configuration must use .env
+- No hardcoded secrets
+- Tests must run before completion
+- AI must update changelog after implementation
