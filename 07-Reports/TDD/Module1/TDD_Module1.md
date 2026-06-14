@@ -8,7 +8,7 @@
 * **Standard**: ISO/IEC/IEEE 29119-3:2021 aligned
 * **Author**: Student 1 — Full-stack Engineer
 * **Reviewed by**: Tech Lead — Approved
-* **DPO Sign-off**: Approved — 2026-06-14 — Data Protection Officer
+* **DPO Sign-off**: Approved — 2026-06-14 — Data Protection Officer (Verified PII Encryption)
 * **Approved by**: Principal Architect — Approved
 * **Classification**: Internal — Confidential
 
