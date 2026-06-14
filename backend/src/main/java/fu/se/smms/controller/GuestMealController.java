@@ -6,6 +6,7 @@ import fu.se.smms.repository.*;
 import fu.se.smms.util.AESUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,6 +24,9 @@ public class GuestMealController {
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
+
+    @Value("${app.food-order.cutoff-hour:22}")
+    private int cutoffHour;
 
     public GuestMealController(UserRepository userRepository,
             RoomBookingRepository roomBookingRepository,
@@ -178,9 +182,7 @@ public class GuestMealController {
             String warningMsg = "";
 
             if (consentSigned && !allergiesRaw.isEmpty()) {
-                // If dish name or description or tags contain any keywords of allergies
-                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags())
-                        .toLowerCase();
+                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags() + " " + (item.getIngredients() != null ? item.getIngredients() : "")).toLowerCase();
 
                 // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to
                 // preserve multi-word allergies
@@ -262,6 +264,23 @@ public class GuestMealController {
         Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDate = new HashMap<>();
         for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
             itemsByDate.computeIfAbsent(item.getDate(), k -> new ArrayList<>()).add(item);
+        }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int currentHour = java.time.LocalTime.now().getHour();
+
+        for (String dateKey : itemsByDate.keySet()) {
+            try {
+                java.time.LocalDate targetDate = java.time.LocalDate.parse(dateKey);
+                if (!targetDate.isAfter(today)) {
+                    return ResponseEntity.badRequest().body("Cannot order meals for today or past dates.");
+                }
+                if (targetDate.equals(today.plusDays(1)) && currentHour >= cutoffHour) {
+                    return ResponseEntity.badRequest().body("Đã qua thời gian hạn chót (Cut-off Time " + cutoffHour + ":00). Không thể đặt trước món ăn cho ngày mai.");
+                }
+            } catch (Exception e) {
+                // Ignore parsing error, will be handled in the loop below
+            }
         }
 
         List<Integer> createdOrderIds = new ArrayList<>();
@@ -418,5 +437,92 @@ public class GuestMealController {
             }
         }
         return ResponseEntity.ok(resultList);
+    }
+
+    @PostMapping("/order-extra")
+    public ResponseEntity<?> orderExtra(@RequestBody MealPreselectionDTO dto) {
+        Optional<User> userOpt = userRepository.findById(dto.getUserId());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("User not found.");
+        }
+        User user = userOpt.get();
+
+        Optional<RoomBooking> bookingOpt = roomBookingRepository.findById(dto.getBookingId());
+        if (bookingOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Booking not found.");
+        }
+        RoomBooking booking = bookingOpt.get();
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        
+        Integer packageId = booking.getPackageId();
+        List<PackageFoodLimit> limits = (packageId != null) ? packageFoodLimitRepository.findByPackageId(packageId) : Collections.emptyList();
+        Map<Integer, Integer> packageLimitMap = limits.stream()
+                .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
+
+        FoodOrder foodOrder = FoodOrder.builder()
+                .user(user)
+                .roomBooking(booking)
+                .orderTime(LocalDateTime.now())
+                .status("PENDING")
+                .totalAmount(BigDecimal.ZERO)
+                .build();
+
+        foodOrder = foodOrderRepository.save(foodOrder);
+
+        BigDecimal totalExtraCharges = BigDecimal.ZERO;
+        List<FoodOrderDetail> detailsToSave = new ArrayList<>();
+        Map<Integer, Integer> dailySelectedCounts = new HashMap<>(); 
+
+        for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
+            Optional<FoodMenu> menuOpt = foodMenuRepository.findById(item.getFoodId());
+            if (menuOpt.isEmpty()) continue;
+            FoodMenu dish = menuOpt.get();
+
+            int previousQty = dailySelectedCounts.getOrDefault(item.getFoodId(), 0);
+            int newQty = previousQty + item.getQuantity();
+            dailySelectedCounts.put(item.getFoodId(), newQty);
+
+            boolean isPackageIncluded = false;
+            BigDecimal itemCost = BigDecimal.ZERO;
+
+            if (packageLimitMap.containsKey(item.getFoodId())) {
+                int limitPerDay = packageLimitMap.get(item.getFoodId());
+                if (newQty <= limitPerDay) {
+                    isPackageIncluded = true;
+                } else {
+                    int overQty = newQty - limitPerDay;
+                    int billableQty = Math.min(item.getQuantity(), overQty);
+                    itemCost = dish.getPrice().multiply(new BigDecimal(billableQty));
+                }
+            } else {
+                itemCost = dish.getPrice().multiply(new BigDecimal(item.getQuantity()));
+            }
+
+            totalExtraCharges = totalExtraCharges.add(itemCost);
+
+            FoodOrderDetail detail = FoodOrderDetail.builder()
+                    .foodOrder(foodOrder)
+                    .foodMenu(dish)
+                    .quantity(item.getQuantity())
+                    .priceAtOrder(dish.getPrice())
+                    .specialNote(item.getSpecialNote() != null ? item.getSpecialNote() + " [EXTRA GỌI NGAY]" : "[EXTRA GỌI NGAY]")
+                    .isPackageIncluded(isPackageIncluded)
+                    .build();
+
+            detailsToSave.add(detail);
+        }
+
+        foodOrderDetailRepository.saveAll(detailsToSave);
+        foodOrder.setTotalAmount(totalExtraCharges);
+        foodOrderRepository.save(foodOrder);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("orderId", foodOrder.getOrderId());
+        result.put("status", "PENDING");
+        result.put("totalAmount", totalExtraCharges);
+        result.put("itemCount", detailsToSave.size());
+
+        return ResponseEntity.ok(result);
     }
 }

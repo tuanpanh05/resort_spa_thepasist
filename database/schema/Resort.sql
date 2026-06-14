@@ -212,6 +212,17 @@ CREATE TABLE dbo.food_menu (
 );
 GO
 
+-- 2.10b Package Food Limit Table
+CREATE TABLE dbo.package_food_limit (
+    package_food_id INT IDENTITY(1,1) PRIMARY KEY,
+    package_id INT NOT NULL REFERENCES dbo.retreat_packages(package_id) ON DELETE CASCADE,
+    food_id INT NOT NULL REFERENCES dbo.food_menu(food_id) ON DELETE CASCADE,
+    quantity_per_day INT NOT NULL DEFAULT 1,
+
+    CONSTRAINT CK_package_food_limit_qty CHECK (quantity_per_day > 0)
+);
+GO
+
 -- 2.11 Food Order Table
 CREATE TABLE dbo.food_order (
     order_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -420,6 +431,12 @@ INSERT INTO dbo.food_order_detail (order_id, food_id, quantity, price_at_order, 
 (1, 3, 1, 95000.00, NULL, 1),
 (2, 2, 1, 320000.00, N'Không bỏ bột ngọt', 0),
 (2, 3, 1, 95000.00, NULL, 0);
+
+-- 4.12b Package Food Limit Data
+INSERT INTO dbo.package_food_limit (package_id, food_id, quantity_per_day) VALUES
+(1, 1, 1),
+(1, 2, 1),
+(1, 3, 2);
 
 -- 4.13 Invoices
 INSERT INTO dbo.invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status, vnpay_tran_id, payment_time) VALUES

@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   Check,
   Truck,
+  Volume2,
+  ArrowRight
 } from "lucide-react";
 
 export default function ManageOrders({
@@ -27,422 +29,223 @@ export default function ManageOrders({
     playVoiceAlert(alertText);
   };
 
+  const OrderCard = ({ ord, status, nextStatus, nextStatusText, nextStatusColor }) => {
+    const alertInfo = checkOrderAllergies(ord);
+    const isCompleted = status === "Completed";
+    
+    return (
+      <div
+        className={`relative overflow-hidden flex flex-col justify-between min-h-[260px] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl rounded-xl ${
+          alertInfo.hasAllergyAlert && !isCompleted
+            ? "border-2 border-red-500 bg-red-50/30 shadow-[0_4px_20px_rgba(239,68,68,0.2)]"
+            : isCompleted
+            ? "border border-sage-200 bg-white opacity-70"
+            : "border border-sage-200 bg-white shadow-sm"
+        }`}
+      >
+        {/* Urgent Allergy Ribbon */}
+        {alertInfo.hasAllergyAlert && !isCompleted && (
+          <div className="absolute top-0 left-0 right-0 bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest py-1.5 px-3 flex items-center justify-center space-x-2 animate-pulse z-10">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>NGUY HIỂM: DỊ ỨNG {alertInfo.matchedAllergens.join(", ")}</span>
+          </div>
+        )}
+
+        <div className={`p-5 flex-1 flex flex-col ${alertInfo.hasAllergyAlert && !isCompleted ? "pt-10" : ""}`}>
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-sage-100 pb-3 mb-3 gap-2">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg font-bold font-mono bg-sage-900 text-white px-3 py-1 rounded-md shadow-inner">
+                P.{ord.room}
+              </span>
+              <span className={`text-[9px] font-bold tracking-wider uppercase px-2 py-1 rounded-md border ${
+                  ord.origin === "Room Service" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"
+              }`}>
+                {ord.origin}
+              </span>
+            </div>
+            {!isCompleted && (
+              <button
+                type="button"
+                onClick={() => speakOrder(ord, alertInfo)}
+                className="p-1.5 bg-sage-50 hover:bg-sage-100 border border-sage-200 text-sage-800 rounded-full transition-colors"
+                title="Đọc đơn bằng giọng nói"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Metadata */}
+          <div className="flex justify-between items-center text-[10px] text-sage-500 font-mono mb-3">
+            <span>Mã: {ord.id}</span>
+            <span className="truncate max-w-[120px]">
+              Khách: <strong className="text-sage-800">{ord.guestName}</strong>
+            </span>
+          </div>
+
+          {/* Items List */}
+          <div className="flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+            {ord.items.map((it, idx) => (
+              <div key={idx} className="flex items-center justify-between p-2.5 bg-sage-50/50 rounded-lg border border-sage-100/50 hover:bg-sage-50 transition-colors">
+                <div className="flex items-center">
+                  <span className={`flex items-center justify-center h-6 w-6 rounded-md text-white font-mono font-bold text-xs mr-3 ${
+                      isCompleted ? "bg-sage-400" : "bg-sage-800"
+                  }`}>
+                    {it.qty}
+                  </span>
+                  <span className={`text-xs font-semibold ${isCompleted ? "text-sage-500 line-through" : "text-sage-900"}`}>
+                    {it.name}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Customer Notes */}
+          {ord.note && (
+            <div className="mt-3 bg-amber-50/80 border-l-4 border-amber-500 text-amber-900 p-3 text-[11px] font-medium rounded-r-lg">
+              <span className="font-bold uppercase tracking-wider text-[9px] block mb-0.5 text-amber-700">Ghi chú bếp:</span>
+              {ord.note}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 bg-sage-50/50 border-t border-sage-100 flex justify-between items-center">
+          <span className="text-[10px] text-sage-500 font-mono flex items-center bg-white px-2 py-1 rounded-md border border-sage-200 shadow-sm">
+            <Clock className="h-3 w-3 mr-1.5 text-sage-400" />
+            {ord.time}
+          </span>
+          {nextStatus ? (
+            <button
+              type="button"
+              onClick={() => handleUpdateOrderStatus(ord.id, nextStatus)}
+              className={`flex items-center space-x-1.5 px-4 py-2 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-md transition-all hover:-translate-y-0.5 ${nextStatusColor}`}
+            >
+              <span>{nextStatusText}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 flex items-center space-x-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
+              <Check className="h-3.5 w-3.5" />
+              <span>Đã hoàn tất</span>
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* KDS Control Header */}
-      <div className="bg-white border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h3 className="font-serif text-lg font-bold text-sage-950 flex items-center space-x-2">
-            <Flame className="h-5 w-5 text-amber-600 animate-pulse" />
-            <span>Màn Hình Điều Phối Bếp KDS (Kitchen Display System)</span>
+      <div className="bg-white rounded-xl border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-100/40 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl pointer-events-none" />
+        <div className="relative z-10">
+          <h3 className="font-serif text-2xl font-bold text-sage-900 flex items-center space-x-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+                <Flame className="h-6 w-6 text-amber-600 animate-pulse" />
+            </div>
+            <span>Màn Hình Điều Phối Bếp KDS</span>
           </h3>
-          <p className="text-xs text-sage-500 mt-1">
-            Theo dõi tiến độ nấu nướng theo thời gian thực. Hỗ trợ cảnh báo dị
-            ứng bằng giọng nói tiếng Việt chuẩn.
+          <p className="text-sm text-sage-500 mt-2 max-w-2xl">
+            Quản lý quy trình chế biến theo mô hình Kanban. Hệ thống tự động đẩy cảnh báo dị ứng lên mức cao nhất đối với các thành phần nguy hiểm.
           </p>
         </div>
-
       </div>
 
-      {/* KDS Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+      {/* Kanban Board Layout */}
+      <div className="flex gap-6 overflow-x-auto pb-4 snap-x custom-scrollbar min-h-[70vh]">
+        
         {/* Column 1: Pending */}
-        <div className="bg-blue-50/40 border border-blue-200/80 p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-blue-200/50 pb-2">
-            <h4 className="font-serif text-sm font-bold text-blue-900 flex items-center space-x-2">
-              <span className="h-2 w-2 bg-blue-600 animate-ping" />
-              <span>1. CHỜ NHẬN ({pendingOrders.length})</span>
+        <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+            <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
+              <span className="h-2.5 w-2.5 rounded-full bg-white animate-pulse" />
+              <span>1. CHỜ NHẬN</span>
             </h4>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{pendingOrders.length}</span>
           </div>
-
-          <div className="space-y-4">
-            {pendingOrders.map((ord) => {
-              const alertInfo = checkOrderAllergies(ord);
-              return (
-                <div
-                  key={ord.id}
-                  className={`bg-white border p-5 flex flex-col justify-between min-h-[260px] ${alertInfo.hasAllergyAlert
-                      ? "border-red-400 ring-2 ring-red-100 bg-red-50/10"
-                      : "border-sage-200"
-                    }`}
-                >
-                  <div className="space-y-3">
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-sage-100 pb-2.5 gap-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold font-mono bg-sage-950 text-white px-2.5 py-1">
-                          P.{ord.room}
-                        </span>
-                        <span className="text-[9px] font-bold tracking-wider uppercase bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-100">
-                          {ord.origin}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => speakOrder(ord, alertInfo)}
-                        className="px-2 py-1 bg-sage-50 hover:bg-sage-100 border border-sage-200 text-sage-800 text-[10px] font-bold uppercase tracking-wider"
-                      >
-                        🔊 Đọc Đơn
-                      </button>
-                    </div>
-
-                    {/* Metadata */}
-                    <div className="flex justify-between items-center text-[10px] text-sage-400 font-mono">
-                      <span>Mã: {ord.id}</span>
-                      <span>
-                        Khách:{" "}
-                        <strong className="text-sage-800 font-semibold">
-                          {ord.guestName}
-                        </strong>
-                      </span>
-                    </div>
-
-                    {/* Items */}
-                    <div className="py-2 border-t border-b border-sage-50 space-y-1.5">
-                      {ord.items.map((it, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-2 bg-sage-50/50 border border-sage-100/50"
-                        >
-                          <div className="flex items-center">
-                            <span className="flex items-center justify-center h-6 w-6 bg-sage-900 text-white font-mono font-bold text-xs mr-2">
-                              x{it.qty}
-                            </span>
-                            <span className="text-xs font-semibold text-sage-900">
-                              {it.name}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Customer Notes */}
-                    {ord.note && (
-                      <p className="bg-amber-50/50 border-l-2 border-amber-500 text-amber-800 p-2.5 text-[10px] font-medium leading-relaxed">
-                        Lưu ý: {ord.note}
-                      </p>
-                    )}
-
-                    {/* Allergy Warning */}
-                    {alertInfo.hasAllergyAlert && (
-                      <div className="bg-red-700 text-white p-2.5 text-[9px] font-bold uppercase tracking-wider flex items-center space-x-1.5 animate-pulse">
-                        <ShieldAlert className="h-4 w-4 flex-shrink-0" />
-                        <span>
-                          CẢNH BÁO DỊ ỨNG: DỊ ỨNG{" "}
-                          {alertInfo.matchedAllergens.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-4 border-t border-sage-100 flex justify-between items-center mt-4">
-                    <span className="text-[10px] text-sage-400 font-mono flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {ord.time}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateOrderStatus(ord.id, "Cooking")}
-                      className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
-                    >
-                      Nhận & Nấu
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="bg-blue-50/50 border border-t-0 border-blue-200/80 rounded-b-xl p-4 flex-1 space-y-4">
+            {pendingOrders.map((ord) => (
+              <OrderCard key={ord.id} ord={ord} status="Pending" nextStatus="Cooking" nextStatusText="Nhận Nấu" nextStatusColor="bg-blue-600 hover:bg-blue-700" />
+            ))}
             {pendingOrders.length === 0 && (
-              <p className="text-xs text-sage-400 italic text-center py-12">
-                Hiện tại không có đơn mới chờ nhận.
-              </p>
+              <div className="h-full flex flex-col items-center justify-center text-blue-300/60 py-12">
+                  <Clock className="w-12 h-12 mb-3 opacity-50" />
+                  <p className="text-xs font-medium uppercase tracking-widest text-center">Trống đơn hàng</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* Column 2: Cooking */}
-        <div className="bg-amber-50/40 border border-amber-200/80 p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-amber-200/50 pb-2">
-            <h4 className="font-serif text-sm font-bold text-amber-900 flex items-center space-x-2">
-              <span className="h-2 w-2 bg-amber-500 animate-pulse" />
-              <span>2. ĐANG NẤU ({cookingOrders.length})</span>
+        <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
+          <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+            <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
+              <span className="h-2.5 w-2.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+              <span>2. ĐANG NẤU</span>
             </h4>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{cookingOrders.length}</span>
           </div>
-
-          <div className="space-y-4">
-            {cookingOrders.map((ord) => {
-              const alertInfo = checkOrderAllergies(ord);
-              return (
-                <div
-                  key={ord.id}
-                  className={`bg-white border p-5 flex flex-col justify-between min-h-[260px] ${alertInfo.hasAllergyAlert
-                      ? "border-red-400 ring-2 ring-red-100 bg-red-50/10"
-                      : "border-sage-200"
-                    }`}
-                >
-                  <div className="space-y-3">
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-sage-100 pb-2.5 gap-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold font-mono bg-sage-950 text-white px-2.5 py-1">
-                          P.{ord.room}
-                        </span>
-                        <span className="text-[9px] font-bold tracking-wider uppercase bg-amber-50 text-amber-700 px-1.5 py-0.5 border border-amber-100">
-                          {ord.origin}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => speakOrder(ord, alertInfo)}
-                        className="px-2 py-1 bg-sage-50 hover:bg-sage-100 border border-sage-200 text-sage-800 text-[10px] font-bold uppercase tracking-wider"
-                      >
-                        🔊 Đọc Đơn
-                      </button>
-                    </div>
-
-                    {/* Metadata */}
-                    <div className="flex justify-between items-center text-[10px] text-sage-400 font-mono">
-                      <span>Mã: {ord.id}</span>
-                      <span>
-                        Khách:{" "}
-                        <strong className="text-sage-800 font-semibold">
-                          {ord.guestName}
-                        </strong>
-                      </span>
-                    </div>
-
-                    {/* Items */}
-                    <div className="py-2 border-t border-b border-sage-50 space-y-1.5">
-                      {ord.items.map((it, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-2 bg-sage-50/50 border border-sage-100/50"
-                        >
-                          <div className="flex items-center">
-                            <span className="flex items-center justify-center h-6 w-6 bg-amber-700 text-white font-mono font-bold text-xs mr-2">
-                              x{it.qty}
-                            </span>
-                            <span className="text-xs font-semibold text-sage-900">
-                              {it.name}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Customer Notes */}
-                    {ord.note && (
-                      <p className="bg-amber-50/50 border-l-2 border-amber-500 text-amber-800 p-2.5 text-[10px] font-medium leading-relaxed">
-                        Lưu ý: {ord.note}
-                      </p>
-                    )}
-
-                    {/* Allergy Warning */}
-                    {alertInfo.hasAllergyAlert && (
-                      <div className="bg-red-700 text-white p-2.5 text-[9px] font-bold uppercase tracking-wider flex items-center space-x-1.5 animate-pulse">
-                        <ShieldAlert className="h-4 w-4 flex-shrink-0" />
-                        <span>
-                          CẢNH BÁO DỊ ỨNG: DỊ ỨNG{" "}
-                          {alertInfo.matchedAllergens.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-4 border-t border-sage-100 flex justify-between items-center mt-4">
-                    <span className="text-[10px] text-sage-400 font-mono flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {ord.time}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleUpdateOrderStatus(ord.id, "Delivering")
-                      }
-                      className="px-3.5 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
-                    >
-                      Xong món
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="bg-amber-50/50 border border-t-0 border-amber-200/80 rounded-b-xl p-4 flex-1 space-y-4">
+            {cookingOrders.map((ord) => (
+              <OrderCard key={ord.id} ord={ord} status="Cooking" nextStatus="Delivering" nextStatusText="Xong Món" nextStatusColor="bg-amber-600 hover:bg-amber-700" />
+            ))}
             {cookingOrders.length === 0 && (
-              <p className="text-xs text-sage-400 italic text-center py-12">
-                Không có món ăn nào đang nấu.
-              </p>
+              <div className="h-full flex flex-col items-center justify-center text-amber-300/60 py-12">
+                  <Flame className="w-12 h-12 mb-3 opacity-50" />
+                  <p className="text-xs font-medium uppercase tracking-widest text-center">Trống bếp</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* Column 3: Delivering */}
-        <div className="bg-violet-50/40 border border-violet-200/80 p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-violet-200/50 pb-2">
-            <h4 className="font-serif text-sm font-bold text-violet-900 flex items-center space-x-2">
-              <span className="h-2 w-2 bg-violet-500 animate-pulse" />
-              <span>3. ĐANG GIAO ({deliveringOrders.length})</span>
+        <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+            <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
+              <Truck className="h-4 w-4 text-white" />
+              <span>3. ĐANG GIAO</span>
             </h4>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{deliveringOrders.length}</span>
           </div>
-
-          <div className="space-y-4">
+          <div className="bg-purple-50/50 border border-t-0 border-purple-200/80 rounded-b-xl p-4 flex-1 space-y-4">
             {deliveringOrders.map((ord) => (
-              <div
-                key={ord.id}
-                className="bg-white border border-sage-200 p-5 flex flex-col justify-between min-h-[260px]"
-              >
-                <div className="space-y-3">
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-sage-100 pb-2.5">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold font-mono bg-sage-950 text-white px-2.5 py-1">
-                        P.{ord.room}
-                      </span>
-                      <span className="text-[9px] font-bold tracking-wider uppercase bg-violet-50 text-violet-700 px-1.5 py-0.5 border border-violet-100">
-                        {ord.origin}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Metadata */}
-                  <div className="flex justify-between items-center text-[10px] text-sage-400 font-mono">
-                    <span>Mã: {ord.id}</span>
-                    <span>
-                      Khách:{" "}
-                      <strong className="text-sage-800 font-semibold">
-                        {ord.guestName}
-                      </strong>
-                    </span>
-                  </div>
-
-                  {/* Items */}
-                  <div className="py-2 border-t border-b border-sage-50 space-y-1.5">
-                    {ord.items.map((it, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2 bg-sage-50/50 border border-sage-100/50"
-                      >
-                        <div className="flex items-center">
-                          <span className="flex items-center justify-center h-6 w-6 bg-violet-700 text-white font-mono font-bold text-xs mr-2">
-                            x{it.qty}
-                          </span>
-                          <span className="text-xs font-semibold text-sage-900">
-                            {it.name}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Delivering Status Label */}
-                  <div className="text-[10px] text-violet-700 bg-violet-50/50 p-2 border border-violet-150 font-bold flex items-center space-x-1.5">
-                    <Truck className="h-4 w-4 text-violet-600 flex-shrink-0 animate-pulse" />
-                    <span>Nhân viên đang giao đến phòng khách...</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-sage-100 flex justify-between items-center mt-4">
-                  <span className="text-[10px] text-sage-400 font-mono flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {ord.time}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUpdateOrderStatus(ord.id, "Completed")
-                    }
-                    className="px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
-                  >
-                    Đã giao thành công
-                  </button>
-                </div>
-              </div>
+              <OrderCard key={ord.id} ord={ord} status="Delivering" nextStatus="Completed" nextStatusText="Đã Giao" nextStatusColor="bg-purple-600 hover:bg-purple-700" />
             ))}
             {deliveringOrders.length === 0 && (
-              <p className="text-xs text-sage-400 italic text-center py-12">
-                Không có đơn nào đang giao.
-              </p>
+              <div className="h-full flex flex-col items-center justify-center text-purple-300/60 py-12">
+                  <Truck className="w-12 h-12 mb-3 opacity-50" />
+                  <p className="text-xs font-medium uppercase tracking-widest text-center">Trống giao hàng</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* Column 4: Completed */}
-        <div className="bg-sage-50/50 border border-sage-200 p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-sage-200/50 pb-2">
-            <h4 className="font-serif text-sm font-bold text-sage-800 flex items-center space-x-2">
-              <span className="h-2 w-2 bg-green-650" />
-              <span>4. HOÀN THÀNH ({completedOrders.length})</span>
+        <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+            <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
+              <CheckCircle2 className="h-4 w-4 text-white" />
+              <span>4. HOÀN TẤT</span>
             </h4>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{completedOrders.length}</span>
           </div>
-
-          <div className="space-y-4">
+          <div className="bg-emerald-50/30 border border-t-0 border-emerald-200/50 rounded-b-xl p-4 flex-1 space-y-4">
             {completedOrders.map((ord) => (
-              <div
-                key={ord.id}
-                className="bg-white border border-sage-200 p-5 flex flex-col justify-between min-h-[260px] opacity-85"
-              >
-                <div className="space-y-3">
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-sage-100 pb-2.5">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold font-mono bg-sage-200 text-sage-700 px-2.5 py-1">
-                        P.{ord.room}
-                      </span>
-                      <span className="text-[9px] font-bold tracking-wider uppercase bg-sage-100 text-sage-500 px-1.5 py-0.5 border border-sage-150">
-                        {ord.origin}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Metadata */}
-                  <div className="flex justify-between items-center text-[10px] text-sage-400 font-mono">
-                    <span>Mã: {ord.id}</span>
-                    <span>Khách: {ord.guestName}</span>
-                  </div>
-
-                  {/* Items */}
-                  <div className="py-2 border-t border-b border-sage-50 space-y-1.5">
-                    {ord.items.map((it, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2 bg-sage-50/20 border border-sage-100/55"
-                      >
-                        <div className="flex items-center">
-                          <span className="flex items-center justify-center h-6 w-6 bg-sage-300 text-sage-705 font-mono font-bold text-xs mr-2">
-                            x{it.qty}
-                          </span>
-                          <span className="text-xs font-medium text-sage-550 line-through">
-                            {it.name}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Completion Label */}
-                  <div className="text-[10px] text-green-700 bg-green-50/50 p-2 border border-green-150 font-bold flex items-center space-x-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <span>Đã bàn giao cho nhân viên</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-sage-100 flex justify-between items-center mt-4">
-                  <span className="text-[10px] text-sage-400 font-mono flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {ord.time}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 flex items-center space-x-1">
-                    <Check className="h-3.5 w-3.5" />
-                    <span>Đã giao</span>
-                  </span>
-                </div>
-              </div>
+              <OrderCard key={ord.id} ord={ord} status="Completed" />
             ))}
             {completedOrders.length === 0 && (
-              <p className="text-xs text-sage-400 italic text-center py-12">
-                Bếp chưa hoàn thành đơn nào trong ca.
-              </p>
+              <div className="h-full flex flex-col items-center justify-center text-emerald-300/60 py-12">
+                  <CheckCircle2 className="w-12 h-12 mb-3 opacity-50" />
+                  <p className="text-xs font-medium uppercase tracking-widest text-center">Chưa có đơn hoàn tất</p>
+              </div>
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

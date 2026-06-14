@@ -19,17 +19,20 @@ public class ChefMealController {
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final RoomBookingRepository roomBookingRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
+    private final InvoiceRepository invoiceRepository;
 
     public ChefMealController(FoodMenuRepository foodMenuRepository,
             FoodOrderRepository foodOrderRepository,
             FoodOrderDetailRepository foodOrderDetailRepository,
             RoomBookingRepository roomBookingRepository,
-            PackageFoodLimitRepository packageFoodLimitRepository) {
+            PackageFoodLimitRepository packageFoodLimitRepository,
+            InvoiceRepository invoiceRepository) {
         this.foodMenuRepository = foodMenuRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
+        this.invoiceRepository = invoiceRepository;
     }
 
     @GetMapping("/menu")
@@ -321,6 +324,27 @@ public class ChefMealController {
 
         order.setStatus(dbStatus);
         foodOrderRepository.save(order);
+
+        // Gap 4: Billing Synchronization. Append total amount to Invoice when DELIVERED
+        if ("DELIVERED".equals(dbStatus) && order.getRoomBooking() != null && order.getTotalAmount() != null) {
+            Optional<Invoice> invoiceOpt = invoiceRepository.findFirstByRoomBooking_BookingId(order.getRoomBooking().getBookingId());
+            if (invoiceOpt.isPresent()) {
+                Invoice invoice = invoiceOpt.get();
+                BigDecimal orderTotal = order.getTotalAmount();
+                invoice.setFoodSubtotal(invoice.getFoodSubtotal() != null ? invoice.getFoodSubtotal().add(orderTotal) : orderTotal);
+                
+                BigDecimal taxAndFees = invoice.getTaxAndFees() != null ? invoice.getTaxAndFees() : BigDecimal.ZERO;
+                BigDecimal roomSubtotal = invoice.getRoomSubtotal() != null ? invoice.getRoomSubtotal() : BigDecimal.ZERO;
+                BigDecimal spaSubtotal = invoice.getSpaSubtotal() != null ? invoice.getSpaSubtotal() : BigDecimal.ZERO;
+                BigDecimal totalAmount = roomSubtotal.add(spaSubtotal).add(invoice.getFoodSubtotal()).add(taxAndFees);
+                
+                invoice.setFinalAmount(totalAmount);
+                BigDecimal depositAmount = invoice.getDepositAmount() != null ? invoice.getDepositAmount() : BigDecimal.ZERO;
+                invoice.setAmountDue(totalAmount.subtract(depositAmount));
+                invoiceRepository.save(invoice);
+            }
+        }
+
         return ResponseEntity.ok(Map.of("success", true, "status", status));
     }
 }

@@ -7,11 +7,14 @@
 
 ## 1. Nguyên Tắc Hoạt Động Của AI (AI Agent Core Directives)
 
-* **Ưu tiên kiểm tra tài liệu:** Trước khi đề xuất bất kỳ dòng code nào, AI phải đọc kỹ:
-  - [AI_RULES.md](file:///c:/Users/Administrator/Videos/FontendFor_SWP391/Quy_tac_AI_Test/AI_RULES.md) (Quy tắc lập trình)
-  - [BUSINESS_PROCESS.md](file:///c:/Users/Administrator/Videos/FontendFor_SWP391/Quy_tac_AI_Test/BUSINESS_PROCESS.md) (Nghiệp vụ dự án)
-  - [DATABASE_CONVENTIONS.md](file:///c:/Users/Administrator/Videos/FontendFor_SWP391/Quy_tac_AI_Test/DATABASE_CONVENTIONS.md) (Thiết kế CSDL)
-  - [TESTING_GUIDELINES.md](file:///c:/Users/Administrator/Videos/FontendFor_SWP391/Quy_tac_AI_Test/TESTING_GUIDELINES.md) (Tiêu chuẩn kiểm thử)
+* **Ưu tiên kiểm tra tài liệu:** Trước khi đề xuất bất kỳ dòng code nào, AI phải đọc kỹ các tài liệu trong 00-Policy, 01-Planning, 02-Requirement, 03-Design.
+* **Bảo vệ tài liệu:** AI không được tự ý sửa đổi Requirement hoặc Design documents mà không có sự chấp thuận của người dùng.
+* **Báo cáo sau triển khai:** Mỗi implementation (triển khai) đều phải có báo cáo đi kèm.
+* **Báo cáo Database:** Mọi thay đổi về database đều phải có tài liệu báo cáo migration.
+* **Sử dụng .env:** Mọi cấu hình (configurations) phải sử dụng file `.env`.
+* **Không Hardcode:** Tuyệt đối không hardcode thông tin nhạy cảm (secrets, API keys, database credentials).
+* **Kiểm thử bắt buộc:** Tests phải được chạy trước khi hoàn thành bất kỳ tiến trình nào.
+* **Changelog:** AI phải cập nhật changelog sau mỗi lần triển khai tính năng.
 * **Bảo toàn chú thích & Logic cũ:** Tuyệt đối không xóa các chú thích (comments), tài liệu API (Javadoc), hoặc cấu hình logging cũ không liên quan trực tiếp đến task được giao.
 * **Tự động xác minh:** Sau khi viết code, AI **bắt buộc** phải chạy lệnh build/test ở local để tự chứng minh tính đúng đắn trước khi báo cáo hoàn thành cho người dùng.
 
