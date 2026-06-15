@@ -6,11 +6,13 @@ import fu.se.smms.dto.VNPayPaymentDTO;
 import fu.se.smms.entity.Invoice;
 import fu.se.smms.entity.PaymentTransactionLog;
 import fu.se.smms.entity.RoomBooking;
+import fu.se.smms.entity.SystemConfiguration;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.InvoiceRepository;
 import fu.se.smms.repository.PaymentTransactionLogRepository;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
+import fu.se.smms.repository.SystemConfigurationRepository;
 import fu.se.smms.service.InvoiceService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -42,19 +44,22 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final RoomRepository roomRepository;
     private final PaymentTransactionLogRepository transactionLogRepository;
     private final VNPayProperties vnPayProperties;
+    private final SystemConfigurationRepository systemConfigurationRepository;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
             RoomBookingRepository roomBookingRepository,
             RoomRepository roomRepository,
             PaymentTransactionLogRepository transactionLogRepository,
-            VNPayProperties vnPayProperties
+            VNPayProperties vnPayProperties,
+            SystemConfigurationRepository systemConfigurationRepository
     ) {
         this.invoiceRepository = invoiceRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.roomRepository = roomRepository;
         this.transactionLogRepository = transactionLogRepository;
         this.vnPayProperties = vnPayProperties;
+        this.systemConfigurationRepository = systemConfigurationRepository;
     }
 
     @Override
@@ -152,16 +157,35 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw conflict("Cancelled invoice cannot be paid");
         }
 
-        invoice.setStatus("PAID");
-        invoice.setPaymentTime(LocalDateTime.now());
-        invoice.setVnpayTranId(null);
+        RoomBooking booking = invoice.getRoomBooking();
+        BigDecimal payableAmount = payableAmount(invoice);
 
-        Invoice savedInvoice = invoiceRepository.save(invoice);
+        if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {
+            // Cash deposit payment flow
+            booking.setStatus("CONFIRMED");
+            booking.setTotalDeposit(payableAmount);
+            roomBookingRepository.save(booking);
 
-        // BR-26: Write immutable audit trail log for cash payment
-        writeTransactionLog(savedInvoice, "CASH", payableAmount(invoice), null, "00", "PAID");
+            invoice.setDepositAmount(payableAmount);
+            invoice.setAmountDue(invoice.getFinalAmount().subtract(payableAmount));
+            invoice.setPaymentTime(LocalDateTime.now());
 
-        return toDto(savedInvoice);
+            Invoice savedInvoice = invoiceRepository.save(invoice);
+            writeTransactionLog(savedInvoice, "CASH", payableAmount, null, "00", "PAID");
+            return toDto(savedInvoice);
+        } else {
+            // Final check-out payment flow
+            invoice.setStatus("PAID");
+            invoice.setPaymentTime(LocalDateTime.now());
+            invoice.setVnpayTranId(null);
+
+            Invoice savedInvoice = invoiceRepository.save(invoice);
+
+            // BR-26: Write immutable audit trail log for cash payment
+            writeTransactionLog(savedInvoice, "CASH", payableAmount, null, "00", "PAID");
+
+            return toDto(savedInvoice);
+        }
     }
 
     @Override

@@ -20,6 +20,8 @@ public class SpaServiceDTO {
     private BigDecimal price;
 
     private String status;
+    private String imageUrl;
+    private String benefits;
 
     public SpaServiceDTO() {}
 
@@ -43,4 +45,10 @@ public class SpaServiceDTO {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getBenefits() { return benefits; }
+    public void setBenefits(String benefits) { this.benefits = benefits; }
 }

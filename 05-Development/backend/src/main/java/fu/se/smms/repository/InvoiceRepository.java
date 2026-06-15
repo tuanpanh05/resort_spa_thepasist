@@ -21,7 +21,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     @Query(value = """
             SELECT COALESCE(
                 CASE
-                    WHEN b.package_id IS NOT NULL THEN p.base_price
+                    WHEN b.package_id IS NOT NULL THEN p.price
                     ELSE room_charge.room_subtotal
                 END,
                 0

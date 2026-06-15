@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -77,9 +78,59 @@ public class MasterDataController {
     // RETREAT PACKAGES – Public read, Admin write
     // ============================================================
 
+    /**
+     * UC6 – Public: Get all ACTIVE retreat packages (no filter).
+     * BR-04: Only ACTIVE packages are returned.
+     */
     @GetMapping("/retreat-packages")
     public ResponseEntity<List<RetreatPackageDTO>> getActiveRetreatPackages() {
         return ResponseEntity.ok(masterDataService.getActiveRetreatPackages());
+    }
+
+    /**
+     * UC6 – Public: Get retreat package by ID.
+     */
+    @GetMapping("/retreat-packages/{id}")
+    public ResponseEntity<?> getRetreatPackageById(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(masterDataService.getRetreatPackageById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * UC6 – Public: Filter active packages via GET query params.
+     * Example: GET /retreat-packages/filter?keyword=yoga&healthGoal=YOGA&minPrice=1000000&maxPrice=10000000
+     *
+     * Implements BR-04 (only ACTIVE shown) and RESORT-M2-SECU-001 (SQL injection safe).
+     */
+    @GetMapping("/retreat-packages/filter")
+    public ResponseEntity<List<RetreatPackageDTO>> filterPackagesGet(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String healthGoal,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer maxDurationDays) {
+
+        PackageFilterRequest filter = new PackageFilterRequest();
+        filter.setKeyword(keyword);
+        filter.setHealthGoal(healthGoal);
+        filter.setMinPrice(minPrice);
+        filter.setMaxPrice(maxPrice);
+        filter.setMaxDurationDays(maxDurationDays);
+
+        return ResponseEntity.ok(masterDataService.filterPackages(filter));
+    }
+
+    /**
+     * UC6 – Public: Filter active packages via POST body (for complex filter objects from frontend).
+     * Example body: { "healthGoal": "YOGA", "minPrice": 1000000 }
+     */
+    @PostMapping("/retreat-packages/filter")
+    public ResponseEntity<List<RetreatPackageDTO>> filterPackagesPost(
+            @RequestBody(required = false) PackageFilterRequest filter) {
+        return ResponseEntity.ok(masterDataService.filterPackages(filter));
     }
 
     @GetMapping("/admin/retreat-packages")

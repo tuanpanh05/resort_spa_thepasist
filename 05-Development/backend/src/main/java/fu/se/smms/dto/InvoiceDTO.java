@@ -121,4 +121,14 @@ public class InvoiceDTO {
     public void setPaymentTime(LocalDateTime paymentTime) {
         this.paymentTime = paymentTime;
     }
+
+    private String bookingStatus;
+
+    public String getBookingStatus() {
+        return bookingStatus;
+    }
+
+    public void setBookingStatus(String bookingStatus) {
+        this.bookingStatus = bookingStatus;
+    }
 }

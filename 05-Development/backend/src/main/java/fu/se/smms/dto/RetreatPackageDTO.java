@@ -3,7 +3,11 @@ package fu.se.smms.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
+/**
+ * DTO for RetreatPackage – used by UC6 (Search/Filter) and UC7 (Booking).
+ */
 public class RetreatPackageDTO {
     private Integer packageId;
 
@@ -20,6 +24,12 @@ public class RetreatPackageDTO {
 
     private String includes;
     private String status;
+
+    // UC6 filter fields
+    private String healthGoal;   // YOGA, WEIGHT_LOSS, STRESS_RELIEF, DETOX, GENERAL
+    private String imageUrl;
+    private Integer maxGuests;
+    private LocalDateTime createdAt;
 
     public RetreatPackageDTO() {}
 
@@ -43,4 +53,17 @@ public class RetreatPackageDTO {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getHealthGoal() { return healthGoal; }
+    public void setHealthGoal(String healthGoal) { this.healthGoal = healthGoal; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public Integer getMaxGuests() { return maxGuests; }
+    public void setMaxGuests(Integer maxGuests) { this.maxGuests = maxGuests; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
+

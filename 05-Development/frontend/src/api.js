@@ -160,6 +160,14 @@ export const masterDataApi = {
   getRetreatPackages: (adminMode = false) =>
     apiRequest(adminMode ? "/admin/retreat-packages" : "/retreat-packages"),
 
+  filterRetreatPackages: (params) => {
+    const query = Object.keys(params || {})
+      .filter(k => params[k] !== undefined && params[k] !== null && params[k] !== "")
+      .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
+      .join("&");
+    return apiRequest(`/retreat-packages/filter?${query}`);
+  },
+
   createRetreatPackage: (dto) =>
     apiRequest("/admin/retreat-packages", { method: "POST", body: JSON.stringify(dto) }),
 
