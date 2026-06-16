@@ -65,6 +65,11 @@
       opacity: 0.85;
     }
   }
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
 
 /* Unified Typography Utilities */
