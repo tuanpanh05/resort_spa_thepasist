@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .idPassportEncrypted(request.getIdPassport()) // Automatically encrypted by AesEncryptor
-                .role("GUEST")
+                .role("CUSTOMER")
                 .status("ACTIVE")
                 .build();
 
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
                     .email(request.getEmail())
                     .passwordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
                     .fullName(request.getFullName())
-                    .role("GUEST") // Role mặc định
+                    .role("CUSTOMER") // Role mặc định
                     .status("ACTIVE")
                     .build();
             user = userRepository.save(user);
@@ -138,8 +138,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public java.util.List<UserProfileDTO> getAllStaffUsers() {
-        // Return all non-GUEST users for Admin management
-        return userRepository.findByRoleNot("GUEST")
+        // Return all non-CUSTOMER users for Admin management
+        return userRepository.findByRoleNot("CUSTOMER")
                 .stream()
                 .map(this::mapToProfileDTO)
                 .collect(java.util.stream.Collectors.toList());
