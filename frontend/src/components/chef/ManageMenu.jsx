@@ -12,7 +12,7 @@ export default function ManageMenu({
     (d) => d.isTodayMenu && (dishFilter === "All" || d.period === dishFilter),
   );
 
-  const inactiveDishes = dishes.filter((d) => !d.isTodayMenu);
+  const inactiveDishes = dishes.filter((d) => !d.isTodayMenu && d.isScheduledForToday);
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
@@ -52,10 +52,10 @@ export default function ManageMenu({
         {activeTodayDishes.map((dish) => (
           <div
             key={dish.id}
-            className={`bg-white rounded-none border p-6 flex flex-col justify-between h-60 transition-all ${
+            className={`bg-white rounded-[20px] border p-6 flex flex-col justify-between h-60 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 ${
               dish.soldOut
-                ? "border-red-200 bg-red-50/10"
-                : "border-sage-200 hover:border-sage-800"
+                ? "border-red-200 bg-red-50/30 opacity-80"
+                : "border-primary-100 hover:border-primary-400"
             }`}
           >
             <div>
@@ -98,7 +98,7 @@ export default function ManageMenu({
 
             <div className="flex justify-between items-center pt-3.5 border-t border-sage-100 mt-4">
               <span className="font-bold text-sage-950 font-mono text-sm">
-                {dish.price}
+                {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
               </span>
               <div className="flex space-x-2">
                 <button
@@ -142,7 +142,7 @@ export default function ManageMenu({
               <div>
                 <h4 className="font-bold text-sage-900">{d.name}</h4>
                 <span className="text-[10px] text-sage-400 block mt-1 font-mono">
-                  {d.category} - {d.price}
+                  {d.category} - {new Intl.NumberFormat("vi-VN").format(d.price)}đ
                 </span>
               </div>
               <button
