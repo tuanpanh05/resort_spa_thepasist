@@ -16,6 +16,7 @@ export default function ManageDishes({ dishes, setDishes }) {
     allergens: "",
     period: "Lunch",
     isTodayMenu: true,
+    availableDays: "0,1,2,3,4,5,6",
   });
 
   const handleToggleEnabled = async (id) => {
@@ -62,6 +63,7 @@ export default function ManageDishes({ dishes, setDishes }) {
       allergens: "",
       period: "Lunch",
       isTodayMenu: true,
+      availableDays: "0,1,2,3,4,5,6",
     });
     setShowAddDishModal(true);
   };
@@ -77,6 +79,7 @@ export default function ManageDishes({ dishes, setDishes }) {
       allergens: dish.allergens.join(", "),
       period: dish.period || "Lunch",
       isTodayMenu: dish.isTodayMenu,
+      availableDays: dish.availableDays || "0,1,2,3,4,5,6",
     });
     setShowEditDishModal(true);
   };
@@ -96,6 +99,10 @@ export default function ManageDishes({ dishes, setDishes }) {
       ingredients: dishForm.ingredients,
       allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
       isTodayMenu: dishForm.isTodayMenu,
+      availableDays: dishForm.availableDays,
+      period: dishForm.period,
+      image: "",
+      isPackageIncluded: true,
       enabled: true
     };
 
@@ -116,6 +123,10 @@ export default function ManageDishes({ dishes, setDishes }) {
           ingredients: savedDish.ingredients || "Thành phần dinh dưỡng tự nhiên",
           allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
           isTodayMenu: savedDish.isTodayMenu,
+          availableDays: savedDish.availableDays || dishForm.availableDays,
+          image: savedDish.imageUrl || "",
+          isPackageIncluded: savedDish.isPackageIncluded !== false,
+          periods: savedDish.periods ? savedDish.periods.split(",").map(s => s.trim()) : [dishForm.period],
           soldOut: savedDish.soldOut,
           enabled: savedDish.enabled
         };
@@ -140,6 +151,10 @@ export default function ManageDishes({ dishes, setDishes }) {
       ingredients: dishForm.ingredients,
       allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
       isTodayMenu: dishForm.isTodayMenu,
+      availableDays: dishForm.availableDays,
+      period: dishForm.period,
+      image: selectedDish.image,
+      isPackageIncluded: selectedDish.isPackageIncluded,
       enabled: selectedDish.enabled
     };
 
@@ -162,6 +177,11 @@ export default function ManageDishes({ dishes, setDishes }) {
                 ingredients: savedDish.ingredients || "Thành phần dinh dưỡng tự nhiên",
                 allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
                 isTodayMenu: savedDish.isTodayMenu,
+                availableDays: savedDish.availableDays || dishForm.availableDays,
+                image: savedDish.imageUrl || d.image,
+                isPackageIncluded: savedDish.isPackageIncluded !== false,
+                periods: savedDish.periods ? savedDish.periods.split(",").map(s => s.trim()) : d.periods,
+                enabled: savedDish.enabled,
               }
               : d
           )
@@ -208,6 +228,7 @@ export default function ManageDishes({ dishes, setDishes }) {
                 <th className="p-4">Tên Món Ăn</th>
                 <th className="p-4">Phân loại</th>
                 <th className="p-4">Giá tiền</th>
+                <th className="p-4">Lịch phục vụ</th>
                 <th className="p-4">Thành phần nguyên liệu</th>
                 <th className="p-4">Chứa chất dị ứng</th>
                 <th className="p-4">Trạng thái</th>
@@ -235,6 +256,15 @@ export default function ManageDishes({ dishes, setDishes }) {
                   </td>
                   <td className="p-4 font-bold text-sage-900 font-mono">
                     {dish.price}
+                  </td>
+                  <td className="p-4 text-[10px] text-sage-700 font-bold tracking-wide uppercase">
+                    {dish.availableDays === "1,3,5" 
+                      ? "Chẵn (2,4,6)" 
+                      : dish.availableDays === "0,2,4,6" 
+                      ? "Lẻ (3,5,7,CN)" 
+                      : dish.availableDays === "0,1,2,3,4,5,6" 
+                      ? "Mỗi ngày" 
+                      : "Tùy chỉnh"}
                   </td>
                   <td
                     className="p-4 text-sage-600 font-light max-w-xs truncate"
@@ -351,7 +381,7 @@ export default function ManageDishes({ dishes, setDishes }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-semibold text-sage-800">
                     Phân loại món
@@ -401,6 +431,22 @@ export default function ManageDishes({ dishes, setDishes }) {
                   >
                     <option value="true">Bật luôn hôm nay</option>
                     <option value="false">Tắt (Lưu kho)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-sage-800">
+                    Lịch phục vụ
+                  </label>
+                  <select
+                    value={dishForm.availableDays}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, availableDays: e.target.value }))
+                    }
+                    className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
+                  >
+                    <option value="0,1,2,3,4,5,6">Tất cả các ngày</option>
+                    <option value="1,3,5">Ngày chẵn (Thứ 2, 4, 6)</option>
+                    <option value="0,2,4,6">Ngày lẻ (Thứ 3, 5, 7, CN)</option>
                   </select>
                 </div>
               </div>
@@ -527,7 +573,7 @@ export default function ManageDishes({ dishes, setDishes }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-semibold text-sage-800">
                     Phân loại món
@@ -577,6 +623,22 @@ export default function ManageDishes({ dishes, setDishes }) {
                   >
                     <option value="true">Bật hôm nay</option>
                     <option value="false">Tắt hôm nay</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-sage-800">
+                    Lịch phục vụ
+                  </label>
+                  <select
+                    value={dishForm.availableDays}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, availableDays: e.target.value }))
+                    }
+                    className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
+                  >
+                    <option value="0,1,2,3,4,5,6">Tất cả các ngày</option>
+                    <option value="1,3,5">Ngày chẵn (Thứ 2, 4, 6)</option>
+                    <option value="0,2,4,6">Ngày lẻ (Thứ 3, 5, 7, CN)</option>
                   </select>
                 </div>
               </div>
