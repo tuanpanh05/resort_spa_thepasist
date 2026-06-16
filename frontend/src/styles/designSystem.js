@@ -6,7 +6,7 @@ export const colors = {
 };
 
 export const radius = {
-  card: "rounded-2xl",
+  card: "rounded-none",
   button: "rounded-none",
 };
 
