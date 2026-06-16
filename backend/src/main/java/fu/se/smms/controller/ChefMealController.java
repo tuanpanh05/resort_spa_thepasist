@@ -44,8 +44,8 @@ public class ChefMealController {
             map.put("foodId", item.getFoodId());
             map.put("name", item.getDishName());
             map.put("description", item.getDescription());
-            // Format price as e.g. "180,000đ" to keep Chef UI mock-compatible
-            map.put("price", String.format("%,.0fđ", item.getPrice()));
+            // Return raw price number for calculations in BookingPage
+            map.put("price", item.getPrice());
 
             String tags = item.getDietaryTags() != null ? item.getDietaryTags() : "";
             String category = "Món chính";
@@ -78,8 +78,13 @@ public class ChefMealController {
                     })
                     .collect(Collectors.toList()));
             map.put("isTodayMenu", item.getIsTodayMenu() != null ? item.getIsTodayMenu() : true);
+            map.put("availableDays", item.getAvailableDays() != null ? item.getAvailableDays() : "0,1,2,3,4,5,6");
             map.put("soldOut", item.getSoldOut() != null ? item.getSoldOut() : false);
             map.put("enabled", item.getEnabled() != null ? item.getEnabled() : true);
+            map.put("enabled", item.getEnabled() != null ? item.getEnabled() : true);
+            map.put("image", item.getImageUrl() != null ? item.getImageUrl() : "/images/dishes/dish_chao_yen_mach.png");
+            map.put("isPackageIncluded", item.getIsPackageIncluded() != null ? item.getIsPackageIncluded() : true);
+            map.put("periods", Arrays.stream((item.getPeriods() != null ? item.getPeriods() : "Lunch").split(",")).map(String::trim).collect(Collectors.toList()));
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(response);
@@ -157,15 +162,27 @@ public class ChefMealController {
 
             BigDecimal price = parsePrice(priceStr);
 
+            String availableDays = (String) payload.get("availableDays");
+            String imageUrl = (String) payload.get("image");
+            Boolean isPackageIncluded = payload.get("isPackageIncluded") != null ? (Boolean) payload.get("isPackageIncluded") : true;
+            
+            Object periodsObj = payload.get("period"); // from Chef UI
+            if (periodsObj == null) periodsObj = payload.get("periods");
+            String periods = periodsObj instanceof List ? String.join(",", (List<String>) periodsObj) : (String) periodsObj;
+
             FoodMenu dish = FoodMenu.builder()
                     .dishName(name)
-                    .description(description != null ? description : "")
+                    .description(description)
                     .price(price)
                     .dietaryTags(dietaryTags)
+                    .ingredients(ingredients)
                     .isTodayMenu(isTodayMenu)
-                    .soldOut(false)
-                    .ingredients(ingredients != null ? ingredients : "")
+                    .availableDays(availableDays != null ? availableDays : "0,1,2,3,4,5,6")
+                    .imageUrl(imageUrl)
+                    .isPackageIncluded(isPackageIncluded)
+                    .periods(periods)
                     .enabled(enabled)
+                    .soldOut(false)
                     .build();
 
             foodMenuRepository.save(dish);
@@ -207,12 +224,30 @@ public class ChefMealController {
 
             BigDecimal price = parsePrice(priceStr);
 
+            String availableDays = (String) payload.get("availableDays");
+            String imageUrl = (String) payload.get("image");
+            Boolean isPackageIncluded = payload.get("isPackageIncluded") != null ? (Boolean) payload.get("isPackageIncluded") : true;
+            
+            Object periodsObj = payload.get("period");
+            if (periodsObj == null) periodsObj = payload.get("periods");
+            String periods = periodsObj instanceof List ? String.join(",", (List<String>) periodsObj) : (String) periodsObj;
+
             dish.setDishName(name);
             dish.setDescription(description != null ? description : "");
             dish.setPrice(price);
             dish.setDietaryTags(dietaryTags);
-            dish.setIsTodayMenu(isTodayMenu);
             dish.setIngredients(ingredients != null ? ingredients : "");
+            dish.setIsTodayMenu(isTodayMenu);
+            if (availableDays != null) {
+                dish.setAvailableDays(availableDays);
+            }
+            if (imageUrl != null) {
+                dish.setImageUrl(imageUrl);
+            }
+            dish.setIsPackageIncluded(isPackageIncluded);
+            if (periods != null) {
+                dish.setPeriods(periods);
+            }
             dish.setEnabled(enabled);
 
             foodMenuRepository.save(dish);
@@ -259,6 +294,9 @@ public class ChefMealController {
                 if (rooms != null && !rooms.isEmpty()) {
                     roomNumber = String.join(", ", rooms);
                 }
+                map.put("mealCode", "MEAL-" + order.getRoomBooking().getBookingId());
+            } else {
+                map.put("mealCode", "GUEST");
             }
             map.put("room", roomNumber);
             map.put("origin", order.getRoomBooking() != null ? "Room Service" : "Restaurant");
@@ -267,6 +305,7 @@ public class ChefMealController {
             List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
             List<Map<String, Object>> items = details.stream().map(d -> {
                 Map<String, Object> itemMap = new HashMap<>();
+                itemMap.put("foodId", d.getFoodMenu().getFoodId());
                 itemMap.put("name", d.getFoodMenu().getDishName());
                 itemMap.put("qty", d.getQuantity());
                 return itemMap;
@@ -346,5 +385,44 @@ public class ChefMealController {
         }
 
         return ResponseEntity.ok(Map.of("success", true, "status", status));
+    }
+
+    @DeleteMapping("/orders/{orderId}/item/{foodId}")
+    public ResponseEntity<?> deleteOrderItem(@PathVariable Integer orderId, @PathVariable Integer foodId) {
+        Optional<FoodOrder> orderOpt = foodOrderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Order not found");
+        }
+        FoodOrder order = orderOpt.get();
+
+        List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(orderId);
+        FoodOrderDetail targetDetail = null;
+        for (FoodOrderDetail detail : details) {
+            if (detail.getFoodMenu() != null && detail.getFoodMenu().getFoodId().equals(foodId)) {
+                targetDetail = detail;
+                break;
+            }
+        }
+
+        if (targetDetail == null) {
+            return ResponseEntity.status(404).body("Item not found in order");
+        }
+
+        // Subtract from totalAmount
+        if (Boolean.FALSE.equals(targetDetail.getIsPackageIncluded())) {
+            BigDecimal cost = targetDetail.getPriceAtOrder().multiply(new BigDecimal(targetDetail.getQuantity()));
+            order.setTotalAmount(order.getTotalAmount().subtract(cost));
+        }
+
+        foodOrderDetailRepository.delete(targetDetail);
+
+        // If this was the last item, cancel the order
+        if (details.size() == 1) {
+            order.setStatus("CANCELLED");
+        }
+        
+        foodOrderRepository.save(order);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Item removed successfully"));
     }
 }
