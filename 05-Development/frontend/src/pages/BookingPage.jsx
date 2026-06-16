@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 import { radius } from "../styles/designSystem";
+import { medicalApi, userApi } from "../api";
 
 // Sub-components
 import BookingGuestInfo from "../components/booking/BookingGuestInfo";
@@ -74,6 +75,54 @@ export default function BookingPage() {
     }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
+  // Load existing profile & health info if logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) return;
+
+    const loadProfileAndHealth = async () => {
+      try {
+        // Fetch User Info to pre-fill Step 1
+        const userProfile = await userApi.getProfile();
+        if (userProfile) {
+          setGuestInfo(prev => ({
+            ...prev,
+            fullName: userProfile.fullName || prev.fullName,
+            phone: userProfile.phone || prev.phone,
+            email: userProfile.email || prev.email,
+          }));
+        }
+
+        // Fetch Health Profile to pre-fill Step 2
+        const healthProfile = await medicalApi.getMyProfile();
+        if (healthProfile && healthProfile.explicitConsentSigned) {
+          setConsentDataProcessing(true);
+          setConsentSharing(true);
+          
+          if (healthProfile.foodAllergies) {
+            try {
+              const parsed = JSON.parse(healthProfile.foodAllergies);
+              setSelectedAllergies(parsed.selected || []);
+              setOtherAllergy(parsed.other || "");
+              setDietaryPreference(parsed.diet || "omnivore");
+            } catch {
+              setSelectedAllergies([]);
+              setOtherAllergy(healthProfile.foodAllergies || "");
+              setDietaryPreference("omnivore");
+            }
+          }
+          if (healthProfile.physicalCondition) {
+            setPhysicalCondition(healthProfile.physicalCondition);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load user or health profile:", err);
+      }
+    };
+
+    loadProfileAndHealth();
+  }, []);
+
   // Selected Villa Info
   const selectedVilla = villasList.find((v) => v.id === selectedVillaId);
 
@@ -134,11 +183,30 @@ export default function BookingPage() {
   };
 
   // Navigations between steps
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step === 1) {
       if (validateStep1()) setStep(2);
     } else if (step === 2) {
-      if (validateStep2()) setStep(3);
+      if (validateStep2()) {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (token) {
+          try {
+            const foodAllergiesJson = JSON.stringify({
+              selected: selectedAllergies,
+              other: otherAllergy,
+              diet: dietaryPreference,
+            });
+            await medicalApi.saveMyProfile(
+              physicalCondition,
+              foodAllergiesJson,
+              true // explicitConsentSigned
+            );
+          } catch (err) {
+            console.error("Failed to save health profile to backend:", err);
+          }
+        }
+        setStep(3);
+      }
     } else if (step === 3) {
       setStep(4);
     }
