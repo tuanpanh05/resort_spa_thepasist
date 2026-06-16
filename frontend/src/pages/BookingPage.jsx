@@ -135,54 +135,6 @@ const servicesList = [
   },
 ];
 
-// Mock data: Package menu items (Module 4 - Dietary F&B)
-const packageMenuItems = [
-  {
-    foodId: 1,
-    dishName: "Organic Avocado Quinoa Salad",
-    description: "Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.",
-    price: 180000,
-    dietaryTags: "Vegan, Gluten-Free",
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-    isPackageIncluded: true,
-  },
-  {
-    foodId: 2,
-    dishName: "Ginseng Chicken Soup",
-    description: "Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.",
-    price: 320000,
-    dietaryTags: "Keto, Healthy",
-    image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
-    isPackageIncluded: false,
-  },
-  {
-    foodId: 3,
-    dishName: "Green Detox Juice",
-    description: "Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.",
-    price: 95000,
-    dietaryTags: "Vegan, Detox",
-    image: "https://images.unsplash.com/photo-1610970881699-44a5587caa90?auto=format&fit=crop&w=600&q=80",
-    isPackageIncluded: true,
-  },
-  {
-    foodId: 4,
-    dishName: "Nấm nướng lá lốt cốt dừa",
-    description: "Nấm đùi gà cuộn lá lốt nướng than hoa, đậu phộng rang giòn.",
-    price: 320000,
-    dietaryTags: "Vegan, Peanut",
-    image: "https://images.unsplash.com/photo-1599021456807-25db0f974333?auto=format&fit=crop&w=600&q=80",
-    isPackageIncluded: false,
-  },
-  {
-    foodId: 5,
-    dishName: "Tôm rim tỏi ớt (Món mặn)",
-    description: "Tôm sú biển tươi rim tỏi ớt thơm lừng, giàu protein.",
-    price: 390000,
-    dietaryTags: "Healthy, Seafood",
-    image: "https://images.unsplash.com/photo-1559737607-3578909a3636?auto=format&fit=crop&w=600&q=80",
-    isPackageIncluded: false,
-  },
-];
 
 const mealPeriods = [
   { key: "Breakfast", label: "Bữa Sáng", time: "06:30 - 09:30", icon: Coffee },
@@ -252,6 +204,36 @@ export default function BookingPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
+  // Live Menu Status from Chef
+  const [packageMenuItems, setPackageMenuItems] = useState([]);
+
+  useEffect(() => {
+    const fetchMenuStatus = async () => {
+      try {
+        const res = await axiosClient.get("/chef/menu");
+        const validDishes = res.data.filter(item => item.enabled !== false && item.isTodayMenu !== false);
+
+        const mappedDishes = validDishes.map(item => ({
+          foodId: item.foodId,
+          dishName: item.name,
+          description: item.description,
+          price: item.price,
+          dietaryTags: [item.category, ...(item.allergens || [])].filter(Boolean).join(", "),
+          allergens: item.allergens || [],
+          image: item.image,
+          isPackageIncluded: item.isPackageIncluded,
+          periods: item.periods || ["Lunch"],
+          availableDays: item.availableDays ? item.availableDays.split(",").map(Number) : [0, 1, 2, 3, 4, 5, 6]
+        }));
+        
+        setPackageMenuItems(mappedDishes);
+      } catch (err) {
+        console.error("Failed to fetch live menu status", err);
+      }
+    };
+    fetchMenuStatus();
+  }, []);
+
   // Calculates nights between check-in and check-out
   const [nightsCount, setNightsCount] = useState(2);
   const [packageDuration, setPackageDuration] = useState(3); // 3 or 5 days
@@ -273,12 +255,14 @@ export default function BookingPage() {
     if (checkOut > checkIn) {
       const days = [];
       let curr = new Date(checkIn);
-      while (curr < checkOut) {
+      while (curr <= checkOut) {
         days.push(curr.toISOString().split("T")[0]);
         curr.setDate(curr.getDate() + 1);
       }
       setMealBookingDays(days);
-      if (days.length > 0 && !selectedMealDate) setSelectedMealDate(days[0]);
+      if (days.length > 0 && (!selectedMealDate || !days.includes(selectedMealDate))) {
+        setSelectedMealDate(days[0]);
+      }
     } else {
       setMealBookingDays([]);
     }
@@ -1244,17 +1228,35 @@ export default function BookingPage() {
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {packageMenuItems.filter(dish => dish.isPackageIncluded).map((dish) => {
+                            {packageMenuItems
+                              .filter(dish => dish.periods.includes(period.key))
+                              .filter(dish => {
+                                const dayOfWeek = new Date(selectedMealDate).getDay();
+                                return dish.availableDays ? dish.availableDays.includes(dayOfWeek) : true;
+                              })
+                              .filter(dish => {
+                                const tags = dish.dietaryTags.toLowerCase();
+                                if (dietaryPreference === "omnivore") return true;
+                                if (dietaryPreference === "vegetarian" || dietaryPreference === "vegan") return tags.includes("vegan") || tags.includes("vegetarian");
+                                if (dietaryPreference === "pescatarian") return tags.includes("vegan") || tags.includes("vegetarian") || tags.includes("seafood");
+                                if (dietaryPreference === "keto") return tags.includes("keto");
+                                if (dietaryPreference === "halal") return tags.includes("vegan") || tags.includes("vegetarian") || tags.includes("halal");
+                                return true;
+                              })
+                              .map((dish) => {
                               const currentQty = (mealSelections[selectedMealDate]?.[period.key]?.[dish.foodId]) || 0;
                               const userAllergens = detectAllergens(guestInfo.healthNote);
-
-                              // Only apply filtering if user gave explicit consent
-                              const isAllergen = (consentDataProcessing && consentSharing) ? (
-                                (dish.dietaryTags.toLowerCase().includes("peanut") && userAllergens.includes("peanut")) ||
-                                (dish.dietaryTags.toLowerCase().includes("seafood") && userAllergens.includes("seafood")) ||
-                                selectedAllergies.some(a => dish.dietaryTags.toLowerCase().includes(a)) ||
-                                (otherAllergy && dish.dietaryTags.toLowerCase().includes(otherAllergy.toLowerCase()))
-                              ) : false;
+                              const isAllergen = (
+                                  (dish.allergens.includes("Đậu phộng") && userAllergens.includes("peanut")) ||
+                                  (dish.allergens.includes("Hải sản") && userAllergens.includes("seafood")) ||
+                                  selectedAllergies.some(a => {
+                                      if (a === "peanuts") return dish.allergens.includes("Đậu phộng");
+                                      if (a === "shellfish") return dish.allergens.includes("Hải sản");
+                                      if (a === "spicy") return dish.allergens.includes("Cay");
+                                      return dish.allergens.some(alg => alg.toLowerCase().includes(a.toLowerCase()));
+                                  }) ||
+                                  (otherAllergy && dish.dietaryTags.toLowerCase().includes(otherAllergy.toLowerCase()))
+                              );
 
                               return (
                                 <div
@@ -1297,7 +1299,7 @@ export default function BookingPage() {
                                         <button
                                           type="button"
                                           onClick={() => updateMealQty(selectedMealDate, period.key, dish.foodId, -1)}
-                                          disabled={currentQty === 0}
+                                          disabled={currentQty === 0 || isAllergen}
                                           className="h-7 w-7 flex items-center justify-center border border-primary-200 text-sage-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
                                         >
                                           <Minus className="h-3.5 w-3.5" />
@@ -1306,7 +1308,8 @@ export default function BookingPage() {
                                         <button
                                           type="button"
                                           onClick={() => updateMealQty(selectedMealDate, period.key, dish.foodId, 1)}
-                                          className="h-7 w-7 flex items-center justify-center border border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer transition-colors"
+                                          disabled={isAllergen}
+                                          className={`h-7 w-7 flex items-center justify-center border transition-colors ${isAllergen ? "bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed" : "border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer"}`}
                                         >
                                           <Plus className="h-3.5 w-3.5" />
                                         </button>
@@ -1485,6 +1488,52 @@ export default function BookingPage() {
                               </div>
                             );
                           })}
+
+                          {/* Extra Meal Items */}
+                          {(() => {
+                            const extraItems = [];
+                            Object.entries(mealSelections).forEach(([date, dateObj]) => {
+                              Object.entries(dateObj).forEach(([period, periodObj]) => {
+                                Object.entries(periodObj).forEach(([foodId, qty]) => {
+                                  const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
+                                  if (item) {
+                                    let billableQty = 0;
+                                    if (item.isPackageIncluded) {
+                                      if (qty > 1) billableQty = qty - 1;
+                                    } else {
+                                      billableQty = qty;
+                                    }
+                                    if (billableQty > 0) {
+                                      const existing = extraItems.find(e => e.foodId === item.foodId);
+                                      if (existing) {
+                                         existing.billableQty += billableQty;
+                                         existing.itemTotal += (item.price * billableQty);
+                                      } else {
+                                         extraItems.push({
+                                           ...item,
+                                           billableQty,
+                                           itemTotal: item.price * billableQty
+                                         });
+                                      }
+                                    }
+                                  }
+                                });
+                              });
+                            });
+                            return extraItems.map((extra, idx) => (
+                              <div key={`extra-meal-${idx}`} className="flex justify-between items-start gap-4 pt-3 border-t border-primary-100/50">
+                                <div>
+                                  <span className="font-serif text-sm font-bold text-sage-950 block">
+                                    🍽️ {extra.dishName} (Gọi Thêm)
+                                  </span>
+                                  <span className="text-[10px] text-sage-400 font-light block mt-0.5">
+                                    {formatCurrency(extra.price)} × {extra.billableQty} Phần
+                                  </span>
+                                </div>
+                                <span className="font-semibold text-sage-900">{formatCurrency(extra.itemTotal)}</span>
+                              </div>
+                            ));
+                          })()}
                         </div>
                       </div>
                     </div>
