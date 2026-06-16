@@ -38,5 +38,13 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
             WHERE rbd.booking_id = :bookingId
             """, nativeQuery = true)
     List<Room> findRoomsByBookingId(@Param("bookingId") Integer bookingId);
+
+    /**
+     * UC09: Fetch all rooms with their room type eagerly loaded.
+     * Used by VillaController for listing rooms in the Villa Status Dashboard.
+     */
+    @Query("SELECT r FROM Room r LEFT JOIN FETCH r.roomType ORDER BY r.roomNumber ASC")
+    List<Room> findAllWithRoomType();
 }
+
 

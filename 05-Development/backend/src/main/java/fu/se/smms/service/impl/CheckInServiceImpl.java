@@ -1,15 +1,20 @@
 package fu.se.smms.service.impl;
 
+import fu.se.smms.dto.ArrivalDTO;
 import fu.se.smms.entity.Room;
 import fu.se.smms.entity.RoomBooking;
+import fu.se.smms.entity.RoomBookingDetail;
+import fu.se.smms.entity.User;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
+import fu.se.smms.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,6 +34,9 @@ public class CheckInServiceImpl {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Perform guest check-in.
@@ -60,15 +68,72 @@ public class CheckInServiceImpl {
                     "Số CCCD / Hộ chiếu là bắt buộc để làm thủ tục nhận phòng (Luật Cư Trú 2020).");
         }
 
-        // 4. Update booking status to CHECKED_IN
+        // 4. Save identity document to user profile (AES-256 encrypted via AesEncryptor converter)
+        User guest = booking.getUser();
+        if (guest != null) {
+            guest.setIdPassportEncrypted(identityDocument);
+            userRepository.save(guest);
+        }
+
+        // 5. Update booking status to CHECKED_IN
         booking.setStatus("CHECKED_IN");
         roomBookingRepository.save(booking);
 
-        // 5. BR-13b: Update all rooms linked to booking to OCCUPIED
+        // 6. BR-13b: Update all rooms linked to booking to OCCUPIED
         List<Room> rooms = roomRepository.findRoomsByBookingId(bookingId);
         for (Room room : rooms) {
             room.setStatus("OCCUPIED");
             roomRepository.save(room);
         }
+    }
+
+    /**
+     * UC08: Get arrivals dashboard data — all active bookings (CONFIRMED, PENDING_DEPOSIT, CHECKED_IN).
+     * Lễ tân can see the list of guests expected to check-in.
+     *
+     * @return List of ArrivalDTO objects.
+     */
+    @Transactional(readOnly = true)
+    public List<ArrivalDTO> getArrivals() {
+        List<RoomBooking> bookings = roomBookingRepository.findAllActiveBookings();
+        List<ArrivalDTO> arrivals = new ArrayList<>();
+
+        for (RoomBooking booking : bookings) {
+            ArrivalDTO dto = new ArrivalDTO();
+            dto.setBookingId(booking.getBookingId());
+            dto.setCheckInDate(booking.getCheckInDate());
+            dto.setCheckOutDate(booking.getCheckOutDate());
+            dto.setDepositPaid(booking.getTotalDeposit());
+            dto.setStatus(booking.getStatus());
+
+            // Guest info
+            User guest = booking.getUser();
+            if (guest != null) {
+                dto.setGuestName(guest.getFullName());
+                dto.setGuestEmail(guest.getEmail());
+                dto.setGuestPhone(guest.getPhone());
+            }
+
+            // Package info
+            if (booking.getRetreatPackage() != null) {
+                dto.setPackageName(booking.getRetreatPackage().getName());
+            }
+
+            // Room info (from first detail)
+            List<RoomBookingDetail> details = booking.getDetails();
+            if (details != null && !details.isEmpty()) {
+                Room room = details.get(0).getRoom();
+                if (room != null) {
+                    dto.setRoomNumber(room.getRoomNumber());
+                    if (room.getRoomType() != null) {
+                        dto.setRoomTypeName(room.getRoomType().getTypeName());
+                    }
+                }
+            }
+
+            arrivals.add(dto);
+        }
+
+        return arrivals;
     }
 }

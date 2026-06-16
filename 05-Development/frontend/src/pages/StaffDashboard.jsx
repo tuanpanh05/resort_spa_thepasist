@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarRange, Bed, Flower, MessageSquare,
-  CreditCard, Clock, X, LogOut, Menu
+  CreditCard, Clock, X, LogOut, Menu, FileText
 } from 'lucide-react';
 
 import {
@@ -23,6 +23,7 @@ import ManageServices from '../components/staff/ManageServices';
 import ManageSupport from '../components/staff/ManageSupport';
 import ManagePayments from '../components/staff/ManagePayments';
 import ManageShifts from '../components/staff/ManageShifts';
+import BookingItinerary from '../components/staff/BookingItinerary';
 
 export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -36,6 +37,7 @@ export default function StaffDashboard() {
   const [complaints, setComplaints] = useState(initialComplaints);
   const [payments, setPayments] = useState(initialPayments);
   const [shiftSwapRequests, setShiftSwapRequests] = useState([]);
+  const [selectedItineraryBookingId, setSelectedItineraryBookingId] = useState(null);
 
   // Modals visibility controller states (shared)
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
@@ -103,10 +105,17 @@ export default function StaffDashboard() {
   };
 
   // Sidebar item list
+  // UC10: Navigate to itinerary tab from bookings list
+  const handleViewItinerary = (bookingId) => {
+    setSelectedItineraryBookingId(bookingId);
+    setActiveTab('itinerary');
+  };
+
   const sidebarItems = [
     { id: 'dashboard', label: 'Tổng Quan Ca Trực', icon: LayoutDashboard },
     { id: 'bookings', label: 'Quản Lý Đặt Phòng', icon: CalendarRange },
     { id: 'rooms', label: 'Sơ Đồ Phòng Trực', icon: Bed },
+    { id: 'itinerary', label: 'Chi Tiết & Lịch Trình', icon: FileText },
     { id: 'services', label: 'Dịch Vụ Phát Sinh', icon: Flower },
     { id: 'support', label: 'Hỗ Trợ Khách Hàng', icon: MessageSquare },
     { id: 'payments', label: 'Thanh Toán & Hóa Đơn', icon: CreditCard },
@@ -126,6 +135,7 @@ export default function StaffDashboard() {
         activeTab === 'dashboard' ? 'Tổng Quan Ca Làm Việc' :
         activeTab === 'bookings' ? 'Quản Lý Đơn Đặt Phòng' :
         activeTab === 'rooms' ? 'Sơ Đồ Phòng Theo Ca' :
+        activeTab === 'itinerary' ? 'Chi Tiết Đặt Phòng & Lịch Trình' :
         activeTab === 'services' ? 'Xử Lý Dịch Vụ Phát Sinh' :
         activeTab === 'support' ? 'Hỗ Trợ & Tiếp Nhận Complaint' :
         activeTab === 'payments' ? 'Xác Nhận Hóa Đơn & Thanh Toán' :
@@ -177,6 +187,7 @@ export default function StaffDashboard() {
           setBookings={setBookings}
           setRooms={setRooms}
           setPayments={setPayments}
+          onViewItinerary={handleViewItinerary}
         />
       )}
 
@@ -185,6 +196,16 @@ export default function StaffDashboard() {
           rooms={rooms}
           setRooms={setRooms}
           setComplaints={setComplaints}
+        />
+      )}
+
+      {activeTab === 'itinerary' && (
+        <BookingItinerary
+          bookingId={selectedItineraryBookingId}
+          onClose={() => {
+            setSelectedItineraryBookingId(null);
+            setActiveTab('bookings');
+          }}
         />
       )}
 

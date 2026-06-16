@@ -58,6 +58,17 @@ export default function Payment() {
     }).format(val || 0);
   };
 
+  const isDepositPayment = invoice?.bookingStatus === "PENDING_DEPOSIT";
+  const isDepositFlow =
+    isDepositPayment ||
+    (invoice?.bookingStatus === "CONFIRMED" &&
+      invoice?.status === "UNPAID" &&
+      Number(invoice?.depositAmount || 0) > 0);
+  const depositPayable = isDepositPayment
+    ? Math.ceil(Number(invoice?.finalAmount || 0) * 0.3)
+    : Number(invoice?.amountDue || invoice?.finalAmount || 0);
+  const displayDueAmount = isDepositPayment ? depositPayable : Number(invoice?.amountDue || 0);
+
   const handleCopy = (text, field) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -82,7 +93,14 @@ export default function Payment() {
     } else if (paymentMethod === "cash") {
       paymentApi.markCashPayment(invoiceId)
         .then((data) => {
-          // Cash payment successful. We perform checkout as well (BR-14)
+          if (data.bookingStatus === "CONFIRMED" && data.status === "UNPAID") {
+            setIsProcessing(false);
+            setIsPaid(true);
+            setInvoice(data);
+            return;
+          }
+
+          // Final check-out payment flow
           paymentApi.performCheckout(invoiceId)
             .then(() => {
               setIsProcessing(false);
@@ -92,7 +110,7 @@ export default function Payment() {
             .catch((err) => {
               console.warn("Perform checkout failed after cash payment: ", err);
               setIsProcessing(false);
-              setIsPaid(true); // Still consider paid
+              setIsPaid(true);
             });
         })
         .catch((err) => {
@@ -163,10 +181,12 @@ export default function Payment() {
               </div>
 
               <h1 className="font-serif text-3xl font-normal text-sage-900 mb-2">
-                Thanh Toán Thành Công!
+                {isDepositFlow ? "Thanh Toán Cọc Thành Công!" : "Thanh Toán Thành Công!"}
               </h1>
               <p className="text-xs sm:text-sm text-sage-600 max-w-md mx-auto mb-8 font-light leading-relaxed">
-                Cảm ơn quý khách đã hoàn tất thanh toán hóa đơn. Thủ tục Check-out đã được thực hiện tự động và trạng thái phòng đã đổi thành **DIRTY** để vệ sinh.
+                {isDepositFlow
+                  ? "Cảm ơn quý khách đã thanh toán tiền cọc. Đặt phòng đã được xác nhận. Số dư còn lại sẽ thanh toán khi trả phòng."
+                  : "Cảm ơn quý khách đã hoàn tất thanh toán hóa đơn. Thủ tục Check-out đã được thực hiện tự động và trạng thái phòng đã đổi thành **DIRTY** để vệ sinh."}
               </p>
 
               {/* Receipt invoice detail box */}
@@ -188,15 +208,21 @@ export default function Payment() {
                   <span className="font-semibold text-right">#BK-{invoice?.bookingId}</span>
 
                   <span className="text-sage-500 font-light">Trạng thái Hóa đơn:</span>
-                  <span className="font-bold text-green-700 text-right uppercase">ĐÃ THANH TOÁN</span>
+                  <span className={`font-bold text-right uppercase ${isDepositFlow ? "text-amber-700" : "text-green-700"}`}>
+                    {isDepositFlow ? "ĐÃ THANH TOÁN CỌC" : "ĐÃ THANH TOÁN"}
+                  </span>
 
                   <span className="text-sage-500 font-light">Hình thức thanh toán:</span>
                   <span className="font-semibold text-right text-primary-850">Tiền mặt tại quầy</span>
                 </div>
 
                 <div className="pt-3 border-t border-primary-100 flex justify-between items-center text-sm sm:text-base font-serif">
-                  <span className="font-normal text-sage-900">Tổng thanh toán:</span>
-                  <span className="font-bold text-primary-900">{formatCurrency(invoice?.amountDue || invoice?.finalAmount)}</span>
+                  <span className="font-normal text-sage-900">
+                    {isDepositFlow ? "Tiền cọc đã thanh toán (30%):" : "Tổng thanh toán:"}
+                  </span>
+                  <span className="font-bold text-primary-900">
+                    {formatCurrency(isDepositFlow ? invoice?.depositAmount || depositPayable : invoice?.amountDue || invoice?.finalAmount)}
+                  </span>
                 </div>
               </div>
 
@@ -284,13 +310,21 @@ export default function Payment() {
                     <span className="font-bold font-mono">{formatCurrency(invoice?.finalAmount)}</span>
                   </div>
                   <div className="flex justify-between text-green-700 bg-green-50/50 p-1.5 px-2.5">
-                    <span className="font-medium">Đã khấu trừ tiền đặt cọc (30%):</span>
-                    <span className="font-bold font-mono">-{formatCurrency(invoice?.depositAmount)}</span>
+                    <span className="font-medium">
+                      {isDepositPayment ? "Tiền cọc cần thanh toán (30%):" : "Đã khấu trừ tiền đặt cọc (30%):"}
+                    </span>
+                    <span className="font-bold font-mono">
+                      {isDepositPayment
+                        ? formatCurrency(depositPayable)
+                        : `-${formatCurrency(invoice?.depositAmount)}`}
+                    </span>
                   </div>
                   
                   <div className="border-t border-primary-100 pt-4 flex justify-between items-center text-base sm:text-lg font-serif">
-                    <span className="font-normal text-sage-950">Dư nợ cần thanh toán:</span>
-                    <span className="font-bold text-primary-950 font-mono">{formatCurrency(invoice?.amountDue)}</span>
+                    <span className="font-normal text-sage-950">
+                      {isDepositPayment ? "Số tiền cọc cần thanh toán:" : "Dư nợ cần thanh toán:"}
+                    </span>
+                    <span className="font-bold text-primary-950 font-mono">{formatCurrency(displayDueAmount)}</span>
                   </div>
                 </div>
 
@@ -340,7 +374,9 @@ export default function Payment() {
                     /* 1. VNPAY SANDBOX GATEWAY */
                     <div className="space-y-6 animate-fade-in">
                       <p className="text-xs sm:text-sm font-light text-sage-600 leading-relaxed">
-                        Bạn sẽ được chuyển hướng an toàn sang cổng **VNPay Sandbox** (môi trường test) để thực hiện thanh toán dư nợ hóa đơn.
+                        {isDepositPayment
+                          ? "Bạn sẽ được chuyển hướng an toàn sang cổng **VNPay Sandbox** để thanh toán tiền đặt cọc (30%)."
+                          : "Bạn sẽ được chuyển hướng an toàn sang cổng **VNPay Sandbox** (môi trường test) để thực hiện thanh toán dư nợ hóa đơn."}
                       </p>
 
                       <div className="bg-[#f3f7f5] border border-primary-100 p-5 space-y-4">
@@ -422,7 +458,7 @@ export default function Payment() {
                             Lễ tân kiểm tra kỹ bảng dồn dịch vụ (Folio) để đảm bảo không còn buổi spa hay đơn ăn nào ở trạng thái chờ (Consolidated Constraint).
                           </li>
                           <li>
-                            Khách hàng thanh toán số tiền còn lại ({formatCurrency(invoice?.amountDue)}) bằng tiền mặt hoặc thẻ POS tại quầy.
+                            Khách hàng thanh toán {formatCurrency(displayDueAmount)} bằng tiền mặt hoặc thẻ POS tại quầy.
                           </li>
                           <li>
                             Lễ tân nhấn nút "Xác nhận đã thu tiền" để hệ thống tự động ghi nhật ký (Audit Trail) và chuyển phòng sang trạng thái cần dọn dẹp (**DIRTY**).

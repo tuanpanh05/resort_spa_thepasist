@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard } from "lucide-react";
+import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, Clock } from "lucide-react";
+import { userApi } from "../api";
 
 const navItems = [
   { label: "Trang chủ", href: "/" },
@@ -29,6 +30,40 @@ export default function Header() {
     if (!name || typeof name !== "string") return "KH";
     return name.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase() || "KH";
   };
+
+  const [latestBooking, setLatestBooking] = useState(null);
+  const [loadingBooking, setLoadingBooking] = useState(false);
+
+  const fmtDate = (val) => {
+    if (!val) return "—";
+    return new Date(val).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && (dropdownOpen || isOpen)) {
+      setLoadingBooking(true);
+      userApi.getMyBookings()
+        .then((bookings) => {
+          if (bookings && bookings.length > 0) {
+            const activeBooking = bookings.find(b => b.status !== "CANCELLED") || bookings[0];
+            setLatestBooking(activeBooking);
+          } else {
+            setLatestBooking(null);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching bookings for dropdown:", err);
+          setLatestBooking(null);
+        })
+        .finally(() => {
+          setLoadingBooking(false);
+        });
+    }
+  }, [isLoggedIn, dropdownOpen, isOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -203,6 +238,33 @@ export default function Header() {
                           <CreditCard className="h-3.5 w-3.5 text-primary-600" />
                           Lịch sử thanh toán
                         </Link>
+                        
+                        {/* Lịch trình section inside dropdown */}
+                        <div className="border-t border-primary-100 my-1" />
+                        <div className="px-4 py-2">
+                          <div className="flex items-center gap-2 text-xs font-bold text-sage-900 mb-1.5">
+                            <Clock className="h-3.5 w-3.5 text-primary-600" />
+                            Lịch trình
+                          </div>
+                          {loadingBooking ? (
+                            <p className="text-[10px] text-sage-400 italic">Đang tải...</p>
+                          ) : latestBooking ? (
+                            <div className="space-y-1 text-[11px] text-sage-600 bg-primary-50/50 p-2 rounded-lg border border-primary-100/50">
+                              <p><span className="font-semibold text-primary-800">Nhận phòng:</span> {fmtDate(latestBooking.checkInDate)}</p>
+                              <p><span className="font-semibold text-primary-800">Gói nghỉ dưỡng:</span> {latestBooking.packageName || "Không có gói"}</p>
+                              <p><span className="font-semibold text-primary-800">Trả phòng:</span> {fmtDate(latestBooking.checkOutDate)}</p>
+                              <Link 
+                                to="/tai-khoan/lich-trinh" 
+                                onClick={() => setDropdownOpen(false)}
+                                className="block text-center text-[10px] font-bold text-primary-700 hover:text-primary-900 hover:underline mt-1.5 pt-1 border-t border-primary-100/50"
+                              >
+                                Xem chi tiết lịch trình →
+                              </Link>
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-sage-400 italic">Chưa có lịch trình hoạt động nào.</p>
+                          )}
+                        </div>
                         <div className="border-t border-primary-100 my-1" />
                         <button onClick={handleLogout}
                           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
@@ -316,6 +378,26 @@ export default function Header() {
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-primary-600" /> Lịch sử thanh toán
                 </Link>
+                <div className="px-3 py-2 border border-primary-100 rounded-lg bg-primary-50/20">
+                  <div className="flex items-center gap-2 text-sm font-bold text-sage-900 mb-1.5">
+                    <Clock className="h-4 w-4 text-primary-600" /> Lịch trình
+                  </div>
+                  {loadingBooking ? (
+                    <p className="text-xs text-sage-400 italic">Đang tải...</p>
+                  ) : latestBooking ? (
+                    <div className="space-y-1 text-xs text-sage-600">
+                      <p><span className="font-semibold text-primary-800">Nhận phòng:</span> {fmtDate(latestBooking.checkInDate)}</p>
+                      <p><span className="font-semibold text-primary-800">Gói nghỉ dưỡng:</span> {latestBooking.packageName || "Không có gói"}</p>
+                      <p><span className="font-semibold text-primary-800">Trả phòng:</span> {fmtDate(latestBooking.checkOutDate)}</p>
+                      <Link to="/tai-khoan/lich-trinh" onClick={() => setIsOpen(false)}
+                        className="block text-center text-xs font-bold text-primary-700 hover:text-primary-900 hover:underline mt-2 pt-1.5 border-t border-primary-100/50">
+                        Xem chi tiết lịch trình →
+                      </Link>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-sage-400 italic">Chưa có lịch trình hoạt động nào.</p>
+                  )}
+                </div>
                 <button onClick={() => { setIsOpen(false); handleLogout(); }}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition cursor-pointer">
                   <LogOut className="h-4 w-4" /> Đăng xuất

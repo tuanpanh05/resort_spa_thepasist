@@ -140,7 +140,7 @@ public class BookingServiceImpl {
         }
 
         // BR-09: Check for overlapping bookings
-        if (roomBookingRepository.existsOverlappingBooking(roomId, checkIn, checkOut)) {
+        if (roomBookingRepository.countOverlappingBookings(roomId, checkIn, checkOut) > 0) {
             throw new BusinessException(
                     "BOOKING-003", HttpStatus.CONFLICT,
                     "Phòng/Villa này đã được đặt trong khoảng thời gian yêu cầu. Vui lòng chọn ngày khác.");

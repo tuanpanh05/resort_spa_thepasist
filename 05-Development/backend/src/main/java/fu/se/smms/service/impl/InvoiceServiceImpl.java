@@ -252,23 +252,42 @@ public class InvoiceServiceImpl implements InvoiceService {
             return toDto(invoice);
         }
 
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null && "CONFIRMED".equals(booking.getStatus())
+                && defaultZero(invoice.getDepositAmount()).signum() > 0) {
+            return toDto(invoice);
+        }
+
+        BigDecimal paymentAmount = payableAmount(invoice);
+
         boolean success = "00".equals(paymentResult.getResponseCode())
                 && (paymentResult.getTransactionStatus() == null || "00".equals(paymentResult.getTransactionStatus()));
 
         if (success) {
-            invoice.setStatus("PAID");
-            invoice.setVnpayTranId(paymentResult.getTransactionNo());
-            invoice.setPaymentTime(LocalDateTime.now());
+            if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {
+                booking.setStatus("CONFIRMED");
+                booking.setTotalDeposit(paymentAmount);
+                roomBookingRepository.save(booking);
+
+                invoice.setDepositAmount(paymentAmount);
+                invoice.setAmountDue(invoice.getFinalAmount().subtract(paymentAmount));
+                invoice.setVnpayTranId(paymentResult.getTransactionNo());
+                invoice.setPaymentTime(LocalDateTime.now());
+            } else {
+                invoice.setStatus("PAID");
+                invoice.setVnpayTranId(paymentResult.getTransactionNo());
+                invoice.setPaymentTime(LocalDateTime.now());
+            }
         }
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
 
         // BR-26: Write audit trail for all VNPay callbacks (including failed ones)
         if (success) {
-            writeTransactionLog(savedInvoice, "VNPAY", payableAmount(invoice),
+            writeTransactionLog(savedInvoice, "VNPAY", paymentAmount,
                     paymentResult.getTransactionNo(), paymentResult.getResponseCode(), "PAID");
         } else {
-            writeTransactionLog(savedInvoice, "VNPAY", payableAmount(invoice),
+            writeTransactionLog(savedInvoice, "VNPAY", paymentAmount,
                     paymentResult.getTransactionNo(), paymentResult.getResponseCode(), "FAILED");
         }
 
@@ -305,6 +324,11 @@ public class InvoiceServiceImpl implements InvoiceService {
                 return ipnResponse("04", "Invalid amount");
             }
             if ("PAID".equals(invoice.getStatus())) {
+                return ipnResponse("02", "Order already confirmed");
+            }
+            RoomBooking booking = invoice.getRoomBooking();
+            if (booking != null && "CONFIRMED".equals(booking.getStatus())
+                    && defaultZero(invoice.getDepositAmount()).signum() > 0) {
                 return ipnResponse("02", "Order already confirmed");
             }
 
@@ -376,6 +400,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         dto.setStatus(invoice.getStatus());
         dto.setVnpayTranId(invoice.getVnpayTranId());
         dto.setPaymentTime(invoice.getPaymentTime());
+        if (invoice.getRoomBooking() != null) {
+            dto.setBookingStatus(invoice.getRoomBooking().getStatus());
+        }
         return dto;
     }
 
@@ -436,11 +463,24 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     private BigDecimal payableAmount(Invoice invoice) {
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {
+            BigDecimal finalAmount = defaultZero(invoice.getFinalAmount());
+            return finalAmount.multiply(getDepositRatio()).setScale(0, RoundingMode.CEILING);
+        }
+
         BigDecimal amountDue = defaultZero(invoice.getAmountDue());
         if (amountDue.signum() > 0) {
             return amountDue;
         }
         return defaultZero(invoice.getFinalAmount());
+    }
+
+    private BigDecimal getDepositRatio() {
+        return systemConfigurationRepository.findByConfigKey("deposit_ratio")
+                .map(SystemConfiguration::getConfigValue)
+                .map(BigDecimal::new)
+                .orElse(new BigDecimal("0.30"));
     }
 
     private String currentClientIp() {

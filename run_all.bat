@@ -1,9 +1,9 @@
 @echo off
-title NSRMS - Start Backend & Frontend
+title "NSRMS - Start Backend & Frontend"
 color 0A
 
 echo ===================================================
-echo   NGU SON RESORT & SPA MANAGEMENT SYSTEM (NSRMS)
+echo   NGU SON RESORT ^& SPA MANAGEMENT SYSTEM (NSRMS)
 echo   Khoi chay ca Backend (Spring Boot) va Frontend (Vite)
 echo ===================================================
 echo.
@@ -54,7 +54,7 @@ start "NSRMS Frontend - Vite" cmd /c "cd 05-Development\frontend && title Fronte
 echo.
 echo ===================================================
 echo [SUCCESS] Da kich hoat thanh cong lenh chay cho ca 2 service!
-echo Cac cua so terminal doc lap da duoc mo de chay song song Backend & Frontend.
+echo Cac cua so terminal doc lap da duoc mo de chay song song Backend ^& Frontend.
 echo ===================================================
 echo.
 pause

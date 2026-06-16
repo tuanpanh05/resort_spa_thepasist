@@ -37,14 +37,15 @@ class Module2IntegrationTest {
         String bookingPayload = "{\n" +
                 "  \"guestId\": 1,\n" +
                 "  \"packageId\": 1,\n" +
-                "  \"villaId\": 1,\n" +
+                "  \"roomId\": 1,\n" +
                 "  \"checkInDate\": \"2026-06-20T14:00:00\",\n" +
                 "  \"checkOutDate\": \"2026-06-25T12:00:00\"\n" +
                 "}";
 
         // Since implementation doesn't exist yet, this integration test will fail (RED status confirmed)
         // when production code is not ready.
-        mockMvc.perform(post("/api/v1/bookings")
+        mockMvc.perform(post("/v1/bookings")
+                        .principal(() -> "guest1@gmail.com")
                         .content(bookingPayload)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());

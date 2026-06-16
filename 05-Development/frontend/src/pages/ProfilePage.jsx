@@ -23,9 +23,10 @@ import {
   ShieldCheck,
   Trash2,
   Info,
+  LogOut,
 } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
-import { userApi, medicalApi } from "../api";
+import { userApi, medicalApi, staffApi } from "../api";
 
 // ─── Allergy & Diet constants (same as HealthProfile.jsx) ───────────────────
 const ALLERGY_OPTIONS = [
@@ -49,11 +50,12 @@ const DIET_OPTIONS = [
 
 // ─── Status badge helpers ────────────────────────────────────────────────────
 const ROOM_STATUS_MAP = {
-  PENDING:     { label: "Chờ xác nhận", color: "bg-amber-100 text-amber-800 border-amber-200" },
-  CONFIRMED:   { label: "Đã xác nhận",  color: "bg-blue-100 text-blue-800 border-blue-200" },
-  CHECKED_IN:  { label: "Đã nhận phòng", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  CHECKED_OUT: { label: "Đã trả phòng", color: "bg-gray-100 text-gray-600 border-gray-200" },
-  CANCELLED:   { label: "Đã huỷ",       color: "bg-red-100 text-red-700 border-red-200" },
+  PENDING:          { label: "Chờ xác nhận", color: "bg-amber-100 text-amber-800 border-amber-200" },
+  PENDING_DEPOSIT:  { label: "Chờ đặt cọc",  color: "bg-amber-100 text-amber-800 border-amber-200" },
+  CONFIRMED:        { label: "Đã xác nhận",  color: "bg-blue-100 text-blue-800 border-blue-200" },
+  CHECKED_IN:       { label: "Đã nhận phòng", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  CHECKED_OUT:      { label: "Đã trả phòng", color: "bg-gray-100 text-gray-600 border-gray-200" },
+  CANCELLED:        { label: "Đã huỷ",       color: "bg-red-100 text-red-700 border-red-200" },
 };
 const SPA_STATUS_MAP = {
   PENDING:    { label: "Chờ xác nhận", color: "bg-amber-100 text-amber-800 border-amber-200" },
@@ -862,6 +864,285 @@ function PaymentHistoryTab() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TAB 5 – Experience Itinerary (UC10 Timeline)
+// ═══════════════════════════════════════════════════════════════════════════════
+function ItineraryTab() {
+  const [bookings, setBookings] = useState([]);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [itinerary, setItinerary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setLoading(true);
+      try {
+        const data = await userApi.getMyBookings().catch(() => []);
+        setBookings(data || []);
+        if (data && data.length > 0) {
+          setSelectedBookingId(data[0].bookingId);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        setError(err.message || "Không thể tải danh sách đặt phòng.");
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
+
+  useEffect(() => {
+    const fetchItinerary = async () => {
+      if (!selectedBookingId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await staffApi.getItinerary(selectedBookingId);
+        setItinerary(data);
+      } catch (err) {
+        setError(err.message || "Không thể tải lịch trình cho đơn đặt phòng này.");
+        setItinerary(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItinerary();
+  }, [selectedBookingId]);
+
+  const handleBookingChange = (e) => {
+    setSelectedBookingId(parseInt(e.target.value));
+  };
+
+  const getEventStyle = (type) => {
+    switch (type) {
+      case "CHECKIN":
+        return { icon: <BedDouble className="h-4 w-4" />, color: "bg-emerald-600", borderColor: "border-emerald-200", bgColor: "bg-emerald-50/40" };
+      case "CHECKOUT":
+        return { icon: <LogOut className="h-4 w-4" />, color: "bg-rose-600", borderColor: "border-rose-200", bgColor: "bg-rose-50/40" };
+      case "SPA":
+        return { icon: <Sparkles className="h-4 w-4" />, color: "bg-purple-600", borderColor: "border-purple-200", bgColor: "bg-purple-50/40" };
+      case "FOOD":
+        return { icon: <Leaf className="h-4 w-4" />, color: "bg-amber-600", borderColor: "border-amber-200", bgColor: "bg-amber-50/40" };
+      default:
+        return { icon: <CalendarDays className="h-4 w-4" />, color: "bg-sage-500", borderColor: "border-sage-200", bgColor: "bg-sage-50/40" };
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "COMPLETED":
+        return "bg-emerald-50 text-emerald-800 border-emerald-200";
+      case "CONFIRMED":
+        return "bg-blue-50 text-blue-800 border-blue-200";
+      case "PENDING":
+        return "bg-amber-50 text-amber-800 border-amber-200";
+      case "CANCELLED":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-sage-50 text-sage-700 border-sage-200";
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "COMPLETED": return "Hoàn thành";
+      case "CONFIRMED": return "Đã xác nhận";
+      case "PENDING": return "Đang chờ";
+      case "CANCELLED": return "Đã hủy";
+      case "CHECKED_IN": return "Đang lưu trú";
+      case "CHECKED_OUT": return "Đã trả phòng";
+      default: return status;
+    }
+  };
+
+  if (loading && bookings.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="w-8 h-8 border-3 border-primary-800 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="inline-flex p-4 rounded-md bg-primary-50 text-primary-300 mb-4">
+          <CalendarDays className="h-8 w-8" />
+        </div>
+        <p className="text-sage-500 text-sm">Bạn chưa có lịch đặt phòng hoặc gói trị liệu nào.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-primary-100 pb-5">
+        <div>
+          <h3 className="text-sm font-bold text-sage-900 uppercase tracking-wider mb-1 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary-700" />
+            Lịch Trình Trải Nghiệm
+          </h3>
+          <p className="text-xs text-sage-500">
+            Xem dòng thời gian các hoạt động (Trị liệu Spa, Yoga, Thực đơn ẩm thực) trong kỳ lưu trú của bạn.
+          </p>
+        </div>
+
+        {/* Dropdown to select booking */}
+        <div className="w-full sm:w-auto">
+          <label className="text-[10px] font-bold text-sage-500 uppercase tracking-wider block mb-1">Chọn mã đặt phòng</label>
+          <select
+            value={selectedBookingId || ""}
+            onChange={handleBookingChange}
+            className="w-full sm:w-64 px-3 py-2 text-xs border border-primary-200 focus:border-primary-800 outline-none bg-white rounded-md text-sage-800 font-semibold"
+          >
+            {bookings.map((b) => (
+              <option key={b.bookingId} value={b.bookingId}>
+                Đơn #{b.bookingId} ({fmtDate(b.checkInDate)} - {fmtDate(b.checkOutDate)})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 p-4 rounded-md flex items-center gap-2 text-red-700 text-xs">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-6 h-6 border-2 border-primary-800 border-t-transparent rounded-full animate-spin mr-2" />
+          <span className="text-xs text-sage-500">Đang tải lịch trình trải nghiệm...</span>
+        </div>
+      )}
+
+      {!loading && itinerary && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+          {/* Stay Info Summary */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="bg-primary-50/40 border border-primary-100 p-4 rounded-md">
+              <h4 className="text-xs font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <BedDouble className="h-4 w-4 text-primary-700" />
+                Thông Tin Lưu Trú
+              </h4>
+              <div className="space-y-2.5 text-xs text-sage-700">
+                <div className="flex justify-between">
+                  <span>Mã đặt phòng:</span>
+                  <span className="font-bold text-primary-900">#{itinerary.bookingId}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Trạng thái:</span>
+                  <StatusBadge status={itinerary.bookingStatus} map={ROOM_STATUS_MAP} />
+                </div>
+                <div className="flex justify-between">
+                  <span>Nhận phòng:</span>
+                  <span className="font-semibold text-sage-900">{fmtDate(itinerary.checkInDate)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Trả phòng:</span>
+                  <span className="font-semibold text-sage-900">{fmtDate(itinerary.checkOutDate)}</span>
+                </div>
+                <div className="flex justify-between border-t border-primary-100 pt-2 mt-1">
+                  <span>Biệt thự / Phòng:</span>
+                  <span className="font-bold text-sage-955">{itinerary.roomNumber || "Chưa gán"}</span>
+                </div>
+                {itinerary.roomTypeName && (
+                  <div className="flex justify-between">
+                    <span>Hạng phòng:</span>
+                    <span className="font-medium text-sage-900">{itinerary.roomTypeName}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {itinerary.packageName && (
+              <div className="bg-emerald-50/30 border border-emerald-100 p-4 rounded-md">
+                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-emerald-600" />
+                  Gói Nghỉ Dưỡng Trị Liệu
+                </h4>
+                <p className="text-xs font-bold text-sage-900">{itinerary.packageName}</p>
+                {itinerary.packageDescription && (
+                  <p className="text-[11px] text-sage-600 mt-1 leading-relaxed">{itinerary.packageDescription}</p>
+                )}
+                <p className="text-[11px] text-emerald-700 font-semibold mt-2">Thời lượng: {itinerary.packageDurationDays} ngày</p>
+              </div>
+            )}
+          </div>
+
+          {/* Timeline display */}
+          <div className="lg:col-span-8">
+            <div className="bg-white border border-primary-100 p-4 rounded-md">
+              <h4 className="text-xs font-bold text-sage-800 uppercase tracking-wider mb-5">
+                Trục thời gian các hoạt động (Timeline)
+              </h4>
+
+              {itinerary.timeline && itinerary.timeline.length > 0 ? (
+                <div className="relative pl-6">
+                  {/* Vertical timeline line */}
+                  <div className="absolute left-[9px] top-4 bottom-4 w-0.5 bg-primary-100" />
+
+                  <div className="space-y-5">
+                    {itinerary.timeline.map((event, idx) => {
+                      const style = getEventStyle(event.type);
+                      return (
+                        <div key={idx} className="relative flex gap-4 text-left">
+                          {/* Event bullet icon */}
+                          <div className={`absolute -left-[23px] top-0.5 z-10 flex h-5 w-5 rounded-full ${style.color} text-white items-center justify-center shadow-sm`}>
+                            <span className="scale-[0.7]">{style.icon}</span>
+                          </div>
+
+                          {/* Event content box */}
+                          <div className={`flex-1 border ${style.borderColor} ${style.bgColor} p-3.5 rounded-md`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h5 className="text-xs font-bold text-sage-955">{event.title}</h5>
+                                {event.description && (
+                                  <p className="text-[11px] text-sage-600 mt-1 leading-relaxed">{event.description}</p>
+                                )}
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider border flex-shrink-0 ${getStatusBadge(event.status)}`}>
+                                {getStatusLabel(event.status)}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-4 mt-2.5 text-[10px] text-sage-500 font-semibold">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 text-sage-400" />
+                                {fmtDateTime(event.startTime)}
+                              </span>
+                              {event.endTime && (
+                                <span>→ {fmtDateTime(event.endTime)}</span>
+                              )}
+                              {event.price && event.price > 0 && (
+                                <span className="ml-auto font-bold text-primary-800">
+                                  Giá: {fmtCurrency(event.price)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 text-sage-400 italic text-xs">
+                  Chưa có lịch trình hoạt động nào được ghi nhận cho kỳ nghỉ này.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ProfilePage Dashboard Layout
 // ═══════════════════════════════════════════════════════════════════════════════
 const MENU_ITEMS = [
@@ -869,6 +1150,7 @@ const MENU_ITEMS = [
   { path: "/tai-khoan/suc-khoe", label: "Hồ sơ sức khỏe", icon: Heart },
   { path: "/tai-khoan/lich-su-dat-hang", label: "Lịch sử đặt hàng", icon: CalendarDays },
   { path: "/tai-khoan/lich-su-thanh-toan", label: "Lịch sử thanh toán", icon: CreditCard },
+  { path: "/tai-khoan/lich-trinh", label: "Lịch trình trải nghiệm", icon: Clock },
 ];
 
 export default function ProfilePage() {
@@ -1015,6 +1297,7 @@ export default function ProfilePage() {
               <Route path="suc-khoe" element={<HealthTab />} />
               <Route path="lich-su-dat-hang" element={<HistoryTab />} />
               <Route path="lich-su-thanh-toan" element={<PaymentHistoryTab />} />
+              <Route path="lich-trinh" element={<ItineraryTab />} />
             </Routes>
           </div>
         </div>

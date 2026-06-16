@@ -52,6 +52,8 @@ public class SecurityConfig {
                 .requestMatchers("/medical-profiles/**").authenticated()
                 // User profile endpoints
                 .requestMatchers("/users/**").authenticated()
+                // Module 2: Booking, Check-In, Villa, Itinerary APIs (UC07-UC10)
+                .requestMatchers("/v1/**").authenticated()
                 // Everything else requires auth
                 .anyRequest().authenticated()
             )

@@ -48,13 +48,19 @@ export default function PaymentResult() {
       .then((data) => {
         setInvoice(data);
         setLoading(false);
-        
-        // Trigger perform-checkout asynchronously so the room status updates to DIRTY immediately
+
+        const isDepositSuccess =
+          data.bookingStatus === "CONFIRMED" &&
+          data.status === "UNPAID" &&
+          Number(data.depositAmount || 0) > 0;
+
         if (data.status === "PAID") {
           paymentApi.performCheckout(data.invoiceId)
             .catch((err) => {
               console.warn("Auto-checkout warning: ", err.message);
             });
+        } else if (isDepositSuccess) {
+          // Deposit payment: booking confirmed, no checkout yet
         }
       })
       .catch((err) => {
@@ -91,6 +97,13 @@ export default function PaymentResult() {
     }).format(val || 0);
   };
 
+  const isDepositSuccess =
+    invoice?.bookingStatus === "CONFIRMED" &&
+    invoice?.status === "UNPAID" &&
+    Number(invoice?.depositAmount || 0) > 0;
+  const isFullPaymentSuccess = invoice?.status === "PAID";
+  const isPaymentSuccess = isDepositSuccess || isFullPaymentSuccess;
+
   if (loading) {
     return (
       <div className="bg-[#fafbfa] min-h-screen pt-36 pb-20 flex flex-col items-center justify-center font-sans text-sage-950">
@@ -105,7 +118,7 @@ export default function PaymentResult() {
     );
   }
 
-  if (errorMsg || (invoice && invoice.status !== "PAID")) {
+  if (errorMsg || (invoice && !isPaymentSuccess)) {
     return (
       <div className="bg-[#fafbfa] min-h-screen pt-36 pb-20 font-sans text-sage-950">
         <div className="max-w-xl mx-auto px-6">
@@ -155,10 +168,12 @@ export default function PaymentResult() {
               <CheckCircle2 className="h-12 w-12" />
             </div>
             <h1 className="font-serif text-2xl sm:text-3xl font-normal text-sage-900">
-              Thanh Toán Thành Công!
+              {isDepositSuccess ? "Thanh Toán Cọc Thành Công!" : "Thanh Toán Thành Công!"}
             </h1>
             <p className="text-xs sm:text-sm text-sage-500 font-light max-w-lg mx-auto leading-relaxed">
-              Cảm ơn quý khách đã sử dụng dịch vụ tại Ngũ Sơn Resort & Spa. Giao dịch đã được ghi nhận và đồng bộ trực tiếp vào hệ thống phòng lưu trú của bạn.
+              {isDepositSuccess
+                ? "Cảm ơn quý khách đã thanh toán tiền đặt cọc. Đặt phòng đã được xác nhận. Số dư còn lại sẽ thanh toán khi trả phòng."
+                : "Cảm ơn quý khách đã sử dụng dịch vụ tại Ngũ Sơn Resort & Spa. Giao dịch đã được ghi nhận và đồng bộ trực tiếp vào hệ thống phòng lưu trú của bạn."}
             </p>
           </div>
 
@@ -189,13 +204,23 @@ export default function PaymentResult() {
                 <span className="font-medium text-sage-900">Tổng cộng hóa đơn:</span>
                 <span className="font-bold text-sage-950 text-right">{formatCurrency(invoice?.finalAmount)}</span>
 
-                <span className="font-medium text-sage-900">Khấu trừ tiền đặt cọc (30%):</span>
-                <span className="font-bold text-green-700 text-right">-{formatCurrency(invoice?.depositAmount)}</span>
+                <span className="font-medium text-sage-900">
+                  {isDepositSuccess ? "Tiền cọc đã thanh toán (30%):" : "Khấu trừ tiền đặt cọc (30%):"}
+                </span>
+                <span className="font-bold text-green-700 text-right">
+                  {isDepositSuccess
+                    ? formatCurrency(invoice?.depositAmount)
+                    : `-${formatCurrency(invoice?.depositAmount)}`}
+                </span>
               </div>
 
               <div className="pt-3.5 border-t border-primary-100 flex justify-between items-center text-sm sm:text-base font-serif">
-                <span className="font-normal text-sage-900">Đã thanh toán (VNPay):</span>
-                <span className="font-bold text-primary-900">{formatCurrency(invoice?.amountDue)}</span>
+                <span className="font-normal text-sage-900">
+                  {isDepositSuccess ? "Số dư còn lại:" : "Đã thanh toán (VNPay):"}
+                </span>
+                <span className="font-bold text-primary-900">
+                  {formatCurrency(invoice?.amountDue)}
+                </span>
               </div>
 
               {invoice?.vnpayTranId && (
@@ -208,6 +233,7 @@ export default function PaymentResult() {
 
             {/* Right: Actions and prints */}
             <div className="md:col-span-5 space-y-6">
+              {!isDepositSuccess && (
               <div className="bg-sage-50/50 border border-primary-200/30 p-5 space-y-3 leading-relaxed text-xs font-light text-sage-600">
                 <div className="flex items-center space-x-1.5 text-primary-850 font-bold">
                   <Info className="h-4 w-4" />
@@ -217,6 +243,19 @@ export default function PaymentResult() {
                   Theo quy định trả phòng <strong>BR-14</strong>, phòng nghỉ của quý khách đã được chuyển sang trạng thái <strong>DIRTY (Đang dọn dẹp)</strong> để bộ phận buồng phòng tiến hành vệ sinh và khử trùng bằng thảo dược chuẩn bị cho lượt khách tiếp theo.
                 </p>
               </div>
+              )}
+
+              {isDepositSuccess && (
+              <div className="bg-primary-50/50 border border-primary-200/30 p-5 space-y-3 leading-relaxed text-xs font-light text-sage-600">
+                <div className="flex items-center space-x-1.5 text-primary-850 font-bold">
+                  <Info className="h-4 w-4" />
+                  <span className="uppercase text-[9px] tracking-wider">Xác nhận đặt phòng</span>
+                </div>
+                <p>
+                  Tiền cọc đã được ghi nhận. Đặt phòng của quý khách đang ở trạng thái <strong>CONFIRMED</strong>. Số dư còn lại sẽ thanh toán khi trả phòng.
+                </p>
+              </div>
+              )}
 
               <div className="flex flex-col gap-3">
                 <button

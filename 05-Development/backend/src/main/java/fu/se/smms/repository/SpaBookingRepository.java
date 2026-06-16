@@ -20,4 +20,14 @@ public interface SpaBookingRepository extends JpaRepository<SpaBooking, Integer>
            "WHERE sb.user.userId = :userId " +
            "ORDER BY sb.startDatetime DESC")
     List<SpaBooking> findAllByUserIdWithService(@Param("userId") Integer userId);
+
+    /**
+     * UC10: Fetch all spa bookings for a given room booking (for itinerary timeline).
+     */
+    @Query(value = """
+            SELECT sb.* FROM dbo.spa_booking sb
+            WHERE sb.room_booking_id = :roomBookingId
+            ORDER BY sb.start_datetime ASC
+            """, nativeQuery = true)
+    List<SpaBooking> findByRoomBookingId(@Param("roomBookingId") Integer roomBookingId);
 }

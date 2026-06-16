@@ -11,6 +11,8 @@ import fu.se.smms.repository.InvoiceRepository;
 import fu.se.smms.repository.PaymentTransactionLogRepository;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
+import fu.se.smms.repository.SystemConfigurationRepository;
+import fu.se.smms.entity.SystemConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,7 @@ class InvoiceServiceImplTest {
     private RoomBookingRepository roomBookingRepository;
     private RoomRepository roomRepository;
     private PaymentTransactionLogRepository transactionLogRepository;
+    private SystemConfigurationRepository systemConfigurationRepository;
     private InvoiceServiceImpl service;
     private VNPayProperties vnPayProperties;
 
@@ -49,6 +52,13 @@ class InvoiceServiceImplTest {
         roomBookingRepository = mock(RoomBookingRepository.class);
         roomRepository = mock(RoomRepository.class);
         transactionLogRepository = mock(PaymentTransactionLogRepository.class);
+        systemConfigurationRepository = mock(SystemConfigurationRepository.class);
+
+        SystemConfiguration depositConfig = new SystemConfiguration();
+        depositConfig.setConfigKey("deposit_ratio");
+        depositConfig.setConfigValue("0.30");
+        when(systemConfigurationRepository.findByConfigKey("deposit_ratio"))
+                .thenReturn(Optional.of(depositConfig));
 
         vnPayProperties = new VNPayProperties();
         vnPayProperties.setPayUrl("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html");
@@ -59,7 +69,7 @@ class InvoiceServiceImplTest {
         service = new InvoiceServiceImpl(
                 invoiceRepository, roomBookingRepository,
                 roomRepository, transactionLogRepository,
-                vnPayProperties
+                vnPayProperties, systemConfigurationRepository
         );
     }
 
@@ -226,6 +236,51 @@ class InvoiceServiceImplTest {
         // IPN should handle idempotent: invoice already PAID → return "02 Already confirmed"
         Map<String, String> response = service.processVNPayIpn(params);
         assertEquals("02", response.get("RspCode"));
+    }
+
+    @Test
+    @DisplayName("UC07: createPaymentUrl returns 30% deposit when booking is PENDING_DEPOSIT")
+    void createPaymentUrl_pendingDeposit_returnsDepositAmount() {
+        Invoice invoice = unpaidInvoice();
+        invoice.getRoomBooking().setStatus("PENDING_DEPOSIT");
+        invoice.getRoomBooking().setTotalDeposit(BigDecimal.ZERO);
+        invoice.setDepositAmount(BigDecimal.ZERO);
+        invoice.setAmountDue(new BigDecimal("14102000.00"));
+        when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
+
+        VNPayPaymentDTO dto = service.createPaymentUrl(1);
+
+        assertEquals(4230600L, dto.getAmount());
+        assertTrue(dto.getPaymentUrl().contains("vnp_Amount=423060000"));
+    }
+
+    @Test
+    @DisplayName("UC07: VNPay deposit callback confirms booking but keeps invoice UNPAID")
+    void vnpayDepositCallback_confirmsBooking_keepsInvoiceUnpaid() {
+        Invoice invoice = unpaidInvoice();
+        invoice.getRoomBooking().setStatus("PENDING_DEPOSIT");
+        invoice.getRoomBooking().setTotalDeposit(BigDecimal.ZERO);
+        invoice.setDepositAmount(BigDecimal.ZERO);
+        invoice.setAmountDue(new BigDecimal("14102000.00"));
+        when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roomBookingRepository.save(any(RoomBooking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("vnp_Amount", "423060000");
+        params.put("vnp_ResponseCode", "00");
+        params.put("vnp_TransactionNo", "VNP-DEP-001");
+        params.put("vnp_TransactionStatus", "00");
+        params.put("vnp_TxnRef", "1");
+        params.put("vnp_SecureHash", sign(params, vnPayProperties.getHashSecret()));
+
+        InvoiceDTO dto = service.processVNPayCallback(params);
+
+        assertEquals("UNPAID", dto.getStatus());
+        assertEquals("CONFIRMED", dto.getBookingStatus());
+        assertEquals(new BigDecimal("4230600"), dto.getDepositAmount());
+        assertEquals(new BigDecimal("9871400.00"), dto.getAmountDue());
+        verify(roomBookingRepository).save(argThat(b -> "CONFIRMED".equals(b.getStatus())));
     }
 
     // ─── UC22: Cash Payment ───────────────────────────────────────────────────

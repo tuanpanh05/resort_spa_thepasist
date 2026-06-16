@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   User,
   Phone,
@@ -21,6 +21,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
+import { masterDataApi, bookingApi } from "../api";
 
 // Food allergy options matching SRS
 const ALLERGY_OPTIONS = [
@@ -48,6 +49,7 @@ const DIET_OPTIONS = [
 const villasList = [
   {
     id: "wood-bungalow",
+    roomId: 2,
     title: "Bungalow Gỗ Hướng Suối",
     description: "Nằm ẩn mình dưới tán cây cổ thụ bên khe suối nhỏ. Thiết kế mở vách kính đón sương mai, bồn Hinoki thơm ngát.",
     price: 3200000,
@@ -58,6 +60,7 @@ const villasList = [
   },
   {
     id: "zen-villa",
+    roomId: 3,
     title: "Biệt Thự Đồi Trà Thiền Định",
     description: "Tọa lạc trên đỉnh đồi lộng gió view 360 độ ra thung lũng Ngũ Sơn. Tích hợp phòng tập yoga riêng biệt và hồ bơi khoáng nóng.",
     price: 5800000,
@@ -68,6 +71,7 @@ const villasList = [
   },
   {
     id: "lotus-family-villa",
+    roomId: 4,
     title: "Biệt Thự Gia Đình Sen Trắng",
     description: "Nằm biệt lập bên đồi thông yên tĩnh với vườn sen bao quanh. Thiết kế 3 phòng ngủ tiện nghi, phòng khách và bếp đầy đủ.",
     price: 7500000,
@@ -78,6 +82,7 @@ const villasList = [
   },
   {
     id: "pebble-bungalow",
+    roomId: 2,
     title: "Bungalow Đá Cuội Bên Rừng",
     description: "Vách đá cuội tự nhiên mộc mạc và sang trọng sườn đồi thông. Sở hữu bồn tắm lộ thiên và mái kính ngắm sao đêm tuyệt đẹp.",
     price: 3800000,
@@ -129,9 +134,15 @@ const servicesList = [
 
 export default function BookingPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const packageIdParam = searchParams.get("packageId");
 
   // Wizard Step State: 1 = Guest Info, 2 = Select Villa & Services, 3 = Review, 4 = Payment QR
   const [step, setStep] = useState(1);
+
+  // Retreat package from URL (UC07)
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [bookingError, setBookingError] = useState(null);
 
   // Status Trackers
   const [bookingStatus, setBookingStatus] = useState("DRAFT"); // DRAFT -> PENDING_PAYMENT -> CONFIRMED
@@ -191,11 +202,40 @@ export default function BookingPage() {
     }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
+  useEffect(() => {
+    if (!packageIdParam) return;
+
+    masterDataApi.getRetreatPackages()
+      .then((packages) => {
+        const pkg = packages.find((p) => p.packageId === Number(packageIdParam));
+        if (!pkg) return;
+        setSelectedPackage(pkg);
+
+        const checkIn = guestInfo.checkInDate;
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkInDate);
+        checkOutDate.setDate(checkOutDate.getDate() + (pkg.durationDays || 1));
+        const checkOut = checkOutDate.toISOString().split("T")[0];
+
+        setGuestInfo((prev) => ({
+          ...prev,
+          checkOutDate: checkOut,
+        }));
+      })
+      .catch(() => {
+        setBookingError("Không thể tải thông tin gói trị liệu.");
+      });
+  }, [packageIdParam]);
+
   // Selected Villa Info
   const selectedVilla = villasList.find((v) => v.id === selectedVillaId);
 
   // Calculates Pricing Breakdown
-  const villaTotal = selectedVilla ? selectedVilla.price * nightsCount : 0;
+  const villaTotal = selectedPackage
+    ? Number(selectedPackage.price || 0)
+    : selectedVilla
+    ? selectedVilla.price * nightsCount
+    : 0;
   
   let servicesTotal = 0;
   const selectedServices = servicesList.filter((s) => selectedServiceIds.includes(s.id));
@@ -268,14 +308,42 @@ export default function BookingPage() {
   };
 
   // Submit Draft and go to Payment
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setBookingError("Vui lòng đăng nhập tài khoản trước khi xác nhận đặt phòng.");
+      navigate("/dang-nhap");
+      return;
+    }
+
+    if (!selectedVilla?.roomId) {
+      setBookingError("Vui lòng chọn biệt thự hợp lệ.");
+      return;
+    }
+
     setIsConfirming(true);
-    setTimeout(() => {
+    setBookingError(null);
+
+    const dto = {
+      packageId: selectedPackage ? selectedPackage.packageId : null,
+      roomId: selectedVilla.roomId,
+      checkInDate: `${guestInfo.checkInDate}T14:00:00`,
+      checkOutDate: `${guestInfo.checkOutDate}T12:00:00`,
+    };
+
+    try {
+      const response = await bookingApi.createBooking(dto);
+      navigate(`/payment?invoiceId=${response.invoiceId}`);
+    } catch (err) {
+      const msg = err.message || "";
+      if (msg.includes("403")) {
+        setBookingError("Phiên đăng nhập hết hạn hoặc chưa đăng nhập. Vui lòng đăng nhập lại.");
+        navigate("/dang-nhap");
+      } else {
+        setBookingError(msg || "Không thể tạo đơn đặt phòng.");
+      }
       setIsConfirming(false);
-      setBookingStatus("PENDING_PAYMENT");
-      setPaymentStatus("PENDING");
-      setStep(5);
-    }, 1800);
+    }
   };
 
   // Verify deposit payment QR code
@@ -1027,7 +1095,19 @@ export default function BookingPage() {
                     <p className="text-resort-desc">
                       Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
                     </p>
+                    {selectedPackage && (
+                      <p className="text-xs text-primary-800 mt-2 font-medium">
+                        Gói trị liệu: {selectedPackage.name} — {formatCurrency(Number(selectedPackage.price))}
+                      </p>
+                    )}
                   </div>
+
+                  {bookingError && (
+                    <div className="mb-4 p-4 bg-red-50 text-red-700 text-sm border border-red-100 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <span>{bookingError}</span>
+                    </div>
+                  )}
 
                   <div className="space-y-6 text-xs sm:text-sm">
                     {/* Part 1: Guest Information Info Card */}
