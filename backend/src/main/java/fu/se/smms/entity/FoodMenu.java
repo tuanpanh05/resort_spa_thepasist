@@ -41,6 +41,21 @@ public class FoodMenu {
     @Column(name = "ingredients")
     private String ingredients;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "is_package_included", nullable = false)
+    @Builder.Default
+    private Boolean isPackageIncluded = true;
+
+    @Column(name = "periods")
+    @Builder.Default
+    private String periods = "Lunch";
+
+    @Column(name = "available_days")
+    @Builder.Default
+    private String availableDays = "0,1,2,3,4,5,6";
+
     @Column(name = "enabled", nullable = false)
     @Builder.Default
     private Boolean enabled = true;
