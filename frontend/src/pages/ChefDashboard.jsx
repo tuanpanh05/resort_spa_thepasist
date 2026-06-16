@@ -68,7 +68,15 @@ export default function ChefDashboard() {
         };
       });
 
+      const currentDay = new Date().getDay();
+
       const mappedDishes = menuRes.data.map(item => {
+        let allowedDays = [0, 1, 2, 3, 4, 5, 6];
+        if (item.availableDays) {
+          allowedDays = item.availableDays.split(',').map(Number);
+        }
+        const isToday = allowedDays.includes(currentDay);
+
         return {
           id: item.id || `DSH-${item.foodId}`,
           foodId: item.foodId,
@@ -78,7 +86,12 @@ export default function ChefDashboard() {
           description: item.description,
           ingredients: item.ingredients || "Thành phần tự nhiên",
           allergens: item.allergens || [],
-          isTodayMenu: item.isTodayMenu,
+          availableDays: item.availableDays || "0,1,2,3,4,5,6",
+          image: item.image,
+          isPackageIncluded: item.isPackageIncluded,
+          periods: item.periods,
+          isScheduledForToday: isToday,
+          isTodayMenu: isToday && item.isTodayMenu !== false,
           soldOut: item.soldOut,
           enabled: true
         };
@@ -97,7 +110,8 @@ export default function ChefDashboard() {
           })),
           note: item.note,
           status: item.status,
-          time: item.time
+          time: item.time,
+          mealCode: item.mealCode
         };
       });
 
@@ -217,6 +231,21 @@ export default function ChefDashboard() {
   };
 
   // Allergy Matching helper for orders
+  const handleCancelItem = async (orderId, foodId, dishName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy món "${dishName}" khỏi đơn hàng này do hết hàng?`)) return;
+
+    const numericId = typeof orderId === "string" ? orderId.replace("ORD-", "") : orderId;
+    try {
+      await axiosClient.delete(`/chef/orders/${numericId}/item/${foodId}`);
+      // Refresh orders
+      fetchDashboardData();
+      alert(`Đã hủy món "${dishName}" thành công.`);
+    } catch (err) {
+      console.warn("Failed to cancel item", err);
+      alert("Lỗi khi hủy món: " + (err.response?.data?.message || err.response?.data || err.message));
+    }
+  };
+
   const checkOrderAllergies = (order) => {
     const guestDiet = allergies.find(
       (a) =>
@@ -472,6 +501,7 @@ export default function ChefDashboard() {
                 playVoiceAlert={playVoiceAlert}
                 handleUpdateOrderStatus={handleUpdateOrderStatus}
                 checkOrderAllergies={checkOrderAllergies}
+                handleCancelItem={handleCancelItem}
               />
             )}
 
