@@ -90,6 +90,31 @@ public class GuestMealController {
                 }
             }
             bookingInfo.put("includedFoodIds", includedFoodIds);
+
+            // Fetch existing food orders for this booking
+            List<FoodOrder> orders = foodOrderRepository.findByRoomBooking_BookingId(activeBooking.getBookingId());
+            List<Map<String, Object>> ordersList = new ArrayList<>();
+            for (FoodOrder order : orders) {
+                Map<String, Object> orderMap = new HashMap<>();
+                orderMap.put("orderId", order.getOrderId());
+                orderMap.put("orderTime", order.getOrderTime());
+                orderMap.put("status", order.getStatus());
+                orderMap.put("totalAmount", order.getTotalAmount());
+                
+                List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
+                List<Map<String, Object>> detailList = new ArrayList<>();
+                for (FoodOrderDetail detail : details) {
+                    Map<String, Object> detailMap = new HashMap<>();
+                    detailMap.put("foodId", detail.getFoodMenu().getFoodId());
+                    detailMap.put("quantity", detail.getQuantity());
+                    detailMap.put("specialNote", detail.getSpecialNote());
+                    detailList.add(detailMap);
+                }
+                orderMap.put("details", detailList);
+                ordersList.add(orderMap);
+            }
+            bookingInfo.put("orders", ordersList);
+
             response.put("booking", bookingInfo);
         } else {
             response.put("booking", null);
@@ -291,7 +316,6 @@ public class GuestMealController {
             String dateKey = entry.getKey();
             List<MealPreselectionDTO.MealSelectionItem> items = entry.getValue();
 
-            // Create a FoodOrder for this specific date
             // Parse dateKey (e.g. "2026-06-20") to LocalDateTime at 08:00 AM
             LocalDateTime mealTime;
             try {
@@ -300,15 +324,31 @@ public class GuestMealController {
                 mealTime = LocalDateTime.now();
             }
 
-            FoodOrder foodOrder = FoodOrder.builder()
-                    .user(user)
-                    .roomBooking(booking)
-                    .orderTime(mealTime)
-                    .status("PENDING")
-                    .totalAmount(BigDecimal.ZERO)
-                    .build();
+            // Find if an order already exists for this booking on this date
+            FoodOrder foodOrder = null;
+            List<FoodOrder> existingOrders = foodOrderRepository.findByRoomBooking_BookingId(booking.getBookingId());
+            for (FoodOrder eo : existingOrders) {
+                if (eo.getOrderTime() != null && eo.getOrderTime().toLocalDate().equals(mealTime.toLocalDate())) {
+                    foodOrder = eo;
+                    break;
+                }
+            }
 
-            foodOrder = foodOrderRepository.save(foodOrder);
+            if (foodOrder == null) {
+                foodOrder = FoodOrder.builder()
+                        .user(user)
+                        .roomBooking(booking)
+                        .orderTime(mealTime)
+                        .status("PENDING")
+                        .totalAmount(BigDecimal.ZERO)
+                        .build();
+                foodOrder = foodOrderRepository.save(foodOrder);
+            } else {
+                // Delete existing details so we can replace them with new selection
+                List<FoodOrderDetail> oldDetails = foodOrderDetailRepository.findByFoodOrder_OrderId(foodOrder.getOrderId());
+                foodOrderDetailRepository.deleteAll(oldDetails);
+            }
+
             createdOrderIds.add(foodOrder.getOrderId());
 
             BigDecimal totalExtraCharges = BigDecimal.ZERO;
