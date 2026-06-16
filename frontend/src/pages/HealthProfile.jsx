@@ -187,15 +187,18 @@ export default function HealthProfile() {
         </Link>
 
         {/* Header */}
-        <div className="bg-white/95 backdrop-blur-md rounded-md shadow-xl p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex p-3 bg-primary-100 rounded-md text-primary-900 mb-3">
-              <Heart className="h-6 w-6" />
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border-[0.5px] border-white p-8 sm:p-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-100/30 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
+          
+          <div className="text-center mb-10 relative z-10">
+            <div className="inline-flex p-4 bg-gradient-to-br from-primary-50 to-primary-100/80 rounded-2xl text-primary-900 mb-5 shadow-sm">
+              <Heart className="h-8 w-8" />
             </div>
-            <h1 className="font-serif text-2xl font-bold text-sage-900">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-sage-900">
               Hồ Sơ Sức Khỏe & Chế Độ Ăn
             </h1>
-            <p className="text-sm text-sage-600 mt-2">
+            <p className="text-sm sm:text-base text-sage-600 mt-3 max-w-lg mx-auto font-light leading-relaxed">
               Xin chào <strong>{userFullName}</strong>! Thông tin sức khỏe giúp chúng tôi cá nhân hóa dịch vụ Spa, thực đơn và trị liệu dành riêng cho bạn.
             </p>
           </div>
@@ -227,19 +230,19 @@ export default function HealthProfile() {
 
           <form onSubmit={handleSave} className="space-y-8">
             {/* Section 1: Dietary Preference */}
-            <div>
-              <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Leaf className="h-4 w-4 text-primary-700" />
+            <div className="relative z-10">
+              <h3 className="font-serif text-lg font-bold text-sage-900 mb-4 flex items-center gap-2">
+                <Leaf className="h-5 w-5 text-primary-700" />
                 Chế Độ Ăn Uống
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="flex flex-wrap gap-3">
                 {DIET_OPTIONS.map((opt) => (
                   <label
                     key={opt.key}
-                    className={`flex items-center justify-center p-3 rounded-md border cursor-pointer text-xs font-semibold transition-all ${
+                    className={`relative overflow-hidden flex items-center justify-center px-6 py-3 rounded-full border cursor-pointer text-sm font-semibold transition-all duration-300 ${
                       dietaryPreference === opt.key
-                        ? "border-primary-800 bg-primary-50 text-primary-900"
-                        : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
+                        ? "border-primary-800 bg-primary-900 text-white shadow-lg shadow-primary-900/30 -translate-y-1"
+                        : "border-primary-100 bg-white/50 text-sage-600 hover:bg-white hover:border-primary-300 hover:shadow-md"
                     }`}
                   >
                     <input
@@ -250,34 +253,35 @@ export default function HealthProfile() {
                       onChange={() => setDietaryPreference(opt.key)}
                       className="sr-only"
                     />
-                    {opt.label}
+                    <span className="relative z-10">{opt.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* Section 2: Food Allergies */}
-            <div>
-              <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <div className="relative z-10">
+              <h3 className="font-serif text-lg font-bold text-sage-900 mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
                 Dị Ứng Thực Phẩm
               </h3>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="flex flex-wrap gap-3 mb-4">
                 {ALLERGY_OPTIONS.map((opt) => (
                   <label
                     key={opt.key}
-                    className={`flex items-center gap-2 p-3 rounded-md border cursor-pointer text-xs font-medium transition-all ${
+                    className={`flex items-center gap-2 px-5 py-3 rounded-full border cursor-pointer text-sm font-medium transition-all duration-300 ${
                       selectedAllergies.includes(opt.key)
-                        ? "border-amber-400 bg-amber-50 text-amber-800"
-                        : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
+                        ? "border-amber-400 bg-amber-500 text-white shadow-lg shadow-amber-500/30 -translate-y-1"
+                        : "border-primary-100 bg-white/50 text-sage-600 hover:bg-white hover:border-amber-200 hover:shadow-md"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={selectedAllergies.includes(opt.key)}
                       onChange={() => toggleAllergy(opt.key)}
-                      className="w-4 h-4 accent-amber-500"
+                      className="sr-only"
                     />
+                    {selectedAllergies.includes(opt.key) && <CheckCircle2 className="w-4 h-4 text-white" />}
                     {opt.label}
                   </label>
                 ))}
@@ -292,12 +296,12 @@ export default function HealthProfile() {
             </div>
 
             {/* Section 3: Physical Condition */}
-            <div>
-              <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Heart className="h-4 w-4 text-rose-500" />
+            <div className="relative z-10">
+              <h3 className="font-serif text-lg font-bold text-sage-900 mb-2 flex items-center gap-2">
+                <Heart className="h-5 w-5 text-rose-500" />
                 Tình Trạng Thể Chất
               </h3>
-              <p className="text-xs text-sage-500 mb-3">
+              <p className="text-xs sm:text-sm text-sage-500 mb-4 font-light leading-relaxed">
                 Ví dụ: Đau lưng, thoát vị đĩa đệm, huyết áp cao, tiểu đường, đang mang thai... Thông tin này được mã hóa và chỉ Kỹ thuật viên Spa/Vật lý trị liệu mới được xem.
               </p>
               <textarea
@@ -305,53 +309,65 @@ export default function HealthProfile() {
                 onChange={(e) => setPhysicalCondition(e.target.value)}
                 rows={4}
                 placeholder="Mô tả tình trạng sức khỏe thể chất của bạn..."
-                className="w-full px-2 py-3 border-b border-primary-200 bg-transparent text-sm text-sage-800 focus:outline-none focus:border-primary-800 rounded-none resize-none transition-all duration-200"
+                className="w-full px-5 py-4 rounded-2xl border border-primary-200 bg-white/60 text-sm text-sage-900 focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-100/50 resize-none transition-all duration-300 placeholder-sage-400"
               />
             </div>
 
             {/* Section 4: Explicit Consent Checkboxes (Decree 356/2025) */}
-            <div className="bg-amber-50/70 rounded-md p-5 space-y-4 border-l-4 border-amber-500">
-              <div className="flex items-center gap-2 mb-1">
-                <ShieldCheck className="h-5 w-5 text-amber-600" />
-                <h3 className="text-sm font-bold text-amber-800">
-                  Đồng Ý Thu Thập Dữ Liệu Nhạy Cảm (Nghị định 356/2025/NĐ-CP)
+            <div className="relative z-10 bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-[24px] p-6 sm:p-8 border-[0.5px] border-amber-200/60 shadow-[0_8px_30px_rgba(245,158,11,0.05)]">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <h3 className="font-serif text-xl font-bold text-amber-900">
+                  Chứng Nhận Bảo Mật Dữ Liệu
                 </h3>
               </div>
-              <p className="text-xs text-amber-700">
-                Theo Nghị định về Bảo vệ Dữ liệu Cá nhân, việc thu thập thông tin sức khỏe yêu cầu sự đồng ý rõ ràng và riêng biệt của bạn.
+              <p className="text-sm text-amber-700/80 font-light mb-6">
+                Theo Nghị định 356/2025/NĐ-CP, việc thu thập thông tin sức khỏe yêu cầu sự đồng ý rõ ràng và riêng biệt. Dữ liệu của bạn được bảo vệ bằng chuẩn mã hóa AES-256.
               </p>
 
-              {/* Consent 1: Data Processing */}
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  id="consent-processing"
-                  checked={consentDataProcessing}
-                  onChange={(e) => setConsentDataProcessing(e.target.checked)}
-                  className="w-5 h-5 mt-0.5 accent-amber-600 flex-shrink-0"
-                />
-                <span className="text-xs text-amber-900 leading-relaxed">
-                  <strong>Đồng ý Xử lý Dữ liệu Sức khỏe:</strong> Tôi đồng ý cho Ngũ Sơn Resort lưu trữ và xử lý thông tin dị ứng thực phẩm và tình trạng thể chất của tôi, được mã hóa AES-256, nhằm mục đích cung cấp dịch vụ nghỉ dưỡng phù hợp.
-                </span>
-              </label>
+              <div className="space-y-4">
+                {/* Consent 1: Data Processing */}
+                <label className="flex items-start gap-4 cursor-pointer group p-4 rounded-2xl bg-white/60 hover:bg-white border border-amber-100 transition-colors">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      type="checkbox"
+                      id="consent-processing"
+                      checked={consentDataProcessing}
+                      onChange={(e) => setConsentDataProcessing(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-6 h-6 rounded-lg border-2 border-amber-300 bg-white peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all duration-200 shadow-sm group-hover:border-amber-400"></div>
+                    <Check className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 peer-checked:scale-100 scale-50 transition-all duration-200" strokeWidth={3} />
+                  </div>
+                  <span className="text-sm text-amber-900 leading-relaxed font-light">
+                    <strong className="font-semibold text-amber-950">Đồng ý Xử lý Dữ liệu Sức khỏe:</strong> Tôi đồng ý cho Ngũ Sơn Resort lưu trữ và xử lý thông tin dị ứng thực phẩm và tình trạng thể chất của tôi nhằm mục đích cung cấp dịch vụ nghỉ dưỡng phù hợp.
+                  </span>
+                </label>
 
-              {/* Consent 2: Limited Sharing */}
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  id="consent-sharing"
-                  checked={consentSharing}
-                  onChange={(e) => setConsentSharing(e.target.checked)}
-                  className="w-5 h-5 mt-0.5 accent-amber-600 flex-shrink-0"
-                />
-                <span className="text-xs text-amber-900 leading-relaxed">
-                  <strong>Đồng ý Chia sẻ Có Giới hạn:</strong> Tôi đồng ý để thông tin dị ứng thực phẩm của tôi được chia sẻ với bộ phận bếp (để loại bỏ món ăn không an toàn), và thông tin thể chất được chia sẻ với kỹ thuật viên Spa/trị liệu (để điều chỉnh phác đồ trị liệu). Các nhân sự khác không được xem dữ liệu này.
-                </span>
-              </label>
+                {/* Consent 2: Limited Sharing */}
+                <label className="flex items-start gap-4 cursor-pointer group p-4 rounded-2xl bg-white/60 hover:bg-white border border-amber-100 transition-colors">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      type="checkbox"
+                      id="consent-sharing"
+                      checked={consentSharing}
+                      onChange={(e) => setConsentSharing(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-6 h-6 rounded-lg border-2 border-amber-300 bg-white peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all duration-200 shadow-sm group-hover:border-amber-400"></div>
+                    <Check className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 peer-checked:scale-100 scale-50 transition-all duration-200" strokeWidth={3} />
+                  </div>
+                  <span className="text-sm text-amber-900 leading-relaxed font-light">
+                    <strong className="font-semibold text-amber-950">Đồng ý Chia sẻ Có Giới hạn:</strong> Tôi đồng ý để thông tin dị ứng thực phẩm được chia sẻ với bộ phận bếp, và thông tin thể chất được chia sẻ với kỹ thuật viên Spa/trị liệu. Các nhân sự khác không được xem dữ liệu này.
+                  </span>
+                </label>
+              </div>
 
-              <div className="flex items-start gap-2 pt-1">
+              <div className="flex items-start gap-2 mt-5">
                 <Info className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-amber-600 font-light">
                   Bạn có thể thu hồi sự đồng ý và xóa vĩnh viễn hồ sơ sức khỏe bất cứ lúc nào thông qua nút "Xóa Hồ Sơ" bên dưới.
                 </p>
               </div>
@@ -361,14 +377,15 @@ export default function HealthProfile() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="relative overflow-hidden w-full py-5 rounded-full text-sm font-bold uppercase tracking-widest bg-gradient-to-r from-primary-800 to-primary-950 text-white shadow-[0_10px_20px_rgba(31,35,27,0.3)] hover:shadow-[0_15px_30px_rgba(31,35,27,0.4)] transition-all duration-500 hover:-translate-y-1 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_10px_20px_rgba(31,35,27,0.3)] flex items-center justify-center gap-3 z-10"
             >
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
-                  {existingProfile ? "Cập Nhật Hồ Sơ Sức Khỏe" : "Lưu Hồ Sơ Sức Khỏe"}
+                  <Save className="h-5 w-5 relative z-10" />
+                  <span className="relative z-10">{existingProfile ? "Cập Nhật Hồ Sơ Sức Khỏe" : "Lưu Hồ Sơ Sức Khỏe"}</span>
                 </>
               )}
             </button>
