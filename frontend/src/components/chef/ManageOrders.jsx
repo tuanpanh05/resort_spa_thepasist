@@ -8,7 +8,8 @@ import {
   Check,
   Truck,
   Volume2,
-  ArrowRight
+  ArrowRight,
+  XCircle
 } from "lucide-react";
 
 export default function ManageOrders({
@@ -16,6 +17,7 @@ export default function ManageOrders({
   playVoiceAlert,
   handleUpdateOrderStatus,
   checkOrderAllergies,
+  handleCancelItem,
 }) {
   const pendingOrders = orders.filter((o) => o.status === "Pending");
   const cookingOrders = orders.filter((o) => o.status === "Cooking");
@@ -78,9 +80,10 @@ export default function ManageOrders({
 
           {/* Metadata */}
           <div className="flex justify-between items-center text-[10px] text-sage-500 font-mono mb-3">
-            <span>Mã: {ord.id}</span>
-            <span className="truncate max-w-[120px]">
+            <span>Đơn: {ord.id}</span>
+            <span className="truncate max-w-[150px] text-right">
               Khách: <strong className="text-sage-800">{ord.guestName}</strong>
+              {ord.mealCode && <span className="block mt-0.5 text-[9px] bg-sage-100 text-sage-800 px-1 py-0.5 inline-block ml-1 rounded">MÃ: {ord.mealCode}</span>}
             </span>
           </div>
 
@@ -98,6 +101,11 @@ export default function ManageOrders({
                     {it.name}
                   </span>
                 </div>
+                {status === "Pending" && handleCancelItem && it.foodId && (
+                  <button onClick={() => handleCancelItem(ord.id, it.foodId, it.name)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors" title="Báo hết hàng / Hủy món">
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
