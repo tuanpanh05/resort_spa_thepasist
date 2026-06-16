@@ -30,7 +30,7 @@ export default function GuestDashboard() {
   const [successOrder, setSuccessOrder] = useState(null);
 
   // F&B Modes: 'preselect' (UC16) or 'extra' (UC19)
-  const [orderMode, setOrderMode] = useState("preselect");
+  const [orderMode, setOrderMode] = useState("extra");
 
   // Profile data
   const [profileData, setProfileData] = useState({
@@ -101,14 +101,47 @@ export default function GuestDashboard() {
           curr.setDate(curr.getDate() + 1);
         }
         setBookingDays(days);
-        if (days.length > 0) setSelectedDate(days[0]);
+        setSelectedDate(todayStr);
+
+        if (data.booking.orders && data.booking.orders.length > 0) {
+          const initSelections = {};
+          const initNotes = {};
+
+          data.booking.orders.forEach(order => {
+            const orderDateStr = order.orderTime.split("T")[0];
+            if (!initSelections[orderDateStr]) initSelections[orderDateStr] = {};
+
+            order.details.forEach(detail => {
+              let period = "Breakfast";
+              let userNote = detail.specialNote || "";
+              
+              if (userNote.includes("[Bữa: ")) {
+                const match = userNote.match(/\[Bữa:\s*([^,\]]+)/);
+                if (match) period = match[1].trim();
+                userNote = userNote.replace(/\[Bữa:.*?\]/, "").trim();
+              }
+
+              if (!initSelections[orderDateStr][period]) initSelections[orderDateStr][period] = {};
+              // Accumulate quantity if there are duplicates
+              initSelections[orderDateStr][period][detail.foodId] = (initSelections[orderDateStr][period][detail.foodId] || 0) + detail.quantity;
+
+              if (userNote) {
+                initNotes[`${orderDateStr}_${period}_${detail.foodId}`] = userNote;
+              }
+            });
+          });
+
+          setSelections(initSelections);
+          setSpecialNotes(initNotes);
+        }
+
       } else {
         setSelectedDate(todayStr);
       }
 
       const menuRes = await axiosClient.get(`/guest/menu?userId=${data.userId}`);
-      setMenuItems(menuRes.data.filter(item => item.isTodayMenu !== false));
-
+      // Filter out items that are strictly disabled. We will handle isTodayMenu dynamically in render
+      setMenuItems(menuRes.data.filter(item => item.enabled !== false));
     } catch (err) {
       console.warn("Live backend failed, using mock...", err);
       // Fallback code omitted for brevity but keeping UI functional
@@ -204,7 +237,7 @@ export default function GuestDashboard() {
         Object.entries(periodObj).forEach(([foodId, qty]) => {
           const item = menuItems.find(m => m.foodId === Number(foodId));
           if (item) {
-            if (isIncludedInPackage(item.foodId)) {
+            if (orderMode === "preselect" && isIncludedInPackage(item.foodId)) {
               if (qty > 1) extraCharge += item.price * (qty - 1);
             } else {
               extraCharge += item.price * qty;
@@ -260,8 +293,16 @@ export default function GuestDashboard() {
     try {
       const endpoint = orderMode === "extra" ? "/guest/order-extra" : "/guest/preselect-meals";
       const res = await axiosClient.post(endpoint, payload);
+      
+      let finalOrderId = res.data.orderId;
+      if (finalOrderId && !String(finalOrderId).startsWith("ORD-")) {
+          finalOrderId = `ORD-${finalOrderId}`;
+      } else if (!finalOrderId) {
+          finalOrderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+      }
+
       setSuccessOrder({
-        orderId: res.data.orderId || `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
+        orderId: finalOrderId,
         totalAmount: res.data.totalAmount || calculateTotalBill(),
         itemCount: formattedSelections.length,
         items: formattedSelections.map(f => {
@@ -269,8 +310,9 @@ export default function GuestDashboard() {
           return { ...f, name: m ? m.dishName : "Món ăn" };
         })
       });
-      setSelections({});
-      setSpecialNotes({});
+      
+      // Refresh the data to stay in sync with the backend
+      fetchData(profileData.email);
     } catch (err) {
       alert("Lỗi khi đặt món: " + (err.response?.data || err.message));
     } finally {
@@ -308,18 +350,24 @@ export default function GuestDashboard() {
   }
 
   return (
-    <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20 font-sans text-sage-950">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8">
-
-        {/* Dashboard Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-primary-100 pb-8 mb-10 gap-6">
-          <div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-normal text-sage-900 mb-2">Khu Vực Ẩm Thực</h1>
-            <p className="text-sage-600 text-xs sm:text-sm font-light">
-              Xin chào, <span className="font-semibold">{profileData.fullName}</span>. Theo dõi lịch trình ẩm thực tại đây.
-            </p>
-          </div>
+    <div className="bg-[#fafbfa] min-h-screen pt-20 pb-20 font-sans text-sage-950">
+      {/* HERO BANNER */}
+      <div className="relative w-full h-[40vh] sm:h-[50vh] overflow-hidden mb-12">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-80"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1920&q=80')` }}
+        ></div>
+        <div className="absolute inset-0 bg-hero-overlay"></div>
+        <div className="relative h-full max-w-7xl mx-auto px-6 sm:px-8 flex flex-col justify-end pb-16">
+          <span className="text-primary-200 font-bold tracking-[0.2em] text-xs uppercase mb-4 animate-slide-up">Resort & Spa</span>
+          <h1 className="font-serif text-4xl sm:text-6xl text-white mb-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>Phục Vụ Tại Phòng</h1>
+          <p className="text-sage-100 max-w-xl text-sm sm:text-base font-light animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            Xin chào, <span className="font-semibold text-white">{profileData.fullName}</span>. Khám phá thực đơn ẩm thực chữa lành, được chế biến từ nguồn nguyên liệu hữu cơ tươi mới nhất trong ngày.
+          </p>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-8">
 
         {successOrder ? (
             <div className="bg-white border border-primary-100 p-8 sm:p-12 text-center shadow-md animate-fade-in relative overflow-hidden rounded-none max-w-2xl mx-auto">
@@ -327,14 +375,18 @@ export default function GuestDashboard() {
                 <div className="inline-flex p-4 bg-primary-100 text-primary-800 rounded-full mb-6">
                   <FileCheck2 className="h-12 w-12" />
                 </div>
-                <h2 className="font-serif text-2xl font-normal text-sage-900 mb-2">Đã Ghi Nhận Thành Công!</h2>
+                <h2 className="font-serif text-2xl font-normal text-sage-900 mb-2">Đã Gửi Yêu Cầu Tới Bếp!</h2>
+                <p className="text-sage-600 text-[13px] mb-6 font-light">
+                  Đơn gọi món của quý khách đã được chuyển thẳng tới Bếp Trưởng. Xin vui lòng giữ mã đơn bên dưới để đối chiếu khi nhận món.
+                </p>
                 <div className="border border-primary-100 bg-primary-50/20 text-left p-6 space-y-4 mb-8 text-xs sm:text-sm">
-                  <div className="flex justify-between pb-3 border-b border-primary-100 font-bold uppercase text-[10px] text-sage-400 tracking-wider">
-                    <span>MÃ ĐƠN: {successOrder.orderId}</span>
+                  <div className="flex justify-between pb-3 border-b border-primary-100 font-bold uppercase text-[10px] text-sage-500 tracking-wider items-center">
+                    <span>MÃ ĐƠN HÀNG:</span>
+                    <span className="text-primary-800 text-lg bg-primary-100 px-3 py-1 font-mono rounded-none border border-primary-200">{successOrder.orderId}</span>
                   </div>
-                  <div className="pt-4 flex justify-between font-bold text-primary-950 font-serif">
+                  <div className="pt-2 flex justify-between font-bold text-primary-950 font-serif items-center">
                     <span>Phụ phí phát sinh:</span>
-                    <span>{formatCurrency(successOrder.totalAmount)}</span>
+                    <span className="text-lg">{formatCurrency(successOrder.totalAmount)}</span>
                   </div>
                 </div>
                 <button onClick={() => setSuccessOrder(null)} className="px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white text-xs font-bold uppercase tracking-widest cursor-pointer">
@@ -345,63 +397,111 @@ export default function GuestDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Info & Consent */}
             <div className="lg:col-span-4 space-y-6">
-              {/* Consent Card */}
-              <div className="bg-white border border-primary-100 p-6 shadow-xs text-left">
-                <div className="flex items-center space-x-2.5 mb-3">
-                  <ShieldAlert className="h-5 w-5 text-primary-800" />
-                  <h3 className="font-serif text-base font-bold text-sage-950 uppercase tracking-wide">Bảo Mật Y Tế</h3>
+              
+              {/* Customer Info Widget */}
+              <div className="bg-white rounded-none p-6 border border-primary-200/50">
+                <h3 className="font-serif text-lg font-bold text-sage-900 border-b border-primary-100 pb-3 mb-4">
+                  Thông Tin Đặt Phòng
+                </h3>
+                <div className="space-y-3 text-xs text-sage-700">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Khách Hàng:</span>
+                    <span className="font-bold text-sage-900">{profileData.fullName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Email:</span>
+                    <span className="font-medium">{profileData.email}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Số điện thoại:</span>
+                    <span className="font-medium">{profileData.phone}</span>
+                  </div>
+                  {profileData.booking && (
+                    <>
+                      <div className="flex justify-between items-center pt-2 border-t border-dashed border-primary-100">
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Mã đơn:</span>
+                        <span className="font-bold text-primary-700">
+                          {String(profileData.booking.bookingId).startsWith("BK-") 
+                            ? profileData.booking.bookingId 
+                            : `BK-${String(profileData.booking.bookingId).padStart(4, '0')}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Nhận phòng:</span>
+                        <span className="font-medium">{new Date(profileData.booking.checkInDate).toLocaleDateString("vi-VN")}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Trả phòng:</span>
+                        <span className="font-medium">{new Date(profileData.booking.checkOutDate).toLocaleDateString("vi-VN")}</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-sage-50/50 p-2 border border-sage-200 mt-2">
+                        <span className="font-bold text-sage-700 uppercase tracking-wider text-[11px]">Mã Ăn:</span>
+                        <span className="font-bold text-sage-900 text-sm font-mono tracking-wider">MEAL-{profileData.booking.bookingId}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="p-4 bg-sage-50 border border-primary-100 text-xs">
-                  <div className="flex items-start space-x-2">
-                    <input type="checkbox" id="consent-chk" checked={consentCheckbox} onChange={(e) => handleConsentSubmit(e.target.checked)} className="mt-0.5" />
-                    <label htmlFor="consent-chk" className="text-[11px] text-sage-800 font-medium cursor-pointer">
-                      <strong>Đồng ý</strong> cho phép nhà bếp xử lý dữ liệu dị ứng để tự động lọc món ăn.
-                    </label>
+              </div>
+
+              {/* Consent Widget */}
+              <div className="bg-white rounded-none p-6 border border-primary-200/50 relative overflow-hidden group hover:border-primary-300 transition-all duration-300">
+                <div className="absolute top-0 left-0 w-1 h-full bg-primary-600" />
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-3 bg-primary-50 rounded-2xl text-primary-700 group-hover:scale-110 group-hover:bg-primary-100 transition-all duration-300">
+                    <ShieldAlert className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg font-bold text-sage-900">Bảo Mật Y Tế</h3>
+                    <p className="text-[11px] text-sage-500 font-medium tracking-wide uppercase mt-1">Bảo vệ sức khỏe hội viên</p>
                   </div>
                 </div>
+                <div className="p-4 bg-sage-50/50 rounded-none border border-primary-100 text-xs transition-colors hover:bg-sage-50">
+                  <label className="flex items-start gap-3 cursor-pointer group/label">
+                    <div className="relative flex items-center justify-center mt-0.5">
+                      <input type="checkbox" id="consent-chk" checked={consentCheckbox} onChange={(e) => handleConsentSubmit(e.target.checked)} className="peer sr-only" />
+                      <div className="w-5 h-5 rounded-none border border-primary-300 bg-white peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all duration-200 group-hover/label:border-primary-400"></div>
+                      <Check className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 peer-checked:scale-100 scale-50 transition-all duration-200" strokeWidth={3} />
+                    </div>
+                    <span className="text-sage-700 leading-relaxed font-medium">
+                      <strong>Đồng ý</strong> cho phép nhà bếp truy cập hồ sơ y tế cá nhân để tự động cảnh báo các thành phần gây dị ứng.
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Info Card */}
+              <div className="bg-white rounded-none p-6 border border-primary-200/50">
+                <h4 className="font-serif text-base font-bold text-sage-900 mb-3">Lưu ý Dịch Vụ</h4>
+                <ul className="text-xs text-sage-600 space-y-2 font-medium">
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Thời gian phục vụ: 06:00 - 22:00 hàng ngày.</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Phí phục vụ tại phòng là 15% (đã bao gồm trong phụ phí dự kiến).</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Các món trong Gói Tiêu Chuẩn sẽ được miễn phí.</li>
+                </ul>
               </div>
             </div>
 
             {/* Right Column: Menu & Orders */}
-            <div className="lg:col-span-8 bg-white border border-primary-100 p-6 shadow-xs text-left">
-              {/* Mode Toggle Tabs */}
-              <div className="flex mb-6 border-b border-primary-100">
-                  <button onClick={() => handleModeSwitch("preselect")} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${orderMode === "preselect" ? "border-b-2 border-primary-800 text-primary-850" : "text-sage-500 hover:text-primary-800 hover:bg-primary-50/30"}`}>
-                      Lên Kế Hoạch Bữa Ăn (Trước)
-                  </button>
-                  <button onClick={() => handleModeSwitch("extra")} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${orderMode === "extra" ? "border-b-2 border-amber-600 text-amber-700 bg-amber-50/20" : "text-sage-500 hover:text-amber-700 hover:bg-amber-50/30"}`}>
-                      <Clock className="w-4 h-4" /> Gọi Đồ Ăn Trong Ngày
-                  </button>
-              </div>
-
-              {/* Date Selector */}
-              {orderMode === "preselect" ? (
-                  <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-8 border-b border-primary-100/50 scrollbar-thin">
-                    {bookingDays.map((date, idx) => {
-                      const isActive = selectedDate === date;
-                      return (
-                        <button key={date} onClick={() => setSelectedDate(date)} className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all min-w-[90px] border shadow-xs cursor-pointer rounded-2xl ${isActive ? "bg-primary-850 border-primary-900 text-white shadow-md -translate-y-0.5" : "bg-white border-primary-100 text-sage-600 hover:bg-primary-50"}`}>
-                          <span className="text-[9px] opacity-75 font-semibold">Ngày {idx + 1}</span>
-                          <span className="font-mono mt-0.5 text-sm">{date.split("-").slice(1).reverse().join("/")}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-              ) : (
-                  <div className="mb-8 p-4 bg-amber-50 border border-amber-200 text-amber-900 flex justify-between items-center rounded-xl shadow-xs">
-                      <div>
-                          <span className="text-xs font-bold uppercase tracking-widest block mb-1">Giao Tận Phòng Trong Ngày</span>
-                          <span className="font-mono text-xl">{todayStr.split("-").slice(1).reverse().join("/")}</span>
+            <div className="lg:col-span-8">
+              {/* Immediate Service Banner */}
+              <div className="mb-8 p-6 bg-amber-50/50 rounded-none border border-amber-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+                  <div className="relative">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 rounded-none bg-amber-500 animate-pulse" />
+                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.2em]">Giao Tận Phòng Trong Ngày</span>
                       </div>
-                      <span className="px-3 py-1 bg-amber-200 text-amber-950 text-[10px] font-bold uppercase tracking-widest rounded-full">Immediate Service</span>
+                      <span className="font-serif text-2xl font-semibold text-amber-950">{todayStr.split("-").slice(1).reverse().join("/")}</span>
                   </div>
-              )}
+                  <span className="relative px-5 py-2.5 bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-widest rounded-none border border-amber-200">Phục Vụ Ngay</span>
+              </div>
 
               {/* MEAL TIMELINE */}
               {selectedDate && (
                 <div className="space-y-8">
                   {["Breakfast", "Lunch", "Dinner"].map((period) => {
                     const periodDishes = menuItems.filter(item => {
+                        // If selectedDate is today, only show today's menu
+                        if (selectedDate === todayStr && item.isTodayMenu === false) return false;
+
                         const name = (item.dishName || "").toLowerCase();
                         if (period === "Breakfast") return name.includes("súp") || name.includes("soup") || name.includes("juice") || name.includes("avocado") || name.includes("sáng") || name.includes("nước");
                         if (period === "Lunch") return name.includes("salad") || name.includes("gỏi") || name.includes("chay") || name.includes("trưa");
@@ -417,32 +517,58 @@ export default function GuestDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {periodDishes.map((dish) => {
                             const isAllergen = consentCheckbox && dish.isAllergen;
-                            const isSoldOut = dish.soldOut === true;
+                            // Only disable sold out items if ordering for today! Future dates ignore sold out.
+                            const isSoldOut = dish.soldOut === true && selectedDate === todayStr;
                             const qty = selections[selectedDate]?.[period]?.[dish.foodId] || 0;
                             const isIncluded = isIncludedInPackage(dish.foodId);
 
                             return (
-                              <div key={dish.foodId} className={`flex flex-col justify-between transition-all duration-300 relative border overflow-hidden rounded-[20px] ${isSoldOut ? "border-gray-200 bg-gray-50 opacity-70" : isAllergen ? "border-red-300 bg-red-50/40 shadow-[0_0_15px_rgba(239,68,68,0.15)]" : "border-primary-100 bg-white hover:-translate-y-1 hover:shadow-md"}`}>
-                                <div className="h-44 w-full relative overflow-hidden bg-sage-50">
-                                  <img src={getFoodImage(dish)} alt={dish.dishName} className="w-full h-full object-cover" />
-                                  {isSoldOut && <div className="absolute inset-0 bg-gray-950/40 flex items-center justify-center"><span className="bg-gray-700 text-white font-bold text-[10px] px-3 py-1.5 uppercase">Hết Hàng</span></div>}
-                                  {isAllergen && <div className="absolute inset-0 bg-red-950/20 border-4 border-red-500/50 flex items-end"><span className="w-full text-center bg-red-600 text-white font-bold text-[10px] py-1.5 uppercase animate-pulse">! CẢNH BÁO DỊ ỨNG</span></div>}
+                              <div key={dish.foodId} className={`flex flex-col justify-between transition-all duration-300 relative border overflow-hidden rounded-none group ${isSoldOut ? "border-gray-200 bg-gray-50/50 opacity-60 grayscale-[0.5]" : isAllergen ? "border-red-300 bg-red-50/30" : "border-primary-200/50 bg-white hover:border-primary-400"}`}>
+                                <div className="h-52 w-full relative overflow-hidden bg-sage-50">
+                                  <img src={getFoodImage(dish)} alt={dish.dishName} className={`w-full h-full object-cover transition-transform duration-700 ${!isSoldOut && 'group-hover:scale-105'}`} />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                                  
+                                  {isSoldOut && (
+                                    <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center">
+                                      <span className="bg-white/90 text-gray-800 font-bold text-[10px] px-4 py-2 rounded-none uppercase tracking-widest border border-gray-200">Hết Hàng</span>
+                                    </div>
+                                  )}
+                                  
+                                  {isAllergen && !isSoldOut && (
+                                    <div className="absolute inset-0 bg-red-900/10 border-2 border-red-500/30 rounded-none flex items-start justify-end p-4">
+                                      <span className="bg-red-600 text-white font-bold text-[9px] px-3 py-1.5 rounded-none uppercase tracking-wider animate-pulse border border-red-700 flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Dị Ứng</span>
+                                    </div>
+                                  )}
+
+                                  <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                                      {isIncluded ? (
+                                        <span className="bg-primary-500 text-white text-[9px] font-bold px-2.5 py-1 rounded-none uppercase tracking-wider border border-primary-600">Gói Miễn Phí</span>
+                                      ) : (
+                                        <span />
+                                      )}
+                                      <span className="text-white font-semibold font-serif text-lg drop-shadow-md">{formatCurrency(dish.price)}</span>
+                                  </div>
                                 </div>
+
                                 <div className="p-5 flex-1 flex flex-col justify-between">
                                   <div>
-                                    <h4 className={`font-serif text-sm font-bold ${isAllergen ? "text-red-900" : "text-sage-950"}`}>{dish.dishName}</h4>
-                                    <p className="text-[11px] text-sage-500 font-light mt-1 line-clamp-2">{dish.description}</p>
-                                    {isAllergen && <p className="text-[10px] text-red-600 mt-2 font-bold">{dish.warningMessage}</p>}
+                                    <h4 className={`font-serif text-lg font-bold leading-tight ${isAllergen ? "text-red-900" : "text-sage-900"}`}>{dish.dishName}</h4>
+                                    <p className="text-xs text-sage-500 font-light mt-2 line-clamp-2 leading-relaxed">{dish.description}</p>
+                                    {isAllergen && <p className="text-[11px] text-red-600 mt-3 font-semibold bg-red-50 p-2.5 rounded-none border border-red-200">{dish.warningMessage}</p>}
                                   </div>
-                                  <div className="mt-4 pt-3 border-t border-primary-50 flex justify-between items-center">
-                                    <span className="font-mono text-sm font-bold text-primary-950">{formatCurrency(dish.price)}</span>
+                                  
+                                  <div className="mt-5 flex justify-between items-center">
                                     {isSoldOut ? (
-                                      <span className="text-[9px] font-bold border px-3 py-1.5 rounded-full uppercase text-gray-500">Hết Hàng</span>
+                                      <span className="text-[10px] font-bold border border-gray-200 px-4 py-2 rounded-none uppercase text-gray-500 tracking-wider">Tạm Ngưng</span>
+                                    ) : orderMode === 'preselect' && selectedDate === todayStr ? (
+                                      <div className="flex items-center space-x-2 w-full">
+                                        <span className="text-[10px] font-bold border border-amber-200 px-3 py-2 rounded-none uppercase text-amber-600 bg-amber-50 w-full text-center tracking-wider">Đã Chốt Bếp</span>
+                                      </div>
                                     ) : (
-                                      <div className="flex items-center space-x-2 bg-primary-50/50 p-0.5 rounded-full border border-primary-100">
-                                        <button disabled={qty===0} onClick={() => updateQuantity(selectedDate, period, dish.foodId, -1)} className="p-1.5 hover:bg-white rounded-full"><Minus className="h-3.5 w-3.5"/></button>
-                                        <span className="font-mono text-xs w-6 text-center">{qty}</span>
-                                        <button onClick={() => handleIncreaseQuantity(selectedDate, period, dish)} className={`p-1.5 rounded-full hover:bg-white ${isAllergen ? "text-red-600 hover:bg-red-100" : "text-primary-850"}`}><Plus className="h-3.5 w-3.5"/></button>
+                                      <div className="flex items-center justify-between w-full bg-sage-50/50 p-1 rounded-none border border-primary-200/50 group/controls">
+                                        <button disabled={qty===0} onClick={() => updateQuantity(selectedDate, period, dish.foodId, -1)} className="p-2 hover:bg-white border border-transparent hover:border-primary-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent rounded-none"><Minus className="h-4 w-4 text-sage-600"/></button>
+                                        <span className="font-sans text-sm font-semibold w-8 text-center text-sage-900">{qty}</span>
+                                        <button onClick={() => handleIncreaseQuantity(selectedDate, period, dish)} className={`p-2 rounded-none border transition-all ${isAllergen ? "bg-red-50 border-red-200 hover:bg-red-100 text-red-600" : "bg-primary-800 border-primary-900 hover:bg-primary-900 text-white"}`}><Plus className="h-4 w-4"/></button>
                                       </div>
                                     )}
                                   </div>
@@ -458,12 +584,13 @@ export default function GuestDashboard() {
               )}
 
               {/* Submit Bar */}
-              <div className="mt-10 pt-6 border-t border-primary-100 flex flex-col md:flex-row items-stretch justify-between gap-4 bg-primary-50/25 p-6">
+              <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-none border-t border-primary-200 sticky bottom-0 z-40">
                 <div>
-                  <div className="text-sm font-bold text-primary-950">Phụ phí dự kiến: {formatCurrency(calculateTotalBill())} ({getSelectedItemsCount()} món)</div>
+                  <span className="text-xs font-medium text-sage-500 uppercase tracking-widest mb-1">Tổng cộng ({getSelectedItemsCount()} món)</span>
+                  <span className="font-serif text-3xl font-bold text-primary-950 block">{formatCurrency(calculateTotalBill())}</span>
                 </div>
-                <button disabled={submitting || getSelectedItemsCount()===0} onClick={handleSubmitSelections} className={`px-8 py-3.5 text-xs font-bold uppercase text-white ${getSelectedItemsCount()===0 ? "bg-sage-300" : orderMode === 'extra' ? "bg-amber-600 hover:bg-amber-700" : "bg-primary-850 hover:bg-primary-900"}`}>
-                  {submitting ? "Đang xử lý..." : orderMode === 'extra' ? "GỌI NGAY" : "LƯU THỰC ĐƠN"}
+                <button disabled={submitting || getSelectedItemsCount()===0} onClick={handleSubmitSelections} className={`w-full md:w-auto px-12 py-4 rounded-none text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${getSelectedItemsCount()===0 ? "bg-sage-100 border-sage-200 text-sage-400" : orderMode === 'extra' ? "bg-amber-600 border-amber-700 text-white hover:bg-amber-700" : "bg-primary-900 border-primary-950 text-white hover:bg-black"}`}>
+                  <span className="relative z-10">{submitting ? "Đang xử lý..." : orderMode === 'extra' ? "Xác Nhận Gọi Món" : "Lưu Thực Đơn"}</span>
                 </button>
               </div>
 
