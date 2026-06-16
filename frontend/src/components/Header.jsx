@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard } from "lucide-react";
+import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, UtensilsCrossed } from "lucide-react";
 
 const navItems = [
   { label: "Trang chủ", href: "/" },
   { label: "Phòng nghỉ", href: "/phong-o" },
   { label: "Spa & Wellness", href: "/spa" },
-  { label: "Ẩm thực", href: "/nha-hang" },
+  {
+    label: "Ẩm thực",
+    dropdown: [
+      { label: "Nhà hàng Ngũ Sơn", href: "/nha-hang" },
+      { label: "Đặt thực đơn", href: "/guest-dashboard" }
+    ]
+  },
   { label: "Khuyến mãi", href: "/khuyen-mai" },
   { label: "Blog", href: "/blog" },
-  { label: "Đặt đồ ăn", href: "/guest-dashboard" },
 ];
 
 export default function Header() {
@@ -79,8 +84,8 @@ export default function Header() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showGlass
-          ? "glass-header shadow-[0_2px_15px_rgba(0,0,0,0.03)] py-3.5"
-          : "bg-gradient-to-b from-black/60 to-transparent py-6"
+        ? "glass-header shadow-[0_2px_15px_rgba(0,0,0,0.03)] py-3.5"
+        : "bg-gradient-to-b from-black/60 to-transparent py-6"
         }`}
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
@@ -92,8 +97,8 @@ export default function Header() {
           >
             <div
               className={`relative p-2 rounded-full transition-all duration-500 ease-out group-hover:scale-110 ${showGlass
-                  ? "bg-primary-100 text-primary-800 group-hover:bg-primary-200"
-                  : "bg-white/10 text-white group-hover:bg-white/20"
+                ? "bg-primary-100 text-primary-800 group-hover:bg-primary-200"
+                : "bg-white/10 text-white group-hover:bg-white/20"
                 }`}
             >
               <Leaf className="h-5 w-5 transition-transform duration-500 ease-out group-hover:rotate-[15deg]" />
@@ -117,14 +122,34 @@ export default function Header() {
           {/* Center Side: Simplified Menu Items with Sliding Underlines */}
           <nav className="hidden xl:flex space-x-8 font-medium text-sm tracking-wide flex-shrink-0">
             {navItems.map((item, index) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || (item.dropdown && item.dropdown.some(sub => location.pathname === sub.href));
+
+              if (item.dropdown) {
+                return (
+                  <div key={index} className="relative group">
+                    <span className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${isActive ? "after:scale-x-100" : "after:scale-x-0 group-hover:after:scale-x-100"} ${showGlass ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${isActive ? "text-primary-900 font-semibold" : ""}` : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white font-semibold" : ""}`} cursor-pointer flex items-center gap-1`}>
+                      {item.label} <ChevronDown className="w-3.5 h-3.5" />
+                    </span>
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-primary-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="py-2">
+                        {item.dropdown.map((subItem, subIdx) => (
+                          <Link key={subIdx} to={subItem.href} className="block px-4 py-2 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                            {subItem.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={index}
                   to={item.href}
                   className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${isActive
-                      ? "after:scale-x-100"
-                      : "after:scale-x-0 hover:after:scale-x-100"
+                    ? "after:scale-x-100"
+                    : "after:scale-x-0 hover:after:scale-x-100"
                     } ${showGlass
                       ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${isActive ? "text-primary-900 font-semibold" : ""
                       }`
@@ -147,8 +172,8 @@ export default function Header() {
                   <button
                     onClick={() => setDropdownOpen((prev) => !prev)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 cursor-pointer ${showGlass
-                        ? "bg-primary-100 hover:bg-primary-200 text-primary-900"
-                        : "bg-white/15 hover:bg-white/25 text-white"
+                      ? "bg-primary-100 hover:bg-primary-200 text-primary-900"
+                      : "bg-white/15 hover:bg-white/25 text-white"
                       }`}
                   >
                     {/* Initials avatar */}
@@ -232,8 +257,8 @@ export default function Header() {
             <Link
               to="/dat-lich"
               className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${showGlass
-                  ? "bg-primary-800 hover:bg-primary-900 text-white"
-                  : "bg-white hover:bg-white/95 text-primary-950"
+                ? "bg-primary-800 hover:bg-primary-900 text-white"
+                : "bg-white hover:bg-white/95 text-primary-950"
                 }`}
             >
               Đặt lịch
@@ -246,8 +271,8 @@ export default function Header() {
               onClick={() => setIsOpen(!isOpen)}
               type="button"
               className={`inline-flex items-center justify-center p-2 rounded-md transition-colors ${showGlass
-                  ? "text-sage-800 hover:bg-primary-50"
-                  : "text-white hover:bg-white/10"
+                ? "text-sage-800 hover:bg-primary-50"
+                : "text-white hover:bg-white/10"
                 }`}
               aria-controls="mobile-menu"
               aria-expanded={isOpen}
@@ -271,15 +296,31 @@ export default function Header() {
       >
         <div className="px-6 py-6 space-y-1 bg-white shadow-lg">
           {navItems.map((item, index) => {
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.href || (item.dropdown && item.dropdown.some(sub => location.pathname === sub.href));
+
+            if (item.dropdown) {
+              return (
+                <div key={index}>
+                  <div className="block px-3 py-2 text-sm font-semibold text-sage-800 opacity-70 uppercase tracking-widest mt-2 mb-1">
+                    {item.label}
+                  </div>
+                  {item.dropdown.map((subItem, subIdx) => (
+                    <Link key={subIdx} to={subItem.href} onClick={() => setIsOpen(false)} className={`block px-3 py-2.5 ml-4 rounded-md text-sm font-medium transition-all duration-200 hover:translate-x-1.5 ${location.pathname === subItem.href ? "bg-primary-50 text-primary-900 font-semibold border-l-2 border-primary-800" : "text-sage-800 hover:bg-primary-50 hover:text-primary-900"}`}>
+                      {subItem.label}
+                    </Link>
+                  ))}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={index}
                 to={item.href}
                 onClick={() => setIsOpen(false)}
                 className={`block px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 hover:translate-x-1.5 ${isActive
-                    ? "bg-primary-50 text-primary-900 font-semibold border-l-2 border-primary-800"
-                    : "text-sage-800 hover:bg-primary-50 hover:text-primary-900"
+                  ? "bg-primary-50 text-primary-900 font-semibold border-l-2 border-primary-800"
+                  : "text-sage-800 hover:bg-primary-50 hover:text-primary-900"
                   }`}
               >
                 {item.label}
