@@ -26,17 +26,16 @@ import Payment from "./pages/Payment";
 import PaymentResult from "./pages/PaymentResult";
 import ProfilePage from "./pages/ProfilePage";
 
+import CustomerLayout from "./layouts/CustomerLayout";
+
 function App() {
   return (
     <Router>
       <ScrollToTop />
       <div className="min-h-screen flex flex-col scroll-smooth selection:bg-primary-200 selection:text-sage-900">
-        {/* Navigation Header (Shared across all pages) */}
-        <Header />
-
-        {/* Main Routed Content */}
-        <main className="flex-grow">
-          <Routes>
+        <Routes>
+          {/* Public Customer Routes */}
+          <Route element={<CustomerLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/spa" element={<Spa />} />
@@ -49,21 +48,20 @@ function App() {
             <Route path="/dang-nhap" element={<Login />} />
             <Route path="/dang-ky" element={<Register />} />
             <Route path="/quen-mat-khau" element={<ForgotPassword />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/staff" element={<StaffDashboard />} />
-            <Route path="/chef" element={<ChefDashboard />} />
-            <Route path="/specialist" element={<SpecialistDashboard />} />
             <Route path="/ho-so-suc-khoe" element={<HealthProfile />} />
             <Route path="/dat-lich" element={<BookingPage />} />
             <Route path="/guest-dashboard" element={<GuestDashboard />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-result" element={<PaymentResult />} />
             <Route path="/tai-khoan/*" element={<ProfilePage />} />
-          </Routes>
-        </main>
+          </Route>
 
-        {/* Footer Info (Shared across all pages) */}
-        <Footer />
+          {/* Operations / Dashboard Routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/staff" element={<StaffDashboard />} />
+          <Route path="/chef" element={<ChefDashboard />} />
+          <Route path="/specialist" element={<SpecialistDashboard />} />
+        </Routes>
       </div>
     </Router>
   );

@@ -86,8 +86,8 @@ public class UserServiceImpl implements UserService {
                     .build();
             user = userRepository.save(user);
         } else {
-            // Cập nhật lại fullName nếu tên từ Google có thay đổi (hoặc để sửa lỗi font chữ cũ)
-            if (request.getFullName() != null && !request.getFullName().equals(user.getFullName())) {
+            // Chỉ cập nhật fullName nếu tên hiện tại trong hệ thống bị trống hoặc null
+            if (request.getFullName() != null && !request.getFullName().isBlank() && (user.getFullName() == null || user.getFullName().isBlank())) {
                 user.setFullName(request.getFullName());
                 user = userRepository.save(user);
             }

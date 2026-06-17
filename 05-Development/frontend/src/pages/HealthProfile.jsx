@@ -14,31 +14,14 @@ import {
 import heroBg from "../assets/hero_bg.png";
 import { medicalApi } from "../api";
 
-// Food allergy options matching SRS
-const ALLERGY_OPTIONS = [
-  { key: "peanuts", label: "Đậu phộng (Peanuts)" },
-  { key: "gluten", label: "Gluten / Lúa mì" },
-  { key: "shellfish", label: "Hải sản có vỏ (Shellfish)" },
-  { key: "dairy", label: "Sữa / Lactose" },
-  { key: "eggs", label: "Trứng" },
-  { key: "soy", label: "Đậu nành (Soy)" },
-  { key: "treenuts", label: "Hạt cây (Tree nuts)" },
-  { key: "fish", label: "Cá" },
-];
-
-// Dietary preference options
-const DIET_OPTIONS = [
-  { key: "omnivore", label: "Ăn tạp (Omnivore)" },
-  { key: "vegetarian", label: "Chay (Vegetarian)" },
-  { key: "vegan", label: "Thuần chay (Vegan)" },
-  { key: "pescatarian", label: "Ăn cá (Pescatarian)" },
-  { key: "keto", label: "Keto" },
-  { key: "halal", label: "Halal" },
-];
+import { ALLERGY_OPTIONS, DIET_OPTIONS } from "../constants/options";
 
 export default function HealthProfile() {
   const navigate = useNavigate();
-  const userFullName = localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "Khách hàng";
+  const hasLocalToken = !!localStorage.getItem("token");
+  const userFullName = hasLocalToken
+    ? (localStorage.getItem("userFullName") || "Khách hàng")
+    : (sessionStorage.getItem("userFullName") || "Khách hàng");
 
   // Form state
   const [selectedAllergies, setSelectedAllergies] = useState([]);
