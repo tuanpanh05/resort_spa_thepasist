@@ -1,0 +1,108 @@
+import { Coffee, Sun, Moon } from "lucide-react";
+
+export const ALLERGY_OPTIONS = [
+  { key: "peanuts", label: "Đậu phộng (Peanuts)" },
+  { key: "gluten", label: "Gluten / Lúa mì" },
+  { key: "shellfish", label: "Hải sản có vỏ (Shellfish)" },
+  { key: "dairy", label: "Sữa / Lactose" },
+  { key: "eggs", label: "Trứng" },
+  { key: "soy", label: "Đậu nành (Soy)" },
+  { key: "treenuts", label: "Hạt cây (Tree nuts)" },
+  { key: "fish", label: "Cá" },
+];
+
+export const DIET_OPTIONS = [
+  { key: "omnivore", label: "Ăn tạp (Omnivore)" },
+  { key: "vegetarian", label: "Chay (Vegetarian)" },
+  { key: "vegan", label: "Thuần chay (Vegan)" },
+  { key: "pescatarian", label: "Ăn cá (Pescatarian)" },
+  { key: "keto", label: "Keto" },
+  { key: "halal", label: "Halal" },
+];
+
+export const villasList = [
+  {
+    id: "wood-bungalow",
+    title: "Bungalow Gỗ Hướng Suối",
+    description: "Nằm ẩn mình dưới tán cây cổ thụ bên khe suối nhỏ. Thiết kế mở vách kính đón sương mai, bồn Hinoki thơm ngát.",
+    price: 3200000,
+    size: "65 m²",
+    capacity: "2 Người lớn",
+    view: "Hướng Suối",
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: "zen-villa",
+    title: "Biệt Thự Đồi Trà Thiền Định",
+    description: "Tọa lạc trên đỉnh đồi lộng gió view 360 độ ra thung lũng Ngũ Sơn. Tích hợp phòng tập yoga riêng biệt và hồ bơi khoáng nóng.",
+    price: 5800000,
+    size: "120 m²",
+    capacity: "4 Người lớn",
+    view: "Thung Lũng & Đồi Trà",
+    image: "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: "lotus-family-villa",
+    title: "Biệt Thự Gia Đình Sen Trắng",
+    description: "Nằm biệt lập bên đồi thông yên tĩnh với vườn sen bao quanh. Thiết kế 3 phòng ngủ tiện nghi, phòng khách và bếp đầy đủ.",
+    price: 7500000,
+    size: "180 m²",
+    capacity: "6 - 8 Người lớn",
+    view: "Đồi Thông & Hồ Sen",
+    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: "pebble-bungalow",
+    title: "Bungalow Đá Cuội Bên Rừng",
+    description: "Vách đá cuội tự nhiên mộc mạc và sang trọng sườn đồi thông. Sở hữu bồn tắm lộ thiên và mái kính ngắm sao đêm tuyệt đẹp.",
+    price: 3800000,
+    size: "75 m²",
+    capacity: "2 Người lớn",
+    view: "Rừng Thông",
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+  },
+];
+
+export const servicesList = [
+  {
+    id: "srv-spa",
+    title: "Spa & Trị Liệu Thảo Dược Cổ Truyền",
+    description: "Ngâm lá thuốc Dao Đỏ đun trong nồi đồng, massage đá nóng và xông hơi thảo mộc.",
+    price: 800000,
+    type: "per-guest",
+  },
+  {
+    id: "srv-yoga",
+    title: "Hatha Yoga Phục Hồi & Thiền Chuông Xoay",
+    description: "Buổi thiền hành sớm mai kết hợp lớp yoga trị liệu trị liệu mỏi cổ vai gáy.",
+    price: 500000,
+    type: "per-guest",
+  },
+  {
+    id: "srv-physio",
+    title: "Vật Lý Trị Liệu Xương Khớp Cột Sống",
+    description: "Chương trình nắn chỉnh cột sống chuyên sâu thực hiện bởi bác sĩ y khoa.",
+    price: 1200000,
+    type: "per-guest",
+  },
+  {
+    id: "srv-meals",
+    title: "Gói Ẩm Thực Thực Dưỡng Organic (3 bữa/ngày)",
+    description: "Chế độ ăn hữu cơ thuần tự nhiên giúp đào thải độc tố cơ thể hiệu quả.",
+    price: 1000000,
+    type: "per-guest-per-night",
+  },
+  {
+    id: "srv-pickup",
+    title: "Xe Điện Đón Tiễn Sân Bay Đà Nẵng",
+    description: "Xe sang đón tiễn hai chiều đảm bảo sự thoải mái tối đa cho hành trình.",
+    price: 600000,
+    type: "flat",
+  },
+];
+
+export const mealPeriods = [
+  { key: "Breakfast", label: "Bữa Sáng", time: "06:30 - 09:30", icon: Coffee },
+  { key: "Lunch", label: "Bữa Trưa", time: "11:30 - 14:00", icon: Sun },
+  { key: "Dinner", label: "Bữa Tối", time: "18:00 - 21:00", icon: Moon },
+];

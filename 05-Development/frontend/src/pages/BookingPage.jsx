@@ -1,154 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  User,
-  Phone,
-  Mail,
-  Calendar,
-  Users,
-  AlertCircle,
-  Compass,
-  ArrowLeft,
-  Check,
-  ShieldCheck,
-  CheckCircle2,
-  Copy,
-  Info,
-  ChevronRight,
-  Loader2,
-  Heart,
-  Leaf,
-  UtensilsCrossed,
-  Coffee,
-  Sun,
-  Moon,
-  Plus,
-  Minus,
-  AlertTriangle,
-  ShieldAlert,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
 import axiosClient from "../api/axiosClient";
 
-// Food allergy options matching SRS
-const ALLERGY_OPTIONS = [
-  { key: "peanuts", label: "Đậu phộng (Peanuts)" },
-  { key: "gluten", label: "Gluten / Lúa mì" },
-  { key: "shellfish", label: "Hải sản có vỏ (Shellfish)" },
-  { key: "dairy", label: "Sữa / Lactose" },
-  { key: "eggs", label: "Trứng" },
-  { key: "soy", label: "Đậu nành (Soy)" },
-  { key: "treenuts", label: "Hạt cây (Tree nuts)" },
-  { key: "fish", label: "Cá" },
-];
+import { villasList, servicesList } from "../constants/booking";
+import { detectAllergens } from "../utils/health";
 
-// Dietary preference options
-const DIET_OPTIONS = [
-  { key: "omnivore", label: "Ăn tạp (Omnivore)" },
-  { key: "vegetarian", label: "Chay (Vegetarian)" },
-  { key: "vegan", label: "Thuần chay (Vegan)" },
-  { key: "pescatarian", label: "Ăn cá (Pescatarian)" },
-  { key: "keto", label: "Keto" },
-  { key: "halal", label: "Halal" },
-];
-
-// Mock data list for Villas (matching room items from mockData.js or rooms page)
-const villasList = [
-  {
-    id: "wood-bungalow",
-    title: "Bungalow Gỗ Hướng Suối",
-    description: "Nằm ẩn mình dưới tán cây cổ thụ bên khe suối nhỏ. Thiết kế mở vách kính đón sương mai, bồn Hinoki thơm ngát.",
-    price: 3200000,
-    size: "65 m²",
-    capacity: "2 Người lớn",
-    view: "Hướng Suối",
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "zen-villa",
-    title: "Biệt Thự Đồi Trà Thiền Định",
-    description: "Tọa lạc trên đỉnh đồi lộng gió view 360 độ ra thung lũng Ngũ Sơn. Tích hợp phòng tập yoga riêng biệt và hồ bơi khoáng nóng.",
-    price: 5800000,
-    size: "120 m²",
-    capacity: "4 Người lớn",
-    view: "Thung Lũng & Đồi Trà",
-    image: "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "lotus-family-villa",
-    title: "Biệt Thự Gia Đình Sen Trắng",
-    description: "Nằm biệt lập bên đồi thông yên tĩnh với vườn sen bao quanh. Thiết kế 3 phòng ngủ tiện nghi, phòng khách và bếp đầy đủ.",
-    price: 7500000,
-    size: "180 m²",
-    capacity: "6 - 8 Người lớn",
-    view: "Đồi Thông & Hồ Sen",
-    image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "pebble-bungalow",
-    title: "Bungalow Đá Cuội Bên Rừng",
-    description: "Vách đá cuội tự nhiên mộc mạc và sang trọng sườn đồi thông. Sở hữu bồn tắm lộ thiên và mái kính ngắm sao đêm tuyệt đẹp.",
-    price: 3800000,
-    size: "75 m²",
-    capacity: "2 Người lớn",
-    view: "Rừng Thông",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-  },
-];
-
-// Mock data list for Wellness Services
-const servicesList = [
-  {
-    id: "srv-spa",
-    title: "Spa & Trị Liệu Thảo Dược Cổ Truyền",
-    description: "Ngâm lá thuốc Dao Đỏ đun trong nồi đồng, massage đá nóng và xông hơi thảo mộc.",
-    price: 800000,
-    type: "per-guest",
-  },
-  {
-    id: "srv-yoga",
-    title: "Hatha Yoga Phục Hồi & Thiền Chuông Xoay",
-    description: "Buổi thiền hành sớm mai kết hợp lớp yoga trị liệu trị liệu mỏi cổ vai gáy.",
-    price: 500000,
-    type: "per-guest",
-  },
-  {
-    id: "srv-physio",
-    title: "Vật Lý Trị Liệu Xương Khớp Cột Sống",
-    description: "Chương trình nắn chỉnh cột sống chuyên sâu thực hiện bởi bác sĩ y khoa.",
-    price: 1200000,
-    type: "per-guest",
-  },
-  {
-    id: "srv-meals",
-    title: "Gói Ẩm Thực Thực Dưỡng Organic (3 bữa/ngày)",
-    description: "Chế độ ăn hữu cơ thuần tự nhiên giúp đào thải độc tố cơ thể hiệu quả.",
-    price: 1000000,
-    type: "per-guest-per-night",
-  },
-  {
-    id: "srv-pickup",
-    title: "Xe Điện Đón Tiễn Sân Bay Đà Nẵng",
-    description: "Xe sang đón tiễn hai chiều đảm bảo sự thoải mái tối đa cho hành trình.",
-    price: 600000,
-    type: "flat",
-  },
-];
-
-
-const mealPeriods = [
-  { key: "Breakfast", label: "Bữa Sáng", time: "06:30 - 09:30", icon: Coffee },
-  { key: "Lunch", label: "Bữa Trưa", time: "11:30 - 14:00", icon: Sun },
-  { key: "Dinner", label: "Bữa Tối", time: "18:00 - 21:00", icon: Moon },
-];
-
-const detectAllergens = (healthNote) => {
-  const note = (healthNote || "").toLowerCase();
-  const allergens = [];
-  if (note.includes("đậu phộng") || note.includes("peanut") || note.includes("lạc")) allergens.push("peanut");
-  if (note.includes("hải sản") || note.includes("seafood") || note.includes("tôm")) allergens.push("seafood");
-  return allergens;
-};
+import BookingWizardHeader from "../components/booking/BookingWizardHeader";
+import GuestInfoStep from "../components/booking/GuestInfoStep";
+import HealthProfileStep from "../components/booking/HealthProfileStep";
+import VillaSelectionStep from "../components/booking/VillaSelectionStep";
+import MealSelectionStep from "../components/booking/MealSelectionStep";
+import ConfirmationStep from "../components/booking/ConfirmationStep";
+import BookingBillSummary from "../components/booking/BookingBillSummary";
+import BookingSuccess from "../components/booking/BookingSuccess";
 
 export default function BookingPage() {
   const navigate = useNavigate();
@@ -192,7 +58,7 @@ export default function BookingPage() {
   const [selectedVillaId, setSelectedVillaId] = useState(villasList[0].id);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
 
-  // Step 3: Meal Selections { "yyyy-MM-dd": { "Breakfast": { foodId: qty }, ... } }
+  // Step 4: Meal Selections { "yyyy-MM-dd": { "Breakfast": { foodId: qty }, ... } }
   const [mealSelections, setMealSelections] = useState({});
   const [selectedMealDate, setSelectedMealDate] = useState("");
   const [mealBookingDays, setMealBookingDays] = useState([]);
@@ -211,7 +77,6 @@ export default function BookingPage() {
     const fetchMenuStatus = async () => {
       try {
         const res = await axiosClient.get("/chef/menu");
-        // Lọc ra các món đang được bật phục vụ hôm nay VÀ nằm trong gói
         const validDishes = res.data.filter(item => 
           item.enabled !== false && 
           item.isTodayMenu !== false &&
@@ -239,9 +104,8 @@ export default function BookingPage() {
     fetchMenuStatus();
   }, []);
 
-  // Calculates nights between check-in and check-out
   const [nightsCount, setNightsCount] = useState(2);
-  const [packageDuration, setPackageDuration] = useState(3); // 3 or 5 days
+  const [packageDuration, setPackageDuration] = useState(3);
 
   useEffect(() => {
     const checkIn = new Date(guestInfo.checkInDate);
@@ -253,7 +117,6 @@ export default function BookingPage() {
     setGuestInfo((prev) => ({ ...prev, checkOutDate: checkOut.toISOString().split("T")[0] }));
   }, [guestInfo.checkInDate, packageDuration]);
 
-  // Calculate booking days for meal selection
   useEffect(() => {
     const checkIn = new Date(guestInfo.checkInDate);
     const checkOut = new Date(guestInfo.checkOutDate);
@@ -273,15 +136,11 @@ export default function BookingPage() {
     }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
-  // Selected Villa Info
   const selectedVilla = villasList.find((v) => v.id === selectedVillaId);
-
-  // Calculates Pricing Breakdown
   const villaTotal = selectedVilla ? selectedVilla.price * nightsCount : 0;
 
   let servicesTotal = 0;
   const selectedServices = servicesList.filter((s) => selectedServiceIds.includes(s.id));
-
   selectedServices.forEach((s) => {
     if (s.type === "per-guest") {
       servicesTotal += s.price * guestInfo.guestsCount;
@@ -292,7 +151,6 @@ export default function BookingPage() {
     }
   });
 
-  // Meal total calculation
   const calculateMealTotal = () => {
     let extra = 0;
     Object.entries(mealSelections).forEach(([date, dateObj]) => {
@@ -336,10 +194,9 @@ export default function BookingPage() {
   };
 
   const totalAmount = villaTotal + servicesTotal + mealTotal;
-  const depositAmount = totalAmount * 0.3; // 30% deposit
-  const remainingAmount = totalAmount * 0.7; // 70% paid at counter
+  const depositAmount = totalAmount * 0.3;
+  const remainingAmount = totalAmount * 0.7;
 
-  // Form input validation for Step 1
   const validateStep1 = () => {
     const errors = {};
     if (!guestInfo.fullName.trim()) errors.fullName = "Vui lòng nhập họ và tên.";
@@ -356,7 +213,6 @@ export default function BookingPage() {
 
     const checkIn = new Date(guestInfo.checkInDate);
     const checkOut = new Date(guestInfo.checkOutDate);
-
     if (checkOut <= checkIn) {
       errors.checkOutDate = "Ngày trả phòng phải sau ngày nhận phòng.";
     }
@@ -366,1432 +222,231 @@ export default function BookingPage() {
   };
 
   const validateStep2 = () => {
-    // Making consent optional as requested, so the system can show the warning if unselected
     const errors = {};
     setFormErrors(errors);
     return true;
   };
 
-    // Navigations between steps (6-step wizard)
-    const handleNextStep = () => {
-      if (step === 1) {
-        if (validateStep1()) setStep(2);
-      } else if (step === 2) {
-        if (validateStep2()) setStep(3);
-      } else if (step === 3) {
-        setStep(4);
-      } else if (step === 4) {
-        setStep(5);
-      }
-    };
+  const handleNextStep = () => {
+    if (step === 1) {
+      if (validateStep1()) setStep(2);
+    } else if (step === 2) {
+      if (validateStep2()) setStep(3);
+    } else if (step === 3) {
+      setStep(4);
+    } else if (step === 4) {
+      setStep(5);
+    }
+  };
 
-    const handlePrevStep = () => {
-      if (step > 1 && step < 6) {
-        setStep(step - 1);
-      }
-    };
+  const handlePrevStep = () => {
+    if (step > 1 && step < 6) {
+      setStep(step - 1);
+    }
+  };
 
-    // Submit Draft and go to Payment
-    const handleConfirmBooking = () => {
-      setIsConfirming(true);
-      setTimeout(() => {
-        setIsConfirming(false);
-        setBookingStatus("PENDING_PAYMENT");
-        setPaymentStatus("PENDING");
-        setStep(6);
-      }, 1800);
-    };
+  const handleVerifyPayment = async () => {
+    setIsVerifyingPayment(true);
+    try {
+      const payload = {
+        fullName: guestInfo.fullName,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
+        checkInDate: guestInfo.checkInDate,
+        checkOutDate: guestInfo.checkOutDate,
+        guestsCount: guestInfo.guestsCount,
+        villaId: selectedVillaId,
+        packageId: packageDuration === 3 ? 1 : 2,
+        serviceIds: selectedServiceIds,
+        allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
+        explicitConsentSigned: consentDataProcessing && consentSharing,
+        mealSelections: mealSelections
+      };
 
-    // Verify deposit payment QR code and create booking via API
-    const handleVerifyPayment = async () => {
-      setIsVerifyingPayment(true);
-      try {
-        const payload = {
-          fullName: guestInfo.fullName,
-          email: guestInfo.email,
-          phone: guestInfo.phone,
-          checkInDate: guestInfo.checkInDate,
-          checkOutDate: guestInfo.checkOutDate,
-          guestsCount: guestInfo.guestsCount,
-          villaId: selectedVillaId,
-          packageId: packageDuration === 3 ? 1 : 2, // Example package mapping
-          serviceIds: selectedServiceIds,
-          allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
-          explicitConsentSigned: consentDataProcessing && consentSharing,
-          mealSelections: mealSelections
-        };
+      const res = await axiosClient.post('/bookings/create', payload);
+      console.log("Booking created successfully:", res.data);
 
-        const res = await axiosClient.post('/bookings/create', payload);
-        console.log("Booking created successfully:", res.data);
+      setBookingStatus("CONFIRMED");
+      setPaymentStatus("PAID");
+    } catch (err) {
+      console.error("Failed to create booking", err);
+      setBookingStatus("CONFIRMED");
+      setPaymentStatus("PAID");
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
 
-        setBookingStatus("CONFIRMED");
-        setPaymentStatus("PAID");
-      } catch (err) {
-        console.error("Failed to create booking", err);
-        // For resilience, allow UI to advance even if API fails
-        setBookingStatus("CONFIRMED");
-        setPaymentStatus("PAID");
-      } finally {
-        setIsVerifyingPayment(false);
-      }
-    };
-
-    // Toggle selected service add-ons
-    const handleToggleService = (srvId) => {
-      setSelectedServiceIds((prev) =>
-        prev.includes(srvId) ? prev.filter((id) => id !== srvId) : [...prev, srvId]
-      );
-    };
-
-    // Helper formatting for currency
-    const formatCurrency = (val) => {
-      return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-      }).format(val);
-    };
-
-    // Copy bank field text helper
-    const handleCopyText = (text, field) => {
-      navigator.clipboard.writeText(text);
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 2000);
-    };
-
-    // Mock QR Code SVG
-    const qrCodeSvg = (
-      <svg className="w-full h-full text-sage-900" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" rx="4" fill="white" />
-        <rect x="6" y="6" width="22" height="22" stroke="currentColor" strokeWidth="4" fill="none" />
-        <rect x="11" y="11" width="12" height="12" fill="currentColor" />
-        <rect x="72" y="6" width="22" height="22" stroke="currentColor" strokeWidth="4" fill="none" />
-        <rect x="77" y="11" width="12" height="12" fill="currentColor" />
-        <rect x="6" y="72" width="22" height="22" stroke="currentColor" strokeWidth="4" fill="none" />
-        <rect x="11" y="77" width="12" height="12" fill="currentColor" />
-
-        <rect x="34" y="6" width="8" height="8" fill="currentColor" />
-        <rect x="48" y="6" width="12" height="4" fill="currentColor" />
-        <rect x="34" y="18" width="16" height="4" fill="currentColor" />
-        <rect x="54" y="14" width="8" height="12" fill="currentColor" />
-
-        <rect x="6" y="34" width="8" height="4" fill="currentColor" />
-        <rect x="20" y="34" width="18" height="4" fill="currentColor" />
-        <rect x="44" y="30" width="12" height="12" fill="currentColor" />
-        <rect x="60" y="34" width="6" height="18" fill="currentColor" />
-        <rect x="72" y="34" width="22" height="4" fill="currentColor" />
-
-        <rect x="6" y="44" width="12" height="12" fill="currentColor" />
-        <rect x="22" y="44" width="4" height="20" fill="currentColor" />
-        <rect x="30" y="48" width="10" height="4" fill="currentColor" />
-        <rect x="72" y="44" width="10" height="20" fill="currentColor" />
-        <rect x="86" y="44" width="8" height="8" fill="currentColor" />
-
-        <rect x="6" y="60" width="4" height="8" fill="currentColor" />
-        <rect x="14" y="60" width="14" height="4" fill="currentColor" />
-        <rect x="34" y="60" width="14" height="14" fill="currentColor" />
-        <rect x="52" y="60" width="12" height="4" fill="currentColor" />
-
-        <rect x="34" y="78" width="18" height="4" fill="currentColor" />
-        <rect x="56" y="70" width="12" height="18" fill="currentColor" />
-        <rect x="72" y="72" width="22" height="4" fill="currentColor" />
-        <rect x="72" y="80" width="10" height="14" fill="currentColor" />
-        <rect x="86" y="80" width="8" height="8" fill="currentColor" />
-        <rect x="6" y="90" width="24" height="4" fill="currentColor" />
-
-        {/* Center Icon */}
-        <rect x="42" y="42" width="16" height="16" rx="3" fill="white" stroke="currentColor" strokeWidth="2" />
-        <path d="M46 50 C46 47, 54 47, 54 50 C54 53, 46 51, 46 54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      </svg>
+  const handleToggleService = (srvId) => {
+    setSelectedServiceIds((prev) =>
+      prev.includes(srvId) ? prev.filter((id) => id !== srvId) : [...prev, srvId]
     );
-
-    return (
-      <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20 font-sans text-sage-950">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8">
-
-          {/* Navigation Breadcrumbs */}
-          <div className="mb-8 flex items-center justify-between">
-            <Link
-              to="/"
-              className="inline-flex items-center text-xs font-semibold tracking-wider text-sage-600 hover:text-primary-800 transition-colors uppercase"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại trang chủ
-            </Link>
-            <span className="text-[10px] bg-primary-100/50 border border-primary-200 text-primary-900 px-3 py-1 font-semibold uppercase tracking-wider">
-              Booking Wizard
-            </span>
-          </div>
-
-          {/* Page Header Title */}
-          <div className="text-center mb-12">
-            <h1 className="text-resort-title text-sage-950 mb-3 uppercase tracking-wide">
-              Đặt Lịch Trị Liệu & Nghỉ Dưỡng
-            </h1>
-            <p className="text-resort-desc max-w-lg mx-auto">
-              Khởi động hành trình phục hồi thân-tâm tại không gian xanh thanh bình của Ngũ Sơn Resort.
-            </p>
-          </div>
-
-          {/* Wizard Header (Steps Progress Bar) */}
-          {bookingStatus !== "CONFIRMED" && (
-            <div className="mb-12 max-w-4xl mx-auto">
-              <div className="flex items-center justify-between relative">
-
-                {/* Progress Line */}
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary-100 z-0" />
-                <div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary-600 transition-all duration-500 z-0"
-                  style={{ width: `${((step - 1) / 5) * 100}%` }}
-                />
-
-                {/* Step indicator node points */}
-                {[
-                  { number: 1, label: "Thông tin khách" },
-                  { number: 2, label: "Hồ sơ sức khỏe" },
-                  { number: 3, label: "Chọn Villa & Dịch vụ" },
-                  { number: 4, label: "Thực đơn trong gói" },
-                  { number: 5, label: "Xác nhận đơn" },
-                  { number: 6, label: "Thanh toán cọc" },
-                ].map((s) => {
-                  const isActive = step >= s.number;
-                  const isCurrent = step === s.number;
-                  return (
-                    <div key={s.number} className="flex flex-col items-center z-10">
-                      <div
-                        className={`h-9 w-9 flex items-center justify-center font-semibold text-xs transition-all duration-300 ${isActive
-                            ? "bg-primary-800 text-white border-2 border-primary-800"
-                            : "bg-white text-sage-400 border-2 border-primary-100"
-                          } ${isCurrent ? "scale-110 shadow-md ring-4 ring-primary-100" : ""}`}
-                      >
-                        {step > s.number ? <Check className="h-4 w-4" /> : s.number}
-                      </div>
-                      <span
-                        className={`mt-2.5 text-resort-stepper transition-colors duration-300 hidden md:block ${isActive ? "text-sage-950 font-medium" : "text-sage-400"
-                          }`}
-                      >
-                        {s.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* STEP PANELS CONTAINER */}
-          {bookingStatus === "CONFIRMED" ? (
-            /* FINAL SUCCESS STATE DISPLAY SCREEN */
-            <div className={`bg-white border border-primary-100 max-w-2xl mx-auto p-8 sm:p-12 text-center shadow-md animate-fade-in relative overflow-hidden ${radius.card}`}>
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary-400 via-primary-600 to-primary-400" />
-
-              <div className="inline-flex p-4 bg-primary-100 text-primary-800 rounded-full mb-6">
-                <CheckCircle2 className="h-14 w-14" />
-              </div>
-
-              <h1 className="font-serif text-3xl font-normal text-sage-900 mb-2">
-                Đặt Phòng Thành Công!
-              </h1>
-              <p className="text-sage-600 text-xs sm:text-sm max-w-md mx-auto mb-8 font-light leading-relaxed">
-                Cảm ơn quý khách đã tin tưởng lựa chọn Ngũ Sơn Resort. Giao dịch đặt cọc đã được xác minh thành công. Chi tiết đặt phòng đã được lưu ở trạng thái **CONFIRMED**.
-              </p>
-
-              {/* Final receipt breakdown */}
-              <div className="border border-primary-100 bg-primary-50/20 text-left p-6 sm:p-8 space-y-4 mb-8 text-xs sm:text-sm">
-                <div className="flex justify-between pb-3 border-b border-primary-100">
-                  <span className="font-bold uppercase tracking-wider text-sage-400 text-[10px]">
-                    Phiếu Đặt Lịch Trị Liệu & Nghỉ Dưỡng
-                  </span>
-                  <span className="font-mono text-primary-800 font-bold">
-                    CODE: BK-{Math.floor(100000 + Math.random() * 900000)}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-y-2.5">
-                  <span className="text-sage-500 font-light">Họ và tên khách hàng:</span>
-                  <span className="font-semibold text-right">{guestInfo.fullName}</span>
-
-                  <span className="text-sage-500 font-light">Số điện thoại liên lạc:</span>
-                  <span className="font-semibold text-right">{guestInfo.phone}</span>
-
-                  <span className="text-sage-500 font-light">Địa chỉ email:</span>
-                  <span className="font-semibold text-right">{guestInfo.email}</span>
-
-                  <span className="text-sage-500 font-light">Thời gian lưu trú:</span>
-                  <span className="font-semibold text-right">
-                    {guestInfo.checkInDate} → {guestInfo.checkOutDate} ({nightsCount} Đêm)
-                  </span>
-
-                  <span className="text-sage-500 font-light">Số khách đi cùng:</span>
-                  <span className="font-semibold text-right">{guestInfo.guestsCount} Khách</span>
-
-                  <span className="text-sage-500 font-light">Căn biệt thự đã chọn:</span>
-                  <span className="font-semibold text-right text-primary-800">{selectedVilla?.title}</span>
-
-                  {selectedServices.length > 0 && (
-                    <>
-                      <span className="text-sage-500 font-light">Các dịch vụ kèm theo:</span>
-                      <span className="font-semibold text-right text-sage-700">
-                        {selectedServices.map((s) => s.title.split("&")[0].trim()).join(", ")}
-                      </span>
-                    </>
-                  )}
-
-                  <span className="text-sage-500 font-bold mt-4 pt-4 border-t border-primary-100">MÃ ĂN (Dùng để gọi món):</span>
-                  <span className="font-bold text-right text-lg text-primary-900 mt-4 pt-4 border-t border-primary-100">
-                    MEAL-{Math.floor(100 + Math.random() * 900)}
-                  </span>
-                </div>
-
-                <div className="pt-4 border-t border-primary-100 space-y-2.5 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-sage-500 font-light">Tổng chi phí đặt phòng:</span>
-                    <span className="font-semibold text-sage-950">{formatCurrency(totalAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-green-700 font-semibold bg-green-50 px-2 py-1">
-                    <span>Số tiền cọc đã thanh toán (30%):</span>
-                    <span>{formatCurrency(depositAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-primary-950 font-bold border-t border-primary-100/50 pt-2 text-sm sm:text-base font-serif">
-                    <span>Số tiền cần trả tại quầy (70%):</span>
-                    <span>{formatCurrency(remainingAmount)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link
-                  to="/"
-                  className="inline-flex items-center justify-center px-8 py-3 bg-primary-800 text-white text-resort-button tracking-wider hover:bg-primary-900 transition-all uppercase rounded-none cursor-pointer"
-                >
-                  Về trang chủ
-                </Link>
-                <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center justify-center px-8 py-3 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none"
-                >
-                  In phiếu xác nhận
-                </button>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-sage-100 flex justify-center items-center text-[10px] text-sage-400 space-x-2">
-                <ShieldCheck className="h-4.5 w-4.5 text-primary-600" />
-                <span>Giao dịch bảo mật SSL. Email xác nhận đặt phòng đã được gửi tự động.</span>
-              </div>
-            </div>
-          ) : (
-            /* ACTIVE STEPS FLOW */
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-              {/* Left 8 Columns: Dynamic Step Form Panel */}
-              <div className={`lg:col-span-8 bg-white border border-primary-100 p-6 sm:p-8 shadow-xs ${radius.card}`}>
-
-                {/* Step 1 Page Content Panel */}
-                {step === 1 && (
-                  <div className="space-y-6 text-left animate-fade-in">
-                    <div className="border-b border-primary-50 pb-3 mb-6">
-                      <h2 className="text-resort-section text-sage-950 mb-1">
-                        Bước 1: Thông Tin Khách Hàng
-                      </h2>
-                      <p className="text-resort-desc mt-1">
-                        Vui lòng nhập các thông tin liên lạc chính xác để tạo hồ sơ khách lưu trú ban đầu.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm">
-
-                      {/* Full Name */}
-                      <div>
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Họ và tên <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="Nguyễn Văn A"
-                            value={guestInfo.fullName}
-                            onChange={(e) => {
-                              setGuestInfo({ ...guestInfo, fullName: e.target.value });
-                              setFormErrors({ ...formErrors, fullName: "" });
-                            }}
-                            className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${formErrors.fullName ? "border-red-400" : "border-primary-200/50"
-                              }`}
-                          />
-                          <User className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                        {formErrors.fullName && <span className="text-[10px] text-red-500 font-normal mt-1 block">{formErrors.fullName}</span>}
-                      </div>
-
-                      {/* Phone Number */}
-                      <div>
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Số điện thoại <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="tel"
-                            placeholder="0901234567"
-                            value={guestInfo.phone}
-                            onChange={(e) => {
-                              setGuestInfo({ ...guestInfo, phone: e.target.value });
-                              setFormErrors({ ...formErrors, phone: "" });
-                            }}
-                            className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${formErrors.phone ? "border-red-400" : "border-primary-200/50"
-                              }`}
-                          />
-                          <Phone className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                        {formErrors.phone && <span className="text-[10px] text-red-500 font-normal mt-1 block">{formErrors.phone}</span>}
-                      </div>
-
-                      {/* Email Address */}
-                      <div>
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Địa chỉ Email <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="email"
-                            placeholder="khachhang@gmail.com"
-                            value={guestInfo.email}
-                            onChange={(e) => {
-                              setGuestInfo({ ...guestInfo, email: e.target.value });
-                              setFormErrors({ ...formErrors, email: "" });
-                            }}
-                            className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${formErrors.email ? "border-red-400" : "border-primary-200/50"
-                              }`}
-                          />
-                          <Mail className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                        {formErrors.email && <span className="text-[10px] text-red-500 font-normal mt-1 block">{formErrors.email}</span>}
-                      </div>
-
-                      {/* Guests count */}
-                      <div>
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Số lượng khách hàng
-                        </label>
-                        <div className="relative">
-                          <select
-                            value={guestInfo.guestsCount}
-                            onChange={(e) => setGuestInfo({ ...guestInfo, guestsCount: Number(e.target.value) })}
-                            className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 appearance-none"
-                          >
-                            <option value="1">1 Khách nghỉ</option>
-                            <option value="2">2 Khách nghỉ</option>
-                            <option value="3">3 Khách nghỉ</option>
-                            <option value="4">4 Khách nghỉ</option>
-                            <option value="5">5 Khách nghỉ</option>
-                            <option value="6">Đoàn nghỉ đông (6+)</option>
-                          </select>
-                          <Users className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                      </div>
-
-                      {/* Check In Date */}
-                      <div>
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Ngày nhận phòng dự kiến <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="date"
-                            value={guestInfo.checkInDate}
-                            onChange={(e) => {
-                              setGuestInfo({ ...guestInfo, checkInDate: e.target.value });
-                              setFormErrors({ ...formErrors, checkInDate: "" });
-                            }}
-                            className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
-                          />
-                          <Calendar className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                      </div>
-
-                      {/* Package Duration Selector */}
-                      <div>
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Thời gian lưu trú (Theo gói) <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <select
-                            value={packageDuration}
-                            onChange={(e) => setPackageDuration(Number(e.target.value))}
-                            className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 appearance-none"
-                          >
-                            <option value={3}>Gói Trị Liệu Ngắn Ngày (3 Ngày 2 Đêm)</option>
-                            <option value={5}>Gói Trị Liệu Chuyên Sâu (5 Ngày 4 Đêm)</option>
-                          </select>
-                          <Calendar className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        </div>
-                      </div>
-
-                      {/* Removed Health Note from here as it is now in Step 2 */}
-
-                      {/* Special requests */}
-                      <div className="sm:col-span-2">
-                        <label className="block text-resort-label uppercase text-sage-900 mb-2">
-                          Yêu cầu đặc biệt khác
-                        </label>
-                        <div className="relative">
-                          <textarea
-                            placeholder="VD: Muốn phòng ở khu yên tĩnh, cần bố trí thêm 1 nôi em bé..."
-                            rows="2"
-                            value={guestInfo.specialRequest}
-                            onChange={(e) => setGuestInfo({ ...guestInfo, specialRequest: e.target.value })}
-                            className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-6 border-t border-primary-50 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleNextStep}
-                        className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
-                      >
-                        Khai báo sức khỏe <ChevronRight className="h-4 w-4 ml-1.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 2 Page Content Panel */}
-                {step === 2 && (
-                  <div className="space-y-8 text-left animate-fade-in">
-                    <div className="border-b border-primary-50 pb-3 mb-6">
-                      <h2 className="text-resort-section text-sage-950 mb-1">
-                        Bước 2: Hồ Sơ Sức Khỏe & Chế Độ Ăn
-                      </h2>
-                      <p className="text-resort-desc">
-                        Thông tin sức khỏe giúp chúng tôi cá nhân hóa dịch vụ Spa, thực đơn và trị liệu dành riêng cho bạn. Dữ liệu sẽ được mã hóa và bảo mật.
-                      </p>
-                    </div>
-
-                    {formErrors.consent && (
-                      <div className="mb-6 p-4 bg-red-50 text-red-700 text-sm border border-red-100 flex items-start gap-2">
-                        <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                        <span>{formErrors.consent}</span>
-                      </div>
-                    )}
-
-                    <div className="space-y-8">
-                      {/* Section 1: Dietary Preference */}
-                      <div>
-                        <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <Leaf className="h-4 w-4 text-primary-700" />
-                          Chế Độ Ăn Uống
-                        </h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {DIET_OPTIONS.map((opt) => (
-                            <label
-                              key={opt.key}
-                              className={`flex items-center justify-center p-3 rounded-none border cursor-pointer text-xs font-semibold transition-all ${dietaryPreference === opt.key
-                                  ? "border-primary-800 bg-primary-50 text-primary-900"
-                                  : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
-                                }`}
-                            >
-                              <input
-                                type="radio"
-                                name="dietaryPreference"
-                                value={opt.key}
-                                checked={dietaryPreference === opt.key}
-                                onChange={() => setDietaryPreference(opt.key)}
-                                className="sr-only"
-                              />
-                              {opt.label}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Section 2: Food Allergies */}
-                      <div>
-                        <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4 text-amber-600" />
-                          Dị Ứng Thực Phẩm
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3 mb-3">
-                          {ALLERGY_OPTIONS.map((opt) => (
-                            <label
-                              key={opt.key}
-                              className={`flex items-center gap-2 p-3 rounded-none border cursor-pointer text-xs font-medium transition-all ${selectedAllergies.includes(opt.key)
-                                  ? "border-amber-400 bg-amber-50 text-amber-800"
-                                  : "border-primary-100 bg-white text-sage-600 hover:border-primary-300"
-                                }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedAllergies.includes(opt.key)}
-                                onChange={() => toggleAllergy(opt.key)}
-                                className="w-4 h-4 accent-amber-500"
-                              />
-                              {opt.label}
-                            </label>
-                          ))}
-                        </div>
-                        <input
-                          type="text"
-                          value={otherAllergy}
-                          onChange={(e) => setOtherAllergy(e.target.value)}
-                          placeholder="Dị ứng khác (nếu có)..."
-                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
-                        />
-                      </div>
-
-                      {/* Section 3: Physical Condition */}
-                      <div>
-                        <h3 className="text-sm font-bold text-sage-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <Heart className="h-4 w-4 text-rose-500" />
-                          Tình Trạng Thể Chất
-                        </h3>
-                        <p className="text-xs text-sage-500 mb-3">
-                          Ví dụ: Đau lưng, huyết áp cao, đang mang thai... Thông tin này chỉ Kỹ thuật viên trị liệu mới được xem.
-                        </p>
-                        <textarea
-                          value={physicalCondition}
-                          onChange={(e) => setPhysicalCondition(e.target.value)}
-                          rows={3}
-                          placeholder="Mô tả tình trạng sức khỏe thể chất của bạn..."
-                          className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 resize-none"
-                        />
-                      </div>
-
-                      {/* Section 4: Explicit Consent */}
-                      <div className="bg-white border border-primary-100 p-6 sm:p-8 shadow-xs text-left mb-8 lg:mb-0">
-                        <div className="flex items-center gap-2 mb-4">
-                          <ShieldAlert className="h-5 w-5 text-sage-800" />
-                          <h3 className="font-serif text-base font-bold text-sage-950 uppercase tracking-wide">
-                            Bảo Mật Y Tế (NĐ 356)
-                          </h3>
-                        </div>
-                        <p className="text-xs text-sage-600 mb-6 font-light leading-relaxed">
-                          Dữ liệu về bệnh lý sức khỏe và dị ứng thực phẩm là thông tin y tế nhạy cảm. Theo **Nghị định 356/2025/NĐ-CP**, resort yêu cầu sự đồng ý tường minh từ quý khách trước khi xử lý dữ liệu để lọc thực đơn.
-                        </p>
-
-                        <div className="bg-sage-50/50 p-4 sm:p-5 border border-primary-100/50">
-                          <label className="flex items-start gap-3 cursor-pointer group">
-                            <input
-                              type="checkbox"
-                              checked={consentDataProcessing && consentSharing}
-                              onChange={(e) => {
-                                setConsentDataProcessing(e.target.checked);
-                                setConsentSharing(e.target.checked);
-                              }}
-                              className="w-4 h-4 mt-0.5 accent-primary-700 flex-shrink-0 cursor-pointer"
-                            />
-                            <div className="flex flex-col gap-2">
-                              <span className="text-xs sm:text-sm font-semibold text-sage-900">
-                                Tôi tự nguyện đồng ý cho phép nhà bếp Ngũ Sơn truy cập và xử lý dữ liệu dị ứng để tự động lọc món ăn gây hại.
-                              </span>
-                              <span className="text-[10px] sm:text-xs text-sage-500 italic">
-                                * Mặc định hộp kiểm là chưa chọn. Dữ liệu chỉ được xử lý khi bạn tích chọn.
-                              </span>
-                            </div>
-                          </label>
-                        </div>
-
-                        {!(consentDataProcessing && consentSharing) && (
-                          <div className="p-4 border border-amber-600/30 text-amber-700 bg-amber-50/50 text-xs mt-4">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                              <span className="font-semibold">Hệ thống chưa được phép lọc dị ứng.</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={handlePrevStep}
-                        className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
-                      >
-                        <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleNextStep}
-                        className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider hover:bg-primary-950 transition-all uppercase rounded-none flex items-center cursor-pointer"
-                      >
-                        Chọn Villa & Dịch vụ <ChevronRight className="h-4 w-4 ml-1.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3 Page Content Panel */}
-                {step === 3 && (
-                  <div className="space-y-8 text-left animate-fade-in">
-                    <div className="border-b border-primary-50 pb-3 mb-6">
-                      <h2 className="text-resort-section text-sage-950 mb-1">
-                        Bước 3: Chọn Không Gian & Trải Nghiệm
-                      </h2>
-                      <p className="text-resort-desc">
-                        Lựa chọn 1 biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
-                      </p>
-                    </div>
-
-                    {/* Villa Selection Row */}
-                    <div className="space-y-4">
-                      <h3 className="font-serif text-lg font-bold text-sage-900 border-l-2 border-primary-700 pl-3">
-                        Hạng Phòng & Biệt Thự Nghỉ Dưỡng
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {villasList.map((villa) => {
-                          const isSelected = selectedVillaId === villa.id;
-                          return (
-                            <div
-                              key={villa.id}
-                              onClick={() => setSelectedVillaId(villa.id)}
-                              className={`border transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between ${isSelected
-                                  ? "border-primary-800 ring-2 ring-primary-800/10 bg-primary-50/10"
-                                  : "border-primary-100 hover:border-primary-300 bg-white"
-                                }`}
-                            >
-                              <div className="relative h-44 overflow-hidden">
-                                <img
-                                  src={villa.image}
-                                  alt={villa.title}
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute top-3 right-3 bg-white/95 px-3 py-1 font-mono text-xs font-bold text-primary-950 border border-primary-200">
-                                  {formatCurrency(villa.price)}/đêm
-                                </div>
-                              </div>
-
-                              <div className="p-5 flex-grow space-y-2.5">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-[9px] font-bold text-primary-700 uppercase tracking-wider bg-primary-100/50 px-2 py-0.5">
-                                    {villa.view}
-                                  </span>
-                                  <span className="text-[10px] text-sage-400 font-mono font-medium">
-                                    {villa.size} | {villa.capacity}
-                                  </span>
-                                </div>
-                                <h4 className="font-serif text-base font-bold text-sage-950">
-                                  {villa.title}
-                                </h4>
-                                <p className="text-xs text-sage-600 font-light leading-relaxed">
-                                  {villa.description}
-                                </p>
-                              </div>
-
-                              <div className="px-5 pb-5 pt-1 flex justify-end">
-                                <span
-                                  className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 ${isSelected
-                                      ? "bg-primary-800 text-white"
-                                      : "bg-white border border-primary-200 text-sage-600 hover:bg-primary-50"
-                                    }`}
-                                >
-                                  {isSelected ? "✓ Đang chọn" : "Chọn phòng"}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Addon Services Selection Row */}
-                    <div className="space-y-4 pt-6 border-t border-primary-50">
-                      <h3 className="font-serif text-lg font-bold text-sage-900 border-l-2 border-primary-700 pl-3">
-                        Dịch Vụ Chăm Sóc Sức Khỏe & Tiện Ích
-                      </h3>
-
-                      <div className="space-y-3">
-                        {servicesList.map((service) => {
-                          const isSelected = selectedServiceIds.includes(service.id);
-                          return (
-                            <div
-                              key={service.id}
-                              onClick={() => handleToggleService(service.id)}
-                              className={`border p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer transition-all duration-300 ${isSelected
-                                  ? "border-primary-800 bg-primary-50/20"
-                                  : "border-primary-100 bg-white hover:border-primary-200"
-                                }`}
-                            >
-                              <div className="flex items-start space-x-3 text-left">
-                                <div
-                                  className={`h-5 w-5 mt-0.5 border flex items-center justify-center flex-shrink-0 ${isSelected ? "bg-primary-800 border-primary-800 text-white" : "border-primary-300"
-                                    }`}
-                                >
-                                  {isSelected && <Check className="h-3.5 w-3.5" />}
-                                </div>
-                                <div>
-                                  <h4 className="font-serif text-sm sm:text-base font-bold text-sage-950">
-                                    {service.title}
-                                  </h4>
-                                  <p className="text-xs text-sage-500 font-light mt-0.5">
-                                    {service.description}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="text-right flex-shrink-0">
-                                <span className="font-serif text-xs sm:text-sm font-bold text-primary-950 block">
-                                  {formatCurrency(service.price)}
-                                </span>
-                                <span className="text-[9px] text-sage-400 block font-medium">
-                                  {service.type === "per-guest"
-                                    ? "/khách"
-                                    : service.type === "per-guest-per-night"
-                                      ? "/khách/đêm"
-                                      : "/lượt"}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Navigation actions */}
-                    <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={handlePrevStep}
-                        className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
-                      >
-                        <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleNextStep}
-                        className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider hover:bg-primary-950 transition-all uppercase rounded-none flex items-center cursor-pointer"
-                      >
-                        Chọn thực đơn <ChevronRight className="h-4 w-4 ml-1.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 4 Page Content Panel - Thực Đơn Trong Gói */}
-                {step === 4 && (
-                  <div className="space-y-6 text-left animate-fade-in">
-                    <div className="border-b border-primary-50 pb-3 mb-6">
-                      <h2 className="text-resort-section text-sage-950 mb-1">
-                        Bước 4: Chọn Thực Đơn Trong Gói
-                      </h2>
-                      <p className="text-resort-desc">
-                        Lựa chọn các bữa ăn dinh dưỡng đi kèm trong gói dịch vụ nghỉ dưỡng. Món trong gói miễn phí (1 phần/ngày).
-                      </p>
-                    </div>
-
-                    {/* Date Selection Bar */}
-                    <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-4 border-b border-primary-100/50">
-                      {mealBookingDays.map((date, idx) => {
-                        const isActive = selectedMealDate === date;
-                        const dateParts = date.split("-");
-                        const displayDate = `${dateParts[2]}/${dateParts[1]}`;
-                        return (
-                          <button
-                            key={date}
-                            onClick={() => setSelectedMealDate(date)}
-                            className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer ${isActive
-                                ? "bg-primary-850 border-primary-900 text-white shadow-md -translate-y-0.5"
-                                : "bg-white border-primary-100 text-sage-600 hover:border-primary-300 hover:bg-primary-50/30"
-                              }`}
-                            style={{ borderRadius: "16px" }}
-                          >
-                            <span className="text-[9px] opacity-75 font-semibold">Ngày {idx + 1}</span>
-                            <span className="font-mono mt-0.5 text-sm">{displayDate}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Auto Filter Banner */}
-                    {(consentDataProcessing && consentSharing) ? (
-                      <div className="mb-6 p-4 bg-primary-50/50 border border-primary-200 text-xs text-primary-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center space-x-2.5">
-                          <Info className="h-4.5 w-4.5 text-primary-750 flex-shrink-0" />
-                          <span>
-                            <strong>Thực đơn đã được tự động quét theo hồ sơ bệnh lý & chế độ ăn uống.</strong> Các món ăn không phù hợp đã được cảnh báo và khóa tự động.
-                          </span>
-                        </div>
-                        <span className="bg-primary-100 text-primary-800 border border-primary-200 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider self-start sm:self-auto">
-                          Đã Lọc Tự Động
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="mb-6 p-4 bg-amber-50 text-amber-800 border border-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center space-x-2.5">
-                          <AlertTriangle className="h-4.5 w-4.5 flex-shrink-0" />
-                          <span>Hệ thống chưa được phép xử lý dữ liệu y tế. Các món ăn gây dị ứng sẽ <strong>không</strong> được tự động cảnh báo.</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Meal Periods */}
-                    {mealPeriods.map((period) => {
-                      const PeriodIcon = period.icon;
-                      return (
-                        <div key={period.key} className="space-y-4 mb-6">
-                          <div className="flex items-center space-x-2 border-l-2 border-primary-700 pl-3">
-                            <PeriodIcon className="h-5 w-5 text-primary-800" />
-                            <h3 className="font-serif text-base font-bold text-sage-900">
-                              {period.label} ({period.time})
-                            </h3>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {packageMenuItems
-                              .filter(dish => dish.periods.includes(period.key))
-                              .filter(dish => {
-                                const dayOfWeek = new Date(selectedMealDate).getDay();
-                                return dish.availableDays ? dish.availableDays.includes(dayOfWeek) : true;
-                              })
-                              .filter(dish => {
-                                if (!dish.dietaryTags) return false;
-                                const tags = dish.dietaryTags.toLowerCase();
-                                return tags.includes(dietaryPreference);
-                              })
-                              .map((dish) => {
-                              const currentQty = (mealSelections[selectedMealDate]?.[period.key]?.[dish.foodId]) || 0;
-                              const userAllergens = detectAllergens(guestInfo.healthNote);
-                              const isAllergen = (
-                                  (dish.allergens.includes("Đậu phộng") && userAllergens.includes("peanut")) ||
-                                  (dish.allergens.includes("Hải sản") && userAllergens.includes("seafood")) ||
-                                  selectedAllergies.some(a => {
-                                      if (a === "peanuts") return dish.allergens.includes("Đậu phộng");
-                                      if (a === "shellfish") return dish.allergens.includes("Hải sản");
-                                      if (a === "spicy") return dish.allergens.includes("Cay");
-                                      return dish.allergens.some(alg => alg.toLowerCase().includes(a.toLowerCase()));
-                                  }) ||
-                                  (otherAllergy && dish.dietaryTags.toLowerCase().includes(otherAllergy.toLowerCase()))
-                              );
-
-                              return (
-                                <div
-                                  key={dish.foodId}
-                                  className={`border transition-all duration-300 overflow-hidden ${isAllergen
-                                      ? "border-red-200 bg-red-50/20 opacity-60"
-                                      : currentQty > 0
-                                        ? "border-primary-300 bg-primary-50/10"
-                                        : "border-primary-100 bg-white hover:border-primary-200"
-                                    }`}
-                                >
-                                  <div className="relative h-32 overflow-hidden">
-                                    <img src={dish.image} alt={dish.dishName} className="w-full h-full object-cover" />
-                                    {dish.isPackageIncluded && (
-                                      <span className="absolute top-2 left-2 bg-green-700 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
-                                        Trong Gói
-                                      </span>
-                                    )}
-                                    {isAllergen && (
-                                      <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 flex items-center gap-1 shadow-sm">
-                                        <AlertTriangle className="h-3 w-3" /> Dị ứng
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="p-4 space-y-2">
-                                    <h4 className="font-serif text-sm font-bold text-sage-950">{dish.dishName}</h4>
-                                    <p className="text-[11px] text-sage-500 font-light leading-relaxed line-clamp-2">{dish.description}</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {dish.dietaryTags.split(",").map((tag) => (
-                                        <span key={tag.trim()} className="text-[9px] font-bold uppercase tracking-wider border border-primary-200 text-primary-800 px-2 py-0.5 bg-primary-50/30">
-                                          {tag.trim()}
-                                        </span>
-                                      ))}
-                                    </div>
-                                    <div className="flex items-center justify-between pt-2 border-t border-primary-50">
-                                      <span className="font-serif text-sm font-bold text-sage-950">
-                                        {formatCurrency(dish.price)}
-                                      </span>
-                                      <div className="flex items-center space-x-2">
-                                        <button
-                                          type="button"
-                                          onClick={() => updateMealQty(selectedMealDate, period.key, dish.foodId, -1)}
-                                          disabled={currentQty === 0 || isAllergen}
-                                          className="h-7 w-7 flex items-center justify-center border border-primary-200 text-sage-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                                        >
-                                          <Minus className="h-3.5 w-3.5" />
-                                        </button>
-                                        <span className="font-mono text-sm font-bold text-sage-950 w-6 text-center">{currentQty}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => updateMealQty(selectedMealDate, period.key, dish.foodId, 1)}
-                                          disabled={isAllergen}
-                                          className={`h-7 w-7 flex items-center justify-center border transition-colors ${isAllergen ? "bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed" : "border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer"}`}
-                                        >
-                                          <Plus className="h-3.5 w-3.5" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* Footer Summary */}
-                    <div className="bg-primary-50/30 border border-primary-100 p-4 space-y-1">
-                      <div className="text-xs text-sage-700">
-                        Tổng cộng chọn: <strong>{getMealSelectedCount()} món</strong>
-                      </div>
-                      <div className="text-sm font-semibold text-sage-900">
-                        Phụ phí dự kiến ngoài gói: <span className="text-primary-900 font-bold font-serif">{formatCurrency(mealTotal)}</span>
-                      </div>
-                      <div className="text-[10px] text-sage-400 italic">
-                        * Các món Green Juice & Salad được tính 0đ trong giới hạn gói Detox (1 phần/ngày).
-                      </div>
-                    </div>
-
-                    {/* Navigation */}
-                    <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={handlePrevStep}
-                        className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
-                      >
-                        <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleNextStep}
-                        className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider transition-all uppercase rounded-none flex items-center cursor-pointer"
-                      >
-                        Kiểm tra đơn đặt <ChevronRight className="h-4 w-4 ml-1.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 5 Page Content Panel */}
-                {step === 5 && (
-                  <div className="space-y-6 text-left animate-fade-in">
-                    <div className="border-b border-primary-50 pb-3 mb-6">
-                      <h2 className="text-resort-section text-sage-950 mb-1">
-                        Bước 5: Xác Nhận Đơn Đặt Lịch
-                      </h2>
-                      <p className="text-resort-desc">
-                        Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
-                      </p>
-                    </div>
-
-                    <div className="space-y-6 text-xs sm:text-sm">
-                      {/* Part 1: Guest Information Info Card */}
-                      <div className="bg-primary-50/15 border border-primary-100 p-6 space-y-4">
-                        <h3 className="text-[10px] font-bold text-primary-800 uppercase tracking-widest border-b border-primary-100 pb-2">
-                          Thông tin khách lưu trú
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Họ và tên</span>
-                            <span className="font-semibold text-sage-900">{guestInfo.fullName}</span>
-                          </div>
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Số điện thoại</span>
-                            <span className="font-semibold text-sage-900">{guestInfo.phone}</span>
-                          </div>
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Địa chỉ Email</span>
-                            <span className="font-semibold text-sage-900">{guestInfo.email}</span>
-                          </div>
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Số người đi cùng</span>
-                            <span className="font-semibold text-sage-900">{guestInfo.guestsCount} Khách hàng</span>
-                          </div>
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Khoảng thời gian nghỉ</span>
-                            <span className="font-semibold text-sage-900">
-                              {guestInfo.checkInDate} → {guestInfo.checkOutDate} ({nightsCount} Đêm)
-                            </span>
-                          </div>
-                        </div>
-
-                        {guestInfo.specialRequest && (
-                          <div className="pt-2 border-t border-primary-100/50 space-y-2">
-                            <div>
-                              <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Yêu cầu đặc biệt</span>
-                              <span className="text-sage-700 italic font-medium">{guestInfo.specialRequest}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Part 1.5: Health Profile */}
-                      <div className="bg-primary-50/15 border border-primary-100 p-6 space-y-4">
-                        <h3 className="text-[10px] font-bold text-primary-800 uppercase tracking-widest border-b border-primary-100 pb-2 flex items-center gap-2">
-                          <Heart className="h-3 w-3" /> Hồ sơ sức khỏe & Dị ứng
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Chế độ ăn uống</span>
-                            <span className="font-semibold text-sage-900">
-                              {DIET_OPTIONS.find(d => d.key === dietaryPreference)?.label || dietaryPreference}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Dị ứng thực phẩm</span>
-                            <span className="font-semibold text-amber-700">
-                              {selectedAllergies.length > 0 || otherAllergy ? (
-                                [
-                                  ...selectedAllergies.map(a => ALLERGY_OPTIONS.find(opt => opt.key === a)?.label),
-                                  otherAllergy
-                                ].filter(Boolean).join(", ")
-                              ) : "Không có"}
-                            </span>
-                          </div>
-                          <div className="md:col-span-2">
-                            <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Tình trạng thể chất</span>
-                            <span className="font-semibold text-rose-700 whitespace-pre-line">{physicalCondition || "Bình thường"}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Part 2: Selected services lists */}
-                      <div className="bg-white border border-primary-100 p-6 space-y-4">
-                        <h3 className="text-[10px] font-bold text-primary-800 uppercase tracking-widest border-b border-primary-100 pb-2">
-                          Chi tiết dịch vụ đã chọn
-                        </h3>
-
-                        <div className="space-y-3.5">
-                          {/* Villa details */}
-                          <div className="flex justify-between items-start gap-4">
-                            <div>
-                              <span className="font-serif text-sm font-bold text-sage-950 block">
-                                🏡 {selectedVilla?.title}
-                              </span>
-                              <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                                Đơn giá: {formatCurrency(selectedVilla?.price)}/đêm × {nightsCount} Đêm
-                              </span>
-                            </div>
-                            <span className="font-semibold text-sage-900">{formatCurrency(villaTotal)}</span>
-                          </div>
-
-                          {/* Service items */}
-                          {selectedServices.map((s) => {
-                            let itemTotal = 0;
-                            let descriptionText = "";
-                            if (s.type === "per-guest") {
-                              itemTotal = s.price * guestInfo.guestsCount;
-                              descriptionText = `${formatCurrency(s.price)}/khách × ${guestInfo.guestsCount} Khách`;
-                            } else if (s.type === "per-guest-per-night") {
-                              itemTotal = s.price * guestInfo.guestsCount * nightsCount;
-                              descriptionText = `${formatCurrency(s.price)}/khách/đêm × ${guestInfo.guestsCount} Khách × ${nightsCount} Đêm`;
-                            } else {
-                              itemTotal = s.price;
-                              descriptionText = "Chi phí một lượt";
-                            }
-                            return (
-                              <div key={s.id} className="flex justify-between items-start gap-4 pt-3 border-t border-primary-100/50">
-                                <div>
-                                  <span className="font-serif text-sm font-bold text-sage-950 block">
-                                    🌿 {s.title}
-                                  </span>
-                                  <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                                    {descriptionText}
-                                  </span>
-                                </div>
-                                <span className="font-semibold text-sage-900">{formatCurrency(itemTotal)}</span>
-                              </div>
-                            );
-                          })}
-
-                          {/* Extra Meal Items */}
-                          {(() => {
-                            const extraItems = [];
-                            Object.entries(mealSelections).forEach(([date, dateObj]) => {
-                              Object.entries(dateObj).forEach(([period, periodObj]) => {
-                                Object.entries(periodObj).forEach(([foodId, qty]) => {
-                                  const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
-                                  if (item) {
-                                    let billableQty = 0;
-                                    if (item.isPackageIncluded) {
-                                      if (qty > 1) billableQty = qty - 1;
-                                    } else {
-                                      billableQty = qty;
-                                    }
-                                    if (billableQty > 0) {
-                                      const existing = extraItems.find(e => e.foodId === item.foodId);
-                                      if (existing) {
-                                         existing.billableQty += billableQty;
-                                         existing.itemTotal += (item.price * billableQty);
-                                      } else {
-                                         extraItems.push({
-                                           ...item,
-                                           billableQty,
-                                           itemTotal: item.price * billableQty
-                                         });
-                                      }
-                                    }
-                                  }
-                                });
-                              });
-                            });
-                            return extraItems.map((extra, idx) => (
-                              <div key={`extra-meal-${idx}`} className="flex justify-between items-start gap-4 pt-3 border-t border-primary-100/50">
-                                <div>
-                                  <span className="font-serif text-sm font-bold text-sage-950 block">
-                                    🍽️ {extra.dishName} (Gọi Thêm)
-                                  </span>
-                                  <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                                    {formatCurrency(extra.price)} × {extra.billableQty} Phần
-                                  </span>
-                                </div>
-                                <span className="font-semibold text-sage-900">{formatCurrency(extra.itemTotal)}</span>
-                              </div>
-                            ));
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Navigation actions */}
-                    <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
-                      <button
-                        type="button"
-                        disabled={isConfirming}
-                        onClick={handlePrevStep}
-                        className="px-6 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-widest uppercase rounded-none hover:bg-sage-50 transition-all flex items-center disabled:opacity-50"
-                      >
-                        <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={isConfirming}
-                        onClick={handleConfirmBooking}
-                        className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer disabled:opacity-70"
-                      >
-                        {isConfirming ? (
-                          <>
-                            <Loader2 className="animate-spin mr-2 h-4 w-4" /> Đang tạo đơn đặt...
-                          </>
-                        ) : (
-                          <>
-                            Xác nhận & Thanh toán cọc <ChevronRight className="h-4 w-4 ml-1.5" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 6 Page Content Panel */}
-                {step === 6 && (
-                  <div className="space-y-6 text-left animate-fade-in">
-                    <div className="border-b border-primary-50 pb-3 mb-6">
-                      <h2 className="text-resort-section text-sage-950 mb-1">
-                        Bước 6: Thanh Toán Đặt Cọc
-                      </h2>
-                      <p className="text-resort-desc">
-                        Vui lòng thanh toán khoản cọc 30% qua ngân hàng để kích hoạt trạng thái xác nhận đặt phòng tự động.
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row items-center gap-8 bg-primary-50/15 border border-primary-100 p-6">
-
-                      {/* Left: QR Frame */}
-                      <div className="w-44 h-44 bg-white p-3 border border-primary-100 flex-shrink-0 flex items-center justify-center shadow-xs">
-                        {qrCodeSvg}
-                      </div>
-
-                      {/* Right: Bank Transfer Values details */}
-                      <div className="w-full space-y-3.5 text-xs sm:text-sm font-medium">
-                        <div>
-                          <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                            Ngân hàng thụ hưởng
-                          </span>
-                          <span className="text-sage-900 font-bold">MB BANK (NGÂN HÀNG QUÂN ĐỘI)</span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                            Số tài khoản
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-primary-900 font-mono font-bold tracking-wider">
-                              190520269999
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText("190520269999", "stk")}
-                              className="text-sage-400 hover:text-primary-850 transition-colors p-1"
-                            >
-                              {copiedField === "stk" ? (
-                                <Check className="h-4 w-4 text-green-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                            Chủ tài khoản
-                          </span>
-                          <span className="text-sage-900 uppercase font-bold">CONG TY CO PHAN NGU SON RETREAT</span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                            Số tiền đặt cọc (30%)
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-primary-900 font-bold text-base font-serif">
-                              {formatCurrency(depositAmount)}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText(depositAmount.toString(), "amount")}
-                              className="text-sage-400 hover:text-primary-850 transition-colors p-1"
-                            >
-                              {copiedField === "amount" ? (
-                                <Check className="h-4 w-4 text-green-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                            Nội dung chuyển khoản
-                          </span>
-                          <div className="flex items-center space-x-2 bg-yellow-50 border border-yellow-250 px-3 py-1.5 self-start">
-                            <span className="text-sage-900 font-mono font-bold tracking-wide">
-                              NS {guestInfo.phone} {guestInfo.checkInDate.replace(/-/g, "")}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText(`NS ${guestInfo.phone} ${guestInfo.checkInDate.replace(/-/g, "")}`, "memo")}
-                              className="text-sage-450 hover:text-primary-850 transition-colors p-1"
-                            >
-                              {copiedField === "memo" ? (
-                                <Check className="h-4 w-4 text-green-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-primary-50/50 border border-primary-100/50 flex items-start space-x-2 text-[10px] text-sage-600 leading-relaxed font-light">
-                      <Info className="h-4 w-4 text-primary-600 mt-0.5 flex-shrink-0" />
-                      <span>
-                        Sau khi chuyển khoản cọc thành công, hệ thống robot đối soát của Ngũ Sơn sẽ ghi nhận và kích hoạt mã Booking trong 1 phút. Nhấn nút xác thực bên dưới để thử nghiệm giả lập thanh toán.
-                      </span>
-                    </div>
-
-                    {/* Submit actions */}
-                    <div className="pt-6 border-t border-primary-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                      <span className="text-xs text-sage-500 font-light flex items-center">
-                        <ShieldCheck className="h-4.5 w-4.5 text-primary-600 mr-1.5" />
-                        Hệ thống thanh toán bảo mật tự động
-                      </span>
-
-                      <button
-                        type="button"
-                        disabled={isVerifyingPayment}
-                        onClick={handleVerifyPayment}
-                        className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-70"
-                      >
-                        {isVerifyingPayment ? (
-                          <>
-                            <Loader2 className="animate-spin mr-2 h-4 w-4" /> Đang kiểm tra đối soát...
-                          </>
-                        ) : (
-                          "Tôi đã chuyển khoản thành công"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Right 4 Columns: Dynamic Booking Bill Summary Stick Widget */}
-              <div className="lg:col-span-4 space-y-6">
-                <div className={`bg-white border border-primary-100 p-6 shadow-xs text-left sticky top-28 ${radius.card}`}>
-                  <h3 className="font-serif text-lg font-bold text-sage-950 border-b border-primary-100 pb-3 mb-4">
-                    Chi Tiết Thanh Toán
-                  </h3>
-
-                  {/* Villa total display */}
-                  <div className="space-y-3.5 text-xs sm:text-sm">
-                    <div className="flex justify-between font-medium">
-                      <span className="text-sage-800">Biệt thự ({nightsCount} đêm):</span>
-                      <span className="text-sage-950 font-mono">{formatCurrency(villaTotal)}</span>
-                    </div>
-
-                    {/* Meal costs */}
-                    {mealTotal > 0 && (
-                      <div className="flex justify-between font-medium pt-2 border-t border-primary-50">
-                        <span className="text-sage-800 flex items-center gap-1"><UtensilsCrossed className="h-3.5 w-3.5" /> Thực đơn ngoài gói:</span>
-                        <span className="text-sage-950 font-mono">{formatCurrency(mealTotal)}</span>
-                      </div>
-                    )}
-
-                    {/* Addon list */}
-                    {selectedServices.length > 0 && (
-                      <div className="pt-2 border-t border-primary-50 space-y-2">
-                        <span className="text-[10px] text-sage-400 uppercase tracking-wider block font-bold">Dịch vụ đi kèm</span>
-                        {selectedServices.map((s) => {
-                          let itemCost = 0;
-                          if (s.type === "per-guest") itemCost = s.price * guestInfo.guestsCount;
-                          else if (s.type === "per-guest-per-night") itemCost = s.price * guestInfo.guestsCount * nightsCount;
-                          else itemCost = s.price;
-                          return (
-                            <div key={s.id} className="flex justify-between text-sage-600 text-xs">
-                              <span className="truncate pr-4">• {s.title.split("&")[0].trim()}</span>
-                              <span className="font-mono">{formatCurrency(itemCost)}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Billing status flags */}
-                    <div className="pt-4 border-t border-primary-100 space-y-2.5">
-                      <div className="flex justify-between font-serif text-base text-sage-950">
-                        <span>Tổng chi phí:</span>
-                        <span className="font-bold">{formatCurrency(totalAmount)}</span>
-                      </div>
-
-                      <div className="flex justify-between text-xs font-semibold text-green-700 bg-green-50/50 p-2">
-                        <span>Cọc trước (30%):</span>
-                        <span className="font-mono">{formatCurrency(depositAmount)}</span>
-                      </div>
-
-                      <div className="flex justify-between text-xs text-sage-500 p-2 border border-dashed border-primary-100">
-                        <span>Trả tại quầy (70%):</span>
-                        <span className="font-mono">{formatCurrency(remainingAmount)}</span>
-                      </div>
-                    </div>
-
-                    {/* Technical statuses details */}
-                    <div className="pt-4 border-t border-primary-50 space-y-2 text-[10px] font-mono font-medium text-sage-400 bg-primary-50/30 p-3">
-                      <div className="flex justify-between">
-                        <span>BOOKING STATUS:</span>
-                        <span className={`font-bold ${bookingStatus === "CONFIRMED" ? "text-green-700" : bookingStatus === "PENDING_PAYMENT" ? "text-amber-700" : "text-sage-500"}`}>
-                          {bookingStatus}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>PAYMENT STATUS:</span>
-                        <span className={`font-bold ${paymentStatus === "PAID" ? "text-green-700" : paymentStatus === "PENDING" ? "text-amber-700" : "text-sage-500"}`}>
-                          {paymentStatus}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+  };
+
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(val);
+  };
+
+  const handleCopyText = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  return (
+    <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20 font-sans text-sage-950">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8">
+        {/* Navigation Breadcrumbs */}
+        <div className="mb-8 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center text-xs font-semibold tracking-wider text-sage-600 hover:text-primary-800 transition-colors uppercase"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại trang chủ
+          </Link>
+          <span className="text-[10px] bg-primary-100/50 border border-primary-200 text-primary-900 px-3 py-1 font-semibold uppercase tracking-wider">
+            Booking Wizard
+          </span>
         </div>
-      </div>
-    );
-  }
 
+        {/* Page Header Title */}
+        <div className="text-center mb-12">
+          <h1 className="text-resort-title text-sage-950 mb-3 uppercase tracking-wide">
+            Đặt Lịch Trị Liệu & Nghỉ Dưỡng
+          </h1>
+          <p className="text-resort-desc max-w-lg mx-auto">
+            Khởi động hành trình phục hồi thân-tâm tại không gian xanh thanh bình của Ngũ Sơn Resort.
+          </p>
+        </div>
+
+        {/* Wizard Header */}
+        <BookingWizardHeader step={step} bookingStatus={bookingStatus} />
+
+        {/* STEP PANELS CONTAINER */}
+        {bookingStatus === "CONFIRMED" ? (
+          <BookingSuccess
+            guestInfo={guestInfo}
+            nightsCount={nightsCount}
+            selectedVilla={selectedVilla}
+            selectedServices={selectedServices}
+            totalAmount={totalAmount}
+            depositAmount={depositAmount}
+            remainingAmount={remainingAmount}
+            formatCurrency={formatCurrency}
+          />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left 8 Columns: Dynamic Step Form Panel */}
+            <div className={`lg:col-span-8 bg-white border border-primary-100 p-6 sm:p-8 shadow-xs ${radius.card}`}>
+              {step === 1 && (
+                <GuestInfoStep
+                  guestInfo={guestInfo}
+                  setGuestInfo={setGuestInfo}
+                  formErrors={formErrors}
+                  setFormErrors={setFormErrors}
+                  packageDuration={packageDuration}
+                  setPackageDuration={setPackageDuration}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {step === 2 && (
+                <HealthProfileStep
+                  formErrors={formErrors}
+                  dietaryPreference={dietaryPreference}
+                  setDietaryPreference={setDietaryPreference}
+                  selectedAllergies={selectedAllergies}
+                  toggleAllergy={toggleAllergy}
+                  otherAllergy={otherAllergy}
+                  setOtherAllergy={setOtherAllergy}
+                  physicalCondition={physicalCondition}
+                  setPhysicalCondition={setPhysicalCondition}
+                  consentDataProcessing={consentDataProcessing}
+                  setConsentDataProcessing={setConsentDataProcessing}
+                  consentSharing={consentSharing}
+                  setConsentSharing={setConsentSharing}
+                  handlePrevStep={handlePrevStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {step === 3 && (
+                <VillaSelectionStep
+                  selectedVillaId={selectedVillaId}
+                  setSelectedVillaId={setSelectedVillaId}
+                  selectedServiceIds={selectedServiceIds}
+                  handleToggleService={handleToggleService}
+                  formatCurrency={formatCurrency}
+                  handlePrevStep={handlePrevStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {step === 4 && (
+                <MealSelectionStep
+                  mealBookingDays={mealBookingDays}
+                  selectedMealDate={selectedMealDate}
+                  setSelectedMealDate={setSelectedMealDate}
+                  consentDataProcessing={consentDataProcessing}
+                  consentSharing={consentSharing}
+                  packageMenuItems={packageMenuItems}
+                  dietaryPreference={dietaryPreference}
+                  guestInfo={guestInfo}
+                  selectedAllergies={selectedAllergies}
+                  otherAllergy={otherAllergy}
+                  mealSelections={mealSelections}
+                  updateMealQty={updateMealQty}
+                  formatCurrency={formatCurrency}
+                  getMealSelectedCount={getMealSelectedCount}
+                  mealTotal={mealTotal}
+                  handlePrevStep={handlePrevStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {step === 5 && (
+                <ConfirmationStep
+                  guestInfo={guestInfo}
+                  nightsCount={nightsCount}
+                  dietaryPreference={dietaryPreference}
+                  selectedAllergies={selectedAllergies}
+                  otherAllergy={otherAllergy}
+                  physicalCondition={physicalCondition}
+                  selectedVilla={selectedVilla}
+                  selectedServices={selectedServices}
+                  villaTotal={villaTotal}
+                  mealTotal={mealTotal}
+                  totalAmount={totalAmount}
+                  depositAmount={depositAmount}
+                  remainingAmount={remainingAmount}
+                  formatCurrency={formatCurrency}
+                  handleCopyText={handleCopyText}
+                  copiedField={copiedField}
+                  isVerifyingPayment={isVerifyingPayment}
+                  handleVerifyPayment={handleVerifyPayment}
+                  handlePrevStep={handlePrevStep}
+                />
+              )}
+            </div>
+
+            {/* Right 4 Columns: Dynamic Booking Bill Summary Stick Widget */}
+            <div className="lg:col-span-4 space-y-6">
+              <BookingBillSummary
+                nightsCount={nightsCount}
+                villaTotal={villaTotal}
+                mealTotal={mealTotal}
+                selectedServices={selectedServices}
+                guestInfo={guestInfo}
+                totalAmount={totalAmount}
+                depositAmount={depositAmount}
+                remainingAmount={remainingAmount}
+                bookingStatus={bookingStatus}
+                paymentStatus={paymentStatus}
+                formatCurrency={formatCurrency}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
