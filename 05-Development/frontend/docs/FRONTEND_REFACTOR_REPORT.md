@@ -5,7 +5,7 @@
 ## Tiến độ chung
 - [x] Giai đoạn 1: `BookingPage.jsx`
 - [x] Giai đoạn 2: `ProfilePage.jsx`
-- [ ] Giai đoạn 3: Dashboards
+- [x] Giai đoạn 3: Dashboards (Đang tiến hành)
 - [ ] Giai đoạn 4: Các trang khác
 
 ---
@@ -44,9 +44,18 @@
   - `PersonalInfoForm.jsx` (Tab: Thông tin & đổi mật khẩu)
   - `HealthRecords.jsx` (Tab: Hồ sơ sức khỏe)
   - `BookingHistory.jsx` (Tab: Lịch sử dịch vụ/phòng)
+  - `BookingHistory.jsx` (Tab: Lịch sử dịch vụ/ phòng)
   - `PaymentHistory.jsx` (Tab: Hóa đơn VNPAY)
   - `StatusBadge.jsx` (Badge dùng chung)
 - **Logic được giữ nguyên**: 
   - API call, Routing `/tai-khoan/*`.
 - **Kiểm thử thủ công cần thiết**: 
   - Đăng nhập và thử điều hướng qua các tab.
+
+### 3. Dashboards (`ManageDishes.jsx`, ...)
+- **`ManageDishes.jsx`**: Tình trạng ban đầu 896 dòng. Đã tách 2 modal lớn (Add và Edit Dish) gộp chung thành một component `DishFormModal.jsx`. 
+  - Tình trạng sau refactor: 377 dòng.
+  - Vị trí mới: `src/components/chef/DishFormModal.jsx`.
+
+---
+*Tiến độ sẽ liên tục được cập nhật...*
