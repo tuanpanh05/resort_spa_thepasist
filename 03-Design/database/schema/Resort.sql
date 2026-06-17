@@ -85,12 +85,12 @@ GO
 -- 2.2 Retreat Packages Table
 CREATE TABLE dbo.retreat_packages (
     package_id INT IDENTITY(1,1) PRIMARY KEY,
-    package_name NVARCHAR(255) NOT NULL,
+    name NVARCHAR(255) NOT NULL,
     description NVARCHAR(MAX) NULL,
-    base_price DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    price DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     duration_days INT NOT NULL DEFAULT 1,
 
-    CONSTRAINT CK_retreat_packages_price CHECK (base_price >= 0),
+    CONSTRAINT CK_retreat_packages_price CHECK (price >= 0),
     CONSTRAINT CK_retreat_packages_duration CHECK (duration_days > 0)
 );
 GO
@@ -99,11 +99,13 @@ GO
 CREATE TABLE dbo.room_types (
     room_type_id INT IDENTITY(1,1) PRIMARY KEY,
     type_name NVARCHAR(255) NOT NULL UNIQUE,
-    base_price DECIMAL(15,2) NULL,
-    capacity INT NULL,
+    description NVARCHAR(MAX) NULL,
+    base_price_per_night DECIMAL(15,2) NULL,
+    max_occupancy INT NULL,
+    area_sqm INT NULL,
 
-    CONSTRAINT CK_room_types_price CHECK (base_price IS NULL OR base_price >= 0),
-    CONSTRAINT CK_room_types_capacity CHECK (capacity IS NULL OR capacity > 0)
+    CONSTRAINT CK_room_types_price CHECK (base_price_per_night IS NULL OR base_price_per_night >= 0),
+    CONSTRAINT CK_room_types_capacity CHECK (max_occupancy IS NULL OR max_occupancy > 0)
 );
 GO
 
