@@ -20,6 +20,15 @@ public interface MasterDataService {
     RetreatPackageDTO updateRetreatPackage(Integer id, RetreatPackageDTO dto);
     void deleteRetreatPackage(Integer id);
 
+    /**
+     * UC6 – Filter active retreat packages by optional criteria.
+     * Implements BR-04: only ACTIVE packages are returned.
+     *
+     * @param filter contains keyword, healthGoal, minPrice, maxPrice, maxDurationDays
+     * @return sorted list of matching packages
+     */
+    List<RetreatPackageDTO> filterPackages(PackageFilterRequest filter);
+
     // Room Types
     List<RoomTypeDTO> getAllRoomTypes();
     RoomTypeDTO getRoomTypeById(Integer id);

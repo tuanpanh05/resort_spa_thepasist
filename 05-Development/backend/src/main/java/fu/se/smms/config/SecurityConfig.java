@@ -44,7 +44,8 @@ public class SecurityConfig {
                 // Auth endpoints – Public (UC01)
                 .requestMatchers("/auth/**").permitAll()
                 // Public read-only Master Data endpoints (Guest can browse)
-                .requestMatchers(HttpMethod.GET, "/spa-services", "/retreat-packages", "/room-types").permitAll()
+                .requestMatchers(HttpMethod.GET, "/spa-services", "/spa-services/**", "/retreat-packages", "/retreat-packages/**", "/room-types", "/room-types/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/retreat-packages/filter").permitAll()
                 // Chef and Kitchen Hub endpoints
                 .requestMatchers("/chef/**", "/guest/**").permitAll()
                 // Admin-only endpoints (UC03, UC04)
@@ -53,6 +54,8 @@ public class SecurityConfig {
                 .requestMatchers("/medical-profiles/**").authenticated()
                 // User profile endpoints
                 .requestMatchers("/users/**").authenticated()
+                // Module 2: Booking, Check-In, Villa, Itinerary APIs (UC07-UC10)
+                .requestMatchers("/v1/**").authenticated()
                 // Everything else requires auth
                 .anyRequest().authenticated()
             )

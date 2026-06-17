@@ -160,6 +160,14 @@ export const masterDataApi = {
   getRetreatPackages: (adminMode = false) =>
     apiRequest(adminMode ? "/admin/retreat-packages" : "/retreat-packages"),
 
+  filterRetreatPackages: (params) => {
+    const query = Object.keys(params || {})
+      .filter(k => params[k] !== undefined && params[k] !== null && params[k] !== "")
+      .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
+      .join("&");
+    return apiRequest(`/retreat-packages/filter?${query}`);
+  },
+
   createRetreatPackage: (dto) =>
     apiRequest("/admin/retreat-packages", { method: "POST", body: JSON.stringify(dto) }),
 
@@ -180,6 +188,45 @@ export const masterDataApi = {
 
   deleteRoomType: (id) =>
     apiRequest(`/admin/room-types/${id}`, { method: "DELETE" }),
+};
+
+// ============================================================
+// BOOKING APIs (UC07/UC-13)
+// ============================================================
+export const bookingApi = {
+  createBooking: (dto) =>
+    apiRequest("/v1/bookings", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+};
+
+// ============================================================
+// STAFF / RECEPTIONIST APIs (UC08, UC09, UC10 — Module 2)
+// ============================================================
+export const staffApi = {
+  /** UC08: GET /v1/check-in/arrivals — Danh sách khách sắp đến */
+  getArrivals: () => apiRequest("/v1/check-in/arrivals"),
+
+  /** UC08: POST /v1/check-in — Thực hiện check-in */
+  performCheckIn: (dto) =>
+    apiRequest("/v1/check-in", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+
+  /** UC09: GET /v1/villas — Lấy danh sách phòng/villa */
+  getVillas: () => apiRequest("/v1/villas"),
+
+  /** UC09: PATCH /v1/villas/:id/status — Cập nhật trạng thái phòng */
+  updateVillaStatus: (id, status) =>
+    apiRequest(`/v1/villas/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+
+  /** UC10: GET /v1/itineraries/:bookingId — Xem lịch trình khách */
+  getItinerary: (bookingId) => apiRequest(`/v1/itineraries/${bookingId}`),
 };
 
 // ============================================================

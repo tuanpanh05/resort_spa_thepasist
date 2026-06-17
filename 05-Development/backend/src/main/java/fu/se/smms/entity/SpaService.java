@@ -31,6 +31,7 @@ public class SpaService {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "ACTIVE"; // ACTIVE, INACTIVE
 
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -63,6 +64,7 @@ public class SpaService {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -18,10 +18,10 @@ public class RoomType {
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(name = "base_price_per_night", precision = 12, scale = 2)
+    @Column(name = "base_price", precision = 12, scale = 2)
     private BigDecimal basePricePerNight;
 
-    @Column(name = "max_occupancy")
+    @Column(name = "capacity")
     private Integer maxOccupancy;
 
     @Column(name = "area_sqm")

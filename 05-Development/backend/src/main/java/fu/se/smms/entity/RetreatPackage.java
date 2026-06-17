@@ -26,7 +26,8 @@ public class RetreatPackage {
     private BigDecimal price;
 
     @Column(name = "includes", columnDefinition = "NVARCHAR(MAX)")
-    private String includes; // JSON-like string or comma-separated descriptions
+    private String includes;
+
 
     @Column(name = "status", nullable = false, length = 20)
     private String status = "ACTIVE"; // ACTIVE, INACTIVE
