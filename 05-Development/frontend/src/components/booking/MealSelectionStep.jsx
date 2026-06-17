@@ -104,6 +104,7 @@ export default function MealSelectionStep({
                   return dish.availableDays ? dish.availableDays.includes(dayOfWeek) : true;
                 })
                 .filter((dish) => {
+                  if (dietaryPreference === "omnivore") return true;
                   if (!dish.dietaryTags) return false;
                   const tags = dish.dietaryTags.toLowerCase();
                   return tags.includes(dietaryPreference);

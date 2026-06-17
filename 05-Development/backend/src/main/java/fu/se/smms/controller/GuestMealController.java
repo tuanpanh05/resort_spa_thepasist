@@ -395,8 +395,7 @@ public class GuestMealController {
                         .foodMenu(dish)
                         .quantity(item.getQuantity())
                         .priceAtOrder(dish.getPrice())
-                        .specialNote(
-                                item.getSpecialNote() + " [Bữa: " + item.getPeriod() + ", Ngày: " + item.getDate() + "]")
+                        .specialNote(item.getSpecialNote())
                         .isPackageIncluded(isPackageIncluded)
                         .build();
 
@@ -553,7 +552,7 @@ public class GuestMealController {
                     .foodMenu(dish)
                     .quantity(item.getQuantity())
                     .priceAtOrder(dish.getPrice())
-                    .specialNote(item.getSpecialNote() != null ? item.getSpecialNote() + " [EXTRA GỌI NGAY]" : "[EXTRA GỌI NGAY]")
+                    .specialNote(item.getSpecialNote())
                     .isPackageIncluded(isPackageIncluded)
                     .build();
 
