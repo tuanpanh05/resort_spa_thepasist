@@ -48,6 +48,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/retreat-packages/filter").permitAll()
                 // Chef and Kitchen Hub endpoints
                 .requestMatchers("/chef/**", "/guest/**").permitAll()
+                // Booking wizard and online payment endpoints – Public (UC07)
+                .requestMatchers("/bookings/create", "/invoices/*", "/invoices/*/payment-url", "/invoices/vnpay-callback", "/invoices/vnpay-ipn", "/invoices/vnpay-return").permitAll()
                 // Admin-only endpoints (UC03, UC04)
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Medical profiles – Authenticated users only (UC02, UC05)

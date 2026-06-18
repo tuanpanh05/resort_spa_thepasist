@@ -15,12 +15,16 @@ import MealSelectionStep from "../components/booking/MealSelectionStep";
 import ConfirmationStep from "../components/booking/ConfirmationStep";
 import BookingBillSummary from "../components/booking/BookingBillSummary";
 import BookingSuccess from "../components/booking/BookingSuccess";
+import PaymentStep from "../components/booking/PaymentStep";
 
 export default function BookingPage() {
   const navigate = useNavigate();
 
   // Wizard Step State: 1 = Guest Info, 2 = Select Villa & Services, 3 = Review, 4 = Payment QR
   const [step, setStep] = useState(1);
+
+  const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
+  const [createdBookingId, setCreatedBookingId] = useState(null);
 
   // Status Trackers
   const [bookingStatus, setBookingStatus] = useState("DRAFT"); // DRAFT -> PENDING_PAYMENT -> CONFIRMED
@@ -32,7 +36,7 @@ export default function BookingPage() {
     phone: "",
     email: "",
     checkInDate: new Date(Date.now() + 86400000).toISOString().split("T")[0], // Tomorrow
-    checkOutDate: new Date(Date.now() + 259200000).toISOString().split("T")[0], // Day after tomorrow (default 3 days/2 nights)
+    checkOutDate: new Date(Date.now() + 172800000).toISOString().split("T")[0], // Day after tomorrow
     guestsCount: 2,
     healthNote: "",
     specialRequest: "",
@@ -104,18 +108,20 @@ export default function BookingPage() {
     fetchMenuStatus();
   }, []);
 
-  const [nightsCount, setNightsCount] = useState(2);
-  const [packageDuration, setPackageDuration] = useState(3);
+  const [nightsCount, setNightsCount] = useState(1);
 
   useEffect(() => {
     const checkIn = new Date(guestInfo.checkInDate);
-    const nights = packageDuration - 1;
-    const checkOut = new Date(checkIn);
-    checkOut.setDate(checkOut.getDate() + nights);
+    const checkOut = new Date(guestInfo.checkOutDate);
 
-    setNightsCount(nights);
-    setGuestInfo((prev) => ({ ...prev, checkOutDate: checkOut.toISOString().split("T")[0] }));
-  }, [guestInfo.checkInDate, packageDuration]);
+    if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime()) || checkOut <= checkIn) {
+      setNightsCount(0);
+      return;
+    }
+
+    const diffMs = checkOut.getTime() - checkIn.getTime();
+    setNightsCount(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
   useEffect(() => {
     const checkIn = new Date(guestInfo.checkInDate);
@@ -248,30 +254,57 @@ export default function BookingPage() {
   const handleVerifyPayment = async () => {
     setIsVerifyingPayment(true);
     try {
+      const villaIdMap = {
+        "wood-bungalow": 1,
+        "zen-villa": 2,
+        "lotus-family-villa": 3,
+        "pebble-bungalow": 4
+      };
+      const numericVillaId = villaIdMap[selectedVillaId] || 1;
+
+      const serviceIdMap = {
+        "srv-spa": 1,
+        "srv-yoga": 2,
+        "srv-physio": 3,
+        "srv-meals": 4,
+        "srv-pickup": 5
+      };
+      const numericServiceIds = selectedServiceIds.map(id => serviceIdMap[id] || 1);
+
       const payload = {
         fullName: guestInfo.fullName,
         email: guestInfo.email,
         phone: guestInfo.phone,
-        checkInDate: guestInfo.checkInDate,
-        checkOutDate: guestInfo.checkOutDate,
+        checkInDate: (guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : "") + "T14:00:00",
+        checkOutDate: (guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : "") + "T12:00:00",
         guestsCount: guestInfo.guestsCount,
-        villaId: selectedVillaId,
-        packageId: packageDuration === 3 ? 1 : 2,
-        serviceIds: selectedServiceIds,
+        villaId: numericVillaId,
+        roomId: 1, // Default room ID to satisfy @NotNull validation if enabled
+        packageId: 1,
+        serviceIds: numericServiceIds,
         allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
         explicitConsentSigned: consentDataProcessing && consentSharing,
         mealSelections: mealSelections
       };
 
       const res = await axiosClient.post('/bookings/create', payload);
-      console.log("Booking created successfully:", res.data);
+      const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+      console.log("Booking created successfully:", data);
 
-      setBookingStatus("CONFIRMED");
-      setPaymentStatus("PAID");
+      if (data && data.invoiceId) {
+        setCreatedInvoiceId(data.invoiceId);
+        setCreatedBookingId(data.bookingId);
+        setStep(6);
+      } else {
+        alert("Không thể khởi tạo hóa đơn thanh toán cho đặt phòng này. Phản hồi từ Server: " + JSON.stringify(res.data));
+      }
     } catch (err) {
       console.error("Failed to create booking", err);
-      setBookingStatus("CONFIRMED");
-      setPaymentStatus("PAID");
+      console.error("Failed to create booking. Response:", err.response);
+      const errMsg = typeof err.response?.data === 'string'
+        ? err.response.data
+        : (err.response?.data?.message || err.message || "Đã xảy ra lỗi trong quá trình đặt phòng. Vui lòng thử lại.");
+      alert(errMsg);
     } finally {
       setIsVerifyingPayment(false);
     }
@@ -347,8 +380,6 @@ export default function BookingPage() {
                   setGuestInfo={setGuestInfo}
                   formErrors={formErrors}
                   setFormErrors={setFormErrors}
-                  packageDuration={packageDuration}
-                  setPackageDuration={setPackageDuration}
                   handleNextStep={handleNextStep}
                 />
               )}
@@ -424,6 +455,15 @@ export default function BookingPage() {
                   isVerifyingPayment={isVerifyingPayment}
                   handleVerifyPayment={handleVerifyPayment}
                   handlePrevStep={handlePrevStep}
+                />
+              )}
+              {step === 6 && (
+                <PaymentStep
+                  bookingId={createdBookingId}
+                  invoiceId={createdInvoiceId}
+                  depositAmount={depositAmount}
+                  totalAmount={totalAmount}
+                  formatCurrency={formatCurrency}
                 />
               )}
             </div>

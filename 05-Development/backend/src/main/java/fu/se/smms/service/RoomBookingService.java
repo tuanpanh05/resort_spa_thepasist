@@ -28,6 +28,7 @@ public class RoomBookingService {
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final FoodMenuRepository foodMenuRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
+    private final InvoiceService invoiceService;
 
     public RoomBookingService(UserRepository userRepository,
                               RoomBookingRepository roomBookingRepository,
@@ -37,7 +38,8 @@ public class RoomBookingService {
                               FoodOrderRepository foodOrderRepository,
                               FoodOrderDetailRepository foodOrderDetailRepository,
                               FoodMenuRepository foodMenuRepository,
-                              PackageFoodLimitRepository packageFoodLimitRepository) {
+                              PackageFoodLimitRepository packageFoodLimitRepository,
+                              InvoiceService invoiceService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.retreatPackageRepository = retreatPackageRepository;
@@ -47,6 +49,7 @@ public class RoomBookingService {
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.foodMenuRepository = foodMenuRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
+        this.invoiceService = invoiceService;
     }
 
     @Transactional
@@ -88,11 +91,11 @@ public class RoomBookingService {
         }
 
         // Parse dates
-        LocalDateTime checkIn = LocalDateTime.parse(dto.getCheckInDate() + "T14:00:00");
-        LocalDateTime checkOut = LocalDateTime.parse(dto.getCheckOutDate() + "T12:00:00");
+        LocalDateTime checkIn = dto.getCheckInDate();
+        LocalDateTime checkOut = dto.getCheckOutDate();
         booking.setCheckInDate(checkIn);
         booking.setCheckOutDate(checkOut);
-        booking.setStatus("CONFIRMED");
+        booking.setStatus("PENDING_DEPOSIT");
         booking.setTotalDeposit(BigDecimal.ZERO); // For simplicity
         
         // 4. Create RoomBookingDetail
@@ -201,6 +204,8 @@ public class RoomBookingService {
                 foodOrderRepository.save(foodOrder);
             }
         }
+
+        invoiceService.createInvoice(savedBooking.getBookingId());
 
         return savedBooking;
     }

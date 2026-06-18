@@ -8,7 +8,7 @@ echo =====================================================================
 echo.
 
 :: 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 (Tương thích 100% với Lombok)
-set "EMBEDDED_JAVA=C:\Program Files\Java\jdk-21.0.10"
+set "EMBEDDED_JAVA=C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
 if exist "%EMBEDDED_JAVA%" (
     set "JAVA_HOME=%EMBEDDED_JAVA%"
     set "PATH=%EMBEDDED_JAVA%\bin;%PATH%"
@@ -38,7 +38,7 @@ echo.
 
 :: 3. Khởi chạy Backend trong cửa sổ CMD mới (Kế thừa biến môi trường JAVA_HOME/PATH)
 echo [*] Dang khoi dong Backend (Spring Boot)...
-start "Backend - Spring Boot" cmd /k "cd /d 05-Development\backend && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
+start "Backend - Spring Boot" cmd /k "cd /d 05-Development\backend && set "DB_URL=%DB_URL%" && set "DB_USERNAME=%DB_USERNAME%" && set "DB_PASSWORD=%DB_PASSWORD%" && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
 
 :: 4. Khởi chạy Frontend trong cửa sổ CMD mới
 echo [*] Dang khoi dong Frontend (Vite)...

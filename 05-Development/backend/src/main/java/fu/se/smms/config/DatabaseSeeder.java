@@ -38,6 +38,13 @@ public class DatabaseSeeder implements CommandLineRunner {
         try { jdbcTemplate.execute("ALTER TABLE food_menu ADD image_url VARCHAR(255)"); } catch (Exception e) {}
         try { jdbcTemplate.execute("ALTER TABLE food_menu ADD is_package_included BIT DEFAULT 1"); } catch (Exception e) {}
         try { jdbcTemplate.execute("ALTER TABLE food_menu ADD periods VARCHAR(100) DEFAULT 'Lunch'"); } catch (Exception e) {}
+        try {
+            System.out.println("[DB Seeder] Adding origin column to food_order table...");
+            jdbcTemplate.execute("ALTER TABLE dbo.food_order ADD origin VARCHAR(50)");
+            System.out.println("[DB Seeder] Successfully added origin column.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not add origin column: " + e.getMessage());
+        }
 
         try {
             System.out.println("[DB Seeder] Updating Food Menu items...");

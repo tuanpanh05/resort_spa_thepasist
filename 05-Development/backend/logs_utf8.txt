@@ -1,0 +1,556 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------------< fu.se:smms >-----------------------------
+[INFO] Building smms 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.4.2:run (default-cli) > test-compile @ smms >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ smms ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ smms ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 118 source files with javac [debug parameters release 17] to target\classes
+[INFO] /C:/Users/Administrator/Videos/FontendFor_SWP391/05-Development/backend/src/main/java/fu/se/smms/controller/ChefMealController.java: C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend\src\main\java\fu\se\smms\controller\ChefMealController.java uses unchecked or unsafe operations.
+[INFO] /C:/Users/Administrator/Videos/FontendFor_SWP391/05-Development/backend/src/main/java/fu/se/smms/controller/ChefMealController.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ smms ---
+[INFO] Not copying test resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ smms ---
+[INFO] Not compiling test sources
+[INFO] 
+[INFO] <<< spring-boot:3.4.2:run (default-cli) < test-compile @ smms <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.4.2:run (default-cli) @ smms ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.2)
+
+2026-06-19T01:19:54.350+07:00  INFO 29908 --- [           main] fu.se.smms.SmmsApplication               : Starting SmmsApplication using Java 21.0.10 with PID 29908 (C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend\target\classes started by Administrator in C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend)
+2026-06-19T01:19:54.353+07:00  INFO 29908 --- [           main] fu.se.smms.SmmsApplication               : No active profile set, falling back to 1 default profile: "default"
+2026-06-19T01:19:55.553+07:00  INFO 29908 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-19T01:19:55.804+07:00  INFO 29908 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 238 ms. Found 18 JPA repository interfaces.
+2026-06-19T01:19:56.714+07:00  INFO 29908 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-06-19T01:19:56.731+07:00  INFO 29908 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-19T01:19:56.731+07:00  INFO 29908 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
+2026-06-19T01:19:56.818+07:00  INFO 29908 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring embedded WebApplicationContext
+2026-06-19T01:19:56.820+07:00  INFO 29908 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2404 ms
+2026-06-19T01:19:57.170+07:00  INFO 29908 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-06-19T01:19:57.237+07:00  INFO 29908 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.5.Final
+2026-06-19T01:19:57.279+07:00  INFO 29908 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-06-19T01:19:57.595+07:00  INFO 29908 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-19T01:19:57.630+07:00  INFO 29908 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-19T01:19:58.119+07:00  INFO 29908 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 9d64bab0-eea3-4adc-8580-e9cbc556f804
+2026-06-19T01:19:58.122+07:00  INFO 29908 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-19T01:19:58.281+07:00  WARN 29908 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-19T01:19:58.308+07:00  INFO 29908 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 16.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-06-19T01:19:59.807+07:00  INFO 29908 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-19T01:19:59.810+07:00  INFO 29908 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-19T01:20:00.217+07:00  INFO 29908 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-06-19T01:20:01.606+07:00  WARN 29908 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-19T01:20:01.652+07:00  WARN 29908 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: db15272a-8528-4bf4-aa32-a140bfb14641
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-06-19T01:20:01.669+07:00  INFO 29908 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-06-19T01:20:01.749+07:00  INFO 29908 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2026-06-19T01:20:02.238+07:00  INFO 29908 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api'
+2026-06-19T01:20:02.245+07:00  INFO 29908 --- [           main] fu.se.smms.SmmsApplication               : Started SmmsApplication in 8.423 seconds (process running for 8.836)
+[DB Seeder] Altering columns to NVARCHAR and adding available_days...
+[DB Seeder] Successfully upgraded database columns to NVARCHAR.
+[DB Seeder] Adding new columns (image_url, is_package_included, periods, available_days)...
+[DB Seeder] Adding origin column to food_order table...
+[DB Seeder] Warning: Could not add origin column: StatementCallback; uncategorized SQLException for SQL [ALTER TABLE dbo.food_order ADD origin VARCHAR(50)]; SQL state [S0004]; error code [2705]; Column names in each table must be unique. Column name 'origin' in table 'dbo.food_order' is specified more than once.
+[DB Seeder] Updating Food Menu items...
+[DB Seeder] Food Menu items updated successfully.
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-19T01:20:36.039+07:00  INFO 29908 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-19T01:20:36.039+07:00  INFO 29908 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-06-19T01:20:36.044+07:00  INFO 29908 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
+Hibernate: 
+    select
+        top (?) u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    insert 
+    into
+        users
+        (created_at, email, full_name, id_passport_encrypted, password_hash, phone, role, status) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        u1_0.user_id,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.id_passport_encrypted,
+        u1_0.password_hash,
+        u1_0.phone,
+        u1_0.role,
+        u1_0.status 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    delete ot1_0 
+    from
+        otp_tokens ot1_0 
+    where
+        ot1_0.email=?
+Hibernate: 
+    insert 
+    into
+        otp_tokens
+        (created_at, email, expires_at, is_used, otp_code) 
+    values
+        (?, ?, ?, ?, ?)
+2026-06-19T01:20:40.287+07:00  INFO 29908 --- [nio-8080-exec-2] f.se.smms.service.impl.EmailServiceImpl  : OTP email sent successfully to: phanh@gmail.com
+2026-06-19T01:20:40.287+07:00  INFO 29908 --- [nio-8080-exec-2] fu.se.smms.service.impl.OtpServiceImpl   : OTP generated and sent for email: phanh@gmail.com
+Hibernate: 
+    select
+        u1_0.user_id,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.id_passport_encrypted,
+        u1_0.password_hash,
+        u1_0.phone,
+        u1_0.role,
+        u1_0.status 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        fm1_0.food_id,
+        fm1_0.allergens,
+        fm1_0.available_days,
+        fm1_0.category,
+        fm1_0.description,
+        fm1_0.dietary_tags,
+        fm1_0.dish_name,
+        fm1_0.enabled,
+        fm1_0.image_url,
+        fm1_0.ingredients,
+        fm1_0.is_package_included,
+        fm1_0.is_today_menu,
+        fm1_0.periods,
+        fm1_0.price,
+        fm1_0.sold_out 
+    from
+        food_menu fm1_0
+Hibernate: 
+    select
+        fm1_0.food_id,
+        fm1_0.allergens,
+        fm1_0.available_days,
+        fm1_0.category,
+        fm1_0.description,
+        fm1_0.dietary_tags,
+        fm1_0.dish_name,
+        fm1_0.enabled,
+        fm1_0.image_url,
+        fm1_0.ingredients,
+        fm1_0.is_package_included,
+        fm1_0.is_today_menu,
+        fm1_0.periods,
+        fm1_0.price,
+        fm1_0.sold_out 
+    from
+        food_menu fm1_0
+[RoomBookingController Debug] Received booking request for email: tp60730@gmail.com
+Hibernate: 
+    select
+        u1_0.user_id,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.id_passport_encrypted,
+        u1_0.password_hash,
+        u1_0.phone,
+        u1_0.role,
+        u1_0.status 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        mp1_0.profile_id,
+        mp1_0.explicit_consent_signed,
+        mp1_0.food_allergies_encrypted,
+        mp1_0.physical_condition_encrypted,
+        mp1_0.updated_at,
+        mp1_0.user_id 
+    from
+        medical_profile mp1_0 
+    left join
+        users u1_0 
+            on u1_0.user_id=mp1_0.user_id 
+    where
+        u1_0.user_id=?
+Hibernate: 
+    select
+        rp1_0.package_id,
+        rp1_0.created_at,
+        rp1_0.description,
+        rp1_0.duration_days,
+        rp1_0.includes,
+        rp1_0.name,
+        rp1_0.price,
+        rp1_0.status 
+    from
+        retreat_packages rp1_0 
+    where
+        rp1_0.package_id=?
+Hibernate: 
+    select
+        r1_0.room_id,
+        r1_0.room_number,
+        r1_0.room_type_id,
+        r1_0.status 
+    from
+        room r1_0
+Hibernate: 
+    insert 
+    into
+        room_booking
+        (check_in_date, check_out_date, created_at, package_id, status, total_deposit, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        room_booking_detail
+        (price_at_booking, room_id, booking_id) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    select
+        pfl1_0.package_food_id,
+        pfl1_0.food_id,
+        pfl1_0.package_id,
+        pfl1_0.quantity_per_day 
+    from
+        package_food_limit pfl1_0 
+    where
+        pfl1_0.package_id=?
+Hibernate: 
+    insert 
+    into
+        food_order
+        (order_time, origin, room_booking_id, status, total_amount, user_id) 
+    values
+        (?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        fm1_0.food_id,
+        fm1_0.allergens,
+        fm1_0.available_days,
+        fm1_0.category,
+        fm1_0.description,
+        fm1_0.dietary_tags,
+        fm1_0.dish_name,
+        fm1_0.enabled,
+        fm1_0.image_url,
+        fm1_0.ingredients,
+        fm1_0.is_package_included,
+        fm1_0.is_today_menu,
+        fm1_0.periods,
+        fm1_0.price,
+        fm1_0.sold_out 
+    from
+        food_menu fm1_0 
+    where
+        fm1_0.food_id=?
+Hibernate: 
+    insert 
+    into
+        food_order_detail
+        (food_id, order_id, is_package_included, price_at_order, quantity, special_note) 
+    values
+        (?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        top (?) i1_0.invoice_id,
+        i1_0.amount_due,
+        i1_0.deposit_amount,
+        i1_0.final_amount,
+        i1_0.food_subtotal,
+        i1_0.payment_time,
+        i1_0.room_booking_id,
+        i1_0.room_subtotal,
+        i1_0.spa_subtotal,
+        i1_0.status,
+        i1_0.tax_and_fees,
+        i1_0.user_id,
+        i1_0.vnpay_tran_id 
+    from
+        invoice i1_0 
+    left join
+        room_booking rb1_0 
+            on rb1_0.booking_id=i1_0.room_booking_id 
+    where
+        rb1_0.booking_id=?
+Hibernate: 
+    update
+        medical_profile 
+    set
+        explicit_consent_signed=?,
+        food_allergies_encrypted=?,
+        physical_condition_encrypted=?,
+        updated_at=?,
+        user_id=? 
+    where
+        profile_id=?
+Hibernate: 
+    update
+        food_order 
+    set
+        order_time=?,
+        origin=?,
+        room_booking_id=?,
+        status=?,
+        total_amount=?,
+        user_id=? 
+    where
+        order_id=?
+Hibernate: 
+    SELECT
+        COALESCE(     CASE         
+            WHEN b.package_id IS NOT NULL 
+                THEN p.price         
+            ELSE room_charge.room_subtotal     
+    END,     0 ) 
+FROM
+    dbo.room_booking b 
+LEFT JOIN
+    dbo.retreat_packages p 
+        ON p.package_id = b.package_id 
+OUTER APPLY (     SELECT
+    SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal     FROM
+        dbo.room_booking_detail d     
+    WHERE
+        d.booking_id = b.booking_id ) room_charge 
+WHERE
+    b.booking_id = ? 
+Hibernate: 
+    SELECT
+        COALESCE(SUM(price_at_booking), 0) 
+    FROM
+        dbo.spa_booking 
+    WHERE
+        room_booking_id = ?   
+        AND is_package_included = 0   
+        AND status IN ('CONFIRMED', 'COMPLETED') 
+Hibernate: 
+    SELECT
+        COALESCE(SUM(d.quantity * d.price_at_order), 0) 
+    FROM
+        dbo.food_order_detail d 
+    INNER JOIN
+        dbo.food_order o 
+            ON o.order_id = d.order_id 
+    WHERE
+        o.room_booking_id = ?   
+        AND d.is_package_included = 0   
+        AND o.status IN ('READY', 'DELIVERED') 
+Hibernate: 
+    insert 
+    into
+        invoice
+        (amount_due, deposit_amount, final_amount, food_subtotal, payment_time, room_booking_id, room_subtotal, spa_subtotal, status, tax_and_fees, user_id, vnpay_tran_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[RoomBookingController Debug] Booking created: ID=19, Status=PENDING_DEPOSIT
+Hibernate: 
+    select
+        top (?) i1_0.invoice_id,
+        i1_0.amount_due,
+        i1_0.deposit_amount,
+        i1_0.final_amount,
+        i1_0.food_subtotal,
+        i1_0.payment_time,
+        i1_0.room_booking_id,
+        i1_0.room_subtotal,
+        i1_0.spa_subtotal,
+        i1_0.status,
+        i1_0.tax_and_fees,
+        i1_0.user_id,
+        i1_0.vnpay_tran_id 
+    from
+        invoice i1_0 
+    left join
+        room_booking rb1_0 
+            on rb1_0.booking_id=i1_0.room_booking_id 
+    where
+        rb1_0.booking_id=?
+Hibernate: 
+    SELECT
+        COALESCE(     CASE         
+            WHEN b.package_id IS NOT NULL 
+                THEN p.price         
+            ELSE room_charge.room_subtotal     
+    END,     0 ) 
+FROM
+    dbo.room_booking b 
+LEFT JOIN
+    dbo.retreat_packages p 
+        ON p.package_id = b.package_id 
+OUTER APPLY (     SELECT
+    SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal     FROM
+        dbo.room_booking_detail d     
+    WHERE
+        d.booking_id = b.booking_id ) room_charge 
+WHERE
+    b.booking_id = ? 
+Hibernate: 
+    SELECT
+        COALESCE(SUM(price_at_booking), 0) 
+    FROM
+        dbo.spa_booking 
+    WHERE
+        room_booking_id = ?   
+        AND is_package_included = 0   
+        AND status IN ('CONFIRMED', 'COMPLETED') 
+Hibernate: 
+    SELECT
+        COALESCE(SUM(d.quantity * d.price_at_order), 0) 
+    FROM
+        dbo.food_order_detail d 
+    INNER JOIN
+        dbo.food_order o 
+            ON o.order_id = d.order_id 
+    WHERE
+        o.room_booking_id = ?   
+        AND d.is_package_included = 0   
+        AND o.status IN ('READY', 'DELIVERED') 
+[RoomBookingController Debug] Invoice generated: ID=16, Status=UNPAID
+Hibernate: 
+    select
+        i1_0.invoice_id,
+        i1_0.amount_due,
+        i1_0.deposit_amount,
+        i1_0.final_amount,
+        i1_0.food_subtotal,
+        i1_0.payment_time,
+        rb1_0.booking_id,
+        rb1_0.check_in_date,
+        rb1_0.check_out_date,
+        rb1_0.created_at,
+        rb1_0.package_id,
+        rb1_0.status,
+        rb1_0.total_deposit,
+        rb1_0.user_id,
+        i1_0.room_subtotal,
+        i1_0.spa_subtotal,
+        i1_0.status,
+        i1_0.tax_and_fees,
+        u2_0.user_id,
+        u2_0.created_at,
+        u2_0.email,
+        u2_0.full_name,
+        u2_0.id_passport_encrypted,
+        u2_0.password_hash,
+        u2_0.phone,
+        u2_0.role,
+        u2_0.status,
+        i1_0.vnpay_tran_id 
+    from
+        invoice i1_0 
+    left join
+        room_booking rb1_0 
+            on rb1_0.booking_id=i1_0.room_booking_id 
+    left join
+        users u2_0 
+            on u2_0.user_id=i1_0.user_id 
+    where
+        i1_0.invoice_id=?
+Hibernate: 
+    select
+        sc1_0.config_id,
+        sc1_0.config_key,
+        sc1_0.config_value,
+        sc1_0.updated_at 
+    from
+        system_configurations sc1_0 
+    where
+        sc1_0.config_key=?
+2026-06-19T01:21:31.589+07:00  INFO 29908 --- [nio-8080-exec-9] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] hashSecret: 3ZAHQSNZONCKAGFBCH7B1UX1LAVIWXH9
+2026-06-19T01:21:31.589+07:00  INFO 29908 --- [nio-8080-exec-9] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] hashData: vnp_Amount=412500000&vnp_Command=pay&vnp_CreateDate=20260619012131&vnp_CurrCode=VND&vnp_ExpireDate=20260619013631&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=Thanh toan hoa don 16&vnp_OrderType=billpayment&vnp_ReturnUrl=http://localhost:5173/payment-result&vnp_TmnCode=12YK9LVK&vnp_TxnRef=16&vnp_Version=2.1.0
+2026-06-19T01:21:31.591+07:00  INFO 29908 --- [nio-8080-exec-9] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] secureHash: b79bec8d95ae603e0f2cdbeb1494ff76a06303a55438be0b48d83a2964c244adf000e8086289e1dea476d92808b2aaa86db8850b0bd52043e6f60a9b29efcf55

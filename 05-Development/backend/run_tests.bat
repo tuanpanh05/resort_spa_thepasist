@@ -1,5 +1,9 @@
 @echo off
-set "JAVA_HOME=C:\Program Files\Java\jdk-24"
+if exist "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64\bin\java.exe" (
+    set "JAVA_HOME=C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
+) else (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-24"
+)
 set "MAVEN_HOME=C:\Users\Administrator\Videos\FontendFor_SWP391\03.SourceCode\maven-extracted\apache-maven-3.9.6"
 set "PATH=%JAVA_HOME%\bin;%MAVEN_HOME%\bin;%PATH%"
 echo ==========================================================
