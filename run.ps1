@@ -6,7 +6,7 @@ Write-Host ""
 $root = Get-Location
 
 # 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 từ VS Code Extensions (Tương thích 100% với Lombok)
-$embeddedJava = "C:\Program Files\Java\jdk-21.0.10"
+$embeddedJava = "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
 if (Test-Path $embeddedJava) {
     $env:JAVA_HOME = $embeddedJava
     $env:PATH = "$embeddedJava\bin;" + $env:PATH
@@ -29,6 +29,8 @@ if (Test-Path ".env") {
             $key = $parts[0].Trim()
             $value = $parts[1].Trim()
             [System.Environment]::SetEnvironmentVariable($key, $value, "Process")
+            # Thiết lập trực tiếp vào env: để tiến trình con (Start-Process) kế thừa chính xác
+            New-Item -Path "env:\$key" -Value $value -Force | Out-Null
         }
     }
 } else {
@@ -40,9 +42,9 @@ Write-Host "[*] Su dung database hien tai (Khong reset du lieu)." -ForegroundCol
 
 
 
-# 4. Khởi chạy Backend trong cửa sổ CMD mới (Kế thừa biến môi trường JAVA_HOME/PATH/DB)
+# 4. Khởi chạy Backend trong cửa sổ PowerShell mới (Ghi log song song ra logs.txt)
 Write-Host "[*] Dang khoi dong Backend (Spring Boot)..." -ForegroundColor Yellow
-Start-Process cmd -ArgumentList "/k cd /d `"$root\05-Development\backend`" && title Backend - Spring Boot && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
+Start-Process powershell -ArgumentList "-NoExit -Command `"cd '$root\05-Development\backend'; `$Host.UI.RawUI.WindowTitle = 'Backend - Spring Boot'; `$env:DB_URL = '$env:DB_URL'; `$env:DB_USERNAME = '$env:DB_USERNAME'; `$env:DB_PASSWORD = '$env:DB_PASSWORD'; .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run '-Dmaven.test.skip=true' 2>&1 | Tee-Object -FilePath logs.txt`""
 
 # 5. Khởi chạy Frontend trong cửa sổ CMD mới
 Write-Host "[*] Dang khoi dong Frontend (Vite)..." -ForegroundColor Yellow

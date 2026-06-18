@@ -36,6 +36,7 @@ import java.util.TreeMap;
 
 @Service
 public class InvoiceServiceImpl implements InvoiceService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InvoiceServiceImpl.class);
     private static final BigDecimal TAX_RATE = new BigDecimal("0.10");
     private static final DateTimeFormatter VNPAY_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -132,7 +133,10 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         String query = buildQuery(params);
         String hashData = buildHashData(params);
+        log.info("[VNPay Debug] hashSecret: {}", vnPayProperties.getHashSecret());
+        log.info("[VNPay Debug] hashData: {}", hashData);
         String secureHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
+        log.info("[VNPay Debug] secureHash: {}", secureHash);
 
         VNPayPaymentDTO dto = new VNPayPaymentDTO();
         dto.setOrderId(orderId);
@@ -424,9 +428,15 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new BusinessException("INV-001", HttpStatus.BAD_REQUEST, "Missing VNPay secure hash");
         }
 
-        Map<String, String> signedParams = new TreeMap<>(callbackParams);
-        signedParams.remove("vnp_SecureHash");
-        signedParams.remove("vnp_SecureHashType");
+        Map<String, String> signedParams = new TreeMap<>();
+        for (Map.Entry<String, String> entry : callbackParams.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (key.startsWith("vnp_") && !"vnp_SecureHash".equals(key) && !"vnp_SecureHashType".equals(key)) {
+                signedParams.put(key, value);
+            }
+        }
+
         String hashData = buildHashData(signedParams);
         String calculatedHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
 
@@ -505,6 +515,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private String buildQuery(Map<String, String> params) {
         return params.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
+                .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
                 .map(entry -> encode(entry.getKey()) + "=" + encode(entry.getValue()))
                 .reduce((left, right) -> left + "&" + right)
                 .orElse("");
@@ -513,14 +524,15 @@ public class InvoiceServiceImpl implements InvoiceService {
     private String buildHashData(Map<String, String> params) {
         return params.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(entry -> entry.getKey() + "=" + (entry.getValue() == null ? "" : entry.getValue()))
+                .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                .map(entry -> entry.getKey() + "=" + encode(entry.getValue()))
                 .reduce((left, right) -> left + "&" + right)
                 .orElse("");
     }
 
     private String encode(String value) {
         if (value == null) return "";
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private String hmacSha512(String key, String data) {

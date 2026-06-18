@@ -68,7 +68,7 @@ export default function ConfirmationStep({
                 Khoảng thời gian nghỉ
               </span>
               <span className="font-semibold text-sage-900">
-                {guestInfo.checkInDate} → {guestInfo.checkOutDate} ({nightsCount} Đêm)
+                {guestInfo.checkInDate} → {guestInfo.checkOutDate}
               </span>
             </div>
           </div>
@@ -200,117 +200,32 @@ export default function ConfirmationStep({
         </div>
 
         {/* Part 3: Total and Payment info */}
-        <div className="bg-primary-50/15 border border-primary-100 p-6">
-          <div className="flex justify-between items-end mb-6 pb-6 border-b border-primary-100 border-dashed">
+        <div className="bg-primary-50/15 border border-primary-100 p-6 space-y-4">
+          <div className="flex justify-between items-end pb-4 border-b border-primary-100 border-dashed">
             <div>
               <span className="text-sage-500 text-xs font-semibold uppercase tracking-wider block mb-1">
                 Tổng chi phí dự kiến
               </span>
-              <span className="text-[10px] text-sage-400 block font-light">Đã bao gồm 10% VAT</span>
+              <span className="text-[10px] text-sage-400 block font-light">Đã bao gồm 10% VAT & phí dịch vụ</span>
             </div>
             <span className="font-serif text-2xl font-bold text-primary-950">
               {formatCurrency(totalAmount)}
             </span>
           </div>
 
-          <div className="bg-white border border-primary-200 p-4 sm:p-5 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-            <div className="space-y-3 w-full">
-              <div>
-                <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                  Ngân hàng thụ hưởng
-                </span>
-                <span className="text-sage-900 font-bold">MB BANK (NGÂN HÀNG QUÂN ĐỘI)</span>
-              </div>
+          <div className="grid grid-cols-2 gap-y-3 font-light text-sage-700 text-xs sm:text-sm pt-2">
+            <span>Tiền đặt cọc cần thanh toán (30%):</span>
+            <span className="font-bold text-primary-900 text-right">{formatCurrency(depositAmount)}</span>
 
-              <div>
-                <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                  Số tài khoản
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-primary-900 font-mono font-bold tracking-wider">
-                    190520269999
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyText("190520269999", "stk")}
-                    className="text-sage-400 hover:text-primary-850 transition-colors p-1"
-                  >
-                    {copiedField === "stk" ? (
-                      <Check className="h-4 w-4 text-green-700" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                  Chủ tài khoản
-                </span>
-                <span className="text-sage-900 uppercase font-bold">
-                  CONG TY CO PHAN NGU SON RETREAT
-                </span>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                  Số tiền đặt cọc (30%)
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-primary-900 font-bold text-base font-serif">
-                    {formatCurrency(depositAmount)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyText(depositAmount.toString(), "amount")}
-                    className="text-sage-400 hover:text-primary-850 transition-colors p-1"
-                  >
-                    {copiedField === "amount" ? (
-                      <Check className="h-4 w-4 text-green-700" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-sage-400 uppercase tracking-wider block leading-none mb-1">
-                  Nội dung chuyển khoản
-                </span>
-                <div className="flex items-center space-x-2 bg-yellow-50 border border-yellow-250 px-3 py-1.5 self-start">
-                  <span className="text-sage-900 font-mono font-bold tracking-wide">
-                    NS {guestInfo.phone} {guestInfo.checkInDate.replace(/-/g, "")}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleCopyText(
-                        `NS ${guestInfo.phone} ${guestInfo.checkInDate.replace(/-/g, "")}`,
-                        "memo"
-                      )
-                    }
-                    className="text-sage-450 hover:text-primary-850 transition-colors p-1"
-                  >
-                    {copiedField === "memo" ? (
-                      <Check className="h-4 w-4 text-green-700" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <span>Số dư thanh toán khi check-out (70%):</span>
+            <span className="font-semibold text-sage-950 text-right">{formatCurrency(remainingAmount)}</span>
           </div>
         </div>
 
         <div className="p-4 bg-primary-50/50 border border-primary-100/50 flex items-start space-x-2 text-[10px] text-sage-600 leading-relaxed font-light">
           <Info className="h-4 w-4 text-primary-600 mt-0.5 flex-shrink-0" />
           <span>
-            Sau khi chuyển khoản cọc thành công, hệ thống robot đối soát của Ngũ Sơn sẽ ghi nhận và
-            kích hoạt mã Booking trong 1 phút. Nhấn nút xác thực bên dưới để thử nghiệm giả lập
-            thanh toán.
+            Vui lòng kiểm tra kỹ các thông tin chi tiết của đơn đặt phòng ở trên. Sau khi nhấn "Xác nhận & Đi đến thanh toán", hệ thống sẽ khởi tạo mã đặt phòng và hóa đơn tạm thời của bạn để thực hiện thanh toán trực tuyến.
           </span>
         </div>
 
@@ -318,14 +233,14 @@ export default function ConfirmationStep({
         <div className="pt-6 border-t border-primary-50 flex flex-col sm:flex-row justify-between items-center gap-4">
           <span className="text-xs text-sage-500 font-light flex items-center">
             <ShieldCheck className="h-4.5 w-4.5 text-primary-600 mr-1.5" />
-            Hệ thống thanh toán bảo mật tự động
+            Hệ thống đặt lịch Ngũ Sơn Resort & Spa
           </span>
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 w-full sm:w-auto">
              <button
               type="button"
               onClick={handlePrevStep}
-              className="w-full sm:w-auto px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center justify-center cursor-pointer disabled:opacity-70"
+              className="w-full sm:w-auto px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center justify-center cursor-pointer disabled:opacity-70 font-semibold"
             >
               Quay lại
             </button>
@@ -333,14 +248,14 @@ export default function ConfirmationStep({
               type="button"
               disabled={isVerifyingPayment}
               onClick={handleVerifyPayment}
-              className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-70"
+              className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center justify-center cursor-pointer disabled:opacity-70 font-semibold"
             >
               {isVerifyingPayment ? (
                 <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Đang kiểm tra đối soát...
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> Đang tạo đơn đặt...
                 </>
               ) : (
-                "Tôi đã chuyển khoản thành công"
+                "Xác nhận & Đi đến thanh toán"
               )}
             </button>
           </div>

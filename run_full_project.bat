@@ -317,16 +317,6 @@ set "VALID_JAVA=0"
 if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" set "VALID_JAVA=1"
 if "%VALID_JAVA%"=="1" goto java_found
 
-if exist "C:\Program Files\Java\jdk-24\bin\java.exe" (
-    set "JAVA_HOME=C:\Program Files\Java\jdk-24"
-    set "VALID_JAVA=1"
-    goto java_found
-)
-if exist "C:\Users\Administrator\.jdks\corretto-17.0.14\bin\java.exe" (
-    set "JAVA_HOME=C:\Users\Administrator\.jdks\corretto-17.0.14"
-    set "VALID_JAVA=1"
-    goto java_found
-)
 if exist "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64\bin\java.exe" (
     set "JAVA_HOME=C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
     set "VALID_JAVA=1"
@@ -339,6 +329,16 @@ if exist "C:\Program Files\Java\jdk-21\bin\java.exe" (
 )
 if exist "C:\Program Files\Java\jdk-17\bin\java.exe" (
     set "JAVA_HOME=C:\Program Files\Java\jdk-17"
+    set "VALID_JAVA=1"
+    goto java_found
+)
+if exist "C:\Users\Administrator\.jdks\corretto-17.0.14\bin\java.exe" (
+    set "JAVA_HOME=C:\Users\Administrator\.jdks\corretto-17.0.14"
+    set "VALID_JAVA=1"
+    goto java_found
+)
+if exist "C:\Program Files\Java\jdk-24\bin\java.exe" (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-24"
     set "VALID_JAVA=1"
     goto java_found
 )
@@ -378,7 +378,7 @@ if not exist "%~dp005-Development\frontend\node_modules\" (
 :: 6. Khoi dong cac server
 echo.
 echo [*] Dang khoi dong Backend (Spring Boot)...
-start "Backend - Spring Boot" cmd /k "cd /d %~dp005-Development\backend && title Backend - Spring Boot && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
+start "Backend - Spring Boot" cmd /k "cd /d %~dp005-Development\backend && title Backend - Spring Boot && set "DB_URL=%DB_URL%" && set "DB_USERNAME=%DB_USERNAME%" && set "DB_PASSWORD=%DB_PASSWORD%" && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
 
 echo [*] Dang khoi dong Frontend (Vite)...
 start "Frontend - Vite" cmd /k "cd /d %~dp005-Development\frontend && title Frontend - Vite && npm run dev"

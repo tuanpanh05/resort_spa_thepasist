@@ -248,6 +248,7 @@ CREATE TABLE dbo.food_order (
     order_time      DATETIME2     NOT NULL DEFAULT GETDATE(),
     status          VARCHAR(50)   NOT NULL,
     total_amount    DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    origin          VARCHAR(50)   NULL,
 
     CONSTRAINT CK_food_order_status CHECK (status IN ('PENDING','PREPARING','READY','DELIVERED','CANCELLED')),
     CONSTRAINT CK_food_order_amount CHECK (total_amount >= 0)

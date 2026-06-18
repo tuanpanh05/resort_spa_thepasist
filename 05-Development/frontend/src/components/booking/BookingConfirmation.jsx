@@ -54,7 +54,7 @@ export default function BookingConfirmation({
             <div>
               <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">Khoảng thời gian nghỉ</span>
               <span className="font-semibold text-sage-900">
-                {guestInfo.checkInDate} → {guestInfo.checkOutDate} ({nightsCount} Đêm)
+                {guestInfo.checkInDate} → {guestInfo.checkOutDate}
               </span>
             </div>
           </div>

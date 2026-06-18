@@ -52,7 +52,7 @@ export default function BookingSuccess({
 
           <span className="text-sage-500 font-light">Thời gian lưu trú:</span>
           <span className="font-semibold text-right">
-            {guestInfo.checkInDate} → {guestInfo.checkOutDate} ({nightsCount} Đêm)
+            {guestInfo.checkInDate} → {guestInfo.checkOutDate}
           </span>
 
           <span className="text-sage-500 font-light">Số khách đi cùng:</span>
