@@ -6,7 +6,7 @@ Write-Host ""
 $root = Get-Location
 
 # 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 từ VS Code Extensions (Tương thích 100% với Lombok)
-$embeddedJava = "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
+$embeddedJava = "C:\Program Files\Java\jdk-21.0.10"
 if (Test-Path $embeddedJava) {
     $env:JAVA_HOME = $embeddedJava
     $env:PATH = "$embeddedJava\bin;" + $env:PATH

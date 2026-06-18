@@ -92,7 +92,8 @@ public class UserServiceImpl implements UserService {
             user = userRepository.save(user);
         } else {
             // Chỉ cập nhật fullName nếu tên hiện tại trong hệ thống bị trống hoặc null
-            if (request.getFullName() != null && !request.getFullName().isBlank() && (user.getFullName() == null || user.getFullName().isBlank())) {
+            if (request.getFullName() != null && !request.getFullName().isBlank()
+                    && (user.getFullName() == null || user.getFullName().isBlank())) {
                 user.setFullName(request.getFullName());
                 user = userRepository.save(user);
             }
@@ -235,7 +236,8 @@ public class UserServiceImpl implements UserService {
                 : rb.getDetails().stream().map(d -> new BookingHistoryDTO.RoomDetailDTO(
                         d.getRoom() != null ? d.getRoom().getRoomNumber() : "N/A",
                         d.getRoom() != null && d.getRoom().getRoomType() != null
-                                ? d.getRoom().getRoomType().getTypeName() : "N/A",
+                                ? d.getRoom().getRoomType().getTypeName()
+                                : "N/A",
                         d.getPriceAtBooking())).collect(Collectors.toList());
 
         return BookingHistoryDTO.builder()
