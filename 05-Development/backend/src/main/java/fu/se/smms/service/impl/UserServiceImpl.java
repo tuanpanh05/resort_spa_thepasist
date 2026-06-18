@@ -9,6 +9,7 @@ import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.SpaBookingRepository;
 import fu.se.smms.repository.UserRepository;
 import fu.se.smms.service.UserService;
+import fu.se.smms.service.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private SpaBookingRepository spaBookingRepository;
 
+    @Autowired
+    private OtpService otpService;
+
     @Override
     public UserProfileDTO signUp(SignUpRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -47,10 +51,11 @@ public class UserServiceImpl implements UserService {
                 .phone(request.getPhone())
                 .idPassportEncrypted(request.getIdPassport()) // Automatically encrypted by AesEncryptor
                 .role("CUSTOMER")
-                .status("ACTIVE")
+                .status("INACTIVE")
                 .build();
 
         User savedUser = userRepository.save(user);
+        otpService.generateAndSendOtp(savedUser.getEmail());
         return mapToProfileDTO(savedUser);
     }
 
@@ -256,5 +261,24 @@ public class UserServiceImpl implements UserService {
                 .priceAtBooking(sb.getPriceAtBooking())
                 .isPackageIncluded(sb.getIsPackageIncluded())
                 .build();
+    }
+
+    @Override
+    public void verifyRegistration(String email, String otpCode) {
+        otpService.verifyAndUseOtp(email, otpCode);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+        user.setStatus("ACTIVE");
+        userRepository.save(user);
+    }
+
+    @Override
+    public void resendVerificationOtp(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+        if (!"INACTIVE".equals(user.getStatus())) {
+            throw new RuntimeException("Tài khoản đã được kích hoạt hoặc bị khóa.");
+        }
+        otpService.generateAndSendOtp(email);
     }
 }

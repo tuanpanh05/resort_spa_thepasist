@@ -21,4 +21,11 @@ public interface OtpService {
      * @param newPassword the new plain-text password
      */
     void resetPassword(String email, String otpCode, String newPassword);
+
+    /**
+     * Verifies the OTP and immediately marks it as used/invalidated.
+     * @param email the email address
+     * @param otpCode the OTP code
+     */
+    void verifyAndUseOtp(String email, String otpCode);
 }

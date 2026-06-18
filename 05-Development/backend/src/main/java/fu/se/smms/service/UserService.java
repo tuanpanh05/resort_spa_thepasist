@@ -22,5 +22,8 @@ public interface UserService {
     UserProfileDTO updateUserRoleAndStatus(Integer userId, String role, String status);
     void deleteUser(Integer userId);
     UserProfileDTO createStaffAccount(SignUpRequest request, String role);
+
+    void verifyRegistration(String email, String otpCode);
+    void resendVerificationOtp(String email);
 }
 
