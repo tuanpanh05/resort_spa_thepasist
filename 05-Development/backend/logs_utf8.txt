@@ -38,24 +38,24 @@
 
  :: Spring Boot ::                (v3.4.2)
 
-2026-06-19T01:19:54.350+07:00  INFO 29908 --- [           main] fu.se.smms.SmmsApplication               : Starting SmmsApplication using Java 21.0.10 with PID 29908 (C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend\target\classes started by Administrator in C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend)
-2026-06-19T01:19:54.353+07:00  INFO 29908 --- [           main] fu.se.smms.SmmsApplication               : No active profile set, falling back to 1 default profile: "default"
-2026-06-19T01:19:55.553+07:00  INFO 29908 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-06-19T01:19:55.804+07:00  INFO 29908 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 238 ms. Found 18 JPA repository interfaces.
-2026-06-19T01:19:56.714+07:00  INFO 29908 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2026-06-19T01:19:56.731+07:00  INFO 29908 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-06-19T01:19:56.731+07:00  INFO 29908 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
-2026-06-19T01:19:56.818+07:00  INFO 29908 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring embedded WebApplicationContext
-2026-06-19T01:19:56.820+07:00  INFO 29908 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2404 ms
-2026-06-19T01:19:57.170+07:00  INFO 29908 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-06-19T01:19:57.237+07:00  INFO 29908 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.5.Final
-2026-06-19T01:19:57.279+07:00  INFO 29908 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-06-19T01:19:57.595+07:00  INFO 29908 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-06-19T01:19:57.630+07:00  INFO 29908 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-06-19T01:19:58.119+07:00  INFO 29908 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 9d64bab0-eea3-4adc-8580-e9cbc556f804
-2026-06-19T01:19:58.122+07:00  INFO 29908 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-06-19T01:19:58.281+07:00  WARN 29908 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2026-06-19T01:19:58.308+07:00  INFO 29908 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+2026-06-19T02:20:10.557+07:00  INFO 25796 --- [           main] fu.se.smms.SmmsApplication               : Starting SmmsApplication using Java 21.0.10 with PID 25796 (C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend\target\classes started by Administrator in C:\Users\Administrator\Videos\FontendFor_SWP391\05-Development\backend)
+2026-06-19T02:20:10.560+07:00  INFO 25796 --- [           main] fu.se.smms.SmmsApplication               : No active profile set, falling back to 1 default profile: "default"
+2026-06-19T02:20:11.460+07:00  INFO 25796 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-19T02:20:11.562+07:00  INFO 25796 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 95 ms. Found 18 JPA repository interfaces.
+2026-06-19T02:20:12.239+07:00  INFO 25796 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-06-19T02:20:12.254+07:00  INFO 25796 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-19T02:20:12.254+07:00  INFO 25796 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
+2026-06-19T02:20:12.319+07:00  INFO 25796 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring embedded WebApplicationContext
+2026-06-19T02:20:12.320+07:00  INFO 25796 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1699 ms
+2026-06-19T02:20:12.606+07:00  INFO 25796 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-06-19T02:20:12.693+07:00  INFO 25796 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.5.Final
+2026-06-19T02:20:12.742+07:00  INFO 25796 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-06-19T02:20:13.046+07:00  INFO 25796 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-19T02:20:13.087+07:00  INFO 25796 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-19T02:20:13.464+07:00  INFO 25796 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 36d1accf-f77c-4885-bb84-b876583b1be4
+2026-06-19T02:20:13.466+07:00  INFO 25796 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-19T02:20:13.671+07:00  WARN 25796 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-19T02:20:13.768+07:00  INFO 25796 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 16.0
@@ -63,20 +63,20 @@
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2026-06-19T01:19:59.807+07:00  INFO 29908 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-06-19T01:19:59.810+07:00  INFO 29908 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-06-19T01:20:00.217+07:00  INFO 29908 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-06-19T01:20:01.606+07:00  WARN 29908 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-06-19T01:20:01.652+07:00  WARN 29908 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+2026-06-19T02:20:15.282+07:00  INFO 25796 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-19T02:20:15.287+07:00  INFO 25796 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-19T02:20:15.696+07:00  INFO 25796 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-06-19T02:20:17.046+07:00  WARN 25796 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-19T02:20:17.070+07:00  WARN 25796 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: db15272a-8528-4bf4-aa32-a140bfb14641
+Using generated security password: 75d39417-027f-4aa7-a66b-a6504a00595d
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2026-06-19T01:20:01.669+07:00  INFO 29908 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2026-06-19T01:20:01.749+07:00  INFO 29908 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
-2026-06-19T01:20:02.238+07:00  INFO 29908 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api'
-2026-06-19T01:20:02.245+07:00  INFO 29908 --- [           main] fu.se.smms.SmmsApplication               : Started SmmsApplication in 8.423 seconds (process running for 8.836)
+2026-06-19T02:20:17.079+07:00  INFO 25796 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-06-19T02:20:17.165+07:00  INFO 25796 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2026-06-19T02:20:17.799+07:00  INFO 25796 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api'
+2026-06-19T02:20:17.805+07:00  INFO 25796 --- [           main] fu.se.smms.SmmsApplication               : Started SmmsApplication in 7.806 seconds (process running for 8.181)
 [DB Seeder] Altering columns to NVARCHAR and adding available_days...
 [DB Seeder] Successfully upgraded database columns to NVARCHAR.
 [DB Seeder] Adding new columns (image_url, is_package_included, periods, available_days)...
@@ -133,53 +133,9 @@ Hibernate:
         users u1_0 
     where
         u1_0.email=?
-2026-06-19T01:20:36.039+07:00  INFO 29908 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-06-19T01:20:36.039+07:00  INFO 29908 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2026-06-19T01:20:36.044+07:00  INFO 29908 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
-Hibernate: 
-    select
-        top (?) u1_0.user_id 
-    from
-        users u1_0 
-    where
-        u1_0.email=?
-Hibernate: 
-    insert 
-    into
-        users
-        (created_at, email, full_name, id_passport_encrypted, password_hash, phone, role, status) 
-    values
-        (?, ?, ?, ?, ?, ?, ?, ?)
-Hibernate: 
-    select
-        u1_0.user_id,
-        u1_0.created_at,
-        u1_0.email,
-        u1_0.full_name,
-        u1_0.id_passport_encrypted,
-        u1_0.password_hash,
-        u1_0.phone,
-        u1_0.role,
-        u1_0.status 
-    from
-        users u1_0 
-    where
-        u1_0.email=?
-Hibernate: 
-    delete ot1_0 
-    from
-        otp_tokens ot1_0 
-    where
-        ot1_0.email=?
-Hibernate: 
-    insert 
-    into
-        otp_tokens
-        (created_at, email, expires_at, is_used, otp_code) 
-    values
-        (?, ?, ?, ?, ?)
-2026-06-19T01:20:40.287+07:00  INFO 29908 --- [nio-8080-exec-2] f.se.smms.service.impl.EmailServiceImpl  : OTP email sent successfully to: phanh@gmail.com
-2026-06-19T01:20:40.287+07:00  INFO 29908 --- [nio-8080-exec-2] fu.se.smms.service.impl.OtpServiceImpl   : OTP generated and sent for email: phanh@gmail.com
+2026-06-19T02:20:30.679+07:00  INFO 25796 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-19T02:20:30.679+07:00  INFO 25796 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-06-19T02:20:30.682+07:00  INFO 25796 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
 Hibernate: 
     select
         u1_0.user_id,
@@ -437,7 +393,7 @@ Hibernate:
         (amount_due, deposit_amount, final_amount, food_subtotal, payment_time, room_booking_id, room_subtotal, spa_subtotal, status, tax_and_fees, user_id, vnpay_tran_id) 
     values
         (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-[RoomBookingController Debug] Booking created: ID=19, Status=PENDING_DEPOSIT
+[RoomBookingController Debug] Booking created: ID=21, Status=PENDING_DEPOSIT
 Hibernate: 
     select
         top (?) i1_0.invoice_id,
@@ -500,7 +456,7 @@ Hibernate:
         o.room_booking_id = ?   
         AND d.is_package_included = 0   
         AND o.status IN ('READY', 'DELIVERED') 
-[RoomBookingController Debug] Invoice generated: ID=16, Status=UNPAID
+[RoomBookingController Debug] Invoice generated: ID=18, Status=UNPAID
 Hibernate: 
     select
         i1_0.invoice_id,
@@ -551,6 +507,44 @@ Hibernate:
         system_configurations sc1_0 
     where
         sc1_0.config_key=?
-2026-06-19T01:21:31.589+07:00  INFO 29908 --- [nio-8080-exec-9] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] hashSecret: 3ZAHQSNZONCKAGFBCH7B1UX1LAVIWXH9
-2026-06-19T01:21:31.589+07:00  INFO 29908 --- [nio-8080-exec-9] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] hashData: vnp_Amount=412500000&vnp_Command=pay&vnp_CreateDate=20260619012131&vnp_CurrCode=VND&vnp_ExpireDate=20260619013631&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=Thanh toan hoa don 16&vnp_OrderType=billpayment&vnp_ReturnUrl=http://localhost:5173/payment-result&vnp_TmnCode=12YK9LVK&vnp_TxnRef=16&vnp_Version=2.1.0
-2026-06-19T01:21:31.591+07:00  INFO 29908 --- [nio-8080-exec-9] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] secureHash: b79bec8d95ae603e0f2cdbeb1494ff76a06303a55438be0b48d83a2964c244adf000e8086289e1dea476d92808b2aaa86db8850b0bd52043e6f60a9b29efcf55
+2026-06-19T02:20:56.910+07:00  INFO 25796 --- [nio-8080-exec-7] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] hashSecret: 3ZAHQSNZONCKAGFBCH7B1UX1LAVIWXH9
+2026-06-19T02:20:56.910+07:00  INFO 25796 --- [nio-8080-exec-7] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] hashData: vnp_Amount=412500000&vnp_Command=pay&vnp_CreateDate=20260619022056&vnp_CurrCode=VND&vnp_ExpireDate=20260619023556&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=Thanh+toan+hoa+don+18&vnp_OrderType=billpayment&vnp_ReturnUrl=http%3A%2F%2Flocalhost%3A5173%2Fpayment-result&vnp_TmnCode=12YK9LVK&vnp_TxnRef=18&vnp_Version=2.1.0
+2026-06-19T02:20:56.911+07:00  INFO 25796 --- [nio-8080-exec-7] f.s.s.service.impl.InvoiceServiceImpl    : [VNPay Debug] secureHash: 73693c302aab3b297a985e0f0f8d41233739c1a853120ab9c89a31e0252fe7d160fd50b24ac36c3f9c13c63b989b1ba64e1a552b11010548a7b288ac48634f9a
+Hibernate: 
+    select
+        fm1_0.food_id,
+        fm1_0.allergens,
+        fm1_0.available_days,
+        fm1_0.category,
+        fm1_0.description,
+        fm1_0.dietary_tags,
+        fm1_0.dish_name,
+        fm1_0.enabled,
+        fm1_0.image_url,
+        fm1_0.ingredients,
+        fm1_0.is_package_included,
+        fm1_0.is_today_menu,
+        fm1_0.periods,
+        fm1_0.price,
+        fm1_0.sold_out 
+    from
+        food_menu fm1_0
+Hibernate: 
+    select
+        fm1_0.food_id,
+        fm1_0.allergens,
+        fm1_0.available_days,
+        fm1_0.category,
+        fm1_0.description,
+        fm1_0.dietary_tags,
+        fm1_0.dish_name,
+        fm1_0.enabled,
+        fm1_0.image_url,
+        fm1_0.ingredients,
+        fm1_0.is_package_included,
+        fm1_0.is_today_menu,
+        fm1_0.periods,
+        fm1_0.price,
+        fm1_0.sold_out 
+    from
+        food_menu fm1_0
