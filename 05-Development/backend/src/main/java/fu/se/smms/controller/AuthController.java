@@ -31,6 +31,33 @@ public class AuthController {
         }
     }
 
+    // UC01 – Registration Verification
+    @PostMapping("/verify-registration")
+    public ResponseEntity<?> verifyRegistration(@Valid @RequestBody VerifyOtpRequest request) {
+        try {
+            userService.verifyRegistration(request.getEmail(), request.getOtpCode());
+            return ResponseEntity.ok(Map.of(
+                "message", "Xác thực tài khoản thành công! Bạn có thể đăng nhập.",
+                "verified", true
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // UC01 – Resend Registration OTP
+    @PostMapping("/resend-verification")
+    public ResponseEntity<?> resendVerification(@RequestParam String email) {
+        try {
+            userService.resendVerificationOtp(email);
+            return ResponseEntity.ok(Map.of(
+                "message", "Mã OTP mới đã được gửi lại vào email."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     // UC01 – Login
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {

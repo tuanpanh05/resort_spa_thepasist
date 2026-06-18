@@ -111,4 +111,14 @@ public class OtpServiceImpl implements OtpService {
 
         log.info("Password for {} has been successfully reset.", email);
     }
+
+    @Override
+    public void verifyAndUseOtp(String email, String otpCode) {
+        verifyOtp(email, otpCode);
+        OtpToken token = otpTokenRepository
+                .findTopByEmailAndIsUsedFalseOrderByCreatedAtDesc(email)
+                .orElseThrow(() -> new RuntimeException("Mã OTP không hợp lệ hoặc đã hết hạn."));
+        token.setIsUsed(true);
+        otpTokenRepository.save(token);
+    }
 }
