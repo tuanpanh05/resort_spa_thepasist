@@ -70,6 +70,17 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify({ email, otpCode, newPassword }),
     }),
+
+  verifyRegistration: (email, otpCode) =>
+    apiRequest("/auth/verify-registration", {
+      method: "POST",
+      body: JSON.stringify({ email, otpCode }),
+    }),
+
+  resendVerification: (email) =>
+    apiRequest(`/auth/resend-verification?email=${encodeURIComponent(email)}`, {
+      method: "POST",
+    }),
 };
 
 // ============================================================

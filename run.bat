@@ -23,6 +23,11 @@ if exist ".env" (
     copy /Y ".env" "05-Development\frontend\.env" >nul
     copy /Y ".env" "05-Development\backend\.env" >nul
     echo [OK] Da dong bo file .env!
+    
+    :: Nạp các biến môi trường vào tiến trình hiện tại
+    for /F "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
+        set "%%A=%%B"
+    )
 ) else (
     echo [!] Khong tim thay file .env o thu muc goc!
     color 0C
