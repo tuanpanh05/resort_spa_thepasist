@@ -35,25 +35,10 @@ if (Test-Path ".env") {
     Write-Host "[!] Khong tim thay file .env o thu muc goc!" -ForegroundColor Red
 }
 
-# 3. Xóa database cũ và chạy file ResortSpaDB_Master.sql mới
-Write-Host "[*] Dang kiem tra cong cu sqlcmd..." -ForegroundColor Yellow
-$hasSqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
-if ($hasSqlcmd) {
-    Write-Host "[*] Dang ngat ket noi va xoa Database cu (ResortSpaDB)..." -ForegroundColor Yellow
-    $dropQuery = "IF DB_ID('ResortSpaDB') IS NOT NULL ALTER DATABASE ResortSpaDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE; IF DB_ID('ResortSpaDB') IS NOT NULL DROP DATABASE ResortSpaDB;"
-    & sqlcmd -S localhost -U sa -P 123 -Q $dropQuery 2>$null
-    
-    Write-Host "[*] Dang thuc thi file database master moi (ResortSpaDB_Master.sql)..." -ForegroundColor Yellow
-    $masterSqlPath = "$root\03-Design\database\ResortSpaDB_Master.sql"
-    if (Test-Path $masterSqlPath) {
-        & sqlcmd -S localhost -U sa -P 123 -i $masterSqlPath
-        Write-Host "[OK] Da nap database master thanh cong!" -ForegroundColor Green
-    } else {
-        Write-Host "[!] Khong tim thay file ResortSpaDB_Master.sql tai: $masterSqlPath" -ForegroundColor Red
-    }
-} else {
-    Write-Host "[!] Khong tim thay sqlcmd. Vui long dam bao SQL Server dang chay va ban da tao database." -ForegroundColor Red
-}
+# 3. Sử dụng Database hiện tại (Không reset)
+Write-Host "[*] Su dung database hien tai (Khong reset du lieu)." -ForegroundColor Green
+
+
 
 # 4. Khởi chạy Backend trong cửa sổ CMD mới (Kế thừa biến môi trường JAVA_HOME/PATH/DB)
 Write-Host "[*] Dang khoi dong Backend (Spring Boot)..." -ForegroundColor Yellow
