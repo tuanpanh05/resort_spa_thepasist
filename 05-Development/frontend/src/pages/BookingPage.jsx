@@ -81,8 +81,8 @@ export default function BookingPage() {
     const fetchMenuStatus = async () => {
       try {
         const res = await axiosClient.get("/chef/menu");
-        const validDishes = res.data.filter(item => 
-          item.enabled !== false && 
+        const validDishes = res.data.filter(item =>
+          item.enabled !== false &&
           item.isTodayMenu !== false &&
           item.isPackageIncluded !== false
         );
@@ -99,7 +99,7 @@ export default function BookingPage() {
           periods: item.periods || ["Lunch"],
           availableDays: item.availableDays ? item.availableDays.split(",").map(Number) : [0, 1, 2, 3, 4, 5, 6]
         }));
-        
+
         setPackageMenuItems(mappedDishes);
       } catch (err) {
         console.error("Failed to fetch live menu status", err);
