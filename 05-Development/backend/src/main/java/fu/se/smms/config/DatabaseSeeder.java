@@ -26,6 +26,13 @@ public class DatabaseSeeder implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN full_name NVARCHAR(255) NOT NULL");
             jdbcTemplate.execute("ALTER TABLE retreat_packages ALTER COLUMN name NVARCHAR(200) NOT NULL");
             jdbcTemplate.execute("ALTER TABLE spa_services ALTER COLUMN name NVARCHAR(150) NOT NULL");
+            
+            // Fix encoding for food_menu
+            jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN dish_name NVARCHAR(255) NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN description NVARCHAR(MAX) NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN category NVARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN allergens NVARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN ingredients NVARCHAR(MAX)");
             System.out.println("[DB Seeder] Successfully upgraded database columns to NVARCHAR.");
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Could not alter database columns. Reason: " + e.getMessage());
@@ -47,7 +54,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
-            System.out.println("[DB Seeder] Updating Food Menu items...");
+            System.out.println("[DB Seeder] Skipping hardcoded Food Menu updates to preserve user edits.");
+            /* 
             jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Cháo Yến Mạch Hạt Chia', description=N'Cháo yến mạch nguyên cám nấu cùng hạt chia, hạt óc chó và dâu tây tươi.', dietary_tags='Vegan, Healthy', price=120000, available_days='1,3,5', image_url='/images/dishes/dish_chao_yen_mach.png', is_package_included=1, periods='Breakfast' WHERE food_id=1");
             jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Bún Gạo Lứt Chay', description=N'Bún nưa ăn kèm đậu hũ non, nấm đùi gà và nước dùng ngọt thanh từ củ quả.', dietary_tags='Vegan, Healthy', price=150000, available_days='0,2,4,6', image_url='/images/dishes/dish_bun_gao_lut.png', is_package_included=1, periods='Breakfast' WHERE food_id=2");
             jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Bánh Mì Nguyên Cám Trứng Chần', description=N'Bánh mì đen nguyên cám nướng giòn kèm bơ sáp và trứng chần.', dietary_tags='Healthy, Vegetarian', price=140000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_banh_mi_trung.png', is_package_included=1, periods='Breakfast' WHERE food_id=3");
@@ -65,20 +73,16 @@ public class DatabaseSeeder implements CommandLineRunner {
             Integer count13 = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM food_menu WHERE food_id=13", Integer.class);
             if (count13 != null && count13 == 0) {
                 jdbcTemplate.update("INSERT INTO food_menu (dish_name, description, dietary_tags, price, periods, is_today_menu, available_days, image_url, is_package_included) VALUES (N'Steak Bò Wagyu', N'Thăn nội bò Wagyu nướng than hoa mềm tan, ăn kèm rau củ nướng.', 'Meat, Keto', 1250000, 'Dinner', 1, '0,1,2,3,4,5,6', '/images/dishes/dish_steak_wagyu.png', 0)");
-            } else {
-                jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Steak Bò Wagyu', description=N'Thăn nội bò Wagyu nướng than hoa mềm tan, ăn kèm rau củ nướng.', dietary_tags='Meat, Keto', price=1250000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_steak_wagyu.png', is_package_included=0, periods='Dinner' WHERE food_id=13");
             }
             
             Integer count14 = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM food_menu WHERE food_id=14", Integer.class);
             if (count14 != null && count14 == 0) {
                 jdbcTemplate.update("INSERT INTO food_menu (dish_name, description, dietary_tags, price, periods, is_today_menu, available_days, image_url, is_package_included) VALUES (N'Tôm Sú Rim Tỏi Ớt', N'Tôm sú biển tươi ngon rim tỏi ớt thơm lừng cay cay ngọt ngọt.', 'Seafood, Spicy', 390000, 'Lunch,Dinner', 1, '0,1,2,3,4,5,6', '/images/dishes/dish_tom_su.png', 0)");
-            } else {
-                jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Tôm Sú Rim Tỏi Ớt', description=N'Tôm sú biển tươi ngon rim tỏi ớt thơm lừng cay cay ngọt ngọt.', dietary_tags='Seafood, Spicy', price=390000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_tom_su.png', is_package_included=0, periods='Lunch,Dinner' WHERE food_id=14");
             }
-
-            System.out.println("[DB Seeder] Food Menu items updated successfully.");
+            */
+            System.out.println("[DB Seeder] Food Menu items preserved successfully.");
         } catch (Exception e) {
-            System.err.println("[DB Seeder] Could not update Food Menu. Reason: " + e.getMessage());
+            System.err.println("[DB Seeder] Could not check Food Menu. Reason: " + e.getMessage());
         }
 
         seedUser("admin@nguson.com", "Administrator", "0900000000", "ADMIN");

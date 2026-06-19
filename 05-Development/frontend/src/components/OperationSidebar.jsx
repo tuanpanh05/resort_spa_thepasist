@@ -69,14 +69,21 @@ export default function OperationSidebar({
                     setActiveTab(item.id);
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-none text-xs font-semibold tracking-wider transition-all duration-150 cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-none text-xs font-semibold tracking-wider transition-all duration-150 cursor-pointer ${
                     isActive
                       ? "bg-primary-800 text-white font-bold"
                       : "text-primary-100/70 hover:bg-primary-900 hover:text-white"
                   }`}
                 >
-                  <Icon className="h-4.5 w-4.5" />
-                  <span>{item.label}</span>
+                  <div className="flex items-center space-x-3">
+                    <Icon className="h-4.5 w-4.5" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && item.badge !== "0" && (
+                    <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full ${isActive ? "bg-white text-primary-900" : "bg-primary-800 text-primary-200"}`}>
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}

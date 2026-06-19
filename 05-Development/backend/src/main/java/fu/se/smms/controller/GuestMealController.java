@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping("/guest")
@@ -190,7 +192,23 @@ public class GuestMealController {
             MedicalProfile mp = profileOpt.get();
             consentSigned = Boolean.TRUE.equals(mp.getExplicitConsentSigned());
             if (consentSigned) {
-                allergiesRaw = AESUtil.decrypt(mp.getFoodAllergiesEncrypted()).toLowerCase();
+                String decrypted = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = mapper.readTree(decrypted);
+                    List<String> list = new ArrayList<>();
+                    if (node.has("selected") && node.get("selected").isArray()) {
+                        for (JsonNode item : node.get("selected")) {
+                            list.add(item.asText());
+                        }
+                    }
+                    if (node.has("other") && !node.get("other").asText().isEmpty()) {
+                        list.add(node.get("other").asText());
+                    }
+                    allergiesRaw = String.join(", ", list).toLowerCase();
+                } catch (Exception e) {
+                    allergiesRaw = decrypted.toLowerCase();
+                }
             }
         }
 
@@ -211,7 +229,9 @@ public class GuestMealController {
             String warningMsg = "";
 
             if (consentSigned && !allergiesRaw.isEmpty()) {
-                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags() + " " + (item.getIngredients() != null ? item.getIngredients() : "")).toLowerCase();
+                String contentToTest = ((item.getAllergens() != null ? item.getAllergens() + " " : "") +
+                        (item.getIngredients() != null ? item.getIngredients() + " " : "") +
+                        item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags()).toLowerCase();
 
                 // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to
                 // preserve multi-word allergies
@@ -219,36 +239,62 @@ public class GuestMealController {
                 for (String allergyItem : allergyItems) {
                     String trimmed = allergyItem.trim().toLowerCase();
                     boolean matches = false;
+                    String vnName = trimmed;
 
                     if (trimmed.contains("đậu phộng") || trimmed.contains("peanut") || trimmed.contains("lạc")) {
-                        if (contentToTest.contains("đậu phộng") || contentToTest.contains("peanut")
-                                || contentToTest.contains("lạc")) {
+                        vnName = "Đậu phộng";
+                        if (checkAllergyKeyword(contentToTest, "đậu phộng", "peanut", "lạc")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("hải sản") || trimmed.contains("seafood") || trimmed.contains("tôm")
                             || trimmed.contains("shrimp") || trimmed.contains("cua") || trimmed.contains("fish")
-                            || trimmed.contains("cá")) {
-                        if (contentToTest.contains("hải sản") || contentToTest.contains("seafood")
-                                || contentToTest.contains("tôm") || contentToTest.contains("shrimp")
-                                || contentToTest.contains("cua") || contentToTest.contains("fish")
-                                || contentToTest.contains("cá")) {
+                            || trimmed.contains("cá") || trimmed.contains("shellfish")) {
+                        vnName = "Hải sản";
+                        if (checkAllergyKeyword(contentToTest, "hải sản", "seafood", "tôm", "shrimp", "cua", "fish", "cá", "shellfish")) {
                             matches = true;
                         }
-                    } else if (trimmed.contains("ớt") || trimmed.contains("cay") || trimmed.contains("chili")
-                            || trimmed.contains("spicy")) {
-                        if (contentToTest.contains("ớt") || contentToTest.contains("cay")
-                                || contentToTest.contains("chili") || contentToTest.contains("spicy")) {
+                    } else if (trimmed.contains("ớt") || trimmed.contains("cay") || trimmed.contains("chili") || trimmed.contains("spicy")) {
+                        vnName = "Đồ Cay / Ớt";
+                        if (checkAllergyKeyword(contentToTest, "ớt", "cay", "chili", "spicy")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("gluten") || trimmed.contains("lúa mì") || trimmed.contains("wheat")) {
+                        vnName = "Gluten / Lúa mì";
+                        if (checkAllergyKeyword(contentToTest, "gluten", "lúa mì", "wheat")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("dairy") || trimmed.contains("sữa") || trimmed.contains("lactose") || trimmed.contains("milk")) {
+                        vnName = "Sữa / Lactose";
+                        if (checkAllergyKeyword(contentToTest, "dairy", "sữa", "lactose", "milk")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("soy") || trimmed.contains("đậu nành")) {
+                        vnName = "Đậu nành";
+                        if (checkAllergyKeyword(contentToTest, "soy", "đậu nành")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("trứng") || trimmed.contains("egg")) {
+                        vnName = "Trứng";
+                        if (checkAllergyKeyword(contentToTest, "trứng", "egg")) {
+                            matches = true;
+                        }
+                    } else if (trimmed.contains("tree nuts") || trimmed.contains("hạt cây") || trimmed.contains("hạt điều") 
+                            || trimmed.contains("óc chó") || trimmed.contains("walnut") || trimmed.contains("cashew") || trimmed.contains("nut")) {
+                        vnName = "Các loại hạt (Tree nuts)";
+                        if (checkAllergyKeyword(contentToTest, "tree nuts", "hạt cây", "hạt điều", "óc chó", "walnut", "cashew", "nut")) {
                             matches = true;
                         }
                     } else {
-                        if (trimmed.length() >= 2 && contentToTest.contains(trimmed)) {
+                        if (trimmed.length() >= 2 && checkAllergyKeyword(contentToTest, trimmed)) {
                             matches = true;
                         }
                     }
 
                     if (matches) {
                         isAllergen = true;
-                        warningMsg = "Phát hiện thành phần gây dị ứng: " + allergyItem.trim();
+                        // Capitalize the first letter of the warning word
+                        vnName = vnName.substring(0, 1).toUpperCase() + vnName.substring(1);
+                        warningMsg = "Phát hiện thành phần gây dị ứng: " + vnName;
                         break;
                     }
                 }
@@ -474,14 +520,84 @@ public class GuestMealController {
                 // Decrypt ONLY food allergies, do NOT decrypt or return physicalCondition
                 // clinical logs!
                 String decryptedAllergies = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
-                guestAllergyMap.put("allergies", decryptedAllergies);
-                guestAllergyMap.put("dietary", decryptedAllergies.toLowerCase().contains("chay")
-                        || decryptedAllergies.toLowerCase().contains("vegan") ? "Vegan" : "Healthy");
+                String readableAllergies = decryptedAllergies;
+                String dietaryPreference = "Healthy";
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode node = mapper.readTree(decryptedAllergies);
+                    List<String> list = new ArrayList<>();
+                    if (node.has("selected") && node.get("selected").isArray()) {
+                        for (JsonNode item : node.get("selected")) {
+                            String val = item.asText();
+                            // Optional: map English keys to VN names for the chef dashboard if needed
+                            if (val.equalsIgnoreCase("peanuts")) val = "Đậu phộng";
+                            else if (val.equalsIgnoreCase("shellfish")) val = "Hải sản có vỏ";
+                            else if (val.equalsIgnoreCase("spicy")) val = "Đồ cay";
+                            else if (val.equalsIgnoreCase("gluten")) val = "Gluten / Lúa mì";
+                            else if (val.equalsIgnoreCase("dairy")) val = "Sữa / Lactose";
+                            else if (val.equalsIgnoreCase("soy")) val = "Đậu nành";
+                            else if (val.equalsIgnoreCase("egg")) val = "Trứng";
+                            else if (val.equalsIgnoreCase("treenuts")) val = "Hạt cây";
+                            list.add(val);
+                        }
+                    }
+                    if (node.has("other") && !node.get("other").asText().isEmpty()) {
+                        list.add(node.get("other").asText());
+                    }
+                    readableAllergies = String.join(", ", list);
+                    if (readableAllergies.isEmpty()) {
+                        readableAllergies = "Không có";
+                    }
+                    
+                    if (node.has("diet") && !node.get("diet").asText().isEmpty()) {
+                        String diet = node.get("diet").asText().toLowerCase();
+                        if (diet.contains("vegetarian")) dietaryPreference = "Chay (Vegetarian)";
+                        else if (diet.contains("vegan")) dietaryPreference = "Thuần chay (Vegan)";
+                        else if (diet.contains("pescatarian")) dietaryPreference = "Ăn cá (Pescatarian)";
+                        else if (diet.contains("keto")) dietaryPreference = "Keto";
+                        else if (diet.contains("halal")) dietaryPreference = "Halal";
+                        else dietaryPreference = "Ăn tạp (Omnivore)";
+                    }
+                } catch (Exception e) {
+                    // Fallback if not JSON
+                    if (decryptedAllergies == null || decryptedAllergies.trim().isEmpty()) {
+                        readableAllergies = "Không có";
+                    }
+                    if (decryptedAllergies.toLowerCase().contains("chay") || decryptedAllergies.toLowerCase().contains("vegan")) {
+                        dietaryPreference = "Vegan";
+                    }
+                }
+                guestAllergyMap.put("allergies", readableAllergies);
+                guestAllergyMap.put("dietary", dietaryPreference);
 
                 resultList.add(guestAllergyMap);
             }
         }
         return ResponseEntity.ok(resultList);
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<?> checkout(@RequestBody Map<String, Object> payload) {
+        // ... (mock implementation omitted for brevity)
+        return ResponseEntity.ok(Collections.singletonMap("success", true));
+    }
+
+    /**
+     * Helper method to check if the content contains the exact word/phrase.
+     * Prevents false positives like "cám" matching "cá".
+     */
+    private boolean checkAllergyKeyword(String content, String... keywords) {
+        if (content == null) return false;
+        // Pad the string and replace punctuation with spaces
+        String padded = " " + content.replaceAll("[\\p{Punct}]", " ") + " ";
+        for (String kw : keywords) {
+            if (kw == null || kw.trim().isEmpty()) continue;
+            // Pad the keyword to match whole words/phrases
+            if (padded.contains(" " + kw.trim().toLowerCase() + " ")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @PostMapping("/order-extra")

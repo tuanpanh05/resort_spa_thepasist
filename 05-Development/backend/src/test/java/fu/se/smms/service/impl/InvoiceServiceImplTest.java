@@ -12,6 +12,7 @@ import fu.se.smms.repository.PaymentTransactionLogRepository;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
+import fu.se.smms.repository.FoodOrderRepository;
 import fu.se.smms.entity.SystemConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +44,7 @@ class InvoiceServiceImplTest {
     private RoomRepository roomRepository;
     private PaymentTransactionLogRepository transactionLogRepository;
     private SystemConfigurationRepository systemConfigurationRepository;
+    private FoodOrderRepository foodOrderRepository;
     private InvoiceServiceImpl service;
     private VNPayProperties vnPayProperties;
 
@@ -53,6 +55,7 @@ class InvoiceServiceImplTest {
         roomRepository = mock(RoomRepository.class);
         transactionLogRepository = mock(PaymentTransactionLogRepository.class);
         systemConfigurationRepository = mock(SystemConfigurationRepository.class);
+        foodOrderRepository = mock(FoodOrderRepository.class);
 
         SystemConfiguration depositConfig = new SystemConfiguration();
         depositConfig.setConfigKey("deposit_ratio");
@@ -69,7 +72,8 @@ class InvoiceServiceImplTest {
         service = new InvoiceServiceImpl(
                 invoiceRepository, roomBookingRepository,
                 roomRepository, transactionLogRepository,
-                vnPayProperties, systemConfigurationRepository
+                vnPayProperties, systemConfigurationRepository,
+                foodOrderRepository
         );
     }
 

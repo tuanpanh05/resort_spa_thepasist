@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { PlusCircle } from "lucide-react";
+import Button from "../ui/Button";
+import Card from "../ui/Card";
 
 export default function ManageMenu({
   dishes,
@@ -17,9 +19,9 @@ export default function ManageMenu({
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* Header & Filters */}
-      <div className="bg-white border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="font-serif text-lg font-bold text-sage-950">
+          <h3 className="card-title text-primary-950">
             Danh Sách Thực Đơn Hàng Ngày
           </h3>
           <p className="text-xs text-sage-500 mt-1">
@@ -29,30 +31,27 @@ export default function ManageMenu({
         </div>
         <div className="flex flex-wrap gap-2">
           {["All", "Breakfast", "Lunch", "Dinner"].map((period) => (
-            <button
+            <Button
               key={period}
               onClick={() => setDishFilter(period)}
-              className={`px-4 py-2 rounded-none text-xs font-bold cursor-pointer tracking-wider uppercase transition-all ${
-                dishFilter === period
-                  ? "bg-sage-950 text-white"
-                  : "bg-white border border-sage-250 text-sage-700 hover:bg-sage-50"
-              }`}
+              variant={dishFilter === period ? "primary" : "outline"}
+              className="px-4 py-2 text-xs"
             >
               {period === "All" && "Tất cả"}
               {period === "Breakfast" && "Sáng"}
               {period === "Lunch" && "Trưa"}
               {period === "Dinner" && "Tối"}
-            </button>
+            </Button>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Menu Today Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {activeTodayDishes.map((dish) => (
-          <div
+          <Card
             key={dish.id}
-            className={`bg-white rounded-[20px] border p-6 flex flex-col justify-between h-60 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 ${
+            className={`p-6 flex flex-col justify-between h-60 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 ${
               dish.soldOut
                 ? "border-red-200 bg-red-50/30 opacity-80"
                 : "border-primary-100 hover:border-primary-400"
@@ -106,25 +105,23 @@ export default function ManageMenu({
                 {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
               </span>
               <div className="flex space-x-2">
-                <button
+                <Button
                   onClick={() => handleToggleSoldOut(dish.id)}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                    dish.soldOut
-                      ? "bg-green-600 hover:bg-green-700 text-white"
-                      : "bg-red-50 hover:bg-red-100 text-red-700 border border-red-150"
-                  }`}
+                  variant={dish.soldOut ? "secondary" : "danger"}
+                  className="px-3 py-1.5 text-[10px]"
                 >
                   {dish.soldOut ? "Còn hàng" : "Hết hàng"}
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => handleToggleTodayMenu(dish.id)}
-                  className="px-3 py-1.5 bg-sage-100 hover:bg-sage-200 text-sage-800 border border-sage-200 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                  variant="outline"
+                  className="px-3 py-1.5 text-[10px]"
                 >
                   Tắt
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
         {activeTodayDishes.length === 0 && (
           <div className="col-span-full bg-white border border-sage-200 p-8 text-center text-sage-400 italic">
@@ -134,15 +131,15 @@ export default function ManageMenu({
       </div>
 
       {/* Quick action: Add other dishes to menu */}
-      <div className="bg-sage-50/50 border border-sage-200 p-6">
-        <h3 className="font-serif text-base font-bold text-sage-950 mb-4 uppercase tracking-wide">
+      <Card className="bg-primary-50/50 p-6">
+        <h3 className="card-title text-primary-950 mb-4 uppercase tracking-wide">
           Món Ăn Đang Tắt - Kích Hoạt Lên Thực Đơn Hôm Nay
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {inactiveDishes.map((d) => (
-            <div
+            <Card
               key={d.id}
-              className="bg-white border border-sage-200 p-4 flex justify-between items-center text-xs"
+              className="p-4 flex justify-between items-center text-xs"
             >
               <div>
                 <h4 className="font-bold text-sage-900">{d.name}</h4>
@@ -150,14 +147,15 @@ export default function ManageMenu({
                   {d.category} - {new Intl.NumberFormat("vi-VN").format(d.price)}đ
                 </span>
               </div>
-              <button
+              <Button
                 onClick={() => handleToggleTodayMenu(d.id)}
-                className="px-3 py-1.5 bg-sage-950 hover:bg-sage-800 text-white font-bold flex items-center space-x-1.5 cursor-pointer uppercase text-[9px] tracking-wider"
+                variant="primary"
+                className="px-3 py-1.5 flex items-center space-x-1.5 text-[9px]"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span>Bật</span>
-              </button>
-            </div>
+              </Button>
+            </Card>
           ))}
           {inactiveDishes.length === 0 && (
             <p className="text-xs text-sage-400 italic text-center py-4 col-span-full">
@@ -165,7 +163,7 @@ export default function ManageMenu({
             </p>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
