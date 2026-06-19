@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
 import axiosClient from "../api/axiosClient";
+import { medicalApi, userApi } from "../api";
 
 import { villasList, servicesList } from "../constants/booking";
 import { detectAllergens } from "../utils/health";
@@ -106,6 +107,56 @@ export default function BookingPage() {
       }
     };
     fetchMenuStatus();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) return;
+      try {
+        const u = await userApi.getProfile();
+        if (u) {
+          setGuestInfo((prev) => ({
+            ...prev,
+            fullName: u.fullName || prev.fullName,
+            phone: u.phone || prev.phone,
+            email: u.email || prev.email,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch user profile for booking info", err);
+      }
+    };
+
+    const fetchHealthProfile = async () => {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) return;
+      try {
+        const p = await medicalApi.getMyProfile();
+        if (p && p.explicitConsentSigned) {
+          setConsentDataProcessing(true);
+          setConsentSharing(true);
+          if (p.foodAllergies) {
+            try {
+              const parsed = JSON.parse(p.foodAllergies);
+              setSelectedAllergies(parsed.selected || []);
+              setOtherAllergy(parsed.other || "");
+              setDietaryPreference(parsed.diet || "omnivore");
+            } catch {
+              setOtherAllergy(p.foodAllergies);
+            }
+          }
+          if (p.physicalCondition) {
+            setPhysicalCondition(p.physicalCondition);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch medical profile for booking info", err);
+      }
+    };
+
+    fetchUserProfile();
+    fetchHealthProfile();
   }, []);
 
   const [nightsCount, setNightsCount] = useState(1);

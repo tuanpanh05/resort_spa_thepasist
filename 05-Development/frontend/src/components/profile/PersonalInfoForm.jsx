@@ -2,6 +2,46 @@ import React, { useState, useEffect } from "react";
 import { User, Phone, CreditCard, Save, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle } from "lucide-react";
 import { userApi } from "../../api";
 
+const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", readOnly = false }) => (
+  <div className="space-y-1.5">
+    <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
+    <div className="relative">
+      <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
+        <Icon className="h-4 w-4" />
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        className={`w-full pl-8 pr-4 py-2.5 border-b ${readOnly ? "border-sage-200 text-sage-400 bg-transparent cursor-not-allowed" : "border-primary-200 focus:border-primary-800 bg-transparent"} text-sm text-sage-900 placeholder-sage-400 outline-none transition-all`}
+      />
+    </div>
+  </div>
+);
+
+const PwdInput = ({ label, value, onChange, show, onToggle }) => (
+  <div className="space-y-1.5">
+    <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
+    <div className="relative">
+      <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
+        <Lock className="h-4 w-4" />
+      </span>
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-8 pr-8 py-2.5 border-b border-primary-200 bg-transparent focus:border-primary-800 text-sm text-sage-900 outline-none transition-all"
+      />
+      <button type="button" onClick={onToggle}
+        className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-700 transition-colors">
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  </div>
+);
+
 export default function PersonalInfoForm({ profile, onProfileUpdate }) {
   const [fullName, setFullName] = useState(profile?.fullName || "");
   const [phone, setPhone]       = useState(profile?.phone || "");
@@ -70,46 +110,6 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
       setPwdSaving(false);
     }
   };
-
-  const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", readOnly = false }) => (
-    <div className="space-y-1.5">
-      <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
-          <Icon className="h-4 w-4" />
-        </span>
-        <input
-          type={type}
-          value={value}
-          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-          placeholder={placeholder}
-          readOnly={readOnly}
-          className={`w-full pl-8 pr-4 py-2.5 border-b ${readOnly ? "border-sage-200 text-sage-400 bg-transparent cursor-not-allowed" : "border-primary-200 focus:border-primary-800 bg-transparent"} text-sm text-sage-900 placeholder-sage-400 outline-none transition-all`}
-        />
-      </div>
-    </div>
-  );
-
-  const PwdInput = ({ label, value, onChange, show, onToggle }) => (
-    <div className="space-y-1.5">
-      <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">{label}</label>
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 pl-1 flex items-center text-sage-400 pointer-events-none">
-          <Lock className="h-4 w-4" />
-        </span>
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-8 pr-8 py-2.5 border-b border-primary-200 bg-transparent focus:border-primary-800 text-sm text-sage-900 outline-none transition-all"
-        />
-        <button type="button" onClick={onToggle}
-          className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-sage-700 transition-colors">
-          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-8">

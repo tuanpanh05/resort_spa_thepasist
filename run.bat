@@ -9,12 +9,18 @@ echo.
 
 :: 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 (Tương thích 100% với Lombok)
 set "EMBEDDED_JAVA=C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
-if exist "%EMBEDDED_JAVA%" (
+set "SYSTEM_JDK21=C:\Program Files\Java\jdk-21.0.10"
+
+if exist "%SYSTEM_JDK21%" (
+    set "JAVA_HOME=%SYSTEM_JDK21%"
+    set "PATH=%SYSTEM_JDK21%\bin;%PATH%"
+    echo [*] Da thiet lap JAVA_HOME ve JDK 21 tai %SYSTEM_JDK21% de tranh crash Lombok.
+) else if exist "%EMBEDDED_JAVA%" (
     set "JAVA_HOME=%EMBEDDED_JAVA%"
     set "PATH=%EMBEDDED_JAVA%\bin;%PATH%"
-    echo [*] Da thiet lap JAVA_HOME ve JDK 21 de tranh crash Lombok.
+    echo [*] Da thiet lap JAVA_HOME ve JDK 21 tai %EMBEDDED_JAVA% de tranh crash Lombok.
 ) else (
-    echo [!] Khong tim thay JDK 21 tai %EMBEDDED_JAVA%. Se dung Java mac dinh.
+    echo [!] Khong tim thay JDK 21. Se dung Java mac dinh.
 )
 
 :: 2. Đồng bộ file .env sang Frontend và Backend
