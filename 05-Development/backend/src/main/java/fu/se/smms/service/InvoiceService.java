@@ -8,6 +8,7 @@ import java.util.Map;
 public interface InvoiceService {
     InvoiceDTO getInvoiceById(Integer invoiceId);
     List<InvoiceDTO> getInvoicesByUserId(Integer userId);
+    List<InvoiceDTO> getAllInvoices();
     InvoiceDTO createInvoice(Integer bookingId);
     VNPayPaymentDTO createPaymentUrl(Integer invoiceId);
     InvoiceDTO markCashPayment(Integer invoiceId);
@@ -35,5 +36,16 @@ public interface InvoiceService {
      * @return Updated InvoiceDTO with CHECKED_OUT booking status
      */
     InvoiceDTO performCheckout(Integer invoiceId);
+
+    /**
+     * UC22-EarlyCheckout - Early Check-out with Force Cancel F&B:
+     * When guest confirms early checkout, cancels all PENDING/PREPARING FoodOrders
+     * for the booking, then proceeds with checkout (marks invoice PAID and rooms DIRTY).
+     * Does NOT call validateCheckoutLock — F&B orders are force-cancelled instead.
+     *
+     * @param invoiceId The invoice to finalize
+     * @return Updated InvoiceDTO after checkout
+     */
+    InvoiceDTO earlyCheckout(Integer invoiceId);
 }
 

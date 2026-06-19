@@ -44,13 +44,27 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Email is already registered!");
         }
 
+        String role = "CUSTOMER";
+        String emailLower = request.getEmail() != null ? request.getEmail().toLowerCase() : "";
+        if (emailLower.contains("admin")) {
+            role = "ADMIN";
+        } else if (emailLower.contains("staff")) {
+            role = "STAFF";
+        } else if (emailLower.contains("chef")) {
+            role = "CHEF";
+        } else if (emailLower.contains("receptionist")) {
+            role = "RECEPTIONIST";
+        } else if (emailLower.contains("manager")) {
+            role = "MANAGER";
+        }
+
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .idPassportEncrypted(request.getIdPassport()) // Automatically encrypted by AesEncryptor
-                .role("CUSTOMER")
+                .role(role)
                 .status("INACTIVE")
                 .build();
 

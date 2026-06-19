@@ -23,6 +23,11 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.getInvoiceById(id));
     }
 
+    @GetMapping
+    public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
+        return ResponseEntity.ok(invoiceService.getAllInvoices());
+    }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<InvoiceDTO>> getUserInvoices(@PathVariable Integer userId) {
         return ResponseEntity.ok(invoiceService.getInvoicesByUserId(userId));
@@ -80,5 +85,15 @@ public class InvoiceController {
     @PostMapping("/{id}/perform-checkout")
     public ResponseEntity<InvoiceDTO> performCheckout(@PathVariable Integer id) {
         return ResponseEntity.ok(invoiceService.performCheckout(id));
+    }
+
+    /**
+     * UC22-EarlyCheckout - Early Check-out (BR-14, Force Cancel F&B).
+     * Force-cancels all PENDING/PREPARING FoodOrders, then checks out.
+     * POST /api/invoices/{id}/early-checkout
+     */
+    @PostMapping("/{id}/early-checkout")
+    public ResponseEntity<InvoiceDTO> earlyCheckout(@PathVariable Integer id) {
+        return ResponseEntity.ok(invoiceService.earlyCheckout(id));
     }
 }

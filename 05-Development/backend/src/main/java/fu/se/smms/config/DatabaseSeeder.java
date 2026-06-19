@@ -91,8 +91,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedUser(String email, String fullName, String phone, String role) {
-        if (!userRepository.existsByEmail(email)) {
-            User user = User.builder()
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            user = User.builder()
                     .email(email)
                     .passwordHash(passwordEncoder.encode("Password123"))
                     .fullName(fullName)
@@ -102,6 +103,12 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(user);
             System.out.println("[DB Seeder] Seeded user: " + email + " with role: " + role);
+        } else {
+            user.setPasswordHash(passwordEncoder.encode("Password123"));
+            user.setStatus("ACTIVE");
+            user.setRole(role);
+            userRepository.save(user);
+            System.out.println("[DB Seeder] Force updated user credentials and status: " + email);
         }
     }
 }

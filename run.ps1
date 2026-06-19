@@ -5,14 +5,20 @@ Write-Host ""
 
 $root = Get-Location
 
-# 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 từ VS Code Extensions (Tương thích 100% với Lombok)
+# 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 (Tương thích 100% với Lombok)
 $embeddedJava = "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
-if (Test-Path $embeddedJava) {
+$systemJdk21 = "C:\Program Files\Java\jdk-21.0.10"
+
+if (Test-Path $systemJdk21) {
+    $env:JAVA_HOME = $systemJdk21
+    $env:PATH = "$systemJdk21\bin;" + $env:PATH
+    Write-Host "[*] Da thiet lap JAVA_HOME ve JDK 21 tai $systemJdk21 de tranh crash Lombok." -ForegroundColor Green
+} elseif (Test-Path $embeddedJava) {
     $env:JAVA_HOME = $embeddedJava
     $env:PATH = "$embeddedJava\bin;" + $env:PATH
     Write-Host "[*] Da thiet lap JAVA_HOME ve JDK 21 (VS Code Embedded) de tranh crash Lombok." -ForegroundColor Green
 } else {
-    Write-Host "[!] Khong tim thay JDK 21 embedded. Se dung Java mac dinh." -ForegroundColor Yellow
+    Write-Host "[!] Khong tim thay JDK 21. Se dung Java mac dinh." -ForegroundColor Yellow
 }
 
 # 2. Đồng bộ file .env sang Frontend và Backend

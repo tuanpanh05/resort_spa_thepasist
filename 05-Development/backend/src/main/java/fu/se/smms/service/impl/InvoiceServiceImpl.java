@@ -9,6 +9,7 @@ import fu.se.smms.entity.RoomBooking;
 import fu.se.smms.entity.SystemConfiguration;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.InvoiceRepository;
+import fu.se.smms.repository.FoodOrderRepository;
 import fu.se.smms.repository.PaymentTransactionLogRepository;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
@@ -46,6 +47,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final PaymentTransactionLogRepository transactionLogRepository;
     private final VNPayProperties vnPayProperties;
     private final SystemConfigurationRepository systemConfigurationRepository;
+    private final FoodOrderRepository foodOrderRepository;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -53,7 +55,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             RoomRepository roomRepository,
             PaymentTransactionLogRepository transactionLogRepository,
             VNPayProperties vnPayProperties,
-            SystemConfigurationRepository systemConfigurationRepository
+            SystemConfigurationRepository systemConfigurationRepository,
+            FoodOrderRepository foodOrderRepository
     ) {
         this.invoiceRepository = invoiceRepository;
         this.roomBookingRepository = roomBookingRepository;
@@ -61,6 +64,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.transactionLogRepository = transactionLogRepository;
         this.vnPayProperties = vnPayProperties;
         this.systemConfigurationRepository = systemConfigurationRepository;
+        this.foodOrderRepository = foodOrderRepository;
     }
 
     @Override
@@ -75,6 +79,14 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional(readOnly = true)
     public List<InvoiceDTO> getInvoicesByUserId(Integer userId) {
         return invoiceRepository.findByUser_UserId(userId).stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InvoiceDTO> getAllInvoices() {
+        return invoiceRepository.findAll().stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -247,6 +259,48 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
+    public InvoiceDTO earlyCheckout(Integer invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
+
+        if (!"PAID".equals(invoice.getStatus())) {
+            throw conflict("Cannot perform checkout: Invoice is not yet PAID. Current status: " + invoice.getStatus());
+        }
+
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking == null) {
+            throw notFound("Room booking not found for invoice: " + invoiceId);
+        }
+
+        // Force-cancel all PENDING / PREPARING food orders for this booking
+        List<fu.se.smms.entity.FoodOrder> pendingOrders = foodOrderRepository
+                .findByRoomBooking_BookingId(booking.getBookingId())
+                .stream()
+                .filter(o -> "PENDING".equalsIgnoreCase(o.getStatus())
+                          || "PREPARING".equalsIgnoreCase(o.getStatus()))
+                .toList();
+
+        for (fu.se.smms.entity.FoodOrder order : pendingOrders) {
+            order.setStatus("CANCELLED");
+        }
+        if (!pendingOrders.isEmpty()) {
+            foodOrderRepository.saveAll(pendingOrders);
+            log.info("[EarlyCheckout] Force-cancelled {} F&B order(s) for bookingId={}",
+                    pendingOrders.size(), booking.getBookingId());
+        }
+
+        // Update booking status to CHECKED_OUT
+        booking.setStatus("CHECKED_OUT");
+        roomBookingRepository.save(booking);
+
+        // BR-14: Mark associated rooms as DIRTY (Vacant/Needs Cleaning)
+        roomRepository.markRoomsAsDirtyAfterCheckout(booking.getBookingId());
+
+        return toDto(invoice);
+    }
+
+    @Override
+    @Transactional
     public InvoiceDTO processPaymentCallback(VNPayPaymentDTO paymentResult) {
         Integer invoiceId = parseInvoiceId(paymentResult.getOrderId());
         Invoice invoice = invoiceRepository.findById(invoiceId)
@@ -404,8 +458,26 @@ public class InvoiceServiceImpl implements InvoiceService {
         dto.setStatus(invoice.getStatus());
         dto.setVnpayTranId(invoice.getVnpayTranId());
         dto.setPaymentTime(invoice.getPaymentTime());
+        if (invoice.getUser() != null) {
+            dto.setCustomerName(invoice.getUser().getFullName());
+        } else {
+            dto.setCustomerName("N/A");
+        }
         if (invoice.getRoomBooking() != null) {
             dto.setBookingStatus(invoice.getRoomBooking().getStatus());
+            dto.setCheckInDate(invoice.getRoomBooking().getCheckInDate());
+            dto.setCheckOutDate(invoice.getRoomBooking().getCheckOutDate());
+            if (invoice.getRoomBooking().getDetails() != null) {
+                String roomNumbers = invoice.getRoomBooking().getDetails().stream()
+                    .map(detail -> detail.getRoom() != null ? detail.getRoom().getRoomNumber() : "")
+                    .filter(num -> !num.isBlank())
+                    .collect(java.util.stream.Collectors.joining(", "));
+                dto.setRoomNumber(roomNumbers.isEmpty() ? "N/A" : roomNumbers);
+            } else {
+                dto.setRoomNumber("N/A");
+            }
+        } else {
+            dto.setRoomNumber("N/A");
         }
         return dto;
     }

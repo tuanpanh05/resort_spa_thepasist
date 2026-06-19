@@ -20,6 +20,59 @@ public class AuthController {
     @Autowired
     private OtpService otpService;
 
+    @Autowired
+    private fu.se.smms.repository.UserRepository userRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @GetMapping({"/debug-reset-staff", "/debug-reset"})
+    public ResponseEntity<?> debugResetStaff() {
+        try {
+            // Reset staff
+            fu.se.smms.entity.User staff = userRepository.findByEmail("staff@nguson.com")
+                    .orElse(null);
+            if (staff == null) {
+                staff = fu.se.smms.entity.User.builder()
+                        .email("staff@nguson.com")
+                        .fullName("Staff Member")
+                        .phone("0900000001")
+                        .build();
+            }
+            staff.setPasswordHash(passwordEncoder.encode("Password123"));
+            staff.setRole("STAFF");
+            staff.setStatus("ACTIVE");
+            userRepository.save(staff);
+
+            // Reset admin
+            fu.se.smms.entity.User admin = userRepository.findByEmail("admin@nguson.com")
+                    .orElse(null);
+            if (admin == null) {
+                admin = fu.se.smms.entity.User.builder()
+                        .email("admin@nguson.com")
+                        .fullName("Administrator")
+                        .phone("0900000000")
+                        .build();
+            }
+            admin.setPasswordHash(passwordEncoder.encode("Password123"));
+            admin.setRole("ADMIN");
+            admin.setStatus("ACTIVE");
+            userRepository.save(admin);
+
+            java.util.List<fu.se.smms.entity.User> allUsers = userRepository.findAll();
+            java.util.List<String> userSummary = allUsers.stream()
+                .map(u -> u.getEmail() + " (" + u.getRole() + ", status=" + u.getStatus() + ")")
+                .toList();
+
+            Map<String, Object> response = new java.util.LinkedHashMap<>();
+            response.put("message", "Reset staff and admin accounts successfully with password Password123");
+            response.put("all_users_in_db", userSummary);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     // UC01 – Register
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarRange, Bed, Flower, MessageSquare,
-  CreditCard, Clock, X, LogOut, Menu, FileText
+  CreditCard, Clock, X, LogOut, Menu, FileText, User
 } from 'lucide-react';
 
 import {
@@ -24,11 +24,26 @@ import ManageSupport from '../components/staff/ManageSupport';
 import ManagePayments from '../components/staff/ManagePayments';
 import ManageShifts from '../components/staff/ManageShifts';
 import BookingItinerary from '../components/staff/BookingItinerary';
+import StaffProfile from '../components/staff/StaffProfile';
 
 export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const role = localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "";
+    if (!token) {
+      navigate("/dang-nhap");
+      return;
+    }
+    const roleUpper = role.toUpperCase();
+    if (roleUpper !== "STAFF" && roleUpper !== "RECEPTIONIST" && roleUpper !== "ADMIN" && roleUpper !== "MANAGER") {
+      alert("Bạn không có quyền truy cập vào khu vực nhân viên!");
+      navigate("/");
+    }
+  }, [navigate]);
 
   // Master React States for entities
   const [bookings, setBookings] = useState(initialBookings);
@@ -119,7 +134,8 @@ export default function StaffDashboard() {
     { id: 'services', label: 'Dịch Vụ Phát Sinh', icon: Flower },
     { id: 'support', label: 'Hỗ Trợ Khách Hàng', icon: MessageSquare },
     { id: 'payments', label: 'Thanh Toán & Hóa Đơn', icon: CreditCard },
-    { id: 'shifts', label: 'Lịch Làm & Điểm Danh', icon: Clock }
+    { id: 'shifts', label: 'Lịch Làm & Điểm Danh', icon: Clock },
+    { id: 'profile', label: 'Hồ Sơ Của Tôi', icon: User }
   ];
 
   return (
@@ -139,7 +155,8 @@ export default function StaffDashboard() {
         activeTab === 'services' ? 'Xử Lý Dịch Vụ Phát Sinh' :
         activeTab === 'support' ? 'Hỗ Trợ & Tiếp Nhận Complaint' :
         activeTab === 'payments' ? 'Xác Nhận Hóa Đơn & Thanh Toán' :
-        activeTab === 'shifts' ? 'Điểm Danh & Đổi Ca Trực' : 'Vận Hành Kỹ Thuật Số'
+        activeTab === 'shifts' ? 'Điểm Danh & Đổi Ca Trực' :
+        activeTab === 'profile' ? 'Hồ Sơ & Công Nợ Nhân Viên' : 'Vận Hành Kỹ Thuật Số'
       }
       customHeaderRight={
         <div className="flex items-center space-x-2 bg-primary-100/70 border border-primary-200/50 rounded-none px-4 py-2 text-xs">
@@ -226,10 +243,7 @@ export default function StaffDashboard() {
       )}
 
       {activeTab === 'payments' && (
-        <ManagePayments
-          payments={payments}
-          setPayments={setPayments}
-        />
+        <ManagePayments />
       )}
 
       {activeTab === 'shifts' && (
@@ -241,6 +255,10 @@ export default function StaffDashboard() {
           handleClockIn={handleClockIn}
           handleClockOut={handleClockOut}
         />
+      )}
+
+      {activeTab === 'profile' && (
+        <StaffProfile />
       )}
     </OperationLayout>
   );

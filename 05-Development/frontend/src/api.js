@@ -247,6 +247,9 @@ export const paymentApi = {
   getInvoice: (id) => 
     apiRequest(`/invoices/${id}`),
 
+  getAllInvoices: () => 
+    apiRequest("/invoices"),
+
   getInvoicesByUserId: (userId) => 
     apiRequest(`/invoices/user/${userId}`),
 
@@ -271,6 +274,13 @@ export const paymentApi = {
 
   performCheckout: (invoiceId) => 
     apiRequest(`/invoices/${invoiceId}/perform-checkout`, { method: "POST" }),
+
+  /**
+   * UC22-EarlyCheckout: Force-cancels all PENDING/PREPARING F&B orders for the booking,
+   * then performs checkout. Use this when guest checks out before scheduled checkout time.
+   */
+  earlyCheckout: (invoiceId) =>
+    apiRequest(`/invoices/${invoiceId}/early-checkout`, { method: "POST" }),
 
   // Feedback Submission (UC23)
   submitFeedback: (bookingId, userId, rating, comment) => 

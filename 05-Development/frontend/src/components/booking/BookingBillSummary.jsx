@@ -14,6 +14,7 @@ export default function BookingBillSummary({
   bookingStatus,
   paymentStatus,
   formatCurrency,
+  selectedVilla,
 }) {
   return (
     <div
@@ -26,7 +27,9 @@ export default function BookingBillSummary({
       {/* Villa total display */}
       <div className="space-y-3.5 text-xs sm:text-sm">
         <div className="flex justify-between font-medium">
-          <span className="text-sage-800">Biệt thự ({nightsCount} đêm):</span>
+          <span className="text-sage-800">
+            {selectedVilla ? `${selectedVilla.title} (${nightsCount} đêm):` : "Biệt thự (chưa chọn):"}
+          </span>
           <span className="text-sage-950 font-mono">{formatCurrency(villaTotal)}</span>
         </div>
 
