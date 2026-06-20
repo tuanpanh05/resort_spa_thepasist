@@ -7,6 +7,8 @@ import {
   ShieldAlert,
   AlertTriangle,
 } from "lucide-react";
+import StatCard from "../ui/StatCard";
+import Card from "../ui/Card";
 
 export default function ChefOverview({
   orders,
@@ -31,73 +33,34 @@ export default function ChefOverview({
     <div className="space-y-8 animate-fade-in text-left">
       {/* Today Focus KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 border border-sage-200/60 flex items-center space-x-4">
-          <div className="p-3 bg-sage-50 text-sage-850 border border-sage-200">
-            <Clock className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">
-              Đơn hàng hiện tại
-            </p>
-            <h3 className="text-lg font-serif font-bold text-sage-950 mt-1">
-              {pendingOrCookingOrders.length} đơn
-            </h3>
-            <span className="text-[9px] text-sage-500 font-medium">
-              Tổng số suất: {totalPortionsCount} phần
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 border border-sage-200/60 flex items-center space-x-4">
-          <div className="p-3 bg-red-50 text-red-700 border border-red-150">
-            <AlertOctagon className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">
-              Cảnh báo dị ứng
-            </p>
-            <h3 className="text-lg font-serif font-bold text-red-750 mt-1">
-              {criticalAllergies.length} khách ở
-            </h3>
-            <span className="text-[9px] text-red-600 font-semibold uppercase tracking-wider">
-              Cực kỳ quan trọng
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 border border-sage-200/60 flex items-center space-x-4">
-          <div className="p-3 bg-amber-50 text-amber-700 border border-amber-200">
-            <Package className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">
-              Nguyên liệu sắp hết
-            </p>
-            <h3 className="text-lg font-serif font-bold text-sage-950 mt-1">
-              {lowStockIngredients.length} loại
-            </h3>
-            <span className="text-[9px] text-amber-600 font-medium">
-              Kho tủ mát bếp trực
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 border border-sage-200/60 flex items-center space-x-4">
-          <div className="p-3 bg-sage-50 text-sage-850 border border-sage-200">
-            <Utensils className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">
-              Món thực đơn ngày
-            </p>
-            <h3 className="text-lg font-serif font-bold text-sage-950 mt-1">
-              {todayMenuCount} món
-            </h3>
-            <span className="text-[9px] text-sage-500 font-medium">
-              Đang mở phục vụ
-            </span>
-          </div>
-        </div>
+        <StatCard 
+          title="Đơn hàng hiện tại" 
+          value={`${pendingOrCookingOrders.length} đơn`} 
+          change={`Tổng số suất: ${totalPortionsCount} phần`} 
+          icon={Clock}
+        />
+        <StatCard 
+          title="Cảnh báo dị ứng" 
+          value={`${criticalAllergies.length} khách ở`} 
+          change="Cực kỳ quan trọng"
+          changeType="negative"
+          icon={AlertOctagon}
+          className="border-red-200"
+        />
+        <StatCard 
+          title="Nguyên liệu sắp hết" 
+          value={`${lowStockIngredients.length} loại`} 
+          change="Kho tủ mát bếp trực"
+          changeType="negative"
+          icon={Package}
+        />
+        <StatCard 
+          title="Món thực đơn ngày" 
+          value={`${todayMenuCount} món`} 
+          change="Đang mở phục vụ"
+          changeType="positive"
+          icon={Utensils}
+        />
       </div>
 
       {/* Critical Allergy Broadcast banner */}
@@ -155,10 +118,10 @@ export default function ChefOverview({
       {/* Grid: Feedbacks list & Live Order Queue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Guest dish feedbacks */}
-        <div className="bg-white border border-sage-200/60 p-6 flex flex-col justify-between">
+        <Card className="p-6 flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center mb-5 border-b border-sage-100 pb-3">
-              <h3 className="font-serif text-base font-bold text-sage-950">
+            <div className="flex justify-between items-center mb-5 border-b border-primary-100 pb-3">
+              <h3 className="card-title text-primary-950">
                 Phản Hồi & Đánh Giá Món Ăn
               </h3>
               <span className="text-[10px] text-sage-400 font-semibold">
@@ -205,13 +168,13 @@ export default function ChefOverview({
               ))}
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Live Kitchen Order Summary */}
-        <div className="bg-white border border-sage-200/60 p-6 flex flex-col justify-between">
+        <Card className="p-6 flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center mb-5 border-b border-sage-100 pb-3">
-              <h3 className="font-serif text-base font-bold text-sage-950">
+            <div className="flex justify-between items-center mb-5 border-b border-primary-100 pb-3">
+              <h3 className="card-title text-primary-950">
                 Đơn Gọi Món Đang Chờ Nấu
               </h3>
               <button
@@ -279,8 +242,8 @@ export default function ChefOverview({
             </div>
           </div>
 
-          <div className="p-4 bg-sage-50/50 border border-sage-200/50 rounded-none text-xs mt-6">
-            <h4 className="font-bold text-sage-800 font-serif">
+          <div className="p-4 bg-primary-50/50 border border-primary-200/50 rounded-none text-xs mt-6">
+            <h4 className="font-bold text-primary-800 font-serif">
               Tip Vận Hành Bếp:
             </h4>
             <p className="text-sage-600 mt-1 font-light leading-relaxed">
@@ -288,7 +251,7 @@ export default function ChefOverview({
               vẹn vị thanh đạm thực dưỡng của resort.
             </p>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

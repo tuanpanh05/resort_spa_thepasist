@@ -1,5 +1,7 @@
 import React from "react";
-import { PlusCircle, X, AlertTriangle } from "lucide-react";
+import { PlusCircle, AlertTriangle } from "lucide-react";
+import Button from "../ui/Button";
+import Modal from "../ui/Modal";
 
 export default function DishFormModal({
   isOpen,
@@ -13,24 +15,22 @@ export default function DishFormModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-none max-w-lg w-full p-6 sm:p-8 border border-sage-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-sage-400 hover:text-sage-900 cursor-pointer"
-        >
-          <X className="h-5 w-5" />
-        </button>
-        <h3 className="font-serif text-lg font-bold text-sage-950 mb-6 flex items-center space-x-2">
-          <PlusCircle className="h-5 w-5 text-sage-800" />
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      title={
+        <div className="flex items-center space-x-2">
+          <PlusCircle className="h-5 w-5 text-primary-800" />
           <span>
             {mode === "add"
               ? "Thêm Món Ăn Mới Vào Thực Đơn"
               : `Chỉnh Sửa Món Ăn: ${selectedDishId}`}
           </span>
-        </h3>
-
-        <form onSubmit={onSubmit} className="space-y-4 text-xs text-left">
+        </div>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-4 text-xs text-left max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="font-semibold text-sage-800">Tên món ăn *</label>
@@ -72,15 +72,41 @@ export default function DishFormModal({
             </div>
             <div className="space-y-1.5">
               <label className="font-semibold text-sage-800">Bữa phục vụ</label>
-              <select
-                value={dishForm.period}
-                onChange={(e) => setForm((prev) => ({ ...prev, period: e.target.value }))}
-                className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
-              >
-                <option value="Breakfast">Breakfast (Sáng)</option>
-                <option value="Lunch">Lunch (Trưa)</option>
-                <option value="Dinner">Dinner (Tối)</option>
-              </select>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {[
+                  { id: "Breakfast", label: "Sáng" },
+                  { id: "Lunch", label: "Trưa" },
+                  { id: "Dinner", label: "Tối" },
+                ].map((periodOption) => {
+                  const isChecked = dishForm.periods.includes(periodOption.id);
+                  return (
+                    <label
+                      key={periodOption.id}
+                      className={`flex items-center space-x-1.5 px-3 py-2 border cursor-pointer transition-colors text-xs ${
+                        isChecked
+                          ? "bg-sage-50 border-sage-500 text-sage-900"
+                          : "bg-white border-sage-200 text-sage-600 hover:border-sage-300"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setForm((prev) => {
+                            const newPeriods = checked
+                              ? [...prev.periods, periodOption.id]
+                              : prev.periods.filter((p) => p !== periodOption.id);
+                            return { ...prev, periods: newPeriods };
+                          });
+                        }}
+                        className="w-3.5 h-3.5 text-sage-600 border-sage-300 focus:ring-sage-500 rounded-none cursor-pointer"
+                      />
+                      <span className="font-bold">{periodOption.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="font-semibold text-sage-800">Menu hôm nay?</label>
@@ -200,23 +226,24 @@ export default function DishFormModal({
             />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t border-sage-100">
-            <button
+          <div className="flex justify-end space-x-2 pt-4 border-t border-primary-100">
+            <Button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-sage-200 hover:bg-sage-50 text-sage-800 rounded-none font-bold cursor-pointer"
+              variant="outline"
+              className="px-4 py-2"
             >
               Đóng
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-5 py-2 bg-sage-950 text-white rounded-none font-bold hover:bg-sage-800 cursor-pointer"
+              variant="primary"
+              className="px-5 py-2"
             >
               {mode === "add" ? "Thêm món mới" : "Lưu thay đổi"}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

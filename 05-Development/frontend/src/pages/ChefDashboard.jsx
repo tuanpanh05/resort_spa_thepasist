@@ -29,6 +29,7 @@ import ManageMenu from "../components/chef/ManageMenu";
 import ManageOrders from "../components/chef/ManageOrders";
 import ManageDishes from "../components/chef/ManageDishes";
 import ManageInventory from "../components/chef/ManageInventory";
+import OperationSidebar from "../components/OperationSidebar";
 
 export default function ChefDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -53,11 +54,10 @@ export default function ChefDashboard() {
       ]);
 
       const mappedAllergies = allergiesRes.data.map(item => {
-        const algs = [];
-        const raw = (item.allergies || "").toLowerCase();
-        if (raw.includes("đậu phộng") || raw.includes("peanut") || raw.includes("lạc")) algs.push("Đậu phộng");
-        if (raw.includes("hải sản") || raw.includes("seafood") || raw.includes("tôm")) algs.push("Hải sản");
-        if (raw.includes("ớt") || raw.includes("cay") || raw.includes("chili")) algs.push("Không ăn cay");
+        let algs = [];
+        if (item.allergies && item.allergies !== "Không có") {
+          algs = item.allergies.split(",").map(a => a.trim());
+        }
         return {
           id: "ALG-" + item.userId,
           guest: item.fullName || "Khách Hàng",
@@ -320,26 +320,17 @@ export default function ChefDashboard() {
         />
       )}
 
-      {/* Side Navigation Bar */}
-      <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-[#1b2b11] text-white flex flex-col z-30 transition-transform duration-300 shadow-xl border-r border-[#15220c] lg:static lg:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <div className="p-6 border-b border-[#25391c] flex items-center space-x-3 bg-[#17250e]/50 hidden lg:flex">
-          <div className="p-2 bg-[#facc15] text-[#1b2b11] shadow-md">
-            <Flame className="h-5.5 w-5.5" />
-          </div>
-          <div>
-            <h1 className="font-serif text-lg font-bold text-white leading-tight">
-              Ngũ Sơn Resort
-            </h1>
-            <span className="text-[10px] text-[#facc15] font-bold tracking-widest uppercase block">
-              Kitchen Hub
-            </span>
-          </div>
-        </div>
-
-        <nav className="flex-grow py-6 px-3.5 space-y-1.5 overflow-y-auto">
-          {[
+      <OperationSidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isMobileMenuOpen={isMobileMenuOpen} 
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+        userRoleLabel="Executive Chef"
+        handleLogout={() => {
+            if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?"))
+                window.location.href = "/dang-nhap";
+        }}
+        sidebarItems={[
             {
               id: "overview",
               label: "1. Bếp tổng quan",
@@ -370,75 +361,15 @@ export default function ChefDashboard() {
               icon: Package,
               badge: `${ingredients.filter((i) => i.status !== "Đầy đủ").length}`,
             },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-3 text-[13px] font-semibold tracking-wide transition-all duration-150 cursor-pointer ${isActive ? "bg-[#facc15] text-[#1b2b11] shadow-md" : "text-[#ccd5c8] hover:bg-[#25391c]/50 hover:text-white"}`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <Icon
-                    className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? "text-[#1b2b11]" : "text-[#a3b899]"}`}
-                  />
-                  <span className="whitespace-nowrap">{item.label}</span>
-                </div>
-                {item.badge && item.badge !== "0" && (
-                  <span
-                    className={`px-2 py-0.5 text-[9px] font-bold flex-shrink-0 ml-1.5 ${isActive ? "bg-[#1b2b11] text-white" : "bg-[#facc15]/20 text-[#facc15]"}`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-[#25391c] bg-[#121f0b]/55">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-[#facc15] flex items-center justify-center text-sage-950 font-bold border border-[#f59e0b] shadow-inner text-sm">
-                BT
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white leading-tight">
-                  Bếp Trưởng
-                </h4>
-                <span className="text-[10px] text-[#a3b899]">
-                  Executive Chef
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?",
-                  )
-                )
-                  window.location.href = "/dang-nhap";
-              }}
-              className="p-2 text-[#a3b899] hover:text-[#f87171] hover:bg-[#25391c]/50 transition-all cursor-pointer"
-              title="Đăng xuất"
-            >
-              <LogOut className="h-4.5 w-4.5" />
-            </button>
-          </div>
-        </div>
-      </aside>
+          ]}
+      />
 
       {/* Main Content Area */}
       <main className="flex-grow min-h-screen flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto max-h-screen">
         {/* Page Header */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-sage-250/30 mb-6 gap-3">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-primary-200 mb-6 gap-3">
           <div>
-            <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-sage-950 leading-tight">
+            <h2 className="dashboard-title text-primary-950">
               {activeTab === "overview" &&
                 "1. Bảng Giám Sát Vận Hành Bếp Resort"}
               {activeTab === "allergies" &&
@@ -451,8 +382,7 @@ export default function ChefDashboard() {
                 "6. Kho Nguyên Liệu & Yêu Cầu Thu Mua"}
             </h2>
             <p className="text-[11px] text-sage-500 font-medium mt-0.5">
-              Tiêu chuẩn vận hành: Tuyệt đối an toàn sức khỏe & Vệ sinh an toàn
-              thực phẩm
+              Tiêu chuẩn vận hành: Tuyệt đối an toàn sức khỏe & Vệ sinh an toàn thực phẩm
             </p>
           </div>
 

@@ -98,6 +98,7 @@ export default function MealSelectionStep({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {packageMenuItems
+                .filter((dish) => dish.isPackageIncluded)
                 .filter((dish) => dish.periods.includes(period.key))
                 .filter((dish) => {
                   const dayOfWeek = new Date(selectedMealDate).getDay();
@@ -113,19 +114,32 @@ export default function MealSelectionStep({
                   const currentQty =
                     mealSelections[selectedMealDate]?.[period.key]?.[dish.foodId] || 0;
                   const userAllergens = detectAllergens(guestInfo.healthNote);
+                  
+                  // Ensure allergens is a searchable string
+                  const allergensStr = (Array.isArray(dish.allergens) ? dish.allergens.join(",") : (dish.allergens || "")).toLowerCase();
+                  const tagsStr = (dish.dietaryTags || "").toLowerCase();
+                  
                   const isAllergen =
-                    (dish.allergens.includes("Đậu phộng") && userAllergens.includes("peanut")) ||
-                    (dish.allergens.includes("Hải sản") && userAllergens.includes("seafood")) ||
+                    (allergensStr.includes("đậu phộng") && userAllergens.includes("peanut")) ||
+                    (allergensStr.includes("hải sản") && userAllergens.includes("seafood")) ||
                     selectedAllergies.some((a) => {
-                      if (a === "peanuts") return dish.allergens.includes("Đậu phộng");
-                      if (a === "shellfish") return dish.allergens.includes("Hải sản");
-                      if (a === "spicy") return dish.allergens.includes("Cay");
-                      return dish.allergens.some((alg) =>
-                        alg.toLowerCase().includes(a.toLowerCase())
-                      );
+                      const lowerA = a.toLowerCase();
+                      if (lowerA === "peanuts") return allergensStr.includes("đậu phộng") || allergensStr.includes("peanut") || allergensStr.includes("lạc");
+                      if (lowerA === "shellfish") return allergensStr.includes("hải sản") || allergensStr.includes("tôm") || allergensStr.includes("cua") || allergensStr.includes("cá");
+                      if (lowerA === "spicy") return allergensStr.includes("cay") || allergensStr.includes("ớt");
+                      if (lowerA === "wheat" || lowerA === "gluten") return allergensStr.includes("lúa mì") || allergensStr.includes("gluten") || allergensStr.includes("wheat");
+                      if (lowerA === "dairy" || lowerA === "lactose") return allergensStr.includes("sữa") || allergensStr.includes("dairy") || allergensStr.includes("milk");
+                      if (lowerA === "soy") return allergensStr.includes("đậu nành") || allergensStr.includes("soy");
+                      if (lowerA === "egg" || lowerA === "eggs") return allergensStr.includes("trứng") || allergensStr.includes("egg");
+                      if (lowerA === "tree nuts" || lowerA === "treenuts") return allergensStr.includes("hạt cây") || allergensStr.includes("hạt điều") || allergensStr.includes("óc chó") || allergensStr.includes("walnut");
+                      if (lowerA === "fish") return allergensStr.includes("cá") || allergensStr.includes("fish");
+                      return allergensStr.includes(lowerA) || tagsStr.includes(lowerA);
                     }) ||
-                    (otherAllergy &&
-                      dish.dietaryTags.toLowerCase().includes(otherAllergy.toLowerCase()));
+                    (otherAllergy && otherAllergy.split(",").some(oa => {
+                      const lowerOA = oa.trim().toLowerCase();
+                      return lowerOA && (allergensStr.includes(lowerOA) || tagsStr.includes(lowerOA));
+                    }));
+
 
                   return (
                     <div

@@ -11,6 +11,8 @@ import {
   ArrowRight,
   XCircle
 } from "lucide-react";
+import Button from "../ui/Button";
+import Card from "../ui/Card";
 
 export default function ManageOrders({
   orders,
@@ -36,13 +38,13 @@ export default function ManageOrders({
     const isCompleted = status === "Completed";
     
     return (
-      <div
-        className={`relative overflow-hidden flex flex-col justify-between min-h-[260px] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl rounded-xl ${
+      <Card
+        className={`relative overflow-hidden flex flex-col justify-between min-h-[260px] transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl ${
           alertInfo.hasAllergyAlert && !isCompleted
             ? "border-2 border-red-500 bg-red-50/30 shadow-[0_4px_20px_rgba(239,68,68,0.2)]"
             : isCompleted
-            ? "border border-sage-200 bg-white opacity-70"
-            : "border border-sage-200 bg-white shadow-sm"
+            ? "border border-primary-200 bg-white opacity-70"
+            : "border border-primary-200 bg-white shadow-sm"
         }`}
       >
         {/* Urgent Allergy Ribbon */}
@@ -138,18 +140,18 @@ export default function ManageOrders({
             </span>
           )}
         </div>
-      </div>
+      </Card>
     );
   };
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* KDS Control Header */}
-      <div className="bg-white rounded-xl border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm relative overflow-hidden">
+      <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-100/40 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl pointer-events-none" />
         <div className="relative z-10">
-          <h3 className="font-serif text-2xl font-bold text-sage-900 flex items-center space-x-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
+          <h3 className="dashboard-title text-primary-950 flex items-center space-x-3">
+            <div className="p-2 bg-amber-100 rounded-none">
                 <Flame className="h-6 w-6 text-amber-600 animate-pulse" />
             </div>
             <span>Màn Hình Điều Phối Bếp KDS</span>
@@ -158,21 +160,21 @@ export default function ManageOrders({
             Quản lý quy trình chế biến theo mô hình Kanban. Hệ thống tự động đẩy cảnh báo dị ứng lên mức cao nhất đối với các thành phần nguy hiểm.
           </p>
         </div>
-      </div>
+      </Card>
 
       {/* Kanban Board Layout */}
       <div className="flex gap-6 overflow-x-auto pb-4 snap-x custom-scrollbar min-h-[70vh]">
         
         {/* Column 1: Pending */}
         <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-none text-white shadow-md flex justify-between items-center z-10">
             <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
               <span className="h-2.5 w-2.5 rounded-full bg-white animate-pulse" />
               <span>1. CHỜ NHẬN</span>
             </h4>
-            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{pendingOrders.length}</span>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-none text-xs font-mono font-bold">{pendingOrders.length}</span>
           </div>
-          <div className="bg-blue-50/50 border border-t-0 border-blue-200/80 rounded-b-xl p-4 flex-1 space-y-4">
+          <div className="bg-blue-50/50 border border-t-0 border-blue-200/80 rounded-none p-4 flex-1 space-y-4">
             {pendingOrders.map((ord) => (
               <OrderCard key={ord.id} ord={ord} status="Pending" nextStatus="Cooking" nextStatusText="Nhận Nấu" nextStatusColor="bg-blue-600 hover:bg-blue-700" />
             ))}
@@ -187,14 +189,14 @@ export default function ManageOrders({
 
         {/* Column 2: Cooking */}
         <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
-          <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+          <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 rounded-none text-white shadow-md flex justify-between items-center z-10">
             <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
               <span className="h-2.5 w-2.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
               <span>2. ĐANG NẤU</span>
             </h4>
-            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{cookingOrders.length}</span>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-none text-xs font-mono font-bold">{cookingOrders.length}</span>
           </div>
-          <div className="bg-amber-50/50 border border-t-0 border-amber-200/80 rounded-b-xl p-4 flex-1 space-y-4">
+          <div className="bg-amber-50/50 border border-t-0 border-amber-200/80 rounded-none p-4 flex-1 space-y-4">
             {cookingOrders.map((ord) => (
               <OrderCard key={ord.id} ord={ord} status="Cooking" nextStatus="Delivering" nextStatusText="Xong Món" nextStatusColor="bg-amber-600 hover:bg-amber-700" />
             ))}
@@ -209,14 +211,14 @@ export default function ManageOrders({
 
         {/* Column 3: Delivering */}
         <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-none text-white shadow-md flex justify-between items-center z-10">
             <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
               <Truck className="h-4 w-4 text-white" />
               <span>3. ĐANG GIAO</span>
             </h4>
-            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{deliveringOrders.length}</span>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-none text-xs font-mono font-bold">{deliveringOrders.length}</span>
           </div>
-          <div className="bg-purple-50/50 border border-t-0 border-purple-200/80 rounded-b-xl p-4 flex-1 space-y-4">
+          <div className="bg-purple-50/50 border border-t-0 border-purple-200/80 rounded-none p-4 flex-1 space-y-4">
             {deliveringOrders.map((ord) => (
               <OrderCard key={ord.id} ord={ord} status="Delivering" nextStatus="Completed" nextStatusText="Đã Giao" nextStatusColor="bg-purple-600 hover:bg-purple-700" />
             ))}
@@ -231,14 +233,14 @@ export default function ManageOrders({
 
         {/* Column 4: Completed */}
         <div className="flex-none w-[320px] lg:w-[calc(25%-18px)] flex flex-col snap-center">
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 rounded-t-xl text-white shadow-md flex justify-between items-center z-10">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 rounded-none text-white shadow-md flex justify-between items-center z-10">
             <h4 className="font-serif text-sm font-bold flex items-center space-x-2 tracking-wide uppercase">
               <CheckCircle2 className="h-4 w-4 text-white" />
               <span>4. HOÀN TẤT</span>
             </h4>
-            <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">{completedOrders.length}</span>
+            <span className="bg-white/20 px-2.5 py-0.5 rounded-none text-xs font-mono font-bold">{completedOrders.length}</span>
           </div>
-          <div className="bg-emerald-50/30 border border-t-0 border-emerald-200/50 rounded-b-xl p-4 flex-1 space-y-4">
+          <div className="bg-emerald-50/30 border border-t-0 border-emerald-200/50 rounded-none p-4 flex-1 space-y-4">
             {completedOrders.map((ord) => (
               <OrderCard key={ord.id} ord={ord} status="Completed" />
             ))}

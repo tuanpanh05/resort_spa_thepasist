@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { PlusCircle, X, AlertTriangle } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import DishFormModal from "./DishFormModal";
+import Button from "../ui/Button";
+import Card from "../ui/Card";
+import { Table } from "../ui/Table";
 
 export default function ManageDishes({ dishes, setDishes }) {
   const [showAddDishModal, setShowAddDishModal] = useState(false);
@@ -15,7 +18,7 @@ export default function ManageDishes({ dishes, setDishes }) {
     description: "",
     ingredients: "",
     allergens: "",
-    period: "Lunch",
+    periods: ["Lunch"],
     isTodayMenu: true,
     availableDays: "0,1,2,3,4,5,6",
     isPackageIncluded: true,
@@ -65,7 +68,7 @@ export default function ManageDishes({ dishes, setDishes }) {
       description: "",
       ingredients: "",
       allergens: "",
-      period: "Lunch",
+      periods: ["Lunch"],
       isTodayMenu: true,
       availableDays: "0,1,2,3,4,5,6",
       isPackageIncluded: true,
@@ -77,19 +80,24 @@ export default function ManageDishes({ dishes, setDishes }) {
 
   const triggerEditModal = (dish) => {
     setSelectedDish(dish);
+    const VALID_TAGS = ["Omnivore", "Pescatarian", "Vegetarian", "Vegan", "Keto", "Halal"];
+    const sanitizedTags = dish.dietaryTags 
+      ? dish.dietaryTags.split(',').map(t => t.trim()).filter(t => VALID_TAGS.includes(t)).join(', ')
+      : "";
+
     setForm({
       name: dish.name,
       price: dish.price,
-      category: dish.category,
+      category: dish.category || "Món chính",
       description: dish.description,
       ingredients: dish.ingredients,
       allergens: dish.allergens.join(", "),
-      period: dish.period || "Lunch",
+      periods: (dish.periods && dish.periods.length > 0) ? dish.periods : ["Lunch"],
       isTodayMenu: dish.isTodayMenu,
       availableDays: dish.availableDays || "0,1,2,3,4,5,6",
       isPackageIncluded: dish.isPackageIncluded !== false,
       image: dish.image || "",
-      dietaryTags: dish.dietaryTags || "",
+      dietaryTags: sanitizedTags,
     });
     setShowEditDishModal(true);
   };
@@ -101,6 +109,11 @@ export default function ManageDishes({ dishes, setDishes }) {
       return;
     }
 
+    const VALID_TAGS = ["Omnivore", "Pescatarian", "Vegetarian", "Vegan", "Keto", "Halal"];
+    const sanitizedTags = dishForm.dietaryTags 
+      ? dishForm.dietaryTags.split(',').map(t => t.trim()).filter(t => VALID_TAGS.includes(t)).join(', ')
+      : "";
+
     const payload = {
       name: dishForm.name,
       price: dishForm.price,
@@ -110,9 +123,9 @@ export default function ManageDishes({ dishes, setDishes }) {
       allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
       isTodayMenu: dishForm.isTodayMenu,
       availableDays: dishForm.availableDays,
-      period: dishForm.period,
+      periods: dishForm.periods.join(","),
       image: dishForm.image,
-      dietaryTags: dishForm.dietaryTags,
+      dietaryTags: sanitizedTags,
       isPackageIncluded: dishForm.isPackageIncluded,
       enabled: true
     };
@@ -121,14 +134,11 @@ export default function ManageDishes({ dishes, setDishes }) {
       const res = await axiosClient.post("/chef/menu", payload);
       if (res.data.success) {
         const savedDish = res.data.dish;
-        const formatPrice = (p) => {
-          return new Intl.NumberFormat("en-US", { minimumFractionDigits: 0 }).format(p) + "đ";
-        };
         const newDish = {
           id: `DSH-${String(savedDish.foodId).padStart(2, '0')}`,
           foodId: savedDish.foodId,
           name: savedDish.dishName,
-          price: formatPrice(savedDish.price),
+          price: savedDish.price,
           category: dishForm.category,
           dietaryTags: savedDish.dietaryTags || dishForm.dietaryTags,
           description: savedDish.description,
@@ -138,7 +148,7 @@ export default function ManageDishes({ dishes, setDishes }) {
           availableDays: savedDish.availableDays || dishForm.availableDays,
           image: savedDish.imageUrl || "",
           isPackageIncluded: savedDish.isPackageIncluded !== false,
-          periods: savedDish.periods ? savedDish.periods.split(",").map(s => s.trim()) : [dishForm.period],
+          periods: savedDish.periods ? savedDish.periods.split(",").map(s => s.trim()) : dishForm.periods,
           soldOut: savedDish.soldOut,
           enabled: savedDish.enabled
         };
@@ -155,6 +165,11 @@ export default function ManageDishes({ dishes, setDishes }) {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     const foodId = selectedDish.foodId;
+    const VALID_TAGS = ["Omnivore", "Pescatarian", "Vegetarian", "Vegan", "Keto", "Halal"];
+    const sanitizedTags = dishForm.dietaryTags 
+      ? dishForm.dietaryTags.split(',').map(t => t.trim()).filter(t => VALID_TAGS.includes(t)).join(', ')
+      : "";
+
     const payload = {
       name: dishForm.name,
       price: dishForm.price,
@@ -164,9 +179,9 @@ export default function ManageDishes({ dishes, setDishes }) {
       allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
       isTodayMenu: dishForm.isTodayMenu,
       availableDays: dishForm.availableDays,
-      period: dishForm.period,
+      periods: dishForm.periods.join(","),
       image: dishForm.image,
-      dietaryTags: dishForm.dietaryTags,
+      dietaryTags: sanitizedTags,
       isPackageIncluded: dishForm.isPackageIncluded,
       enabled: selectedDish.enabled
     };
@@ -175,16 +190,13 @@ export default function ManageDishes({ dishes, setDishes }) {
       const res = await axiosClient.put(`/chef/menu/${foodId}`, payload);
       if (res.data.success) {
         const savedDish = res.data.dish;
-        const formatPrice = (p) => {
-          return new Intl.NumberFormat("en-US", { minimumFractionDigits: 0 }).format(p) + "đ";
-        };
         setDishes((prev) =>
           prev.map((d) =>
             d.id === selectedDish.id
               ? {
                 ...d,
                 name: savedDish.dishName,
-                price: formatPrice(savedDish.price),
+                price: savedDish.price,
                 category: dishForm.category,
                 dietaryTags: savedDish.dietaryTags || dishForm.dietaryTags,
                 description: savedDish.description,
@@ -213,9 +225,9 @@ export default function ManageDishes({ dishes, setDishes }) {
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* Table Header Controls */}
-      <div className="bg-white border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="font-serif text-lg font-bold text-sage-950">
+          <h3 className="card-title text-primary-950">
             Cơ Sở Dữ Liệu Danh Mục Món Ăn
           </h3>
           <p className="text-xs text-sage-500 mt-1">
@@ -223,36 +235,33 @@ export default function ManageDishes({ dishes, setDishes }) {
             mục dị ứng của món ăn resort.
           </p>
         </div>
-        <button
+        <Button
           onClick={triggerAddModal}
-          className="px-4 py-2.5 bg-sage-950 hover:bg-sage-800 text-white text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 cursor-pointer shadow-sm"
+          variant="primary"
+          className="px-4 py-2.5 flex items-center space-x-1.5 shadow-sm"
         >
           <PlusCircle className="h-4.5 w-4.5" />
           <span>Thêm Món Ăn Mới</span>
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       {/* Dishes Table */}
-      <div className="bg-white border border-sage-200/60 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-sage-50/50 text-sage-600 font-bold border-b border-sage-200/50">
-                <th className="p-4">Mã Món</th>
-                <th className="p-4">Hình ảnh</th>
-                <th className="p-4">Tên Món Ăn</th>
-                <th className="p-4">Phân loại</th>
-                <th className="p-4">Chế độ ăn</th>
-                <th className="p-4">Giá tiền</th>
-                <th className="p-4">Lịch phục vụ</th>
-                <th className="p-4">Bữa ăn</th>
-                <th className="p-4">Thành phần nguyên liệu</th>
-                <th className="p-4">Chứa chất dị ứng</th>
-                <th className="p-4">Trạng thái</th>
-                <th className="p-4 text-center">Tác vụ bếp</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-sage-100">
+      <Table
+        headers={[
+          "Mã Món",
+          "Hình ảnh",
+          "Tên Món Ăn",
+          "Phân loại",
+          "Chế độ ăn",
+          "Giá tiền",
+          "Lịch phục vụ",
+          "Bữa ăn",
+          "Thành phần nguyên liệu",
+          "Chứa chất dị ứng",
+          "Trạng thái",
+          "Tác vụ bếp"
+        ]}
+      >
               {dishes.map((dish) => (
                 <tr key={dish.id} className="hover:bg-sage-50/30">
                   <td className="p-4 font-mono font-bold text-sage-500">
@@ -286,7 +295,7 @@ export default function ManageDishes({ dishes, setDishes }) {
                     {dish.dietaryTags}
                   </td>
                   <td className="p-4 font-bold text-sage-900 font-mono">
-                    {dish.price}
+                    {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
                   </td>
                   <td className="p-4 text-[10px] text-sage-700 font-bold tracking-wide uppercase">
                     {dish.availableDays === "1,3,5" 
@@ -336,9 +345,9 @@ export default function ManageDishes({ dishes, setDishes }) {
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${dish.enabled
-                          ? "bg-green-105 text-green-700 border border-green-150"
-                          : "bg-sage-100 text-sage-400"
+                      className={`inline-flex items-center justify-center whitespace-nowrap px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${dish.enabled
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : "bg-sage-100 text-sage-500 border border-sage-200"
                         }`}
                     >
                       {dish.enabled ? "Phục vụ" : "Tạm khóa"}
@@ -346,35 +355,32 @@ export default function ManageDishes({ dishes, setDishes }) {
                   </td>
                   <td className="p-4 text-center">
                     <div className="flex items-center justify-center space-x-1.5">
-                      <button
+                      <Button
                         onClick={() => triggerEditModal(dish)}
-                        className="px-2.5 py-1.5 bg-sage-50 hover:bg-sage-100 border border-sage-200 text-sage-800 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                        variant="outline"
+                        className="px-2.5 py-1.5 text-[10px]"
                       >
                         Sửa
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleDeleteDish(dish.id)}
-                        className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-150 text-red-750 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                        variant="danger-light"
+                        className="px-2.5 py-1.5 text-[10px]"
                       >
                         Xóa
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleToggleEnabled(dish.id)}
-                        className={`px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${dish.enabled
-                            ? "bg-amber-50 text-amber-800 border-amber-205 hover:bg-amber-100"
-                            : "bg-green-50 text-green-800 border-green-155 hover:bg-green-100"
-                          }`}
+                        variant={dish.enabled ? "warning" : "secondary"}
+                        className="px-2.5 py-1.5 text-[10px]"
                       >
                         {dish.enabled ? "Tắt" : "Bật"}
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </Table>
       <DishFormModal
         isOpen={showAddDishModal}
         mode="add"
