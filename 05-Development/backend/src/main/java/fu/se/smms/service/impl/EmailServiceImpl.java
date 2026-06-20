@@ -26,6 +26,16 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendOtpEmail(String toEmail, String otpCode) {
+        // Skip sending actual emails to mock/dev domains to prevent Gmail bounces & spam
+        if (toEmail != null && (toEmail.toLowerCase().endsWith("@nguson.com") || toEmail.toLowerCase().endsWith("@nguson.vn"))) {
+            log.info("[MOCK EMAIL] OTP for {} is simulated. Skipping actual SMTP mail sending.", toEmail);
+            log.warn("===== [MOCK EMAIL] OTP for {} is: {} =====", toEmail, otpCode);
+            System.out.println("===================================================");
+            System.out.println(" [MOCK EMAIL] OTP for " + toEmail + " : " + otpCode);
+            System.out.println("===================================================");
+            return;
+        }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
