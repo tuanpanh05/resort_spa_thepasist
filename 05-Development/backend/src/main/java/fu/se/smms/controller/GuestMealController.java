@@ -229,9 +229,7 @@ public class GuestMealController {
             String warningMsg = "";
 
             if (consentSigned && !allergiesRaw.isEmpty()) {
-                String contentToTest = ((item.getAllergens() != null ? item.getAllergens() + " " : "") +
-                        (item.getIngredients() != null ? item.getIngredients() + " " : "") +
-                        item.getDishName() + " " + item.getDietaryTags()).toLowerCase();
+                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags() + " " + (item.getIngredients() != null ? item.getIngredients() : "")).toLowerCase();
 
                 // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to
                 // preserve multi-word allergies

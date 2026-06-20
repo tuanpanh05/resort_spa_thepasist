@@ -44,11 +44,10 @@ export default function MealSelectionStep({
             <button
               key={date}
               onClick={() => setSelectedMealDate(date)}
-              className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer ${
-                isActive
+              className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer ${isActive
                   ? "bg-primary-850 border-primary-900 text-white shadow-md -translate-y-0.5"
                   : "bg-white border-primary-100 text-sage-600 hover:border-primary-300 hover:bg-primary-50/30"
-              }`}
+                }`}
               style={{ borderRadius: "16px" }}
             >
               <span className="text-[9px] opacity-75 font-semibold">Ngày {idx + 1}</span>
@@ -114,11 +113,11 @@ export default function MealSelectionStep({
                   const currentQty =
                     mealSelections[selectedMealDate]?.[period.key]?.[dish.foodId] || 0;
                   const userAllergens = detectAllergens(guestInfo.healthNote);
-                  
+
                   // Ensure allergens is a searchable string
                   const allergensStr = (Array.isArray(dish.allergens) ? dish.allergens.join(",") : (dish.allergens || "")).toLowerCase();
                   const tagsStr = (dish.dietaryTags || "").toLowerCase();
-                  
+
                   const isAllergen =
                     (allergensStr.includes("đậu phộng") && userAllergens.includes("peanut")) ||
                     (allergensStr.includes("hải sản") && userAllergens.includes("seafood")) ||
@@ -140,89 +139,86 @@ export default function MealSelectionStep({
                       return lowerOA && (allergensStr.includes(lowerOA) || tagsStr.includes(lowerOA));
                     }));
 
-
-                  return (
-                    <div
-                      key={dish.foodId}
-                      className={`border transition-all duration-300 overflow-hidden ${
-                        isAllergen
-                          ? "border-red-200 bg-red-50/20 opacity-60"
-                          : currentQty > 0
-                          ? "border-primary-300 bg-primary-50/10"
-                          : "border-primary-100 bg-white hover:border-primary-200"
-                      }`}
-                    >
-                      <div className="relative h-32 overflow-hidden">
-                        <img
-                          src={dish.image}
-                          alt={dish.dishName}
-                          className="w-full h-full object-cover"
-                        />
-                        {dish.isPackageIncluded && (
-                          <span className="absolute top-2 left-2 bg-green-700 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
-                            Trong Gói
-                          </span>
-                        )}
-                        {isAllergen && (
-                          <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 flex items-center gap-1 shadow-sm">
-                            <AlertTriangle className="h-3 w-3" /> Dị ứng
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-4 space-y-2">
-                        <h4 className="font-serif text-sm font-bold text-sage-950">
-                          {dish.dishName}
-                        </h4>
-                        <p className="text-[11px] text-sage-500 font-light leading-relaxed line-clamp-2">
-                          {dish.description}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {dish.dietaryTags.split(",").map((tag) => (
-                            <span
-                              key={tag.trim()}
-                              className="text-[9px] font-bold uppercase tracking-wider border border-primary-200 text-primary-800 px-2 py-0.5 bg-primary-50/30"
-                            >
-                              {tag.trim()}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-primary-50">
-                          <span className="font-serif text-sm font-bold text-sage-950">
-                            {formatCurrency(dish.price)}
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateMealQty(selectedMealDate, period.key, dish.foodId, -1)
-                              }
-                              disabled={currentQty === 0 || isAllergen}
-                              className="h-7 w-7 flex items-center justify-center border border-primary-200 text-sage-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="font-mono text-sm font-bold text-sage-950 w-6 text-center">
-                              {currentQty}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateMealQty(selectedMealDate, period.key, dish.foodId, 1)
-                              }
-                              disabled={isAllergen}
-                              className={`h-7 w-7 flex items-center justify-center border transition-colors ${
-                                isAllergen
-                                  ? "bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer"
-                              }`}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+              return (
+              <div
+                key={dish.foodId}
+                className={`border transition-all duration-300 overflow-hidden ${isAllergen
+                    ? "border-red-200 bg-red-50/20 opacity-60"
+                    : currentQty > 0
+                      ? "border-primary-300 bg-primary-50/10"
+                      : "border-primary-100 bg-white hover:border-primary-200"
+                  }`}
+              >
+                <div className="relative h-32 overflow-hidden">
+                  <img
+                    src={dish.image}
+                    alt={dish.dishName}
+                    className="w-full h-full object-cover"
+                  />
+                  {dish.isPackageIncluded && (
+                    <span className="absolute top-2 left-2 bg-green-700 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
+                      Trong Gói
+                    </span>
+                  )}
+                  {isAllergen && (
+                    <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 flex items-center gap-1 shadow-sm">
+                      <AlertTriangle className="h-3 w-3" /> Dị ứng
+                    </span>
+                  )}
+                </div>
+                <div className="p-4 space-y-2">
+                  <h4 className="font-serif text-sm font-bold text-sage-950">
+                    {dish.dishName}
+                  </h4>
+                  <p className="text-[11px] text-sage-500 font-light leading-relaxed line-clamp-2">
+                    {dish.description}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dish.dietaryTags.split(",").map((tag) => (
+                      <span
+                        key={tag.trim()}
+                        className="text-[9px] font-bold uppercase tracking-wider border border-primary-200 text-primary-800 px-2 py-0.5 bg-primary-50/30"
+                      >
+                        {tag.trim()}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-primary-50">
+                    <span className="font-serif text-sm font-bold text-sage-950">
+                      {formatCurrency(dish.price)}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateMealQty(selectedMealDate, period.key, dish.foodId, -1)
+                        }
+                        disabled={currentQty === 0 || isAllergen}
+                        className="h-7 w-7 flex items-center justify-center border border-primary-200 text-sage-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="font-mono text-sm font-bold text-sage-950 w-6 text-center">
+                        {currentQty}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateMealQty(selectedMealDate, period.key, dish.foodId, 1)
+                        }
+                        disabled={isAllergen}
+                        className={`h-7 w-7 flex items-center justify-center border transition-colors ${isAllergen
+                            ? "bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed"
+                            : "border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer"
+                          }`}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                  );
+                  </div>
+                </div>
+              </div>
+              );
                 })}
             </div>
           </div>
