@@ -164,7 +164,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (user == null) {
             user = User.builder()
                     .email(email)
-                    .passwordHash(passwordEncoder.encode("Password123"))
+                    .passwordHash(passwordEncoder.encode("123456"))
                     .fullName(fullName)
                     .phone(phone)
                     .role(role)
@@ -173,7 +173,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             userRepository.save(user);
             System.out.println("[DB Seeder] Seeded user: " + email + " with role: " + role);
         } else {
-            user.setPasswordHash(passwordEncoder.encode("Password123"));
+            user.setPasswordHash(passwordEncoder.encode("123456"));
             user.setStatus("ACTIVE");
             user.setRole(role);
             userRepository.save(user);
