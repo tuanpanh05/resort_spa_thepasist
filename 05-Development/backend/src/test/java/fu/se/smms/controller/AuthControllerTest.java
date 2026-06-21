@@ -48,6 +48,9 @@ public class AuthControllerTest {
     @MockBean
     private OtpService otpService;
 
+    @MockBean
+    private fu.se.smms.repository.UserRepository userRepository;
+
     @Test
     public void testRegister_Success() throws Exception {
         SignUpRequest request = new SignUpRequest();

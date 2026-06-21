@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import { PlusCircle, X, Package } from "lucide-react";
+import Button from "../ui/Button";
+import Card from "../ui/Card";
+import Modal from "../ui/Modal";
+import { Table } from "../ui/Table";
 
 export default function ManageInventory({
   ingredients,
@@ -85,9 +89,9 @@ export default function ManageInventory({
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* Header Actions */}
-      <div className="bg-white border border-sage-200/60 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="font-serif text-lg font-bold text-sage-950">
+          <h3 className="card-title text-primary-950">
             Kho Nguyên Liệu Bếp & Đề Xuất Thu Mua
           </h3>
           <p className="text-xs text-sage-500 mt-1">
@@ -95,91 +99,87 @@ export default function ManageInventory({
             Tạo đơn đề xuất mua hàng khi cạn kiệt.
           </p>
         </div>
-        <button
+        <Button
           onClick={() => {
             const firstIng = ingredients[0]?.name || "Nấm đùi gà tươi";
             const firstUnit = ingredients[0]?.unit || "Kg";
             setRequestForm({ name: firstIng, qty: "", unit: firstUnit });
             setShowRequestModal(true);
           }}
-          className="px-4 py-2.5 bg-sage-950 hover:bg-sage-800 text-white text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 cursor-pointer shadow-sm"
+          variant="primary"
+          className="px-4 py-2.5 flex items-center space-x-1.5 shadow-sm"
         >
           <PlusCircle className="h-4.5 w-4.5" />
           <span>Yêu Cầu Nhập Nguyên Liệu</span>
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ingredients Stock Table */}
-        <div className="bg-white border border-sage-200/60 p-6 col-span-2 space-y-4">
-          <h3 className="font-serif text-base font-bold text-sage-950 border-b border-sage-100 pb-2.5">
+        <Card className="p-6 col-span-2 space-y-4">
+          <h3 className="card-title text-primary-950 border-b border-primary-100 pb-2.5">
             Nguyên Liệu Trong Kho Bếp
           </h3>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="bg-sage-50/50 text-sage-600 font-bold border-b border-sage-200/50">
-                  <th className="p-3">Nguyên liệu</th>
-                  <th className="p-3">Phân nhóm</th>
-                  <th className="p-3">Tồn kho</th>
-                  <th className="p-3">Hạn mức tối thiểu</th>
-                  <th className="p-3">Đơn vị</th>
-                  <th className="p-3">Trạng thái</th>
-                  <th className="p-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-sage-100">
-                {ingredients.map((ing) => (
-                  <tr key={ing.id} className="hover:bg-sage-50/30">
-                    <td className="p-3 font-bold text-sage-950">{ing.name}</td>
-                    <td className="p-3 text-sage-600">{ing.category}</td>
-                    <td
-                      className={`p-3 font-bold font-mono ${
-                        ing.stock === 0
-                          ? "text-red-600"
-                          : ing.stock < ing.minQty
-                            ? "text-amber-600"
-                            : "text-sage-900"
-                      }`}
-                    >
-                      {ing.stock}
-                    </td>
-                    <td className="p-3 text-sage-500 font-mono">
-                      {ing.minQty}
-                    </td>
-                    <td className="p-3 text-sage-500">{ing.unit}</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                          ing.status === "Đầy đủ"
-                            ? "bg-green-50 text-green-700 border border-green-150"
-                            : ing.status === "Sắp hết"
-                              ? "bg-amber-50 text-[#b45309] border border-amber-150"
-                              : "bg-red-50 text-red-700 border border-red-150"
-                        }`}
-                      >
-                        {ing.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <button 
-                        onClick={() => setEditingIng({ ...ing })}
-                        className="text-[10px] text-sage-600 hover:text-sage-950 font-bold underline"
-                      >
-                        SỬA
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <Table
+            headers={[
+              "Nguyên liệu",
+              "Phân nhóm",
+              "Tồn kho",
+              "Hạn mức tối thiểu",
+              "Đơn vị",
+              "Trạng thái",
+              ""
+            ]}
+          >
+            {ingredients.map((ing) => (
+              <tr key={ing.id} className="hover:bg-primary-50/30">
+                <td className="p-3 font-bold text-primary-950">{ing.name}</td>
+                <td className="p-3 text-sage-600">{ing.category}</td>
+                <td
+                  className={`p-3 font-bold font-mono ${
+                    ing.stock === 0
+                      ? "text-red-600"
+                      : ing.stock < ing.minQty
+                        ? "text-amber-600"
+                        : "text-primary-900"
+                  }`}
+                >
+                  {ing.stock}
+                </td>
+                <td className="p-3 text-sage-500 font-mono">
+                  {ing.minQty}
+                </td>
+                <td className="p-3 text-sage-500">{ing.unit}</td>
+                <td className="p-3">
+                  <span
+                    className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                      ing.status === "Đầy đủ"
+                        ? "bg-green-50 text-green-700 border border-green-150"
+                        : ing.status === "Sắp hết"
+                          ? "bg-amber-50 text-[#b45309] border border-amber-150"
+                          : "bg-red-50 text-red-700 border border-red-150"
+                    }`}
+                  >
+                    {ing.status}
+                  </span>
+                </td>
+                <td className="p-3 text-right">
+                  <button 
+                    onClick={() => setEditingIng({ ...ing })}
+                    className="text-[10px] text-sage-600 hover:text-primary-950 font-bold underline cursor-pointer"
+                  >
+                    SỬA
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </Table>
+        </Card>
 
         {/* Purchase Orders Log */}
-        <div className="bg-white border border-sage-200/60 p-6 space-y-4">
-          <h3 className="font-serif text-base font-bold text-sage-950 border-b border-sage-100 pb-2.5">
+        <Card className="p-6 space-y-4">
+          <h3 className="card-title text-primary-950 border-b border-primary-100 pb-2.5">
             Nhật Ký Yêu Cầu Nhập Hàng
           </h3>
 
@@ -187,10 +187,10 @@ export default function ManageInventory({
             {procurements.map((req) => (
               <div
                 key={req.id}
-                className="p-3.5 bg-sage-50/50 border border-sage-150 text-xs space-y-2"
+                className="p-3.5 bg-primary-50/50 border border-primary-100 text-xs space-y-2"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-sage-900">{req.name}</span>
+                  <span className="font-bold text-primary-900">{req.name}</span>
                   <span
                     className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${
                       req.status === "Chờ duyệt"
@@ -204,7 +204,7 @@ export default function ManageInventory({
                 <div className="flex justify-between items-center text-[10px] text-sage-500">
                   <span>
                     Số lượng:{" "}
-                    <strong className="text-sage-800 font-bold">
+                    <strong className="text-primary-800 font-bold">
                       {req.qty} {req.unit}
                     </strong>
                   </span>
@@ -215,12 +215,13 @@ export default function ManageInventory({
                     Yêu cầu: {req.id}
                   </div>
                   {req.status === "Chờ duyệt" && (
-                    <button
+                    <Button
                       onClick={() => handleApproveRequest(req.id)}
-                      className="px-2 py-1 bg-sage-900 hover:bg-sage-800 text-white text-[9px] font-bold uppercase tracking-wider cursor-pointer"
+                      variant="primary"
+                      className="px-2 py-1 text-[9px]"
                     >
                       Duyệt & Nhập Kho
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -231,182 +232,177 @@ export default function ManageInventory({
               </p>
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Request Stock Requisition Modal */}
-      {showRequestModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-none max-w-sm w-full p-6 border border-sage-200 shadow-2xl relative">
-            <button
-              onClick={() => setShowRequestModal(false)}
-              className="absolute top-4 right-4 p-2 text-sage-400 hover:text-sage-900 cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <h3 className="font-serif text-base font-bold text-sage-950 mb-4 flex items-center space-x-2">
-              <Package className="h-5 w-5 text-sage-800" />
-              <span>Yêu Cầu Nhập Thêm Thực Phẩm</span>
-            </h3>
-
-            <form onSubmit={handleCreateRequest} className="space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="font-semibold text-sage-800">
-                  Chọn nguyên liệu cần nhập
-                </label>
-                <select
-                  value={requestForm.name}
-                  onChange={(e) => {
-                    const selectedIng = ingredients.find(
-                      (ing) => ing.name === e.target.value,
-                    );
-                    setRequestForm((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                      unit: selectedIng ? selectedIng.unit : prev.unit,
-                    }));
-                  }}
-                  className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 focus:outline-none focus:border-sage-800"
-                >
-                  {ingredients.map((ing) => (
-                    <option key={ing.id} value={ing.name}>
-                      {ing.name} ({ing.unit})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-sage-800">
-                    Số lượng yêu cầu
-                  </label>
-                  <input
-                    type="number"
-                    value={requestForm.qty}
-                    onChange={(e) =>
-                      setRequestForm((prev) => ({
-                        ...prev,
-                        qty: e.target.value,
-                      }))
-                    }
-                    placeholder="Ví dụ: 15"
-                    className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 focus:outline-none focus:border-sage-800"
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-sage-800">
-                    Đo bằng đơn vị
-                  </label>
-                  <input
-                    type="text"
-                    value={requestForm.unit}
-                    onChange={(e) =>
-                      setRequestForm((prev) => ({
-                        ...prev,
-                        unit: e.target.value,
-                      }))
-                    }
-                    placeholder="Kg / Khay / Chai"
-                    className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 font-bold focus:outline-none focus:border-sage-800"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4 border-t border-sage-100">
-                <button
-                  type="button"
-                  onClick={() => setShowRequestModal(false)}
-                  className="px-4 py-2 border border-sage-200 hover:bg-sage-50 text-sage-800 rounded-none font-bold cursor-pointer"
-                >
-                  Đóng
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-sage-950 text-white rounded-none font-bold hover:bg-sage-800 cursor-pointer"
-                >
-                  Gửi yêu cầu
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        title={
+          <div className="flex items-center space-x-2">
+            <Package className="h-5 w-5 text-primary-800" />
+            <span>Yêu Cầu Nhập Thêm Thực Phẩm</span>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form onSubmit={handleCreateRequest} className="space-y-4 text-xs">
+          <div className="space-y-1.5">
+            <label className="font-semibold text-primary-800">
+              Chọn nguyên liệu cần nhập
+            </label>
+            <select
+              value={requestForm.name}
+              onChange={(e) => {
+                const selectedIng = ingredients.find(
+                  (ing) => ing.name === e.target.value,
+                );
+                setRequestForm((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                  unit: selectedIng ? selectedIng.unit : prev.unit,
+                }));
+              }}
+              className="w-full p-2.5 border border-primary-200 bg-white text-primary-900 focus:outline-none focus:border-primary-800"
+            >
+              {ingredients.map((ing) => (
+                <option key={ing.id} value={ing.name}>
+                  {ing.name} ({ing.unit})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-primary-800">
+                Số lượng yêu cầu
+              </label>
+              <input
+                type="number"
+                value={requestForm.qty}
+                onChange={(e) =>
+                  setRequestForm((prev) => ({
+                    ...prev,
+                    qty: e.target.value,
+                  }))
+                }
+                placeholder="Ví dụ: 15"
+                className="w-full p-2.5 border border-primary-200 bg-white text-primary-900 focus:outline-none focus:border-primary-800"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-semibold text-primary-800">
+                Đo bằng đơn vị
+              </label>
+              <input
+                type="text"
+                value={requestForm.unit}
+                onChange={(e) =>
+                  setRequestForm((prev) => ({
+                    ...prev,
+                    unit: e.target.value,
+                  }))
+                }
+                placeholder="Kg / Khay / Chai"
+                className="w-full p-2.5 border border-primary-200 bg-white text-primary-900 font-bold focus:outline-none focus:border-primary-800"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4 border-t border-primary-100">
+            <Button
+              type="button"
+              onClick={() => setShowRequestModal(false)}
+              variant="outline"
+              className="px-4 py-2"
+            >
+              Đóng
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="px-5 py-2"
+            >
+              Gửi yêu cầu
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Edit Inventory Modal */}
-      {editingIng && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-none max-w-sm w-full p-6 border border-sage-200 shadow-2xl relative">
-            <button
-              onClick={() => setEditingIng(null)}
-              className="absolute top-4 right-4 p-2 text-sage-400 hover:text-sage-900 cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <h3 className="font-serif text-base font-bold text-sage-950 mb-4 flex items-center space-x-2">
-              <Package className="h-5 w-5 text-sage-800" />
-              <span>Cập Nhật Tồn Kho</span>
-            </h3>
+      {/* Edit Inventory Modal */}
+      <Modal
+        isOpen={!!editingIng}
+        onClose={() => setEditingIng(null)}
+        title={
+          <div className="flex items-center space-x-2">
+            <Package className="h-5 w-5 text-primary-800" />
+            <span>Cập Nhật Tồn Kho</span>
+          </div>
+        }
+      >
+        {editingIng && (
+          <form onSubmit={handleEditSubmit} className="space-y-4 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-primary-800">Tên nguyên liệu</label>
+              <input
+                type="text"
+                value={editingIng.name}
+                disabled
+                className="w-full p-2.5 border border-primary-200 bg-primary-50 text-primary-500 font-bold"
+              />
+            </div>
 
-            <form onSubmit={handleEditSubmit} className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="font-semibold text-sage-800">Tên nguyên liệu</label>
+                <label className="font-semibold text-primary-800">Tồn kho hiện tại ({editingIng.unit})</label>
                 <input
-                  type="text"
-                  value={editingIng.name}
-                  disabled
-                  className="w-full p-2.5 border border-sage-200 bg-sage-50 text-sage-500 font-bold"
+                  type="number"
+                  value={editingIng.stock}
+                  onChange={(e) => setEditingIng(prev => ({ ...prev, stock: e.target.value }))}
+                  className="w-full p-2.5 border border-primary-200 bg-white text-primary-900 focus:outline-none focus:border-primary-800 font-mono font-bold"
+                  required
+                  min="0"
+                  step="0.01"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-sage-800">Tồn kho hiện tại ({editingIng.unit})</label>
-                  <input
-                    type="number"
-                    value={editingIng.stock}
-                    onChange={(e) => setEditingIng(prev => ({ ...prev, stock: e.target.value }))}
-                    className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 focus:outline-none focus:border-sage-800 font-mono font-bold"
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-sage-800">Mức tối thiểu ({editingIng.unit})</label>
-                  <input
-                    type="number"
-                    value={editingIng.minQty}
-                    onChange={(e) => setEditingIng(prev => ({ ...prev, minQty: e.target.value }))}
-                    className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 focus:outline-none focus:border-sage-800 font-mono font-bold text-sage-500"
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="font-semibold text-primary-800">Mức tối thiểu ({editingIng.unit})</label>
+                <input
+                  type="number"
+                  value={editingIng.minQty}
+                  onChange={(e) => setEditingIng(prev => ({ ...prev, minQty: e.target.value }))}
+                  className="w-full p-2.5 border border-primary-200 bg-white text-primary-900 focus:outline-none focus:border-primary-800 font-mono font-bold text-primary-500"
+                  required
+                  min="0"
+                  step="0.01"
+                />
               </div>
+            </div>
 
-              <div className="flex justify-end space-x-2 pt-4 border-t border-sage-100">
-                <button
-                  type="button"
-                  onClick={() => setEditingIng(null)}
-                  className="px-4 py-2 border border-sage-200 hover:bg-sage-50 text-sage-800 rounded-none font-bold cursor-pointer"
-                >
-                  Đóng
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-sage-950 text-white rounded-none font-bold hover:bg-sage-800 cursor-pointer"
-                >
-                  Lưu thay đổi
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end space-x-2 pt-4 border-t border-primary-100">
+              <Button
+                type="button"
+                onClick={() => setEditingIng(null)}
+                variant="outline"
+                className="px-4 py-2"
+              >
+                Đóng
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className="px-5 py-2"
+              >
+                Lưu thay đổi
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

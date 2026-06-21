@@ -21,6 +21,9 @@ import {
   Clock
 } from "lucide-react";
 import axiosClient from "../api/axiosClient";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
 
 export default function GuestDashboard() {
   const navigate = useNavigate();
@@ -362,9 +365,9 @@ export default function GuestDashboard() {
                     <span className="text-lg">{formatCurrency(successOrder.totalAmount)}</span>
                   </div>
                 </div>
-                <button onClick={() => setSuccessOrder(null)} className="px-8 py-3 bg-primary-800 hover:bg-primary-900 text-white text-xs font-bold uppercase tracking-widest cursor-pointer">
+                <Button onClick={() => setSuccessOrder(null)} variant="primary" className="px-8 py-3">
                   Quay Lại Đặt Món
-                </button>
+                </Button>
             </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -372,8 +375,9 @@ export default function GuestDashboard() {
             <div className="lg:col-span-4 space-y-6">
               
               {/* Customer Info Widget */}
-              <div className="bg-white rounded-none p-6 border border-primary-200/50">
+              <Card className="p-6 border-primary-200/50">
                 <h3 className="font-serif text-lg font-bold text-sage-900 border-b border-primary-100 pb-3 mb-4">
+
                   Thông Tin Đặt Phòng
                 </h3>
                 <div className="space-y-3 text-xs text-sage-700">
@@ -409,15 +413,15 @@ export default function GuestDashboard() {
                       </div>
                       <div className="flex justify-between items-center bg-sage-50/50 p-2 border border-sage-200 mt-2">
                         <span className="font-bold text-sage-700 uppercase tracking-wider text-[11px]">Mã Ăn:</span>
-                        <span className="font-bold text-sage-900 text-sm font-mono tracking-wider">MEAL-{profileData.booking.bookingId}</span>
+                        <span className="font-bold text-sage-900 text-sm font-mono tracking-wider">MEAL-{String(profileData.booking.bookingId).replace('BK-', '').padStart(4, '0')}</span>
                       </div>
                     </>
                   )}
                 </div>
-              </div>
+              </Card>
 
               {/* Consent Widget */}
-              <div className="bg-white rounded-none p-6 border border-primary-200/50 relative overflow-hidden group hover:border-primary-300 transition-all duration-300">
+              <Card className="p-6 border-primary-200/50 relative overflow-hidden group hover:border-primary-300 transition-all duration-300">
                 <div className="absolute top-0 left-0 w-1 h-full bg-primary-600" />
                 <div className="flex items-start gap-4 mb-4">
                   <div className="p-3 bg-primary-50 rounded-2xl text-primary-700 group-hover:scale-110 group-hover:bg-primary-100 transition-all duration-300">
@@ -440,17 +444,17 @@ export default function GuestDashboard() {
                     </span>
                   </label>
                 </div>
-              </div>
+              </Card>
 
               {/* Info Card */}
-              <div className="bg-white rounded-none p-6 border border-primary-200/50">
+              <Card className="p-6 border-primary-200/50">
                 <h4 className="font-serif text-base font-bold text-sage-900 mb-3">Lưu ý Dịch Vụ</h4>
                 <ul className="text-xs text-sage-600 space-y-2 font-medium">
                   <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Thời gian phục vụ: 06:00 - 22:00 hàng ngày.</li>
                   <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Phí phục vụ tại phòng là 15% (đã bao gồm trong phụ phí dự kiến).</li>
                   <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Các món trong Gói Tiêu Chuẩn sẽ được miễn phí.</li>
                 </ul>
-              </div>
+              </Card>
             </div>
 
             {/* Right Column: Menu & Orders */}
@@ -567,9 +571,14 @@ export default function GuestDashboard() {
                   <span className="text-xs font-medium text-sage-500 uppercase tracking-widest mb-1">Tổng cộng ({getSelectedItemsCount()} món)</span>
                   <span className="font-serif text-3xl font-bold text-primary-950 block">{formatCurrency(calculateTotalBill())}</span>
                 </div>
-                <button disabled={submitting || getSelectedItemsCount()===0} onClick={handleSubmitSelections} className={`w-full md:w-auto px-12 py-4 rounded-none text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${getSelectedItemsCount()===0 ? "bg-sage-100 border-sage-200 text-sage-400" : orderMode === 'extra' ? "bg-amber-600 border-amber-700 text-white hover:bg-amber-700" : "bg-primary-900 border-primary-950 text-white hover:bg-black"}`}>
-                  <span className="relative z-10">{submitting ? "Đang xử lý..." : orderMode === 'extra' ? "Xác Nhận Gọi Món" : "Lưu Thực Đơn"}</span>
-                </button>
+                <Button 
+                  disabled={submitting || getSelectedItemsCount()===0} 
+                  onClick={handleSubmitSelections} 
+                  variant={getSelectedItemsCount()===0 ? "secondary" : (orderMode === 'extra' ? "warning" : "primary")}
+                  className="w-full md:w-auto px-12 py-4"
+                >
+                  {submitting ? "Đang xử lý..." : orderMode === 'extra' ? "Xác Nhận Gọi Món" : "Lưu Thực Đơn"}
+                </Button>
               </div>
 
             </div>
@@ -579,40 +588,36 @@ export default function GuestDashboard() {
 
       {/* EMERGENCY ALLERGY MODAL */}
       {showAllergyWarningModal && pendingAllergyItem && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border-2 border-red-500 w-full max-w-lg shadow-2xl relative p-8">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-xl border border-red-200 w-full max-w-lg shadow-[0_0_50px_rgba(220,38,38,0.15)] relative p-8 rounded-none overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 via-rose-500 to-red-500" />
             <div className="flex items-start space-x-4 mb-6">
-              <div className="p-3 bg-red-100 text-red-700 rounded-full"><AlertTriangle className="h-8 w-8 animate-pulse" /></div>
+              <div className="p-3 bg-red-50 text-red-600 rounded-none shadow-inner"><AlertTriangle className="h-8 w-8 animate-pulse" /></div>
               <div>
-                <h3 className="text-xl font-bold text-red-800 uppercase">CẢNH BÁO NGUY HIỂM</h3>
-                <p className="text-red-600 text-sm mt-1">{pendingAllergyItem.dish.warningMessage}</p>
+                <h3 className="font-serif text-2xl font-bold text-red-900 uppercase">Cảnh Báo Nguy Hiểm</h3>
+                <p className="text-red-600 text-sm mt-1 font-medium">{pendingAllergyItem.dish.warningMessage}</p>
               </div>
             </div>
-            <p className="text-sage-700 text-sm mb-6 bg-red-50 p-4 border border-red-200">
+            <p className="text-sage-700 text-sm mb-6 bg-red-50/50 p-4 border border-red-100 rounded-none leading-relaxed">
                 Món <strong>{pendingAllergyItem.dish.dishName}</strong> chứa thành phần mà bạn đã khai báo dị ứng trong hồ sơ y tế. Việc tiếp tục sử dụng có thể gây ra nguy cơ sốc phản vệ hoặc ảnh hưởng nghiêm trọng đến sức khỏe.
             </p>
-            <p className="text-sage-900 font-bold mb-6 text-center">Bạn có thực sự muốn đặt món ăn này và tự chịu trách nhiệm rủi ro?</p>
+            <p className="text-sage-900 font-bold mb-6 text-center text-sm">Bạn có thực sự muốn đặt món ăn này và tự chịu trách nhiệm rủi ro?</p>
             <div className="flex gap-4">
-                <button onClick={cancelAllergyWarning} className="flex-1 py-3 bg-sage-200 hover:bg-sage-300 text-sage-800 font-bold uppercase text-sm">Hủy Bỏ (Khuyên Dùng)</button>
-                <button onClick={confirmAllergyWarning} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase text-sm">Tôi Chấp Nhận Rủi Ro</button>
+                <Button variant="outline" onClick={cancelAllergyWarning} className="flex-1 text-sage-600">Hủy Bỏ (Khuyên Dùng)</Button>
+                <Button variant="danger" onClick={confirmAllergyWarning} className="flex-1 shadow-lg shadow-red-500/20">Tôi Chấp Nhận Rủi Ro</Button>
             </div>
           </div>
         </div>
       )}
 
       {/* CONSENT MODAL */}
-      {showConsentModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white max-w-lg p-8">
-             <h3 className="text-xl font-bold uppercase">Bật tự động lọc?</h3>
-             <p className="mt-4 text-sm mb-6">Bạn chưa bật bộ lọc dị ứng. Bạn có muốn kích hoạt bộ lọc tự động để đảm bảo an toàn?</p>
-             <div className="flex gap-4">
-                <button onClick={() => { setShowConsentModal(false); executeSubmitSelections(); }} className="flex-1 py-2 bg-gray-200 text-gray-800 font-bold text-xs">Vẫn gửi (Không lọc)</button>
-                <button onClick={async () => { setShowConsentModal(false); await handleConsentSubmit(true); }} className="flex-1 py-2 bg-primary-800 text-white font-bold text-xs">Bật & Lọc Thực Đơn</button>
-             </div>
-          </div>
-        </div>
-      )}
+      <Modal isOpen={showConsentModal} onClose={() => setShowConsentModal(false)} title="Bật tự động lọc?">
+         <p className="mt-4 text-sm mb-6 text-sage-600 font-medium">Bạn chưa bật bộ lọc dị ứng. Bạn có muốn kích hoạt bộ lọc tự động để đảm bảo an toàn không?</p>
+         <div className="flex gap-4">
+            <Button variant="outline" onClick={() => { setShowConsentModal(false); executeSubmitSelections(); }} className="flex-1">Vẫn gửi (Không lọc)</Button>
+            <Button variant="primary" onClick={async () => { setShowConsentModal(false); await handleConsentSubmit(true); executeSubmitSelections(); }} className="flex-1">Bật & Lọc Thực Đơn</Button>
+         </div>
+      </Modal>
     </div>
   );
 }

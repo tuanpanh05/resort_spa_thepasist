@@ -357,13 +357,29 @@ public class InvoiceServiceImpl implements InvoiceService {
     public InvoiceDTO processVNPayCallback(Map<String, String> callbackParams) {
         verifyVNPaySignature(callbackParams);
 
+        String orderId = callbackParams.get("vnp_TxnRef");
+        Integer invoiceId = parseInvoiceId(orderId);
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
+
+        if ("PAID".equals(invoice.getStatus())) {
+            return toDto(invoice);
+        }
+
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null && "CONFIRMED".equals(booking.getStatus())
+                && defaultZero(invoice.getDepositAmount()).signum() > 0) {
+            return toDto(invoice);
+        }
+
+        validateVNPayAmount(orderId, callbackParams.get("vnp_Amount"));
+
         VNPayPaymentDTO dto = new VNPayPaymentDTO();
-        dto.setOrderId(callbackParams.get("vnp_TxnRef"));
+        dto.setOrderId(orderId);
         dto.setResponseCode(callbackParams.get("vnp_ResponseCode"));
         dto.setTransactionStatus(callbackParams.get("vnp_TransactionStatus"));
         dto.setTransactionNo(callbackParams.get("vnp_TransactionNo"));
         dto.setSecureHash(callbackParams.get("vnp_SecureHash"));
-        validateVNPayAmount(dto.getOrderId(), callbackParams.get("vnp_Amount"));
         return processPaymentCallback(dto);
     }
 
@@ -378,9 +394,6 @@ public class InvoiceServiceImpl implements InvoiceService {
             if (invoice == null) {
                 return ipnResponse("01", "Order not found");
             }
-            if (!isVNPayAmountValid(invoice, callbackParams.get("vnp_Amount"))) {
-                return ipnResponse("04", "Invalid amount");
-            }
             if ("PAID".equals(invoice.getStatus())) {
                 return ipnResponse("02", "Order already confirmed");
             }
@@ -388,6 +401,9 @@ public class InvoiceServiceImpl implements InvoiceService {
             if (booking != null && "CONFIRMED".equals(booking.getStatus())
                     && defaultZero(invoice.getDepositAmount()).signum() > 0) {
                 return ipnResponse("02", "Order already confirmed");
+            }
+            if (!isVNPayAmountValid(invoice, callbackParams.get("vnp_Amount"))) {
+                return ipnResponse("04", "Invalid amount");
             }
 
             VNPayPaymentDTO dto = new VNPayPaymentDTO();
