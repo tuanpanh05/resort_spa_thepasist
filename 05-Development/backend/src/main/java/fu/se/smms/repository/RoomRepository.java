@@ -45,6 +45,12 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
      */
     @Query("SELECT r FROM Room r LEFT JOIN FETCH r.roomType ORDER BY r.roomNumber ASC")
     List<Room> findAllWithRoomType();
+
+    /**
+     * Count rooms of a specific type that are AVAILABLE.
+     */
+    @Query("SELECT COUNT(r) FROM Room r WHERE r.roomType.roomTypeId = :roomTypeId AND r.status = 'AVAILABLE'")
+    long countAvailableByRoomTypeId(@Param("roomTypeId") Integer roomTypeId);
 }
 
 

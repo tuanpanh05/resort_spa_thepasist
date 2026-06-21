@@ -42,22 +42,62 @@ public class BookingController {
 
     /**
      * UC07/UC-13: Create a new retreat package booking with deposit payment.
-     * The booking is created with status PENDING_DEPOSIT, and an invoice is generated
-     * automatically. The guest is then redirected to the payment page to pay the deposit.
+     * Supports BOTH authenticated users (Principal) AND guests (email+phone in request body).
+     * If Principal is null/anonymous, a GUEST user is created or looked up by email.
      */
     @PostMapping
     public ResponseEntity<BookingResponseDTO> createBooking(
             Principal principal,
             @Valid @RequestBody BookingRequestDTO request) {
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new BusinessException(
-                        "BOOKING-001", HttpStatus.NOT_FOUND,
-                        "Không tìm thấy người dùng đang đăng nhập."));
+
+        User user;
+        if (principal != null && principal.getName() != null
+                && !principal.getName().isBlank()
+                && !"anonymousUser".equals(principal.getName())) {
+            // Authenticated user
+            user = userRepository.findByEmail(principal.getName())
+                    .orElseThrow(() -> new BusinessException(
+                            "BOOKING-001", HttpStatus.NOT_FOUND,
+                            "Không tìm thấy người dùng đang đăng nhập."));
+        } else {
+            // Guest user — find or create by email from request body
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                throw new BusinessException(
+                        "BOOKING-001", HttpStatus.BAD_REQUEST,
+                        "Vui lòng nhập Email để đặt phòng.");
+            }
+            user = userRepository.findByEmail(request.getEmail()).orElseGet(() -> {
+                User newUser = User.builder()
+                        .email(request.getEmail())
+                        .fullName(request.getFullName() != null ? request.getFullName() : "Khách")
+                        .phone(request.getPhone() != null ? request.getPhone() : "")
+                        .role("GUEST")
+                        .status("ACTIVE")
+                        .passwordHash("GUEST_" + System.currentTimeMillis())
+                        .build();
+                return userRepository.save(newUser);
+            });
+            // Update name/phone if provided and existing user didn't have them
+            boolean updated = false;
+            if (request.getFullName() != null && !request.getFullName().isBlank()
+                    && (user.getFullName() == null || user.getFullName().isBlank() || "Khách".equals(user.getFullName()))) {
+                user.setFullName(request.getFullName());
+                updated = true;
+            }
+            if (request.getPhone() != null && !request.getPhone().isBlank()
+                    && (user.getPhone() == null || user.getPhone().isBlank())) {
+                user.setPhone(request.getPhone());
+                updated = true;
+            }
+            if (updated) {
+                userRepository.save(user);
+            }
+        }
 
         // createBooking internally creates the invoice via invoiceService.createInvoice
         RoomBooking booking = bookingService.createBooking(
                 user.getUserId(),
-                request.getPackageId(),
+                request.getPackageIds(),
                 request.getRoomId(),
                 request.getCheckInDate(),
                 request.getCheckOutDate());

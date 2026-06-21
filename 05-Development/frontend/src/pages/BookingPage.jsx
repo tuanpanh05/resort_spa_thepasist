@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
 import axiosClient from "../api/axiosClient";
-import { medicalApi, userApi } from "../api";
+import { medicalApi, userApi, masterDataApi } from "../api";
 
 import { villasList, servicesList } from "../constants/booking";
 import { detectAllergens } from "../utils/health";
@@ -12,6 +12,7 @@ import BookingWizardHeader from "../components/booking/BookingWizardHeader";
 import GuestInfoStep from "../components/booking/GuestInfoStep";
 import HealthProfileStep from "../components/booking/HealthProfileStep";
 import VillaSelectionStep from "../components/booking/VillaSelectionStep";
+import PackageSelectionStep from "../components/booking/PackageSelectionStep";
 import MealSelectionStep from "../components/booking/MealSelectionStep";
 import ConfirmationStep from "../components/booking/ConfirmationStep";
 import BookingBillSummary from "../components/booking/BookingBillSummary";
@@ -26,6 +27,10 @@ export default function BookingPage() {
 
   const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
   const [createdBookingId, setCreatedBookingId] = useState(null);
+  // Retreat packages and spa services
+  const [retreatPackages, setRetreatPackages] = useState([]);
+  const [spaServices, setSpaServices] = useState([]);
+  const [selectedPackageIds, setSelectedPackageIds] = useState([]);
 
   // Status Trackers
   const [bookingStatus, setBookingStatus] = useState("DRAFT"); // DRAFT -> PENDING_PAYMENT -> CONFIRMED
@@ -36,6 +41,7 @@ export default function BookingPage() {
     fullName: "",
     phone: "",
     email: "",
+    age: "",
     checkInDate: new Date(Date.now() + 86400000).toISOString().split("T")[0], // Tomorrow
     checkOutDate: new Date(Date.now() + 172800000).toISOString().split("T")[0], // Day after tomorrow
     guestsCount: 2,
@@ -62,11 +68,13 @@ export default function BookingPage() {
   // Step 3: Selected Room & Services
   const [selectedVillaId, setSelectedVillaId] = useState(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [roomTypes, setRoomTypes] = useState([]);
 
   // Step 4: Meal Selections { "yyyy-MM-dd": { "Breakfast": { foodId: qty }, ... } }
   const [mealSelections, setMealSelections] = useState({});
   const [selectedMealDate, setSelectedMealDate] = useState("");
   const [mealBookingDays, setMealBookingDays] = useState([]);
+  const [packageMenuItems, setPackageMenuItems] = useState([]);
 
   // Copy helper
   const [copiedField, setCopiedField] = useState(null);
@@ -75,8 +83,9 @@ export default function BookingPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
-  // Live Menu Status from Chef
-  const [packageMenuItems, setPackageMenuItems] = useState([]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   useEffect(() => {
     const fetchMenuStatus = async () => {
@@ -159,20 +168,85 @@ export default function BookingPage() {
     fetchHealthProfile();
   }, []);
 
-  const [nightsCount, setNightsCount] = useState(1);
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const data = await masterDataApi.getRoomTypes();
+        setRoomTypes(data);
+      } catch (err) {
+        console.error("Failed to fetch room types from database", err);
+      }
+    };
+    fetchRoomTypes();
+  }, []);
 
   useEffect(() => {
-    const checkIn = new Date(guestInfo.checkInDate);
-    const checkOut = new Date(guestInfo.checkOutDate);
+    const fetchPackagesAndServices = async () => {
+      try {
+        const pkgs = await masterDataApi.getRetreatPackages();
+        setRetreatPackages(pkgs);
+        const svcs = await masterDataApi.getSpaServices();
+        setSpaServices(svcs);
+      } catch (err) {
+        console.error("Failed to fetch retreat packages and spa services:", err);
+      }
+    };
+    fetchPackagesAndServices();
+  }, []);
 
-    if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime()) || checkOut <= checkIn) {
-      setNightsCount(0);
-      return;
+  // Auto-select recommended package when Step 4 is reached
+  useEffect(() => {
+    if (step === 4 && selectedPackageIds.length === 0 && retreatPackages.length > 0) {
+      const guests = guestInfo.guestsCount || 1;
+      const age = guestInfo.age || 30;
+      let recId = 1;
+      if (age >= 50) {
+        recId = 5;
+      } else if (guests === 1) {
+        recId = 1;
+      } else if (guests === 2) {
+        recId = 2;
+      } else {
+        recId = 3;
+      }
+      
+      if (retreatPackages.some(p => p.packageId === recId)) {
+        setSelectedPackageIds([recId]);
+      } else {
+        setSelectedPackageIds([retreatPackages[0].packageId]);
+      }
     }
+  }, [step, retreatPackages, guestInfo.guestsCount, guestInfo.age, selectedPackageIds]);
 
-    const diffMs = checkOut.getTime() - checkIn.getTime();
-    setNightsCount(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  const [nightsCount, setNightsCount] = useState(2);
+
+  // Automatically calculate nightsCount based on checkInDate and checkOutDate
+  useEffect(() => {
+    if (guestInfo.checkInDate && guestInfo.checkOutDate) {
+      const checkIn = new Date(guestInfo.checkInDate);
+      const checkOut = new Date(guestInfo.checkOutDate);
+      if (checkOut > checkIn) {
+        const diffTime = Math.abs(checkOut - checkIn);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setNightsCount(diffDays);
+      } else {
+        setNightsCount(0);
+      }
+    }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
+
+  // Adjust checkOutDate if checkInDate changes and becomes >= checkOutDate
+  useEffect(() => {
+    if (guestInfo.checkInDate && guestInfo.checkOutDate) {
+      const checkIn = new Date(guestInfo.checkInDate);
+      const checkOut = new Date(guestInfo.checkOutDate);
+      if (checkOut <= checkIn) {
+        const nextDay = new Date(checkIn);
+        nextDay.setDate(nextDay.getDate() + 2); // Default stay duration of 2 nights
+        setGuestInfo((prev) => ({ ...prev, checkOutDate: nextDay.toISOString().split("T")[0] }));
+      }
+    }
+  }, [guestInfo.checkInDate]);
 
   useEffect(() => {
     const checkIn = new Date(guestInfo.checkInDate);
@@ -193,8 +267,8 @@ export default function BookingPage() {
     }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
-  const selectedVilla = villasList.find((v) => v.id === selectedVillaId);
-  const villaTotal = selectedVilla ? selectedVilla.price * nightsCount : 0;
+  const selectedVilla = roomTypes.find((v) => v.roomTypeId === selectedVillaId);
+  const villaTotal = selectedVilla ? selectedVilla.basePricePerNight * nightsCount : 0;
 
   let servicesTotal = 0;
   const selectedServices = servicesList.filter((s) => selectedServiceIds.includes(s.id));
@@ -250,7 +324,9 @@ export default function BookingPage() {
     });
   };
 
-  const totalAmount = villaTotal + servicesTotal + mealTotal;
+  const selectedPackages = retreatPackages.filter(p => selectedPackageIds.includes(p.packageId));
+  const packageTotal = selectedPackages.reduce((sum, p) => sum + p.price, 0);
+  const totalAmount = villaTotal + packageTotal + servicesTotal + mealTotal;
   const depositAmount = totalAmount * 0.3;
   const remainingAmount = totalAmount * 0.7;
 
@@ -266,6 +342,12 @@ export default function BookingPage() {
       errors.email = "Vui lòng nhập địa chỉ email.";
     } else if (!/\S+@\S+\.\S+/.test(guestInfo.email)) {
       errors.email = "Địa chỉ email không hợp lệ.";
+    }
+
+    if (!guestInfo.age) {
+      errors.age = "Vui lòng nhập số tuổi.";
+    } else if (isNaN(guestInfo.age) || guestInfo.age < 1 || guestInfo.age > 120) {
+      errors.age = "Số tuổi không hợp lệ.";
     }
 
     const checkIn = new Date(guestInfo.checkInDate);
@@ -291,17 +373,23 @@ export default function BookingPage() {
       if (validateStep2()) setStep(3);
     } else if (step === 3) {
       if (!selectedVillaId) {
-        alert("Vui lòng chọn một hạng phòng/biệt thự nghỉ dưỡng trước khi tiếp tục.");
+        alert("Vui lòng chọn một biệt thự nghỉ dưỡng ở Bước 3 trước khi tiếp tục.");
         return;
       }
       setStep(4);
     } else if (step === 4) {
+      if (selectedPackageIds.length === 0) {
+        alert("Vui lòng chọn ít nhất một gói trị liệu ở Bước 4 trước khi tiếp tục.");
+        return;
+      }
       setStep(5);
+    } else if (step === 5) {
+      setStep(6);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1 && step < 6) {
+    if (step > 1 && step < 7) {
       setStep(step - 1);
     }
   };
@@ -333,10 +421,16 @@ export default function BookingPage() {
         checkInDate: (guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : "") + "T14:00:00",
         checkOutDate: (guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : "") + "T12:00:00",
         guestsCount: guestInfo.guestsCount,
-        villaId: numericVillaId,
+        villaId: selectedVillaId,
         roomId: 1, // Default room ID to satisfy @NotNull validation if enabled
-        packageId: 1,
-        serviceIds: numericServiceIds,
+        packageId: selectedPackageIds[0] || null,
+        packageIds: selectedPackageIds,
+        serviceIds: selectedServiceIds.map(id => {
+          if (id === "srv-spa") return 2;
+          if (id === "srv-yoga") return 1;
+          if (id === "srv-physio") return 3;
+          return null;
+        }).filter(id => id !== null),
         allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
         explicitConsentSigned: consentDataProcessing && consentSharing,
         mealSelections: mealSelections
@@ -347,18 +441,16 @@ export default function BookingPage() {
       console.log("Booking created successfully:", data);
 
       if (data && data.invoiceId) {
-        setCreatedInvoiceId(data.invoiceId);
-        setCreatedBookingId(data.bookingId);
-        setStep(6);
+        navigate(`/payment?invoiceId=${data.invoiceId}`);
       } else {
-        alert("Không thể khởi tạo hóa đơn thanh toán cho đặt phòng này. Phản hồi từ Server: " + JSON.stringify(res.data));
+        alert("Đặt phòng thành công, nhưng không tìm thấy thông tin hóa đơn.");
       }
     } catch (err) {
       console.error("Failed to create booking", err);
       console.error("Failed to create booking. Response:", err.response);
-      const errMsg = typeof err.response?.data === 'string'
-        ? err.response.data
-        : (err.response?.data?.message || err.message || "Đã xảy ra lỗi trong quá trình đặt phòng. Vui lòng thử lại.");
+      const errMsg = typeof err.response?.data === "object"
+        ? (err.response.data.message || JSON.stringify(err.response.data))
+        : (err.response?.data || err.message || "Đặt phòng thất bại. Vui lòng kiểm tra lại thông tin.");
       alert(errMsg);
     } finally {
       setIsVerifyingPayment(false);
@@ -424,6 +516,7 @@ export default function BookingPage() {
             depositAmount={depositAmount}
             remainingAmount={remainingAmount}
             formatCurrency={formatCurrency}
+            selectedPackages={selectedPackages}
           />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -459,6 +552,7 @@ export default function BookingPage() {
               )}
               {step === 3 && (
                 <VillaSelectionStep
+                  roomTypes={roomTypes}
                   selectedVillaId={selectedVillaId}
                   setSelectedVillaId={setSelectedVillaId}
                   selectedServiceIds={selectedServiceIds}
@@ -469,6 +563,18 @@ export default function BookingPage() {
                 />
               )}
               {step === 4 && (
+                <PackageSelectionStep
+                  retreatPackages={retreatPackages}
+                  spaServices={spaServices}
+                  guestInfo={guestInfo}
+                  selectedPackageIds={selectedPackageIds}
+                  setSelectedPackageIds={setSelectedPackageIds}
+                  formatCurrency={formatCurrency}
+                  handlePrevStep={handlePrevStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {step === 5 && (
                 <MealSelectionStep
                   mealBookingDays={mealBookingDays}
                   selectedMealDate={selectedMealDate}
@@ -489,7 +595,7 @@ export default function BookingPage() {
                   handleNextStep={handleNextStep}
                 />
               )}
-              {step === 5 && (
+              {step === 6 && (
                 <ConfirmationStep
                   guestInfo={guestInfo}
                   nightsCount={nightsCount}
@@ -510,15 +616,7 @@ export default function BookingPage() {
                   isVerifyingPayment={isVerifyingPayment}
                   handleVerifyPayment={handleVerifyPayment}
                   handlePrevStep={handlePrevStep}
-                />
-              )}
-              {step === 6 && (
-                <PaymentStep
-                  bookingId={createdBookingId}
-                  invoiceId={createdInvoiceId}
-                  depositAmount={depositAmount}
-                  totalAmount={totalAmount}
-                  formatCurrency={formatCurrency}
+                  selectedPackages={selectedPackages}
                 />
               )}
             </div>
@@ -538,6 +636,7 @@ export default function BookingPage() {
                 paymentStatus={paymentStatus}
                 formatCurrency={formatCurrency}
                 selectedVilla={selectedVilla}
+                selectedPackages={selectedPackages}
               />
             </div>
           </div>

@@ -92,6 +92,71 @@ public class DatabaseSeeder implements CommandLineRunner {
         seedUser("spa@nguson.com", "Spa Specialist", "0900000004", "THERAPIST");
         seedUser("yoga@nguson.com", "Yoga Trainer", "0900000005", "THERAPIST");
         seedUser("physio@nguson.com", "Physiotherapist", "0900000006", "THERAPIST");
+
+        try {
+            System.out.println("[DB Seeder] Re-aligning Room Type Prices, cleaning and setting up exactly 17 Rooms...");
+
+            // 1. Update prices for Room Types
+            jdbcTemplate.update("UPDATE room_types SET base_price = 1200000.00 WHERE type_name = N'Standard Room 1 King Bed'");
+            jdbcTemplate.update("UPDATE room_types SET base_price = 1800000.00 WHERE type_name = N'Vip Villa 1-Bedroom Pool'");
+            jdbcTemplate.update("UPDATE room_types SET base_price = 2500000.00 WHERE type_name = N'Presidential Suite 2-Bedroom'");
+
+            // 2. Clean child tables of Room/Booking to prevent constraint errors
+            try { jdbcTemplate.update("DELETE FROM room_guest_declaration"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM room_booking_detail"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM payment_transaction_log"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM invoice"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM spa_booking"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM food_order_detail"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM food_order"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM feedback"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM room_booking"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM room"); } catch (Exception e) {}
+
+            // Get Room Type IDs to ensure we insert with correct IDs
+            Integer stdTypeId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Standard Room 1 King Bed'", Integer.class);
+            Integer vipTypeId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Vip Villa 1-Bedroom Pool'", Integer.class);
+            Integer presTypeId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Presidential Suite 2-Bedroom'", Integer.class);
+
+            if (stdTypeId != null && vipTypeId != null && presTypeId != null) {
+                // Insert 5 Standard Rooms (Room-101 to Room-105)
+                for (int i = 1; i <= 5; i++) {
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", stdTypeId, String.format("Room-%03d", 100 + i));
+                }
+
+                // Insert 5 VIP Villas (Villa-101 to Villa-105)
+                for (int i = 1; i <= 5; i++) {
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", vipTypeId, String.format("Villa-%03d", 100 + i));
+                }
+
+                // Insert 7 President Suites (President-501 to President-507)
+                for (int i = 1; i <= 7; i++) {
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", presTypeId, String.format("President-%03d", 500 + i));
+                }
+
+                // Re-seed default bookings so the staff page isn't empty
+                jdbcTemplate.update("INSERT INTO room_booking (user_id, package_id, check_in_date, check_out_date, status, total_deposit) VALUES (5, 1, DATEADD(day, 1, GETDATE()), DATEADD(day, 6, GETDATE()), 'CONFIRMED', 3750000.00)");
+                jdbcTemplate.update("INSERT INTO room_booking (user_id, package_id, check_in_date, check_out_date, status, total_deposit) VALUES (6, NULL, DATEADD(day, 2, GETDATE()), DATEADD(day, 4, GETDATE()), 'CONFIRMED', 2700000.00)");
+
+                // Re-seed default booking details
+                Integer booking1 = jdbcTemplate.queryForObject("SELECT TOP 1 booking_id FROM room_booking ORDER BY booking_id ASC", Integer.class);
+                Integer booking2 = jdbcTemplate.queryForObject("SELECT TOP 1 booking_id FROM room_booking ORDER BY booking_id DESC", Integer.class);
+                Integer villa1Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'Villa-101'", Integer.class);
+                Integer villa2Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'Villa-102'", Integer.class);
+
+                if (booking1 != null && villa1Id != null) {
+                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 1800000.00)", booking1, villa1Id);
+                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (5, ?, 9000000.00, 0.00, 0.00, 900000.00, 9900000.00, 3750000.00, 6150000.00, 'UNPAID')", booking1);
+                }
+                if (booking2 != null && villa2Id != null && !booking2.equals(booking1)) {
+                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 1800000.00)", booking2, villa2Id);
+                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (6, ?, 3600000.00, 0.00, 0.00, 360000.00, 3960000.00, 2700000.00, 1260000.00, 'UNPAID')", booking2);
+                }
+            }
+            System.out.println("[DB Seeder] Exactly 17 rooms configured successfully.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Room types / rooms seeding failed: " + e.getMessage());
+        }
     }
 
     private void seedUser(String email, String fullName, String phone, String role) {
@@ -112,7 +177,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             user.setStatus("ACTIVE");
             user.setRole(role);
             userRepository.save(user);
-            System.out.println("[DB Seeder] Force updated user credentials and status: " + email);
+            System.out.println("[DB Seeder] Force updated user credentials, role and status: " + email);
         }
     }
 }

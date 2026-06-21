@@ -61,6 +61,16 @@ public class CheckInServiceImpl {
                     "Trạng thái hiện tại: " + booking.getStatus());
         }
 
+        // 2b. Only allow check-in on or after check-in date
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate checkInDate = booking.getCheckInDate() != null ? booking.getCheckInDate().toLocalDate() : today;
+        if (today.isBefore(checkInDate)) {
+            throw new BusinessException(
+                    "CHECKIN-004", HttpStatus.BAD_REQUEST,
+                    "Chưa đến ngày nhận phòng (Check-in). Ngày nhận phòng đăng ký: " +
+                    checkInDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        }
+
         // 3. BR-13: Identity document is mandatory (Residence Law 2020)
         if (identityDocument == null || identityDocument.isBlank()) {
             throw new BusinessException(

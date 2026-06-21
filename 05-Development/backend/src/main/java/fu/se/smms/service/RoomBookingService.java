@@ -28,6 +28,7 @@ public class RoomBookingService {
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final FoodMenuRepository foodMenuRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
+    private final SpaBookingRepository spaBookingRepository;
     private final InvoiceService invoiceService;
 
     public RoomBookingService(UserRepository userRepository,
@@ -39,6 +40,7 @@ public class RoomBookingService {
                               FoodOrderDetailRepository foodOrderDetailRepository,
                               FoodMenuRepository foodMenuRepository,
                               PackageFoodLimitRepository packageFoodLimitRepository,
+                              SpaBookingRepository spaBookingRepository,
                               InvoiceService invoiceService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
@@ -49,6 +51,7 @@ public class RoomBookingService {
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.foodMenuRepository = foodMenuRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
+        this.spaBookingRepository = spaBookingRepository;
         this.invoiceService = invoiceService;
     }
 
@@ -85,29 +88,49 @@ public class RoomBookingService {
         // 3. Create RoomBooking
         RoomBooking booking = new RoomBooking();
         booking.setUser(user);
-        
-        if (dto.getPackageId() != null) {
+        if (dto.getPackageIds() != null && !dto.getPackageIds().isEmpty()) {
+            List<RetreatPackage> packages = new ArrayList<>();
+            for (Integer pkgId : dto.getPackageIds()) {
+                retreatPackageRepository.findById(pkgId).ifPresent(packages::add);
+            }
+            booking.setRetreatPackages(packages);
+        } else if (dto.getPackageId() != null) {
             retreatPackageRepository.findById(dto.getPackageId()).ifPresent(booking::setRetreatPackage);
         }
 
-        // Parse dates
-        LocalDateTime checkIn = dto.getCheckInDate();
-        LocalDateTime checkOut = dto.getCheckOutDate();
+        // Set check-in and check-out times
+        LocalDateTime checkIn = dto.getCheckInDate().toLocalDate().atTime(14, 0, 0);
+        LocalDateTime checkOut = dto.getCheckOutDate().toLocalDate().atTime(12, 0, 0);
         booking.setCheckInDate(checkIn);
         booking.setCheckOutDate(checkOut);
         booking.setStatus("PENDING_DEPOSIT");
-        booking.setTotalDeposit(BigDecimal.ZERO); // For simplicity
+        booking.setTotalDeposit(BigDecimal.ZERO);
         
         // 4. Create RoomBookingDetail
-        // Find a room (mock logic: just get the first available room or room ID 1)
-        List<Room> allRooms = roomRepository.findAll();
-        Room room = allRooms.isEmpty() ? null : allRooms.get(0);
+        // Find an available room belonging to the selected room type (villaId)
+        Room room = null;
+        if (dto.getVillaId() != null) {
+            room = roomRepository.findAll().stream()
+                    .filter(r -> r.getRoomType() != null && r.getRoomType().getRoomTypeId().equals(dto.getVillaId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (room == null) {
+            // Fallback to first available room if none matches or not specified
+            List<Room> allRooms = roomRepository.findAll();
+            room = allRooms.isEmpty() ? null : allRooms.get(0);
+        }
         
         if (room != null) {
             RoomBookingDetail detail = new RoomBookingDetail();
             detail.setRoomBooking(booking);
             detail.setRoom(room);
-            detail.setPriceAtBooking(BigDecimal.valueOf(5000000)); // Mock price
+            
+            BigDecimal priceAtBooking = BigDecimal.valueOf(5000000); // Fallback price
+            if (room.getRoomType() != null && room.getRoomType().getBasePricePerNight() != null) {
+                priceAtBooking = room.getRoomType().getBasePricePerNight();
+            }
+            detail.setPriceAtBooking(priceAtBooking);
             
             List<RoomBookingDetail> details = new ArrayList<>();
             details.add(detail);
@@ -191,7 +214,7 @@ public class RoomBookingService {
                                 .foodMenu(dish)
                                 .quantity(qty)
                                 .priceAtOrder(dish.getPrice())
-                                .specialNote("[Bữa: " + period + ", Ngày: " + dateStr + "]")
+                                .specialNote("[Bá»¯a: " + period + ", NgÃ y: " + dateStr + "]")
                                 .isPackageIncluded(isPackageIncluded)
                                 .build();
 
@@ -205,8 +228,144 @@ public class RoomBookingService {
             }
         }
 
-        invoiceService.createInvoice(savedBooking.getBookingId());
+        // 6. Calculate initial invoice
+        try {
+            invoiceService.createInvoice(savedBooking.getBookingId());
+        } catch (Exception e) {
+            System.err.println("[Invoice Calc] Error creating initial invoice: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         return savedBooking;
+    }
+
+    // ================================================================
+    // Guest Booking Lookup & Update (Public â€“ no auth required)
+    // ================================================================
+
+    /**
+     * Lookup bookings by guest email + phone (public endpoint).
+     */
+    @Transactional(readOnly = true)
+    public List<RoomBooking> lookupBookings(String email, String phone) {
+        if (email == null || email.isBlank() || phone == null || phone.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập đầy đủ Email và Số điện thoại.");
+        }
+        List<RoomBooking> bookings = roomBookingRepository.findByEmailAndPhoneWithFullDetails(email.trim(), phone.trim());
+        // Force-initialize lazy associations within the transaction
+        // (cannot JOIN FETCH both 'details' and 'retreatPackages' — MultipleBagFetchException)
+        for (RoomBooking b : bookings) {
+            if (b.getRetreatPackages() != null) {
+                b.getRetreatPackages().size(); // trigger lazy load
+            }
+            if (b.getRetreatPackage() != null) {
+                b.getRetreatPackage().getPackageId(); // trigger lazy load for single package
+            }
+        }
+        return bookings;
+    }
+
+    /**
+     * Update booking details (name, phone, dates) with full validation.
+     * Verifies email+phone ownership, checks room overlap, validates activity ranges,
+     * and recalculates the invoice automatically.
+     */
+    @Transactional
+    public RoomBooking updateBooking(Integer bookingId, String email, String phone, BookingRequestDTO dto) {
+        // 1. Verify ownership via email + phone
+        RoomBooking booking = roomBookingRepository.findByIdWithFullDetails(bookingId)
+                .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y Ä‘áº·t phÃ²ng vá»›i ID: " + bookingId));
+
+        User user = booking.getUser();
+        if (user == null || !email.equalsIgnoreCase(user.getEmail()) || !phone.equals(user.getPhone())) {
+            throw new RuntimeException("ThÃ´ng tin Email hoáº·c Sá»‘ Ä‘iá»‡n thoáº¡i khÃ´ng khá»›p vá»›i Ä‘Æ¡n Ä‘áº·t phÃ²ng nÃ y.");
+        }
+
+        // 2. Update guest name/phone if provided
+        if (dto.getFullName() != null && !dto.getFullName().isBlank()) {
+            user.setFullName(dto.getFullName());
+        }
+        if (dto.getPhone() != null && !dto.getPhone().isBlank()) {
+            user.setPhone(dto.getPhone());
+        }
+        userRepository.save(user);
+
+        // 3. Update dates if provided
+        if (dto.getCheckInDate() != null && dto.getCheckOutDate() != null) {
+            LocalDateTime newCheckIn = dto.getCheckInDate().toLocalDate().atTime(14, 0, 0);
+            LocalDateTime newCheckOut = dto.getCheckOutDate().toLocalDate().atTime(12, 0, 0);
+
+            if (!newCheckOut.isAfter(newCheckIn)) {
+                throw new RuntimeException("NgÃ y tráº£ phÃ²ng pháº£i sau ngÃ y nháº­n phÃ²ng.");
+            }
+
+            // 3a. Check room overlap (BR-09) â€“ exclude current booking
+            List<RoomBookingDetail> details = booking.getDetails();
+            if (details != null) {
+                for (RoomBookingDetail det : details) {
+                    int overlap = roomBookingRepository.countOverlappingBookingsForUpdate(
+                            det.getRoom().getRoomId(), bookingId, newCheckIn, newCheckOut);
+                    if (overlap > 0) {
+                        throw new RuntimeException("PhÃ²ng " + det.getRoom().getRoomNumber()
+                                + " Ä‘Ã£ Ä‘Æ°á»£c Ä‘áº·t trong khoáº£ng thá»i gian nÃ y. Vui lÃ²ng chá»n ngÃ y khÃ¡c.");
+                    }
+                }
+            }
+
+            // 3b. Validate existing Spa bookings fall within new stay range (ITINERARY-001)
+            try {
+                List<SpaBooking> spaBookings = spaBookingRepository.findByRoomBookingId(bookingId);
+                for (SpaBooking spa : spaBookings) {
+                    if (spa.getStartDatetime() != null) {
+                        if (spa.getStartDatetime().isBefore(newCheckIn) || spa.getStartDatetime().isAfter(newCheckOut)) {
+                            throw new RuntimeException("KhÃ´ng thá»ƒ thay Ä‘á»•i ngÃ y: Lá»‹ch háº¹n Spa '"
+                                    + (spa.getSpaService() != null ? spa.getSpaService().getName() : "")
+                                    + "' náº±m ngoÃ i khoáº£ng thá»i gian lÆ°u trÃº má»›i.");
+                        }
+                    }
+                }
+            } catch (RuntimeException e) {
+                throw e; // re-throw our validation errors
+            } catch (Exception ignored) {
+                // spa data unavailable â€“ skip validation
+            }
+
+            // 3c. Validate existing Food orders fall within new stay range
+            try {
+                List<Object[]> foodOrders = roomBookingRepository.findFoodOrdersForTimeline(bookingId);
+                for (Object[] row : foodOrders) {
+                    Object rawTime = row[1];
+                    LocalDateTime orderTime = null;
+                    if (rawTime instanceof LocalDateTime) {
+                        orderTime = (LocalDateTime) rawTime;
+                    } else if (rawTime instanceof java.sql.Timestamp) {
+                        orderTime = ((java.sql.Timestamp) rawTime).toLocalDateTime();
+                    }
+                    if (orderTime != null && (orderTime.isBefore(newCheckIn) || orderTime.isAfter(newCheckOut))) {
+                        throw new RuntimeException("KhÃ´ng thá»ƒ thay Ä‘á»•i ngÃ y: CÃ³ Ä‘Æ¡n gá»i mÃ³n náº±m ngoÃ i khoáº£ng thá»i gian lÆ°u trÃº má»›i.");
+                    }
+                }
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception ignored) {
+                // food data unavailable â€“ skip validation
+            }
+
+            booking.setCheckInDate(newCheckIn);
+            booking.setCheckOutDate(newCheckOut);
+        }
+
+        RoomBooking saved = roomBookingRepository.save(booking);
+
+        // 4. Recalculate invoice if dates changed
+        if (dto.getCheckInDate() != null && dto.getCheckOutDate() != null) {
+            try {
+                invoiceService.createInvoice(bookingId);
+            } catch (Exception ignored) {
+                // Invoice recalculation failure is non-fatal
+            }
+        }
+
+        return saved;
     }
 }

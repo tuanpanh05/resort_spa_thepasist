@@ -7,6 +7,7 @@ import fu.se.smms.entity.SpaService;
 import fu.se.smms.repository.RetreatPackageRepository;
 import fu.se.smms.repository.RoomTypeRepository;
 import fu.se.smms.repository.SpaServiceRepository;
+import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.service.MasterDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class MasterDataServiceImpl implements MasterDataService {
     @Autowired private SpaServiceRepository spaServiceRepository;
     @Autowired private RetreatPackageRepository retreatPackageRepository;
     @Autowired private RoomTypeRepository roomTypeRepository;
+    @Autowired private RoomRepository roomRepository;
 
     // ========== SPA SERVICES ==========
     @Override @Transactional(readOnly = true)
@@ -260,27 +262,36 @@ public class MasterDataServiceImpl implements MasterDataService {
         dto.setCreatedAt(e.getCreatedAt());
 
         String lowerName = e.getName() != null ? e.getName().toLowerCase() : "";
+
+        // --- healthGoal: derive from name keywords ---
         if (lowerName.contains("detox")) {
             dto.setHealthGoal("DETOX");
-            dto.setImageUrl("https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80");
-            dto.setMaxGuests(2);
         } else if (lowerName.contains("yoga") || lowerName.contains("mindfulness")) {
             dto.setHealthGoal("YOGA");
-            dto.setImageUrl("https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80");
-            dto.setMaxGuests(2);
         } else if (lowerName.contains("slim") || lowerName.contains("weight") || lowerName.contains("béo")) {
             dto.setHealthGoal("WEIGHT_LOSS");
-            dto.setImageUrl("https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80");
-            dto.setMaxGuests(2);
         } else if (lowerName.contains("stress") || lowerName.contains("de-stress") || lowerName.contains("thư giãn")) {
             dto.setHealthGoal("STRESS_RELIEF");
-            dto.setImageUrl("https://images.unsplash.com/photo-1447452001602-7090c7ab2db3?auto=format&fit=crop&w=800&q=80");
-            dto.setMaxGuests(1);
         } else {
             dto.setHealthGoal("GENERAL");
-            dto.setImageUrl("https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80");
-            dto.setMaxGuests(2);
         }
+
+        // --- imageUrl: prefer DB value, fall back to curated Unsplash by keyword ---
+        if (e.getImageUrl() != null && !e.getImageUrl().isBlank()) {
+            dto.setImageUrl(e.getImageUrl());
+        } else if (lowerName.contains("detox")) {
+            dto.setImageUrl("https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80");
+        } else if (lowerName.contains("yoga") || lowerName.contains("mindfulness")) {
+            dto.setImageUrl("https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80");
+        } else if (lowerName.contains("slim") || lowerName.contains("weight")) {
+            dto.setImageUrl("https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80");
+        } else if (lowerName.contains("stress") || lowerName.contains("de-stress")) {
+            dto.setImageUrl("https://images.unsplash.com/photo-1447452001602-7090c7ab2db3?auto=format&fit=crop&w=800&q=80");
+        } else {
+            dto.setImageUrl("https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80");
+        }
+
+        dto.setMaxGuests(2);
         return dto;
     }
 
@@ -292,6 +303,11 @@ public class MasterDataServiceImpl implements MasterDataService {
         dto.setBasePricePerNight(e.getBasePricePerNight());
         dto.setMaxOccupancy(e.getMaxOccupancy());
         dto.setAreaSqm(e.getAreaSqm());
+        if (e.getRoomTypeId() != null) {
+            dto.setAvailableRoomsCount(roomRepository.countAvailableByRoomTypeId(e.getRoomTypeId()));
+        } else {
+            dto.setAvailableRoomsCount(0L);
+        }
         return dto;
     }
 }

@@ -17,13 +17,14 @@ public class BookingRequestDTO {
     private Integer villaId;
 
     private Integer packageId;
+    private List<Integer> packageIds;
     private List<Integer> serviceIds;
 
     @NotNull(message = "Vui lòng chọn ngày nhận phòng.")
-    private LocalDateTime checkInDate;
+    private String checkInDate;
 
     @NotNull(message = "Vui lòng chọn ngày trả phòng.")
-    private LocalDateTime checkOutDate;
+    private String checkOutDate;
 
     // Medical profile fields
     private String allergies;
@@ -56,14 +57,58 @@ public class BookingRequestDTO {
     public Integer getPackageId() { return packageId; }
     public void setPackageId(Integer packageId) { this.packageId = packageId; }
 
+    public List<Integer> getPackageIds() {
+        if (packageIds == null || packageIds.isEmpty()) {
+            if (packageId != null) {
+                return java.util.List.of(packageId);
+            }
+            return java.util.Collections.emptyList();
+        }
+        return packageIds;
+    }
+    public void setPackageIds(List<Integer> packageIds) { this.packageIds = packageIds; }
+
     public List<Integer> getServiceIds() { return serviceIds; }
     public void setServiceIds(List<Integer> serviceIds) { this.serviceIds = serviceIds; }
 
-    public LocalDateTime getCheckInDate() { return checkInDate; }
-    public void setCheckInDate(LocalDateTime checkInDate) { this.checkInDate = checkInDate; }
+    private LocalDateTime parseDateTime(String dateStr, int defaultHour) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+        dateStr = dateStr.trim();
+        try {
+            if (dateStr.length() == 10) {
+                return java.time.LocalDate.parse(dateStr).atTime(defaultHour, 0, 0);
+            }
+            if (dateStr.contains("T")) {
+                if (dateStr.indexOf('T') != dateStr.lastIndexOf('T')) {
+                    dateStr = dateStr.substring(0, dateStr.lastIndexOf('T'));
+                }
+                if (dateStr.length() == 16) {
+                    return LocalDateTime.parse(dateStr, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                }
+                return LocalDateTime.parse(dateStr);
+            }
+            if (dateStr.contains(" ")) {
+                String[] parts = dateStr.split(" ");
+                java.time.LocalDate date = java.time.LocalDate.parse(parts[0]);
+                String timePart = parts[1];
+                if (timePart.length() == 5) timePart += ":00";
+                return date.atTime(java.time.LocalTime.parse(timePart));
+            }
+            return java.time.LocalDate.parse(dateStr).atTime(defaultHour, 0, 0);
+        } catch (Exception e) {
+            throw new RuntimeException("Định dạng ngày không hợp lệ: " + dateStr, e);
+        }
+    }
 
-    public LocalDateTime getCheckOutDate() { return checkOutDate; }
-    public void setCheckOutDate(LocalDateTime checkOutDate) { this.checkOutDate = checkOutDate; }
+    public LocalDateTime getCheckInDate() { 
+        return parseDateTime(checkInDate, 14); 
+    }
+    public void setCheckInDate(String checkInDate) { this.checkInDate = checkInDate; }
+
+    public LocalDateTime getCheckOutDate() { 
+        return parseDateTime(checkOutDate, 12); 
+    }
+    public void setCheckOutDate(String checkOutDate) { this.checkOutDate = checkOutDate; }
 
     public String getAllergies() { return allergies; }
     public void setAllergies(String allergies) { this.allergies = allergies; }

@@ -40,10 +40,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserProfileDTO signUp(SignUpRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already registered!");
-        }
-
         String role = "CUSTOMER";
         String emailLower = request.getEmail() != null ? request.getEmail().toLowerCase() : "";
         if (emailLower.contains("admin")) {
@@ -58,19 +54,44 @@ public class UserServiceImpl implements UserService {
             role = "MANAGER";
         }
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .phone(request.getPhone())
-                .idPassportEncrypted(request.getIdPassport()) // Automatically encrypted by AesEncryptor
-                .role(role)
-                .status("INACTIVE")
-                .build();
+        java.util.Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
+        User user;
 
-        User savedUser = userRepository.save(user);
-        otpService.generateAndSendOtp(savedUser.getEmail());
-        return mapToProfileDTO(savedUser);
+        if (existingUserOpt.isPresent()) {
+            User existing = existingUserOpt.get();
+            if ("GUEST".equalsIgnoreCase(existing.getRole())) {
+                // Upgrade GUEST user to CUSTOMER or detected role
+                existing.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                if (request.getFullName() != null && !request.getFullName().isBlank()) {
+                    existing.setFullName(request.getFullName());
+                }
+                if (request.getPhone() != null && !request.getPhone().isBlank()) {
+                    existing.setPhone(request.getPhone());
+                }
+                if (request.getIdPassport() != null && !request.getIdPassport().isBlank()) {
+                    existing.setIdPassportEncrypted(request.getIdPassport());
+                }
+                existing.setRole(role);
+                existing.setStatus("INACTIVE"); // Needs OTP validation to activate
+                user = userRepository.save(existing);
+            } else {
+                throw new RuntimeException("Email is already registered!");
+            }
+        } else {
+            user = User.builder()
+                    .email(request.getEmail())
+                    .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .fullName(request.getFullName())
+                    .phone(request.getPhone())
+                    .idPassportEncrypted(request.getIdPassport()) // Automatically encrypted by AesEncryptor
+                    .role(role)
+                    .status("INACTIVE")
+                    .build();
+            user = userRepository.save(user);
+        }
+
+        otpService.generateAndSendOtp(user.getEmail());
+        return mapToProfileDTO(user);
     }
 
     @Override

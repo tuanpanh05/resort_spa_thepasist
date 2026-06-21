@@ -91,19 +91,15 @@ public class BookingServiceImpl {
         return true;
     }
 
-    /**
-     * Create a new room booking, checking for date-range conflicts first.
-     *
-     * @param userId    The guest's user ID.
-     * @param packageId Optional package ID (nullable).
-     * @param roomId    The room/villa to book.
-     * @param checkIn   Requested check-in date/time.
-     * @param checkOut  Requested check-out date/time.
-     * @return The saved RoomBooking entity.
-     * @throws BusinessException BOOKING-003 (CONFLICT) if the room is already booked for those dates.
-     */
     @Transactional
     public RoomBooking createBooking(Integer userId, Integer packageId, Integer roomId,
+                                     LocalDateTime checkIn, LocalDateTime checkOut) {
+        java.util.List<Integer> packageIds = packageId != null ? java.util.List.of(packageId) : java.util.Collections.emptyList();
+        return createBooking(userId, packageIds, roomId, checkIn, checkOut);
+    }
+
+    @Transactional
+    public RoomBooking createBooking(Integer userId, java.util.List<Integer> packageIds, Integer roomId,
                                      LocalDateTime checkIn, LocalDateTime checkOut) {
         // Validate dates
         if (checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
@@ -124,18 +120,21 @@ public class BookingServiceImpl {
                         "BOOKING-001", HttpStatus.NOT_FOUND,
                         "Không tìm thấy phòng với ID: " + roomId));
 
-        // Load Retreat Package if specified
-        RetreatPackage retreatPackage = null;
-        if (packageId != null) {
-            retreatPackage = retreatPackageRepository.findById(packageId)
-                    .orElseThrow(() -> new BusinessException(
-                            "BOOKING-001", HttpStatus.NOT_FOUND,
-                            "Không tìm thấy gói trị liệu với ID: " + packageId));
+        // Load Retreat Packages if specified
+        java.util.List<RetreatPackage> retreatPackages = new java.util.ArrayList<>();
+        if (packageIds != null && !packageIds.isEmpty()) {
+            for (Integer packageId : packageIds) {
+                RetreatPackage retreatPackage = retreatPackageRepository.findById(packageId)
+                        .orElseThrow(() -> new BusinessException(
+                                "BOOKING-001", HttpStatus.NOT_FOUND,
+                                "Không tìm thấy gói trị liệu với ID: " + packageId));
 
-            if (!"ACTIVE".equals(retreatPackage.getStatus())) {
-                throw new BusinessException(
-                        "BOOKING-001", HttpStatus.BAD_REQUEST,
-                        "Gói trị liệu này hiện không hoạt động.");
+                if (!"ACTIVE".equals(retreatPackage.getStatus())) {
+                    throw new BusinessException(
+                            "BOOKING-001", HttpStatus.BAD_REQUEST,
+                            "Gói trị liệu này hiện không hoạt động.");
+                }
+                retreatPackages.add(retreatPackage);
             }
         }
 
@@ -149,7 +148,7 @@ public class BookingServiceImpl {
         // Create RoomBooking
         RoomBooking booking = new RoomBooking();
         booking.setUser(user);
-        booking.setRetreatPackage(retreatPackage);
+        booking.setRetreatPackages(retreatPackages);
         booking.setCheckInDate(checkIn);
         booking.setCheckOutDate(checkOut);
         booking.setStatus("PENDING_DEPOSIT");

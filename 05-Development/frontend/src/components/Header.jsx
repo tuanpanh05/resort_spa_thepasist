@@ -16,7 +16,9 @@ const navItems = [
   },
   { label: "Khuyến mãi", href: "/khuyen-mai" },
   { label: "Blog", href: "/blog" },
+  { label: "Tra cứu", href: "/tra-cuu" },
 ];
+
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);

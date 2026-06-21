@@ -103,5 +103,38 @@ public interface RoomBookingRepository extends JpaRepository<RoomBooking, Intege
             ORDER BY o.order_time ASC
             """, nativeQuery = true)
     List<Object[]> findFoodOrdersForTimeline(@Param("bookingId") Integer bookingId);
+
+    /**
+     * Guest Lookup: Find all bookings by matching Email AND Phone number.
+     * Used by public /bookings/lookup endpoint for guests without accounts.
+     */
+    @Query("SELECT DISTINCT rb FROM RoomBooking rb " +
+           "LEFT JOIN FETCH rb.details d " +
+           "LEFT JOIN FETCH d.room r " +
+           "LEFT JOIN FETCH r.roomType rt " +
+           "LEFT JOIN FETCH rb.user u " +
+           "WHERE u.email = :email AND u.phone = :phone " +
+           "ORDER BY rb.checkInDate DESC")
+    List<RoomBooking> findByEmailAndPhoneWithFullDetails(@Param("email") String email,
+                                                         @Param("phone") String phone);
+
+    /**
+     * Overlap check that excludes the booking being updated (avoids self-conflict).
+     * Used when guests update their check-in/check-out dates.
+     */
+    @Query(value = """
+            SELECT COUNT(rb.booking_id)
+            FROM dbo.room_booking rb
+            INNER JOIN dbo.room_booking_detail rbd ON rbd.booking_id = rb.booking_id
+            WHERE rbd.room_id = :roomId
+              AND rb.booking_id <> :excludeBookingId
+              AND rb.status IN ('CONFIRMED','CHECKED_IN','PENDING_DEPOSIT')
+              AND rb.check_in_date  < :checkOut
+              AND rb.check_out_date > :checkIn
+            """, nativeQuery = true)
+    int countOverlappingBookingsForUpdate(@Param("roomId") Integer roomId,
+                                          @Param("excludeBookingId") Integer excludeBookingId,
+                                          @Param("checkIn") LocalDateTime checkIn,
+                                          @Param("checkOut") LocalDateTime checkOut);
 }
 

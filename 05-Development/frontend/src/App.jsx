@@ -25,6 +25,7 @@ import GuestDashboard from "./pages/GuestDashboard";
 import Payment from "./pages/Payment";
 import PaymentResult from "./pages/PaymentResult";
 import ProfilePage from "./pages/ProfilePage";
+import BookingLookup from "./pages/BookingLookup";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 
@@ -54,6 +55,7 @@ function App() {
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-result" element={<PaymentResult />} />
             <Route path="/tai-khoan/*" element={<ProfilePage />} />
+            <Route path="/tra-cuu" element={<BookingLookup />} />
           </Route>
 
           {/* Operations / Dashboard Routes */}

@@ -102,6 +102,16 @@ export default function ManageBookings({
     return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
+  // Check if check-in date is reached or passed
+  const isCheckInAllowed = (checkInDateStr) => {
+    if (!checkInDateStr) return false;
+    const checkIn = new Date(checkInDateStr);
+    checkIn.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today >= checkIn;
+  };
+
   // Filter arrivals
   const filteredArrivals = arrivals.filter((b) => {
     const matchesSearch =
@@ -270,13 +280,19 @@ export default function ManageBookings({
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center space-x-1.5">
                           {b.status === "CONFIRMED" && (
-                            <button
-                              onClick={() => openCheckInModal(b)}
-                              className="px-2.5 py-1.5 bg-primary-800 hover:bg-primary-900 text-white rounded-none text-[10px] font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-1"
-                            >
-                              <UserCheck className="h-3 w-3" />
-                              Check-in
-                            </button>
+                            isCheckInAllowed(b.checkInDate) ? (
+                              <button
+                                onClick={() => openCheckInModal(b)}
+                                className="px-2.5 py-1.5 bg-primary-800 hover:bg-primary-900 text-white rounded-none text-[10px] font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                              >
+                                <UserCheck className="h-3 w-3" />
+                                Check-in
+                              </button>
+                            ) : (
+                              <span className="text-[10px] font-bold text-red-650 bg-red-50 border border-red-200 px-2 py-1.5 rounded-none uppercase select-none">
+                                Chưa đến ngày check-in
+                              </span>
+                            )
                           )}
                           {onViewItinerary && (
                             <button

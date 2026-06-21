@@ -8,9 +8,9 @@ export default function BookingWizardHeader({ step, bookingStatus }) {
     { number: 1, label: "Thông tin khách" },
     { number: 2, label: "Hồ sơ sức khỏe" },
     { number: 3, label: "Chọn Villa & Dịch vụ" },
-    { number: 4, label: "Thực đơn trong gói" },
-    { number: 5, label: "Xác nhận đơn" },
-    { number: 6, label: "Thanh toán cọc" },
+    { number: 4, label: "Chọn Gói Trị Liệu" },
+    { number: 5, label: "Thực đơn trong gói" },
+    { number: 6, label: "Xác nhận đơn" },
   ];
 
   return (
