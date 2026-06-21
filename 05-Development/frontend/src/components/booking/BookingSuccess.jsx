@@ -12,6 +12,7 @@ export default function BookingSuccess({
   depositAmount,
   remainingAmount,
   formatCurrency,
+  selectedPackages = [],
 }) {
   return (
     <div
@@ -60,8 +61,17 @@ export default function BookingSuccess({
 
           <span className="text-sage-500 font-light">Căn biệt thự đã chọn:</span>
           <span className="font-semibold text-right text-primary-800">
-            {selectedVilla?.title}
+            {selectedVilla?.typeName || selectedVilla?.title}
           </span>
+
+          {selectedPackages && selectedPackages.map((pkg) => (
+            <React.Fragment key={pkg.packageId}>
+              <span className="text-sage-500 font-light">Gói trị liệu:</span>
+              <span className="font-semibold text-right text-primary-800">
+                {pkg.name}
+              </span>
+            </React.Fragment>
+          ))}
 
           {selectedServices.length > 0 && (
             <>

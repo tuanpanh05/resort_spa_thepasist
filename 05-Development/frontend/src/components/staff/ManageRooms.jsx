@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusCircle, X, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { PlusCircle, X, Loader2, AlertCircle, RefreshCw, Crown, Gem, Sparkles } from "lucide-react";
 import { staffApi } from "../../api";
 
 /**
@@ -88,18 +88,22 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
   const getStatusStyle = (status) => {
     switch (status) {
       case "AVAILABLE":
-        return "bg-green-50 text-green-700 border-green-150";
+        return "bg-green-50 text-green-700 border-green-200";
       case "OCCUPIED":
-        return "bg-primary-100 text-primary-950 border-primary-200";
+        return "bg-red-50 text-red-650 border-red-200";
       case "CLEANING":
       case "DIRTY":
       case "VACANT_NEEDS_CLEANING":
-        return "bg-orange-50 text-orange-850 border-orange-150";
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "MAINTENANCE":
-        return "bg-red-50 text-red-800 border-red-150";
+        return "bg-yellow-50 text-yellow-750 border-yellow-200";
       default:
         return "bg-gray-50 text-gray-600 border-gray-200";
     }
+  };
+
+  const getStatusContainerStyle = (status) => {
+    return "h-20 w-full bg-white/70 backdrop-blur-xs rounded-xl overflow-hidden relative flex flex-col justify-center px-3 border border-white/80 text-xs";
   };
 
   const getStatusDescription = (status, villa) => {
@@ -107,28 +111,81 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
       case "OCCUPIED":
         return (
           <div>
-            <span className="text-[10px] text-sage-400 block">Khách đang ở:</span>
-            <span className="font-bold text-sage-900 block truncate">
+            <span className="text-[10px] text-red-500 block font-medium">Khách đang ở:</span>
+            <span className="font-bold text-red-950 block truncate">
               {villa.guestName || "Khách nghỉ dưỡng"}
             </span>
           </div>
         );
       case "MAINTENANCE":
         return (
-          <div className="text-red-750">
-            <span className="text-[10px] text-red-500 block">Đang bảo trì</span>
-            <span className="font-semibold block truncate italic">Liên hệ kỹ thuật</span>
+          <div>
+            <span className="text-[10px] text-yellow-600 block font-bold">Đang bảo trì</span>
+            <span className="font-semibold block truncate italic text-yellow-800">Liên hệ kỹ thuật</span>
           </div>
         );
       case "CLEANING":
       case "DIRTY":
       case "VACANT_NEEDS_CLEANING":
-        return <span className="text-orange-750 font-medium italic">Đang dọn dẹp vệ sinh...</span>;
+        return <span className="text-blue-750 font-medium italic">Đang dọn dẹp vệ sinh...</span>;
       case "AVAILABLE":
         return <span className="text-green-750 font-medium italic">Sẵn sàng đón khách</span>;
       default:
         return <span className="text-sage-500 italic">{status}</span>;
     }
+  };
+
+  const getRoomCardStyle = (roomTypeName, status) => {
+    const lower = (roomTypeName || "").toLowerCase();
+    
+    let bgClass = "";
+    let borderClass = "";
+    
+    switch (status) {
+      case "AVAILABLE":
+        bgClass = "bg-emerald-100 hover:bg-emerald-200/80";
+        borderClass = "border-emerald-350 hover:border-emerald-450";
+        break;
+      case "OCCUPIED":
+        bgClass = "bg-rose-100 hover:bg-rose-200/80";
+        borderClass = "border-rose-350 hover:border-rose-450";
+        break;
+      case "CLEANING":
+      case "DIRTY":
+      case "VACANT_NEEDS_CLEANING":
+        bgClass = "bg-sky-100 hover:bg-sky-200/80";
+        borderClass = "border-sky-350 hover:border-sky-450";
+        break;
+      case "MAINTENANCE":
+        bgClass = "bg-amber-100 hover:bg-amber-200/80";
+        borderClass = "border-amber-350 hover:border-amber-450";
+        break;
+      default:
+        bgClass = "bg-white hover:bg-slate-50";
+        borderClass = "border-slate-200 hover:border-slate-350";
+    }
+
+    const baseClass = "p-5 flex flex-col justify-between h-60 text-left rounded-2xl transition-all duration-300 relative overflow-hidden";
+
+    if (lower.includes("presidential") || lower.includes("president") || lower.includes("suite")) {
+      return `${baseClass} ${bgClass} border-2 border-amber-400 ring-4 ring-amber-400/20 shadow-md hover:shadow-lg`;
+    }
+    if (lower.includes("vip") || lower.includes("villa") || lower.includes("pool")) {
+      return `${baseClass} ${bgClass} border-2 border-indigo-300 ring-2 ring-indigo-300/10 shadow-sm hover:shadow-md`;
+    }
+    
+    return `${baseClass} ${bgClass} border-2 ${borderClass} shadow-xs`;
+  };
+
+  const getRoomIcon = (roomTypeName) => {
+    const lower = (roomTypeName || "").toLowerCase();
+    if (lower.includes("presidential") || lower.includes("president") || lower.includes("suite")) {
+      return <Crown className="h-4.5 w-4.5 text-amber-500 fill-amber-500/20 animate-pulse mr-1.5" />;
+    }
+    if (lower.includes("vip") || lower.includes("villa") || lower.includes("pool")) {
+      return <Gem className="h-4 w-4 text-indigo-550 mr-1.5" />;
+    }
+    return <Sparkles className="h-3.5 w-3.5 text-slate-400 mr-1.5" />;
   };
 
   // Format price
@@ -182,52 +239,69 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
         </div>
       )}
 
-      {/* Room Grid */}
+      {/* Room Grid grouped by roomTypeName */}
       {!loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {villas.map((villa) => (
-            <div
-              key={villa.roomId}
-              className="bg-white border-2 border-primary-300 p-5 flex flex-col justify-between h-60 text-left rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary-500"
-            >
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-primary-900 uppercase">
-                    {villa.roomNumber}
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider border ${getStatusStyle(villa.status)}`}
+        <div className="space-y-8">
+          {Object.entries(
+            villas.reduce((groups, villa) => {
+              const typeName = villa.roomTypeName || "Hạng phòng khác";
+              if (!groups[typeName]) groups[typeName] = [];
+              groups[typeName].push(villa);
+              return groups;
+            }, {})
+          ).map(([typeName, roomsOfType]) => (
+            <div key={typeName} className="space-y-4">
+              <h4 className="font-serif text-sm font-bold text-sage-900 border-l-4 border-primary-700 pl-3 uppercase tracking-wider">
+                {typeName} ({roomsOfType.length} phòng)
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {roomsOfType.map((villa) => (
+                  <div
+                    key={villa.roomId}
+                    className={getRoomCardStyle(villa.roomTypeName, villa.status)}
                   >
-                    {getStatusLabel(villa.status)}
-                  </span>
-                </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-extrabold text-primary-955 bg-primary-100/80 border border-primary-250 px-2 py-0.5 uppercase rounded-sm font-mono flex items-center">
+                          {getRoomIcon(villa.roomTypeName)}
+                          <span>Phòng: {villa.roomNumber}</span>
+                        </span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider border ${getStatusStyle(villa.status)}`}
+                        >
+                          {getStatusLabel(villa.status)}
+                        </span>
+                      </div>
 
-                <div className="h-20 w-full bg-primary-50/50 rounded-xl overflow-hidden relative flex flex-col justify-center px-3 border border-primary-250 text-xs">
-                  {getStatusDescription(villa.status, villa)}
-                </div>
+                      <div className={getStatusContainerStyle(villa.status)}>
+                        {getStatusDescription(villa.status, villa)}
+                      </div>
 
-                <div className="flex justify-between items-center text-[10px] pt-1">
-                  <span className="font-serif font-normal text-sage-955">
-                    {villa.roomTypeName || "—"}
-                  </span>
-                  <span className="font-semibold text-primary-950">
-                    {formatPrice(villa.basePrice)}/đêm
-                  </span>
-                </div>
-              </div>
+                      <div className="flex justify-between items-center text-[10px] pt-1">
+                        <span className="font-serif font-normal text-sage-955">
+                          {villa.roomTypeName || "—"}
+                        </span>
+                        <span className="font-semibold text-primary-955">
+                          {formatPrice(villa.basePrice)}/đêm
+                        </span>
+                      </div>
+                    </div>
 
-              <div className="flex justify-end space-x-1.5 pt-2 border-t border-primary-100/50 mt-2">
-                <select
-                  value={villa.status}
-                  onChange={(e) => handleUpdateRoomStatus(villa.roomId, e.target.value)}
-                  className="p-1.5 border border-primary-250 text-[10px] focus:outline-none bg-white cursor-pointer rounded-md w-full font-semibold"
-                >
-                  <option value="AVAILABLE">Sẵn sàng (Available)</option>
-                  <option value="OCCUPIED">Có khách (Occupied)</option>
-                  <option value="CLEANING">Dọn dẹp (Cleaning)</option>
-                  <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
-                  <option value="VACANT_NEEDS_CLEANING">Cần dọn (Needs Cleaning)</option>
-                </select>
+                    <div className="flex justify-end space-x-1.5 pt-2 border-t border-primary-100/50 mt-2">
+                      <select
+                        value={villa.status}
+                        onChange={(e) => handleUpdateRoomStatus(villa.roomId, e.target.value)}
+                        className="p-1.5 border border-primary-250 text-[10px] focus:outline-none bg-white cursor-pointer rounded-md w-full font-semibold"
+                      >
+                        <option value="AVAILABLE">Sẵn sàng (Available)</option>
+                        <option value="OCCUPIED">Có khách (Occupied)</option>
+                        <option value="CLEANING">Dọn dẹp (Cleaning)</option>
+                        <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
+                        <option value="VACANT_NEEDS_CLEANING">Cần dọn (Needs Cleaning)</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}

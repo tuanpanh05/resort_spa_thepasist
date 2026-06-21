@@ -26,6 +26,14 @@ public class RoomBooking {
     @JoinColumn(name = "package_id", referencedColumnName = "package_id")
     private RetreatPackage retreatPackage; // nullable
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "booking_packages",
+        joinColumns = @JoinColumn(name = "booking_id"),
+        inverseJoinColumns = @JoinColumn(name = "package_id")
+    )
+    private List<RetreatPackage> retreatPackages;
+
     @Column(name = "check_in_date", nullable = false)
     private LocalDateTime checkInDate;
 
@@ -61,7 +69,24 @@ public class RoomBooking {
     public void setUser(User user) { this.user = user; }
 
     public RetreatPackage getRetreatPackage() { return retreatPackage; }
-    public void setRetreatPackage(RetreatPackage retreatPackage) { this.retreatPackage = retreatPackage; }
+    public void setRetreatPackage(RetreatPackage retreatPackage) {
+        this.retreatPackage = retreatPackage;
+        if (retreatPackage != null) {
+            this.retreatPackages = java.util.List.of(retreatPackage);
+        } else {
+            this.retreatPackages = java.util.Collections.emptyList();
+        }
+    }
+
+    public List<RetreatPackage> getRetreatPackages() { return retreatPackages; }
+    public void setRetreatPackages(List<RetreatPackage> retreatPackages) {
+        this.retreatPackages = retreatPackages;
+        if (retreatPackages != null && !retreatPackages.isEmpty()) {
+            this.retreatPackage = retreatPackages.get(0);
+        } else {
+            this.retreatPackage = null;
+        }
+    }
 
     public LocalDateTime getCheckInDate() { return checkInDate; }
     public void setCheckInDate(LocalDateTime checkInDate) { this.checkInDate = checkInDate; }

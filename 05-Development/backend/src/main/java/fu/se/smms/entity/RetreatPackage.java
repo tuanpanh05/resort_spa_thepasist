@@ -35,6 +35,9 @@ public class RetreatPackage {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "image_url", columnDefinition = "NVARCHAR(255)")
+    private String imageUrl;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -67,4 +70,7 @@ public class RetreatPackage {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

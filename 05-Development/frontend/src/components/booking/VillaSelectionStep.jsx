@@ -3,6 +3,7 @@ import { Check, ArrowLeft, ChevronRight } from "lucide-react";
 import { villasList, servicesList } from "../../constants/booking";
 
 export default function VillaSelectionStep({
+  roomTypes,
   selectedVillaId,
   setSelectedVillaId,
   selectedServiceIds,
@@ -11,6 +12,25 @@ export default function VillaSelectionStep({
   handlePrevStep,
   handleNextStep,
 }) {
+  const getRoomTypeView = (name) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("vip")) return "Hướng Hồ Bơi";
+    if (lowerName.includes("president")) return "Toàn Cảnh Đồi Trà";
+    return "Hướng Vườn";
+  };
+
+  const getRoomTypeImage = (name) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("standard")) {
+      return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+    } else if (lowerName.includes("vip") || lowerName.includes("pool")) {
+      return "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80";
+    } else if (lowerName.includes("presidential") || lowerName.includes("suite")) {
+      return "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80";
+    }
+    return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
+  };
+
   return (
     <div className="space-y-8 text-left animate-fade-in">
       <div className="border-b border-primary-50 pb-3 mb-6">
@@ -29,55 +49,73 @@ export default function VillaSelectionStep({
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {villasList.map((villa) => {
-            const isSelected = selectedVillaId === villa.id;
+          {roomTypes.map((villa) => {
+            const isSelected = selectedVillaId === villa.roomTypeId;
+            const villaImage = getRoomTypeImage(villa.typeName);
+            const villaView = getRoomTypeView(villa.typeName);
+            const isAvailable = villa.availableRoomsCount === undefined || villa.availableRoomsCount > 0;
+
             return (
               <div
-                key={villa.id}
-                onClick={() => setSelectedVillaId(villa.id)}
-                className={`border transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between ${
-                  isSelected
-                    ? "border-primary-800 ring-2 ring-primary-800/10 bg-primary-50/10"
-                    : "border-primary-100 hover:border-primary-300 bg-white"
+                key={villa.roomTypeId}
+                onClick={() => isAvailable && setSelectedVillaId(villa.roomTypeId)}
+                className={`border transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+                  !isAvailable
+                    ? "border-red-100 bg-red-50/5 opacity-65 cursor-not-allowed"
+                    : isSelected
+                    ? "border-primary-800 ring-2 ring-primary-800/10 bg-primary-50/10 cursor-pointer"
+                    : "border-primary-100 hover:border-primary-300 bg-white cursor-pointer"
                 }`}
               >
                 <div className="relative h-44 overflow-hidden">
                   <img
-                    src={villa.image}
-                    alt={villa.title}
-                    className="w-full h-full object-cover"
+                    src={villaImage}
+                    alt={villa.typeName}
+                    className={`w-full h-full object-cover transition-all duration-500 ${!isAvailable ? "grayscale contrast-75" : ""}`}
                   />
+                  {!isAvailable && (
+                    <div className="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider shadow-sm">
+                      Hết phòng
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 bg-white/95 px-3 py-1 font-mono text-xs font-bold text-primary-950 border border-primary-200">
-                    {formatCurrency(villa.price)}/đêm
+                    {formatCurrency(villa.basePricePerNight)}/đêm
                   </div>
                 </div>
 
                 <div className="p-5 flex-grow space-y-2.5">
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] font-bold text-primary-700 uppercase tracking-wider bg-primary-100/50 px-2 py-0.5">
-                      {villa.view}
+                      {villaView}
                     </span>
                     <span className="text-[10px] text-sage-400 font-mono font-medium">
-                      {villa.size} | {villa.capacity}
+                      {villa.areaSqm || 50} m² | {villa.maxOccupancy || 2} Người lớn
+                      {villa.availableRoomsCount !== undefined && (
+                        <span className={villa.availableRoomsCount > 0 ? "text-sage-500 font-semibold" : "text-red-500 font-semibold"}>
+                          {` | Còn ${villa.availableRoomsCount} phòng`}
+                        </span>
+                      )}
                     </span>
                   </div>
                   <h4 className="font-serif text-base font-bold text-sage-950">
-                    {villa.title}
+                    {villa.typeName}
                   </h4>
                   <p className="text-xs text-sage-600 font-light leading-relaxed">
-                    {villa.description}
+                    {villa.description || "Phòng nghỉ dưỡng dưỡng sinh cao cấp thiết kế sang trọng, hòa mình cùng không gian thiên nhiên resort."}
                   </p>
                 </div>
 
                 <div className="px-5 pb-5 pt-1 flex justify-end">
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 ${
-                      isSelected
+                    className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 transition-colors duration-200 ${
+                      !isAvailable
+                        ? "bg-red-50 text-red-600 border border-red-200"
+                        : isSelected
                         ? "bg-primary-800 text-white"
                         : "bg-white border border-primary-200 text-sage-600 hover:bg-primary-50"
                     }`}
                   >
-                    {isSelected ? "✓ Đang chọn" : "Chọn phòng"}
+                    {!isAvailable ? "Hết phòng" : isSelected ? "✓ Đang chọn" : "Chọn phòng"}
                   </span>
                 </div>
               </div>

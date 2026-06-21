@@ -48,7 +48,7 @@ export default function AdminOverview({
       });
   }, []);
 
-  const pendingPayments = payments.filter((p) => p.status === "Unpaid").length;
+  const pendingPayments = payments.filter((p) => p.status?.toUpperCase() === "UNPAID" || p.status === "Unpaid").length;
   const pendingSwaps = swapRequests.length;
 
   return (

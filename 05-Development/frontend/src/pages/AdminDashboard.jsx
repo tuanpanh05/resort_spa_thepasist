@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
+import { paymentApi } from "../api";
 
 import {
   adminInitialAccounts as initialAccounts,
@@ -57,6 +58,16 @@ export default function AdminDashboard() {
   const [shifts] = useState(initialShifts);
   const [swapRequests, setSwapRequests] = useState(initialSwapRequests);
   const [warnings] = useState(initialWarnings);
+
+  useEffect(() => {
+    paymentApi.getAllInvoices()
+      .then((data) => {
+        setPayments(data || []);
+      })
+      .catch((err) => {
+        console.error("Error loading operational payments:", err);
+      });
+  }, []);
 
   // Stats calculation
   const totalRoomsCount = rooms.length;

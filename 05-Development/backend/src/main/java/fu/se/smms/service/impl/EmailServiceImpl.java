@@ -26,6 +26,41 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendOtpEmail(String toEmail, String otpCode) {
+        // Write OTP to a local file for easy developer access in dev environment
+        try {
+            String content = "========================================\n" +
+                             "Email: " + toEmail + "\n" +
+                             "OTP Code: " + otpCode + "\n" +
+                             "Time: " + java.time.LocalDateTime.now() + "\n" +
+                             "========================================\n";
+            // Write to project root
+            try {
+                java.nio.file.Files.writeString(java.nio.file.Path.of("d:/Semester5/P/Project/su26-swp391-se2023-g3/dev-otp.txt"), content);
+            } catch (Exception ignored) {}
+            // Write to relative paths just in case the execution directory differs
+            try {
+                java.nio.file.Files.writeString(java.nio.file.Path.of("./dev-otp.txt"), content);
+            } catch (Exception ignored) {}
+            try {
+                java.nio.file.Files.writeString(java.nio.file.Path.of("../dev-otp.txt"), content);
+            } catch (Exception ignored) {}
+            try {
+                java.nio.file.Files.writeString(java.nio.file.Path.of("../../dev-otp.txt"), content);
+            } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.error("Error writing dev-otp.txt file: {}", e.getMessage());
+        }
+
+        // Skip sending actual emails to mock/dev domains to prevent Gmail bounces & spam
+        if (toEmail != null && (toEmail.toLowerCase().endsWith("@nguson.com") || toEmail.toLowerCase().endsWith("@nguson.vn"))) {
+            log.info("[MOCK EMAIL] OTP for {} is simulated. Skipping actual SMTP mail sending.", toEmail);
+            log.warn("===== [MOCK EMAIL] OTP for {} is: {} =====", toEmail, otpCode);
+            System.out.println("===================================================");
+            System.out.println(" [MOCK EMAIL] OTP for " + toEmail + " : " + otpCode);
+            System.out.println("===================================================");
+            return;
+        }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

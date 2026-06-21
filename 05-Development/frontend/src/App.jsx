@@ -25,8 +25,10 @@ import GuestDashboard from "./pages/GuestDashboard";
 import Payment from "./pages/Payment";
 import PaymentResult from "./pages/PaymentResult";
 import ProfilePage from "./pages/ProfilePage";
+import BookingLookup from "./pages/BookingLookup";
 
 import CustomerLayout from "./layouts/CustomerLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -48,19 +50,61 @@ function App() {
             <Route path="/dang-nhap" element={<Login />} />
             <Route path="/dang-ky" element={<Register />} />
             <Route path="/quen-mat-khau" element={<ForgotPassword />} />
-            <Route path="/ho-so-suc-khoe" element={<HealthProfile />} />
-            <Route path="/dat-lich" element={<BookingPage />} />
-            <Route path="/guest-dashboard" element={<GuestDashboard />} />
-            <Route path="/payment" element={<Payment />} />
-            <Route path="/payment-result" element={<PaymentResult />} />
-            <Route path="/tai-khoan/*" element={<ProfilePage />} />
+            {/* Protected Customer Routes */}
+            <Route path="/ho-so-suc-khoe" element={
+              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                <HealthProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/dat-lich" element={
+              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                <BookingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/guest-dashboard" element={
+              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                <GuestDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/payment" element={
+              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                <Payment />
+              </ProtectedRoute>
+            } />
+            <Route path="/payment-result" element={
+              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
+                <PaymentResult />
+              </ProtectedRoute>
+            } />
+            <Route path="/tai-khoan/*" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/tra-cuu" element={<BookingLookup />} />
           </Route>
 
           {/* Operations / Dashboard Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/staff" element={<StaffDashboard />} />
-          <Route path="/chef" element={<ChefDashboard />} />
-          <Route path="/specialist" element={<SpecialistDashboard />} />
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/staff" element={
+            <ProtectedRoute allowedRoles={["STAFF", "RECEPTIONIST", "MANAGER", "ADMIN"]}>
+              <StaffDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/chef" element={
+            <ProtectedRoute allowedRoles={["CHEF", "ADMIN", "MANAGER"]}>
+              <ChefDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/specialist" element={
+            <ProtectedRoute allowedRoles={["SPA", "YOGA", "PHYSIO", "THERAPIST", "ADMIN", "MANAGER"]}>
+              <SpecialistDashboard />
+            </ProtectedRoute>
+          } />
         </Routes>
       </div>
     </Router>

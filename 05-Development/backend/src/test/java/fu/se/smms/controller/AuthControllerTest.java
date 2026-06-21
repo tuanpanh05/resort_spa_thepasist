@@ -51,6 +51,9 @@ public class AuthControllerTest {
     @MockBean
     private fu.se.smms.repository.UserRepository userRepository;
 
+    @MockBean
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Test
     public void testRegister_Success() throws Exception {
         SignUpRequest request = new SignUpRequest();

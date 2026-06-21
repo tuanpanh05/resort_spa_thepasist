@@ -213,6 +213,30 @@ export const bookingApi = {
 };
 
 // ============================================================
+// GUEST BOOKING LOOKUP APIs (Public — no auth)
+// ============================================================
+export const bookingLookupApi = {
+  /** POST /bookings/lookup — Tra cứu đặt phòng bằng Email + SĐT */
+  lookup: (email, phone) =>
+    apiRequest("/bookings/lookup", {
+      method: "POST",
+      body: JSON.stringify({ email, phone }),
+    }),
+
+  /** PUT /bookings/:id/update — Cập nhật thông tin đặt phòng */
+  update: (bookingId, dto) =>
+    apiRequest(`/bookings/${bookingId}/update`, {
+      method: "PUT",
+      body: JSON.stringify(dto),
+    }),
+
+  /** GET /bookings/:id/itinerary — Lịch trình khách hàng */
+  getItinerary: (bookingId) =>
+    apiRequest(`/bookings/${bookingId}/itinerary`),
+};
+
+
+// ============================================================
 // STAFF / RECEPTIONIST APIs (UC08, UC09, UC10 — Module 2)
 // ============================================================
 export const staffApi = {

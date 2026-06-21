@@ -33,4 +33,8 @@ public class RoomTypeDTO {
 
     public Integer getAreaSqm() { return areaSqm; }
     public void setAreaSqm(Integer areaSqm) { this.areaSqm = areaSqm; }
+
+    private Long availableRoomsCount;
+    public Long getAvailableRoomsCount() { return availableRoomsCount; }
+    public void setAvailableRoomsCount(Long availableRoomsCount) { this.availableRoomsCount = availableRoomsCount; }
 }

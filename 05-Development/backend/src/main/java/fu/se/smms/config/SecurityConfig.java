@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/static/**", "/css/**", "/js/**", "/favicon.ico").permitAll()
                 // Auth endpoints – Public (UC01)
                 .requestMatchers("/auth/**").permitAll()
+                // Public booking, invoice and feedback endpoints
+                .requestMatchers("/bookings/**", "/invoices/**", "/feedback/**").permitAll()
                 // Public read-only Master Data endpoints (Guest can browse)
                 .requestMatchers(HttpMethod.GET, "/spa-services", "/spa-services/**", "/retreat-packages", "/retreat-packages/**", "/room-types", "/room-types/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/retreat-packages/filter").permitAll()

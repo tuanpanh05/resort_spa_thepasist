@@ -19,6 +19,8 @@ GO
 -- =========================================================================
 -- 1. DROP EXISTING TABLES (CHILDREN FIRST, THEN PARENTS)
 -- =========================================================================
+IF OBJECT_ID('dbo.package_highlights', 'U') IS NOT NULL DROP TABLE dbo.package_highlights;
+IF OBJECT_ID('dbo.package_features', 'U') IS NOT NULL DROP TABLE dbo.package_features;
 IF OBJECT_ID('dbo.feedback', 'U') IS NOT NULL DROP TABLE dbo.feedback;
 IF OBJECT_ID('dbo.blog', 'U') IS NOT NULL DROP TABLE dbo.blog;
 IF OBJECT_ID('dbo.payment_transaction_log', 'U') IS NOT NULL DROP TABLE dbo.payment_transaction_log;
@@ -428,18 +430,37 @@ GO
 -- 4.3 Room Types
 INSERT INTO dbo.room_types (type_name, base_price, capacity)
 VALUES
-    (N'Standard Room 1 King Bed',      1800000.00,  2),
-    (N'Vip Villa 1-Bedroom Pool',       4500000.00,  2),
-    (N'Presidential Suite 2-Bedroom',  12000000.00, 4);
+    (N'Standard Room 1 King Bed',      1200000.00,  2),
+    (N'Vip Villa 1-Bedroom Pool',       1800000.00,  2),
+    (N'Presidential Suite 2-Bedroom',  2500000.00, 4);
 GO
 
 -- 4.4 Rooms
-INSERT INTO dbo.room (room_type_id, room_number, status)
-VALUES
-    (1, 'Room-102',      'AVAILABLE'),
-    (2, 'Villa-101',     'AVAILABLE'),
-    (2, 'Villa-102',     'AVAILABLE'),
-    (3, 'President-501', 'AVAILABLE');
+-- Type 1: Standard Room 1 King Bed (5 rooms)
+INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
+(1, 'Room-101', 'AVAILABLE'),
+(1, 'Room-102', 'AVAILABLE'),
+(1, 'Room-103', 'AVAILABLE'),
+(1, 'Room-104', 'AVAILABLE'),
+(1, 'Room-105', 'AVAILABLE');
+
+-- Type 2: Vip Villa 1-Bedroom Pool (5 rooms)
+INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
+(2, 'Villa-101', 'AVAILABLE'),
+(2, 'Villa-102', 'AVAILABLE'),
+(2, 'Villa-103', 'AVAILABLE'),
+(2, 'Villa-104', 'AVAILABLE'),
+(2, 'Villa-105', 'AVAILABLE');
+
+-- Type 3: Presidential Suite 2-Bedroom (7 rooms)
+INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
+(3, 'President-501', 'AVAILABLE'),
+(3, 'President-502', 'AVAILABLE'),
+(3, 'President-503', 'AVAILABLE'),
+(3, 'President-504', 'AVAILABLE'),
+(3, 'President-505', 'AVAILABLE'),
+(3, 'President-506', 'AVAILABLE'),
+(3, 'President-507', 'AVAILABLE');
 GO
 
 -- 4.5 Room Bookings
@@ -452,8 +473,8 @@ GO
 -- 4.6 Booking Details
 INSERT INTO dbo.room_booking_detail (booking_id, room_id, price_at_booking)
 VALUES
-    (1, 2, 4500000.00),
-    (2, 3, 4500000.00);
+    (1, (SELECT room_id FROM dbo.room WHERE room_number = 'Villa-101'), 1800000.00),
+    (2, (SELECT room_id FROM dbo.room WHERE room_number = 'Villa-102'), 1800000.00);
 GO
 
 -- 4.7 Spa Services

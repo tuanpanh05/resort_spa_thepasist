@@ -15,7 +15,41 @@ export default function BookingBillSummary({
   paymentStatus,
   formatCurrency,
   selectedVilla,
+  selectedPackages = [],
 }) {
+  if (villaTotal === 0) {
+    return (
+      <div
+        className={`bg-white border border-primary-100 p-6 shadow-xs text-left sticky top-28 ${radius.card}`}
+      >
+        <h3 className="font-serif text-lg font-bold text-sage-950 border-b border-primary-100 pb-3 mb-4">
+          Chi Tiết Thanh Toán
+        </h3>
+        <div className="py-8 text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-50/50 border border-primary-100">
+            <span className="text-xl">📋</span>
+          </div>
+          <p className="text-xs text-sage-600 font-medium">Chưa có thông tin thanh toán</p>
+          <p className="text-[11px] text-sage-400 font-light leading-relaxed max-w-[220px] mx-auto">
+            Vui lòng hoàn thành khai báo và chọn hạng phòng/biệt thự ở Bước 3 để hiển thị bảng tính phí chi tiết.
+          </p>
+        </div>
+        
+        {/* Technical statuses details */}
+        <div className="mt-4 pt-4 border-t border-primary-50 space-y-2 text-[10px] font-mono font-medium text-sage-400 bg-primary-50/30 p-3">
+          <div className="flex justify-between">
+            <span>BOOKING STATUS:</span>
+            <span className="font-bold text-sage-500">{bookingStatus}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>PAYMENT STATUS:</span>
+            <span className="font-bold text-sage-500">{paymentStatus}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`bg-white border border-primary-100 p-6 shadow-xs text-left sticky top-28 ${radius.card}`}
@@ -32,6 +66,14 @@ export default function BookingBillSummary({
           </span>
           <span className="text-sage-950 font-mono">{formatCurrency(villaTotal)}</span>
         </div>
+
+        {/* Retreat package display */}
+        {selectedPackages && selectedPackages.map((pkg) => (
+          <div key={pkg.packageId} className="flex justify-between font-medium pt-2 border-t border-primary-50">
+            <span className="text-sage-800">Gói trị liệu ({pkg.name}):</span>
+            <span className="text-sage-950 font-mono">{formatCurrency(pkg.price)}</span>
+          </div>
+        ))}
 
         {/* Meal costs */}
         {mealTotal > 0 && (

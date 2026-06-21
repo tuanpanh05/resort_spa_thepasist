@@ -20,14 +20,13 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
 
     @Query(value = """
             SELECT COALESCE(
-                CASE
-                    WHEN b.package_id IS NOT NULL THEN p.price
-                    ELSE room_charge.room_subtotal
-                END,
+                (SELECT SUM(p.price)
+                 FROM dbo.booking_packages bp
+                 INNER JOIN dbo.retreat_packages p ON p.package_id = bp.package_id
+                 WHERE bp.booking_id = b.booking_id),
                 0
-            )
+            ) + COALESCE(room_charge.room_subtotal, 0)
             FROM dbo.room_booking b
-            LEFT JOIN dbo.retreat_packages p ON p.package_id = b.package_id
             OUTER APPLY (
                 SELECT SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal
                 FROM dbo.room_booking_detail d

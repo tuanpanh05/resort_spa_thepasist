@@ -15,9 +15,9 @@ public class RoomBookingDetail {
     @Column(name = "detail_id")
     private Integer detailId;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", referencedColumnName = "booking_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
     private RoomBooking roomBooking;
 
     @ManyToOne(fetch = FetchType.LAZY)

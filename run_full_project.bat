@@ -225,18 +225,18 @@ if /i "%AUTH_MODE%"=="WINDOWS" goto check_empty_windows
 goto check_empty_sql
 
 :check_empty_windows
-sqlcmd -S "%DB_HOST%" -E -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.[User]', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
+sqlcmd -S "%DB_HOST%" -E -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.users', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
 if %errorlevel% equ 0 set "DB_EMPTY=0"
 if "%DB_EMPTY%"=="0" goto check_empty_done
-sqlcmd -S "%DB_HOST%,%DB_PORT%" -E -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.[User]', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
+sqlcmd -S "%DB_HOST%,%DB_PORT%" -E -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.users', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
 if %errorlevel% equ 0 set "DB_EMPTY=0"
 goto check_empty_done
 
 :check_empty_sql
-sqlcmd -S "%DB_HOST%" -U "%DB_USER%" -P "%DB_PASS%" -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.[User]', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
+sqlcmd -S "%DB_HOST%" -U "%DB_USER%" -P "%DB_PASS%" -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.users', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
 if %errorlevel% equ 0 set "DB_EMPTY=0"
 if "%DB_EMPTY%"=="0" goto check_empty_done
-sqlcmd -S "%DB_HOST%,%DB_PORT%" -U "%DB_USER%" -P "%DB_PASS%" -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.[User]', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
+sqlcmd -S "%DB_HOST%,%DB_PORT%" -U "%DB_USER%" -P "%DB_PASS%" -d "%DB_NAME%" -Q "IF OBJECT_ID('dbo.users', 'U') IS NOT NULL SELECT 1 ELSE THROW 50000, 'Empty', 1" >nul 2>&1
 if %errorlevel% equ 0 set "DB_EMPTY=0"
 goto check_empty_done
 
@@ -246,20 +246,20 @@ if "%DB_EMPTY%"=="0" (
     goto run_app
 )
 
-echo [*] Phat hien Database trong. Dang dong bo hoa bang va nap du lieu tu resort_spa_db.sql...
+echo [*] Phat hien Database trong. Dang dong bo hoa bang va nap du lieu tu ResortSpaDB_Master.sql...
 if /i "%AUTH_MODE%"=="WINDOWS" goto populate_windows
 goto populate_sql
 
 :populate_windows
-sqlcmd -S "%DB_HOST%" -E -i "%~dp005-Development\backend\src\main\resources\resort_spa_db.sql"
+sqlcmd -f 65001 -S "%DB_HOST%" -E -i "%~dp003-Design\database\ResortSpaDB_Master.sql"
 if %errorlevel% equ 0 goto populate_done
-sqlcmd -S "%DB_HOST%,%DB_PORT%" -E -i "%~dp005-Development\backend\src\main\resources\resort_spa_db.sql"
+sqlcmd -f 65001 -S "%DB_HOST%,%DB_PORT%" -E -i "%~dp003-Design\database\ResortSpaDB_Master.sql"
 goto populate_done
 
 :populate_sql
-sqlcmd -S "%DB_HOST%" -U "%DB_USER%" -P "%DB_PASS%" -i "%~dp005-Development\backend\src\main\resources\resort_spa_db.sql"
+sqlcmd -f 65001 -S "%DB_HOST%" -U "%DB_USER%" -P "%DB_PASS%" -i "%~dp003-Design\database\ResortSpaDB_Master.sql"
 if %errorlevel% equ 0 goto populate_done
-sqlcmd -S "%DB_HOST%,%DB_PORT%" -U "%DB_USER%" -P "%DB_PASS%" -i "%~dp005-Development\backend\src\main\resources\resort_spa_db.sql"
+sqlcmd -f 65001 -S "%DB_HOST%,%DB_PORT%" -U "%DB_USER%" -P "%DB_PASS%" -i "%~dp003-Design\database\ResortSpaDB_Master.sql"
 goto populate_done
 
 :populate_done
@@ -369,7 +369,7 @@ if %errorlevel% neq 0 (
 
 :: 5. Tu dong chay npm install neu chua co node_modules o Frontend
 if not exist "%~dp005-Development\frontend\node_modules\" (
-    echo [*] Dang tu dong tai va cai dat thu vien Frontend (npm install)...
+    echo [*] Dang tu dong tai va cai dat thu vien Frontend [npm install]...
     pushd "%~dp005-Development\frontend"
     call npm install
     popd
