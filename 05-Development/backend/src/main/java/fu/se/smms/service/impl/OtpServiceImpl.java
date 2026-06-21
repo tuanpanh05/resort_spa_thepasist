@@ -40,7 +40,8 @@ public class OtpServiceImpl implements OtpService {
     public void generateAndSendOtp(String email) {
         // Verify the email belongs to an existing user
         userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này. Vui lòng kiểm tra lại."));
+                .orElseThrow(
+                        () -> new RuntimeException("Không tìm thấy tài khoản với email này. Vui lòng kiểm tra lại."));
 
         // Invalidate all previous OTPs for this email
         otpTokenRepository.deleteAllByEmail(email);
@@ -75,7 +76,8 @@ public class OtpServiceImpl implements OtpService {
         if (!token.getOtpCode().equals(otpCode)) {
             throw new RuntimeException("Mã OTP không chính xác. Vui lòng kiểm tra lại.");
         }
-        // OTP is valid - do NOT mark as used yet (user still needs to submit new password)
+        // OTP is valid - do NOT mark as used yet (user still needs to submit new
+        // password)
     }
 
     @Override
