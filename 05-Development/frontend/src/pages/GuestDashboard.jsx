@@ -259,6 +259,11 @@ export default function GuestDashboard() {
       return;
     }
 
+    if (!profileData.booking?.bookingId) {
+      alert("Vui lòng đặt phòng trước khi tiến hành gọi món!");
+      return;
+    }
+
     setSubmitting(true);
     const payload = {
       userId: profileData.userId,
@@ -290,7 +295,9 @@ export default function GuestDashboard() {
       // Refresh the data to stay in sync with the backend
       fetchData(profileData.email);
     } catch (err) {
-      alert("Lỗi khi đặt món: " + (err.response?.data || err.message));
+      let errorMsg = err.response?.data?.message || err.response?.data || err.message;
+      if (typeof errorMsg === 'object') errorMsg = JSON.stringify(errorMsg);
+      alert("Lỗi khi đặt món: " + errorMsg);
     } finally {
       setSubmitting(false);
     }

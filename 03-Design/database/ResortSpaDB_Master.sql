@@ -501,11 +501,22 @@ VALUES
 GO
 
 -- 4.10 Food Menu
-INSERT INTO dbo.food_menu (dish_name, description, price, dietary_tags)
+INSERT INTO dbo.food_menu (dish_name, description, price, dietary_tags, available_days, image_url, is_package_included, periods)
 VALUES
-    (N'Organic Avocado Quinoa Salad', N'Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.', 180000.00, 'Vegan, Gluten-Free'),
-    (N'Ginseng Chicken Soup',         N'Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.',       320000.00, 'Keto, Healthy'),
-    (N'Green Detox Juice',            N'Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.',          95000.00,  'Vegan, Detox');
+    (N'Cháo Yến Mạch Hạt Chia', N'Cháo yến mạch nguyên cám nấu cùng hạt chia, hạt óc chó và dâu tây tươi.', 120000.00, 'Vegan, Healthy', '1,3,5', '/images/dishes/dish_chao_yen_mach.png', 1, 'Breakfast'),
+    (N'Bún Gạo Lứt Chay', N'Bún nưa ăn kèm đậu hũ non, nấm đùi gà và nước dùng ngọt thanh từ củ quả.', 150000.00, 'Vegan, Healthy', '0,2,4,6', '/images/dishes/dish_bun_gao_lut.png', 1, 'Breakfast'),
+    (N'Bánh Mì Nguyên Cám Trứng Chần', N'Bánh mì đen nguyên cám nướng giòn kèm bơ sáp và trứng chần.', 140000.00, 'Healthy, Vegetarian', '0,1,2,3,4,5,6', '/images/dishes/dish_banh_mi_trung.png', 1, 'Breakfast'),
+    (N'Phở Gạo Lứt Bò Thảo Mộc', N'Phở nấu từ gạo lứt nảy mầm, nước dùng hầm xương bò thảo mộc trong 12h.', 250000.00, 'Healthy, Meat', '0,1,2,3,4,5,6', '/images/dishes/dish_pho_bo.png', 0, 'Breakfast'),
+    (N'Nước Ép Green Detox', N'Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.', 95000.00, 'Vegan, Detox', '0,2,4,6', '/images/dishes/dish_green_detox.png', 1, 'Breakfast,Lunch'),
+    (N'Trà Thảo Mộc Hoa Cúc', N'Trà hoa cúc ủ lạnh thanh nhiệt, giúp an thần và dễ tiêu hóa.', 85000.00, 'Vegan, Detox', '1,3,5', '/images/dishes/dish_tra_hoa_cuc.png', 1, 'Breakfast,Lunch'),
+    (N'Organic Avocado Quinoa Salad', N'Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.', 180000.00, 'Vegan, Gluten-Free', '1,3,5', '/images/dishes/dish_quinoa_salad.png', 1, 'Lunch'),
+    (N'Mì Soba Lạnh Nhật Bản', N'Mì kiều mạch Nhật Bản thanh mát, ăn kèm rong biển và nước tương dashi nấm.', 210000.00, 'Vegan, Healthy', '0,2,4,6', '/images/dishes/dish_mi_soba.png', 1, 'Lunch'),
+    (N'Cơm Gạo Lứt Ngũ Sắc', N'Cơm gạo lứt dẻo nấu cùng đậu gà, bắp, đậu hà lan và hạt sen.', 160000.00, 'Vegan, Healthy', '0,1,2,3,4,5,6', '/images/dishes/dish_com_gao_lut.png', 1, 'Lunch,Dinner'),
+    (N'Cá Hồi Áp Chảo Măng Tây', N'Cá hồi Na Uy áp chảo sốt bơ chanh ăn kèm măng tây nướng.', 450000.00, 'Seafood, Keto', '1,3,5', '/images/dishes/dish_ca_hoi.png', 1, 'Dinner'),
+    (N'Ginseng Chicken Soup', N'Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.', 320000.00, 'Keto, Healthy', '0,2,4,6', '/images/dishes/dish_chicken_soup.png', 1, 'Dinner'),
+    (N'Súp Bí Đỏ Hạnh Nhân', N'Súp bí đỏ sánh mịn nấu cùng sữa hạnh nhân hữu cơ và dầu olive.', 150000.00, 'Vegan, Gluten-Free', '0,1,2,3,4,5,6', '/images/dishes/dish_sup_bi_do.png', 1, 'Dinner'),
+    (N'Steak Bò Wagyu', N'Thăn nội bò Wagyu nướng than hoa mềm tan, ăn kèm rau củ nướng.', 1250000.00, 'Meat, Keto', '0,1,2,3,4,5,6', '/images/dishes/dish_steak_wagyu.png', 0, 'Dinner'),
+    (N'Tôm Sú Rim Tỏi Ớt', N'Tôm sú biển tươi ngon rim tỏi ớt thơm lừng cay cay ngọt ngọt.', 390000.00, 'Seafood, Spicy', '0,1,2,3,4,5,6', '/images/dishes/dish_tom_su.png', 0, 'Lunch,Dinner');
 GO
 
 -- 4.11 Food Orders

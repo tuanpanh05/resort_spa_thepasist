@@ -181,33 +181,36 @@ public class GuestMealController {
      * allergy profile.
      */
     @GetMapping("/menu")
-    public ResponseEntity<?> getFilteredMenu(@RequestParam Integer userId) {
+    public ResponseEntity<?> getFilteredMenu(@RequestParam(required = false) Integer userId) {
         List<FoodMenu> allItems = foodMenuRepository.findAll();
 
-        Optional<MedicalProfile> profileOpt = medicalProfileRepository.findByUser_UserId(userId);
         boolean consentSigned = false;
         String allergiesRaw = "";
 
-        if (profileOpt.isPresent()) {
-            MedicalProfile mp = profileOpt.get();
-            consentSigned = Boolean.TRUE.equals(mp.getExplicitConsentSigned());
-            if (consentSigned) {
-                String decrypted = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
-                try {
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonNode node = mapper.readTree(decrypted);
-                    List<String> list = new ArrayList<>();
-                    if (node.has("selected") && node.get("selected").isArray()) {
-                        for (JsonNode item : node.get("selected")) {
-                            list.add(item.asText());
+        if (userId != null) {
+            Optional<MedicalProfile> profileOpt = medicalProfileRepository.findByUser_UserId(userId);
+
+            if (profileOpt.isPresent()) {
+                MedicalProfile mp = profileOpt.get();
+                consentSigned = Boolean.TRUE.equals(mp.getExplicitConsentSigned());
+                if (consentSigned) {
+                    String decrypted = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode node = mapper.readTree(decrypted);
+                        List<String> list = new ArrayList<>();
+                        if (node.has("selected") && node.get("selected").isArray()) {
+                            for (JsonNode item : node.get("selected")) {
+                                list.add(item.asText());
+                            }
                         }
+                        if (node.has("other") && !node.get("other").asText().isEmpty()) {
+                            list.add(node.get("other").asText());
+                        }
+                        allergiesRaw = String.join(", ", list).toLowerCase();
+                    } catch (Exception e) {
+                        allergiesRaw = decrypted.toLowerCase();
                     }
-                    if (node.has("other") && !node.get("other").asText().isEmpty()) {
-                        list.add(node.get("other").asText());
-                    }
-                    allergiesRaw = String.join(", ", list).toLowerCase();
-                } catch (Exception e) {
-                    allergiesRaw = decrypted.toLowerCase();
                 }
             }
         }
