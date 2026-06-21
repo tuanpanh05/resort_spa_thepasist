@@ -38,6 +38,11 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public void generateAndSendOtp(String email) {
+        generateAndSendOtp(email, false);
+    }
+
+    @Override
+    public void generateAndSendOtp(String email, boolean isForgotPassword) {
         // Verify the email belongs to an existing user
         userRepository.findByEmail(email)
                 .orElseThrow(
@@ -54,8 +59,8 @@ public class OtpServiceImpl implements OtpService {
         otpTokenRepository.save(token);
 
         // Send OTP via email (falls back to console log if email is not configured)
-        emailService.sendOtpEmail(email, otpCode);
-        log.info("OTP generated and sent for email: {}", email);
+        emailService.sendOtpEmail(email, otpCode, isForgotPassword);
+        log.info("OTP generated and sent for email: {} (isForgotPassword: {})", email, isForgotPassword);
     }
 
     @Override

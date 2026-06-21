@@ -26,10 +26,17 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendOtpEmail(String toEmail, String otpCode) {
+        sendOtpEmail(toEmail, otpCode, false);
+    }
+
+    @Override
+    public void sendOtpEmail(String toEmail, String otpCode, boolean isForgotPassword) {
         // Write OTP to a local file for easy developer access in dev environment
         try {
+            String purpose = isForgotPassword ? "FORGOT PASSWORD" : "REGISTER / ACTIVATE ACCOUNT";
             String content = "========================================\n" +
                              "Email: " + toEmail + "\n" +
+                             "Purpose: " + purpose + "\n" +
                              "OTP Code: " + otpCode + "\n" +
                              "Time: " + java.time.LocalDateTime.now() + "\n" +
                              "========================================\n";
@@ -65,10 +72,14 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            String subject = isForgotPassword 
+                ? "Mã xác thực khôi phục tài khoản - Ngũ Sơn Resort & Spa" 
+                : "Mã xác thực đăng ký tài khoản - Ngũ Sơn Resort & Spa";
+
             helper.setFrom(fromEmail, fromName);
             helper.setTo(toEmail);
-            helper.setSubject("Mã xác thực OTP - Ngũ Sơn Resort & Spa");
-            helper.setText(buildHtmlEmail(otpCode), true);
+            helper.setSubject(subject);
+            helper.setText(buildHtmlEmail(otpCode, isForgotPassword), true);
 
             mailSender.send(message);
             log.info("OTP email sent successfully to: {}", toEmail);
@@ -83,7 +94,15 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private String buildHtmlEmail(String otpCode) {
+    private String buildHtmlEmail(String otpCode, boolean isForgotPassword) {
+        String title = isForgotPassword ? "Khôi phục tài khoản của bạn" : "Kích hoạt tài khoản của bạn";
+        String desc = isForgotPassword 
+            ? "Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn tại <strong>Ngũ Sơn Resort & Spa</strong>. Vui lòng sử dụng mã OTP dưới đây để tiến hành đặt lại mật khẩu:"
+            : "Chúng tôi đã nhận được yêu cầu đăng ký tài khoản của bạn tại <strong>Ngũ Sơn Resort & Spa</strong>. Vui lòng sử dụng mã OTP dưới đây để tiến hành kích hoạt tài khoản:";
+        String note = isForgotPassword
+            ? "🔒 Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này. Tài khoản của bạn vẫn được bảo mật."
+            : "🔒 Nếu bạn không thực hiện đăng ký tài khoản, hãy bỏ qua email này.";
+
         return """
             <!DOCTYPE html>
             <html lang="vi">
@@ -101,7 +120,7 @@ public class EmailServiceImpl implements EmailService {
                       <tr>
                         <td style="background:linear-gradient(135deg,#2d5a27,#4a7c3f);padding:40px 40px 30px;text-align:center;">
                           <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">🌿 Ngũ Sơn Resort & Spa</h1>
-                          <p style="margin:8px 0 0;color:#c8e6c9;font-size:14px;">Khôi phục tài khoản của bạn</p>
+                          <p style="margin:8px 0 0;color:#c8e6c9;font-size:14px;">%s</p>
                         </td>
                       </tr>
 
@@ -110,8 +129,7 @@ public class EmailServiceImpl implements EmailService {
                         <td style="padding:40px;">
                           <p style="margin:0 0 20px;color:#37474f;font-size:15px;line-height:1.6;">
                             Xin chào,<br/><br/>
-                            Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn tại <strong>Ngũ Sơn Resort & Spa</strong>.
-                            Vui lòng sử dụng mã OTP dưới đây để tiến hành đặt lại mật khẩu:
+                            %s
                           </p>
 
                           <!-- OTP Box -->
@@ -126,7 +144,7 @@ public class EmailServiceImpl implements EmailService {
                             ⏱️ Mã OTP có hiệu lực trong <strong>10 phút</strong>.
                           </p>
                           <p style="margin:0 0 24px;color:#37474f;font-size:14px;line-height:1.6;">
-                            🔒 Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này. Tài khoản của bạn vẫn được bảo mật.
+                            %s
                           </p>
 
                           <hr style="border:none;border-top:1px solid #e8f5e9;margin:24px 0;"/>
@@ -143,6 +161,6 @@ public class EmailServiceImpl implements EmailService {
               </table>
             </body>
             </html>
-            """.formatted(otpCode);
+            """.formatted(title, desc, otpCode, note);
     }
 }

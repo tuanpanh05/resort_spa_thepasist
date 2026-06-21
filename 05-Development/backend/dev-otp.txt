@@ -1,5 +1,6 @@
 ========================================
-Email: tuananh1122hy@gmail.com
-OTP Code: 629391
-Time: 2026-06-21T18:43:50.072256500
+Email: luu14102005@gmail.com
+Purpose: REGISTER / ACTIVATE ACCOUNT
+OTP Code: 262514
+Time: 2026-06-21T20:01:51.441833200
 ========================================

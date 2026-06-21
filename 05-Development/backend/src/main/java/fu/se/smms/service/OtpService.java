@@ -8,6 +8,13 @@ public interface OtpService {
     void generateAndSendOtp(String email);
 
     /**
+      * Generates a 6-digit OTP, persists it, and sends it via email with custom template.
+      * @param email the target email address
+      * @param isForgotPassword true if for password recovery, false if for registration/activation
+      */
+    void generateAndSendOtp(String email, boolean isForgotPassword);
+
+    /**
      * Validates the OTP code for the given email. Throws RuntimeException if invalid/expired.
      * @param email the email address
      * @param otpCode the OTP code entered by the user
