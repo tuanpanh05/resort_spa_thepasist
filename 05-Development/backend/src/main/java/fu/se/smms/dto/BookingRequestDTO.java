@@ -15,6 +15,8 @@ public class BookingRequestDTO {
     @NotNull(message = "Vui lòng chọn biệt thự/phòng trống.")
     private Integer roomId;
     private Integer villaId;
+    private Integer roomQuantity;
+    private Map<String, Integer> roomTypeQuantities;
 
     private Integer packageId;
     private List<Integer> packageIds;
@@ -53,6 +55,14 @@ public class BookingRequestDTO {
 
     public Integer getVillaId() { return villaId; }
     public void setVillaId(Integer villaId) { this.villaId = villaId; }
+
+    public Integer getRoomQuantity() {
+        return (roomQuantity == null || roomQuantity < 1) ? 1 : roomQuantity;
+    }
+    public void setRoomQuantity(Integer roomQuantity) { this.roomQuantity = roomQuantity; }
+
+    public Map<String, Integer> getRoomTypeQuantities() { return roomTypeQuantities; }
+    public void setRoomTypeQuantities(Map<String, Integer> roomTypeQuantities) { this.roomTypeQuantities = roomTypeQuantities; }
 
     public Integer getPackageId() { return packageId; }
     public void setPackageId(Integer packageId) { this.packageId = packageId; }

@@ -1,51 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { CreditCard } from "lucide-react";
 import { fmtDateTime, fmtCurrency } from "../../utils/formatters";
+import { paymentApi, userApi } from "../../api";
 
-export default function PaymentHistory() {
+export default function PaymentHistory({ profile }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const mockInvoices = [
-      {
-        invoiceId: 1,
-        roomBookingId: 1,
-        roomSubtotal: 12500000,
-        spaSubtotal: 0,
-        foodSubtotal: 320000,
-        taxAndFees: 1282000,
-        finalAmount: 14102000,
-        depositAmount: 3750000,
-        amountDue: 10352000,
-        status: "UNPAID",
-        vnpayTranId: null,
-        paymentTime: null,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      },
-      {
-        invoiceId: 2,
-        roomBookingId: 2,
-        roomSubtotal: 9000000,
-        spaSubtotal: 1500000,
-        foodSubtotal: 415000,
-        taxAndFees: 1091500,
-        finalAmount: 12006500,
-        depositAmount: 2700000,
-        amountDue: 0,
-        status: "PAID",
-        vnpayTranId: "VNP14328905",
-        paymentTime: new Date(Date.now() - 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
+    const fetchInvoices = async () => {
+      setLoading(true);
+      try {
+        let uId = profile?.userId;
+        if (!uId) {
+          const userProfile = await userApi.getProfile();
+          uId = userProfile?.userId;
+        }
+        if (uId) {
+          const data = await paymentApi.getInvoicesByUserId(uId);
+          // Sort invoices by createdAt descending (newest first)
+          const sorted = (data || []).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          setInvoices(sorted);
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải hóa đơn:", err);
+      } finally {
+        setLoading(false);
       }
-    ];
-
-    const timer = setTimeout(() => {
-      setInvoices(mockInvoices);
-      setLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
+    };
+    fetchInvoices();
+  }, [profile?.userId]);
 
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-16 text-center">

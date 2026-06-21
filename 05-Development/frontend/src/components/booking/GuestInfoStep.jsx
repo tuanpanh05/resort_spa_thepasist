@@ -210,13 +210,13 @@ export default function GuestInfoStep({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-primary-50 flex justify-end">
+      <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-end shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
         <button
           type="button"
           onClick={handleNextStep}
           className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
         >
-          {"Khai b\u00e1o s\u1ee9c kh\u1ecfe"} <ChevronRight className="h-4 w-4 ml-1.5" />
+          {"Khai báo sức khỏe"} <ChevronRight className="h-4 w-4 ml-1.5" />
         </button>
       </div>
     </div>

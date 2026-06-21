@@ -156,7 +156,7 @@ export default function ProfilePage() {
               <Route index element={<PersonalInfoForm profile={profile} onProfileUpdate={setProfile} />} />
               <Route path="suc-khoe" element={<HealthRecords />} />
               <Route path="lich-su-dat-hang" element={<BookingHistory />} />
-              <Route path="lich-su-thanh-toan" element={<PaymentHistory />} />
+              <Route path="lich-su-thanh-toan" element={<PaymentHistory profile={profile} />} />
             </Routes>
           </div>
         </div>

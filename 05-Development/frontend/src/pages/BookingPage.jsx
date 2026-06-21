@@ -66,7 +66,7 @@ export default function BookingPage() {
   };
 
   // Step 3: Selected Room & Services
-  const [selectedVillaId, setSelectedVillaId] = useState(null);
+  const [selectedRooms, setSelectedRooms] = useState({}); // { [roomTypeId]: quantity }
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
 
@@ -267,8 +267,20 @@ export default function BookingPage() {
     }
   }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
-  const selectedVilla = roomTypes.find((v) => v.roomTypeId === selectedVillaId);
-  const villaTotal = selectedVilla ? selectedVilla.basePricePerNight * nightsCount : 0;
+  const selectedVillaIdFirst = Object.keys(selectedRooms).find(id => selectedRooms[id] > 0);
+  const selectedVilla = selectedVillaIdFirst ? roomTypes.find((v) => v.roomTypeId === Number(selectedVillaIdFirst)) : null;
+
+  const calculateVillaTotal = () => {
+    let total = 0;
+    Object.entries(selectedRooms).forEach(([roomTypeId, qty]) => {
+      const roomType = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+      if (roomType && qty > 0) {
+        total += roomType.basePricePerNight * nightsCount * qty;
+      }
+    });
+    return total;
+  };
+  const villaTotal = calculateVillaTotal();
 
   let servicesTotal = 0;
   const selectedServices = servicesList.filter((s) => selectedServiceIds.includes(s.id));
@@ -372,8 +384,9 @@ export default function BookingPage() {
     } else if (step === 2) {
       if (validateStep2()) setStep(3);
     } else if (step === 3) {
-      if (!selectedVillaId) {
-        alert("Vui lòng chọn một biệt thự nghỉ dưỡng ở Bước 3 trước khi tiếp tục.");
+      const hasSelectedRoom = Object.values(selectedRooms).some((qty) => qty > 0);
+      if (!hasSelectedRoom) {
+        alert("Vui lòng chọn ít nhất một biệt thự nghỉ dưỡng ở Bước 3 trước khi tiếp tục.");
         return;
       }
       setStep(4);
@@ -383,13 +396,11 @@ export default function BookingPage() {
         return;
       }
       setStep(5);
-    } else if (step === 5) {
-      setStep(6);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1 && step < 7) {
+    if (step > 1 && step < 6) {
       setStep(step - 1);
     }
   };
@@ -397,13 +408,7 @@ export default function BookingPage() {
   const handleVerifyPayment = async () => {
     setIsVerifyingPayment(true);
     try {
-      const villaIdMap = {
-        "wood-bungalow": 1,
-        "zen-villa": 2,
-        "lotus-family-villa": 3,
-        "pebble-bungalow": 4
-      };
-      const numericVillaId = villaIdMap[selectedVillaId] || 1;
+
 
       const serviceIdMap = {
         "srv-spa": 1,
@@ -421,8 +426,10 @@ export default function BookingPage() {
         checkInDate: (guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : "") + "T14:00:00",
         checkOutDate: (guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : "") + "T12:00:00",
         guestsCount: guestInfo.guestsCount,
-        villaId: selectedVillaId,
+        villaId: selectedVillaIdFirst ? Number(selectedVillaIdFirst) : null,
         roomId: 1, // Default room ID to satisfy @NotNull validation if enabled
+        roomQuantity: selectedVillaIdFirst ? selectedRooms[selectedVillaIdFirst] : 1,
+        roomTypeQuantities: selectedRooms,
         packageId: selectedPackageIds[0] || null,
         packageIds: selectedPackageIds,
         serviceIds: selectedServiceIds.map(id => {
@@ -511,6 +518,8 @@ export default function BookingPage() {
             guestInfo={guestInfo}
             nightsCount={nightsCount}
             selectedVilla={selectedVilla}
+            selectedRooms={selectedRooms}
+            roomTypes={roomTypes}
             selectedServices={selectedServices}
             totalAmount={totalAmount}
             depositAmount={depositAmount}
@@ -553,8 +562,8 @@ export default function BookingPage() {
               {step === 3 && (
                 <VillaSelectionStep
                   roomTypes={roomTypes}
-                  selectedVillaId={selectedVillaId}
-                  setSelectedVillaId={setSelectedVillaId}
+                  selectedRooms={selectedRooms}
+                  setSelectedRooms={setSelectedRooms}
                   selectedServiceIds={selectedServiceIds}
                   handleToggleService={handleToggleService}
                   formatCurrency={formatCurrency}
@@ -575,27 +584,6 @@ export default function BookingPage() {
                 />
               )}
               {step === 5 && (
-                <MealSelectionStep
-                  mealBookingDays={mealBookingDays}
-                  selectedMealDate={selectedMealDate}
-                  setSelectedMealDate={setSelectedMealDate}
-                  consentDataProcessing={consentDataProcessing}
-                  consentSharing={consentSharing}
-                  packageMenuItems={packageMenuItems}
-                  dietaryPreference={dietaryPreference}
-                  guestInfo={guestInfo}
-                  selectedAllergies={selectedAllergies}
-                  otherAllergy={otherAllergy}
-                  mealSelections={mealSelections}
-                  updateMealQty={updateMealQty}
-                  formatCurrency={formatCurrency}
-                  getMealSelectedCount={getMealSelectedCount}
-                  mealTotal={mealTotal}
-                  handlePrevStep={handlePrevStep}
-                  handleNextStep={handleNextStep}
-                />
-              )}
-              {step === 6 && (
                 <ConfirmationStep
                   guestInfo={guestInfo}
                   nightsCount={nightsCount}
@@ -604,6 +592,8 @@ export default function BookingPage() {
                   otherAllergy={otherAllergy}
                   physicalCondition={physicalCondition}
                   selectedVilla={selectedVilla}
+                  selectedRooms={selectedRooms}
+                  roomTypes={roomTypes}
                   selectedServices={selectedServices}
                   villaTotal={villaTotal}
                   mealTotal={mealTotal}
@@ -627,6 +617,8 @@ export default function BookingPage() {
                 nightsCount={nightsCount}
                 villaTotal={villaTotal}
                 mealTotal={mealTotal}
+                selectedRooms={selectedRooms}
+                roomTypes={roomTypes}
                 selectedServices={selectedServices}
                 guestInfo={guestInfo}
                 totalAmount={totalAmount}

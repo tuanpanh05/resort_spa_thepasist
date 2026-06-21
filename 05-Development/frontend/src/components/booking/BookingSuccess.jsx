@@ -7,6 +7,8 @@ export default function BookingSuccess({
   guestInfo,
   nightsCount,
   selectedVilla,
+  selectedRooms,
+  roomTypes,
   selectedServices,
   totalAmount,
   depositAmount,
@@ -61,7 +63,14 @@ export default function BookingSuccess({
 
           <span className="text-sage-500 font-light">Căn biệt thự đã chọn:</span>
           <span className="font-semibold text-right text-primary-800">
-            {selectedVilla?.typeName || selectedVilla?.title}
+            {selectedRooms && Object.entries(selectedRooms)
+              .map(([roomTypeId, qty]) => {
+                const roomType = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+                return roomType && qty > 0 ? `${roomType.typeName} (x${qty})` : "";
+              })
+              .filter(Boolean)
+              .join(", ")
+            }
           </span>
 
           {selectedPackages && selectedPackages.map((pkg) => (
