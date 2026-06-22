@@ -3,24 +3,28 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, Clock, UtensilsCrossed } from "lucide-react";
 import { userApi } from "../api";
 
+import { useLanguage } from "../context/LanguageContext";
+
 const navItems = [
-  { label: "Trang chủ", href: "/" },
-  { label: "Phòng nghỉ", href: "/phong-o" },
-  { label: "Spa & Wellness", href: "/spa" },
+  { key: "home", href: "/" },
+  { key: "rooms", href: "/phong-o" },
+  { key: "spa", href: "/spa" },
   {
-    label: "Ẩm thực",
+    key: "dining",
     dropdown: [
-      { label: "Nhà hàng Ngũ Sơn", href: "/nha-hang" },
-      { label: "Đặt thực đơn", href: "/guest-dashboard" }
+      { key: "restaurant", href: "/nha-hang" },
+      { key: "mealPlanner", href: "/guest-dashboard" }
     ]
   },
-  { label: "Khuyến mãi", href: "/khuyen-mai" },
-  { label: "Blog", href: "/blog" },
-  { label: "Tra cứu", href: "/tra-cuu" },
+  { key: "promotions", href: "/khuyen-mai" },
+  { key: "blog", href: "/blog" },
+  { key: "lookup", href: "/tra-cuu" },
 ];
 
 
+
 export default function Header() {
+  const { language, setLanguage, toggleLanguage, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -165,13 +169,13 @@ export default function Header() {
                 return (
                   <div key={index} className="relative group">
                     <span className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${isActive ? "after:scale-x-100" : "after:scale-x-0 group-hover:after:scale-x-100"} ${showGlass ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${isActive ? "text-primary-900 font-semibold" : ""}` : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white font-semibold" : ""}`} cursor-pointer flex items-center gap-1`}>
-                      {item.label} <ChevronDown className="w-3.5 h-3.5" />
+                      {t("nav." + item.key)} <ChevronDown className="w-3.5 h-3.5" />
                     </span>
                     <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-primary-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                       <div className="py-2">
                         {item.dropdown.map((subItem, subIdx) => (
                           <Link key={subIdx} to={subItem.href} className="block px-4 py-2 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
-                            {subItem.label}
+                            {t("nav." + subItem.key)}
                           </Link>
                         ))}
                       </div>
@@ -194,7 +198,7 @@ export default function Header() {
                       }`
                     }`}
                 >
-                  {item.label}
+                  {t("nav." + item.key)}
                 </Link>
               );
             })}
@@ -219,7 +223,7 @@ export default function Header() {
                       {getInitials(userFullName)}
                     </span>
                     <span className="text-xs font-semibold tracking-wide max-w-[100px] truncate hidden 2xl:block">
-                      {userFullName || "Tài khoản"}
+                      {userFullName || t("nav.personalInfo")}
                     </span>
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
                   </button>
@@ -229,8 +233,8 @@ export default function Header() {
                     <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-primary-100 overflow-hidden z-50 animate-[fadeIn_0.15s_ease-out]">
                       {/* User info header */}
                       <div className="px-4 py-3 bg-primary-50 border-b border-primary-100">
-                        <p className="text-xs font-bold text-sage-900 truncate">{userFullName || "Khách hàng"}</p>
-                        <p className="text-[10px] text-sage-500 mt-0.5">Hội viên Ngũ Sơn Resort</p>
+                        <p className="text-xs font-bold text-sage-900 truncate">{userFullName || t("nav.guest")}</p>
+                        <p className="text-[10px] text-sage-500 mt-0.5">{t("nav.member")}</p>
                       </div>
                       {/* Menu items */}
                       <div className="py-1">
@@ -238,28 +242,28 @@ export default function Header() {
                           <Link to={userRole === "MANAGER" ? "/admin" : userRole === "CHEF" ? "/chef" : userRole === "RECEPTIONIST" ? "/staff" : "/specialist"} onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                             <User className="h-3.5 w-3.5 text-primary-600" />
-                            Trang quản trị (Dashboard)
+                            {t("nav.dashboard")}
                           </Link>
                         )}
                         <Link to="/tai-khoan" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <User className="h-3.5 w-3.5 text-primary-600" />
-                          Thông tin cá nhân
+                          {t("nav.personalInfo")}
                         </Link>
                         <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <CalendarDays className="h-3.5 w-3.5 text-primary-600" />
-                          Lịch sử đặt hàng
+                          {t("nav.orderHistory")}
                         </Link>
                         <Link to="/tai-khoan/suc-khoe" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <Heart className="h-3.5 w-3.5 text-rose-500" />
-                          Hồ sơ sức khỏe
+                          {t("nav.healthProfile")}
                         </Link>
                         <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
                           <CreditCard className="h-3.5 w-3.5 text-primary-600" />
-                          Lịch sử thanh toán
+                          {t("nav.paymentHistory")}
                         </Link>
                         
                         {/* Lịch trình section inside dropdown */}
@@ -267,32 +271,32 @@ export default function Header() {
                         <div className="px-4 py-2">
                           <div className="flex items-center gap-2 text-xs font-bold text-sage-900 mb-1.5">
                             <Clock className="h-3.5 w-3.5 text-primary-600" />
-                            Lịch trình
+                            {t("nav.itinerary")}
                           </div>
                           {loadingBooking ? (
-                            <p className="text-[10px] text-sage-400 italic">Đang tải...</p>
+                            <p className="text-[10px] text-sage-400 italic">{t("nav.loading")}</p>
                           ) : latestBooking ? (
                             <div className="space-y-1 text-[11px] text-sage-600 bg-primary-50/50 p-2 rounded-lg border border-primary-100/50">
-                              <p><span className="font-semibold text-primary-800">Nhận phòng:</span> {fmtDate(latestBooking.checkInDate)}</p>
-                              <p><span className="font-semibold text-primary-800">Gói nghỉ dưỡng:</span> {latestBooking.packageName || "Không có gói"}</p>
-                              <p><span className="font-semibold text-primary-800">Trả phòng:</span> {fmtDate(latestBooking.checkOutDate)}</p>
+                              <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
+                              <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
+                              <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
                               <Link 
                                 to="/tai-khoan/lich-trinh" 
                                 onClick={() => setDropdownOpen(false)}
                                 className="block text-center text-[10px] font-bold text-primary-700 hover:text-primary-900 hover:underline mt-1.5 pt-1 border-t border-primary-100/50"
                               >
-                                Xem chi tiết lịch trình →
+                                {t("nav.viewDetails")}
                               </Link>
                             </div>
                           ) : (
-                            <p className="text-[10px] text-sage-400 italic">Chưa có lịch trình hoạt động nào.</p>
+                            <p className="text-[10px] text-sage-400 italic">{t("nav.noItinerary")}</p>
                           )}
                         </div>
                         <div className="border-t border-primary-100 my-1" />
                         <button onClick={handleLogout}
                           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
                           <LogOut className="h-3.5 w-3.5" />
-                          Đăng xuất
+                          {t("nav.signOut")}
                         </button>
                       </div>
                     </div>
@@ -306,26 +310,40 @@ export default function Header() {
                   className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
                     }`}
                 >
-                  Đăng nhập
+                  {t("nav.signIn")}
                 </Link>
                 <Link
                   to="/dang-ky"
                   className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
                     }`}
                 >
-                  Đăng ký
+                  {t("nav.register")}
                 </Link>
               </>
             )}
+
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border hover:scale-105 mr-2 cursor-pointer ${
+                showGlass
+                  ? "border-sage-300 hover:bg-primary-50 text-sage-850"
+                  : "border-white/30 hover:bg-white/10 text-white"
+              }`}
+            >
+              <span className={language === "VIE" ? (showGlass ? "text-primary-850 font-extrabold scale-110" : "text-primary-200 font-extrabold scale-110") : "opacity-60"}>VIE</span>
+              <span className="opacity-30">|</span>
+              <span className={language === "ENG" ? (showGlass ? "text-primary-850 font-extrabold scale-110" : "text-primary-200 font-extrabold scale-110") : "opacity-60"}>ENG</span>
+            </button>
 
             <Link
               to="/dat-lich"
               className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${showGlass
                 ? "bg-primary-800 hover:bg-primary-900 text-white"
-                : "bg-white hover:bg-white/95 text-primary-950"
+                : "bg-white hover:bg-white/95 text-primary-955"
                 }`}
             >
-              Đặt lịch
+              {t("nav.bookNow")}
             </Link>
           </div>
 
@@ -366,11 +384,11 @@ export default function Header() {
               return (
                 <div key={index}>
                   <div className="block px-3 py-2 text-sm font-semibold text-sage-800 opacity-70 uppercase tracking-widest mt-2 mb-1">
-                    {item.label}
+                    {t("nav." + item.key)}
                   </div>
                   {item.dropdown.map((subItem, subIdx) => (
                     <Link key={subIdx} to={subItem.href} onClick={() => setIsOpen(false)} className={`block px-3 py-2.5 ml-4 rounded-md text-sm font-medium transition-all duration-200 hover:translate-x-1.5 ${location.pathname === subItem.href ? "bg-primary-50 text-primary-900 font-semibold border-l-2 border-primary-800" : "text-sage-800 hover:bg-primary-50 hover:text-primary-900"}`}>
-                      {subItem.label}
+                      {t("nav." + subItem.key)}
                     </Link>
                   ))}
                 </div>
@@ -387,7 +405,7 @@ export default function Header() {
                   : "text-sage-800 hover:bg-primary-50 hover:text-primary-900"
                   }`}
               >
-                {item.label}
+                {t("nav." + item.key)}
               </Link>
             );
           })}
@@ -398,68 +416,96 @@ export default function Header() {
                 {userRole && userRole !== "CUSTOMER" && (
                   <Link to={userRole === "MANAGER" ? "/admin" : userRole === "CHEF" ? "/chef" : userRole === "RECEPTIONIST" ? "/staff" : "/specialist"} onClick={() => setIsOpen(false)}
                     className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary-600" /> Trang quản trị (Dashboard)
+                    <User className="h-4 w-4 text-primary-600" /> {t("nav.dashboard")}
                   </Link>
                 )}
                 <Link to="/tai-khoan" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary-600" /> Thông tin cá nhân
+                  <User className="h-4 w-4 text-primary-600" /> {t("nav.personalInfo")}
                 </Link>
                 <Link to="/tai-khoan/suc-khoe" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-rose-500" /> Hồ sơ sức khỏe
+                  <Heart className="h-4 w-4 text-rose-500" /> {t("nav.healthProfile")}
                 </Link>
                 <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-primary-600" /> Lịch sử đặt hàng
+                  <CalendarDays className="h-4 w-4 text-primary-600" /> {t("nav.orderHistory")}
                 </Link>
                 <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary-600" /> Lịch sử thanh toán
+                  <CreditCard className="h-4 w-4 text-primary-600" /> {t("nav.paymentHistory")}
                 </Link>
                 <div className="px-3 py-2 border border-primary-100 rounded-lg bg-primary-50/20">
                   <div className="flex items-center gap-2 text-sm font-bold text-sage-900 mb-1.5">
-                    <Clock className="h-4 w-4 text-primary-600" /> Lịch trình
+                    <Clock className="h-4 w-4 text-primary-600" /> {t("nav.itinerary")}
                   </div>
                   {loadingBooking ? (
-                    <p className="text-xs text-sage-400 italic">Đang tải...</p>
+                    <p className="text-xs text-sage-400 italic">{t("nav.loading")}</p>
                   ) : latestBooking ? (
                     <div className="space-y-1 text-xs text-sage-600">
-                      <p><span className="font-semibold text-primary-800">Nhận phòng:</span> {fmtDate(latestBooking.checkInDate)}</p>
-                      <p><span className="font-semibold text-primary-800">Gói nghỉ dưỡng:</span> {latestBooking.packageName || "Không có gói"}</p>
-                      <p><span className="font-semibold text-primary-800">Trả phòng:</span> {fmtDate(latestBooking.checkOutDate)}</p>
+                      <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
+                      <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
+                      <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
                       <Link to="/tai-khoan/lich-trinh" onClick={() => setIsOpen(false)}
                         className="block text-center text-xs font-bold text-primary-700 hover:text-primary-900 hover:underline mt-2 pt-1.5 border-t border-primary-100/50">
-                        Xem chi tiết lịch trình →
+                        {t("nav.viewDetails")}
                       </Link>
                     </div>
                   ) : (
-                    <p className="text-xs text-sage-400 italic">Chưa có lịch trình hoạt động nào.</p>
+                    <p className="text-xs text-sage-400 italic">{t("nav.noItinerary")}</p>
                   )}
                 </div>
                 <button onClick={() => { setIsOpen(false); handleLogout(); }}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition cursor-pointer">
-                  <LogOut className="h-4 w-4" /> Đăng xuất
+                  <LogOut className="h-4 w-4" /> {t("nav.signOut")}
                 </button>
               </>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 <Link to="/dang-nhap" onClick={() => setIsOpen(false)}
                   className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50">
-                  Đăng nhập
+                  {t("nav.signIn")}
                 </Link>
                 <Link to="/dang-ky" onClick={() => setIsOpen(false)}
                   className="text-center py-2.5 text-sm font-medium text-sage-700 hover:text-primary-900 transition-colors duration-200 border border-primary-100/50">
-                  Đăng ký
+                  {t("nav.register")}
                 </Link>
               </div>
             )}
+
+            {/* Mobile Language Switcher */}
+            <div className="flex items-center justify-between px-3 py-2 border-t border-primary-50 mt-4">
+              <span className="text-xs font-bold text-sage-800">Language:</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setLanguage("VIE")}
+                  className={`px-3 py-1 text-xs font-bold rounded-md border cursor-pointer ${
+                    language === "VIE"
+                      ? "bg-primary-800 text-white border-primary-800"
+                      : "bg-white text-sage-800 border-sage-200"
+                  }`}
+                >
+                  VIE
+                </button>
+                <button
+                  onClick={() => setLanguage("ENG")}
+                  className={`px-3 py-1 text-xs font-bold rounded-md border cursor-pointer ${
+                    language === "ENG"
+                      ? "bg-primary-800 text-white border-primary-800"
+                      : "bg-white text-sage-800 border-sage-200"
+                  }`}
+                >
+                  ENG
+                </button>
+              </div>
+            </div>
+
             <Link
               to="/dat-lich"
               onClick={() => setIsOpen(false)}
               className="w-full text-center py-2.5 rounded-none text-sm font-medium bg-primary-800 hover:bg-primary-900 text-white shadow-sm transition-all duration-200"
             >
-              Đặt lịch trải nghiệm
+              {t("nav.bookNowExperience")}
             </Link>
           </div>
         </div>

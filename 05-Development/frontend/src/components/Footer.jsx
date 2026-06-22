@@ -1,8 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Leaf, Phone, Mail, MapPin } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Footer() {
+  const { t } = useLanguage();
   const location = useLocation();
   if (
     location.pathname.startsWith("/admin") ||
@@ -35,9 +37,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-white/80 font-light text-sm leading-relaxed">
-              Nơi kết hợp tinh hoa của thiên nhiên núi rừng và các liệu pháp trị
-              liệu cổ truyền, giúp khơi nguồn sức sống mới và nuôi dưỡng tâm hồn
-              bạn.
+              {t("footer.brandDesc")}
             </p>
             <div className="flex space-x-4">
               <a
@@ -88,12 +88,12 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h4 className="font-serif text-lg font-semibold mb-6 border-l-2 border-white pl-3 text-white">
-              Khám Phá
+              {t("footer.explore")}
             </h4>
             <ul className="space-y-3.5 text-sm font-light text-white/80">
               <li>
                 <Link to="/" className="hover:text-white transition-colors">
-                  Trang chủ
+                  {t("nav.home")}
                 </Link>
               </li>
               <li>
@@ -101,7 +101,7 @@ export default function Footer() {
                   to="/#services"
                   className="hover:text-white transition-colors"
                 >
-                  Dịch vụ trị liệu
+                  {t("footer.therapyServices")}
                 </Link>
               </li>
               <li>
@@ -109,7 +109,7 @@ export default function Footer() {
                   to="/phong-o"
                   className="hover:text-white transition-colors"
                 >
-                  Phòng nghỉ dưỡng
+                  {t("nav.rooms")}
                 </Link>
               </li>
               <li>
@@ -117,7 +117,7 @@ export default function Footer() {
                   to="/dat-lich"
                   className="hover:text-white transition-colors"
                 >
-                  Đặt lịch tư vấn
+                  {t("nav.bookNow")}
                 </Link>
               </li>
             </ul>
@@ -126,27 +126,27 @@ export default function Footer() {
           {/* Therapy Services List */}
           <div>
             <h4 className="font-serif text-lg font-semibold mb-6 border-l-2 border-white pl-3 text-white">
-              Liệu Trình Chữa Lành
+              {t("footer.therapyServices")}
             </h4>
             <ul className="space-y-3.5 text-sm font-light text-white/80">
               <li>
                 <span className="hover:text-white cursor-default transition-colors">
-                  Ẩm thực thực dưỡng organic
+                  {t("footer.organicMeals")}
                 </span>
               </li>
               <li>
                 <span className="hover:text-white cursor-default transition-colors">
-                  Massage & Spa thảo dược
+                  {t("footer.massageSpa")}
                 </span>
               </li>
               <li>
                 <span className="hover:text-white cursor-default transition-colors">
-                  Yoga thở & Thiền định phục hồi
+                  {t("footer.yogaZen")}
                 </span>
               </li>
               <li>
                 <span className="hover:text-white cursor-default transition-colors">
-                  Vật lý trị liệu cột sống
+                  {t("footer.physio")}
                 </span>
               </li>
             </ul>
@@ -155,22 +155,22 @@ export default function Footer() {
           {/* Contact Details */}
           <div className="space-y-4">
             <h4 className="font-serif text-lg font-semibold mb-6 border-l-2 border-white pl-3 text-white">
-              Liên Hệ
+              {t("footer.contact")}
             </h4>
             <ul className="space-y-4 text-sm font-light text-white/80">
               <li className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
                 <span className="leading-relaxed">
-                  Thung Lũng Ngũ Sơn, Xã Hòa Ninh, Huyện Hòa Vang, Đà Nẵng
+                  {t("footer.address")}
                 </span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-white flex-shrink-0" />
-                <span>1900 8888 (Hotline 24/7)</span>
+                <span>{t("footer.phone")}</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-white flex-shrink-0" />
-                <span>info@ngusonresort.com.vn</span>
+                <span>{t("footer.mail")}</span>
               </li>
             </ul>
           </div>
@@ -178,13 +178,13 @@ export default function Footer() {
 
         {/* Footer Bottom copyright */}
         <div className="flex flex-col sm:flex-row items-center justify-between pt-8 text-xs text-white/60 font-light">
-          <p>© 2026 Ngũ Sơn Resort. Tất cả các quyền được bảo lưu.</p>
+          <p>{t("footer.copyright")}</p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
             <a href="#" className="hover:text-white transition-colors">
-              Chính sách bảo mật
+              {t("footer.privacy")}
             </a>
             <a href="#" className="hover:text-white transition-colors">
-              Điều khoản dịch vụ
+              {t("footer.terms")}
             </a>
           </div>
         </div>

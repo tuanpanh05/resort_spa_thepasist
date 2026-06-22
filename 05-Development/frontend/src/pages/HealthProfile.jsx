@@ -10,14 +10,17 @@ import {
   ArrowLeft,
   Save,
   Info,
+  Check,
 } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
 import { medicalApi } from "../api";
+import { useLanguage } from "../context/LanguageContext";
 
 import { ALLERGY_OPTIONS, DIET_OPTIONS } from "../constants/options";
 
 export default function HealthProfile() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const hasLocalToken = !!localStorage.getItem("token");
   const userFullName = hasLocalToken
     ? (localStorage.getItem("userFullName") || "Khách hàng")
@@ -93,9 +96,7 @@ export default function HealthProfile() {
 
     // UC02 Constraint: Both consents are mandatory per Decree 356/2025
     if (!consentDataProcessing || !consentSharing) {
-      setError(
-        "Bạn phải đồng ý với cả hai điều khoản xử lý và chia sẻ dữ liệu sức khỏe để tiếp tục (theo Nghị định 356/2025/NĐ-CP)."
-      );
+      setError(t("health.errProcessing"));
       return;
     }
 
@@ -112,10 +113,10 @@ export default function HealthProfile() {
         foodAllergiesJson,
         true
       );
-      setSuccess("Hồ sơ sức khỏe đã được lưu thành công! Dữ liệu được mã hóa AES-256.");
+      setSuccess(t("health.saveSuccess"));
       await loadExistingProfile();
     } catch (err) {
-      setError(err.message || "Không thể lưu hồ sơ sức khỏe. Vui lòng thử lại.");
+      setError(err.message || "Error saving health profile.");
     } finally {
       setLoading(false);
     }
@@ -133,9 +134,9 @@ export default function HealthProfile() {
       setPhysicalCondition("");
       setConsentDataProcessing(false);
       setConsentSharing(false);
-      setSuccess("Hồ sơ sức khỏe của bạn đã được xóa vĩnh viễn khỏi hệ thống.");
+      setSuccess(t("health.deleteSuccess"));
     } catch (err) {
-      setError(err.message || "Không thể xóa hồ sơ sức khỏe.");
+      setError(err.message || "Error deleting health profile.");
     } finally {
       setLoading(false);
     }
@@ -146,7 +147,7 @@ export default function HealthProfile() {
       <div className="min-h-screen flex items-center justify-center bg-primary-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary-800 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sage-600 text-sm">Đang tải hồ sơ sức khỏe...</p>
+          <p className="text-sage-600 text-sm">{t("health.loadingProfile")}</p>
         </div>
       </div>
     );
@@ -166,7 +167,7 @@ export default function HealthProfile() {
           className="inline-flex items-center space-x-2 text-white/80 hover:text-white text-xs font-semibold mb-6 group transition"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          <span>Quay lại trang chủ</span>
+          <span>{t("health.backToHome")}</span>
         </Link>
 
         {/* Header */}
@@ -179,10 +180,10 @@ export default function HealthProfile() {
               <Heart className="h-8 w-8" />
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-sage-900">
-              Hồ Sơ Sức Khỏe & Chế Độ Ăn
+              {t("health.title")}
             </h1>
             <p className="text-sm sm:text-base text-sage-600 mt-3 max-w-lg mx-auto font-light leading-relaxed">
-              Xin chào <strong>{userFullName}</strong>! Thông tin sức khỏe giúp chúng tôi cá nhân hóa dịch vụ Spa, thực đơn và trị liệu dành riêng cho bạn.
+              {t("health.subtitle").replace("{name}", userFullName)}
             </p>
           </div>
 
@@ -191,8 +192,11 @@ export default function HealthProfile() {
             <div className="mb-6 p-4 rounded-md bg-green-50 border border-green-200 flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-green-800">Hồ sơ đã được lưu</p>
-                <p className="text-xs text-green-700">Cập nhật lần cuối: {existingProfile.updatedAt ? new Date(existingProfile.updatedAt).toLocaleString("vi-VN") : "—"}</p>
+                <p className="text-sm font-semibold text-green-800">{t("health.existingProfile")}</p>
+                <p className="text-xs text-green-700">
+                  {t("health.lastUpdated")} 
+                  {existingProfile.updatedAt ? new Date(existingProfile.updatedAt).toLocaleString(language === "VIE" ? "vi-VN" : "en-US") : "—"}
+                </p>
               </div>
             </div>
           )}
@@ -216,7 +220,7 @@ export default function HealthProfile() {
             <div className="relative z-10">
               <h3 className="font-serif text-lg font-bold text-sage-900 mb-4 flex items-center gap-2">
                 <Leaf className="h-5 w-5 text-primary-700" />
-                Chế Độ Ăn Uống
+                {t("health.dietarySection")}
               </h3>
               <div className="flex flex-wrap gap-3">
                 {DIET_OPTIONS.map((opt) => (
@@ -236,7 +240,7 @@ export default function HealthProfile() {
                       onChange={() => setDietaryPreference(opt.key)}
                       className="sr-only"
                     />
-                    <span className="relative z-10">{opt.label}</span>
+                    <span className="relative z-10">{t("health.diet." + opt.key)}</span>
                   </label>
                 ))}
               </div>
@@ -246,7 +250,7 @@ export default function HealthProfile() {
             <div className="relative z-10">
               <h3 className="font-serif text-lg font-bold text-sage-900 mb-4 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-600" />
-                Dị Ứng Thực Phẩm
+                {t("health.allergiesSection")}
               </h3>
               <div className="flex flex-wrap gap-3 mb-4">
                 {ALLERGY_OPTIONS.map((opt) => (
@@ -265,7 +269,7 @@ export default function HealthProfile() {
                       className="sr-only"
                     />
                     {selectedAllergies.includes(opt.key) && <CheckCircle2 className="w-4 h-4 text-white" />}
-                    {opt.label}
+                    {t("health.allergy." + opt.key)}
                   </label>
                 ))}
               </div>
@@ -273,7 +277,7 @@ export default function HealthProfile() {
                 type="text"
                 value={otherAllergy}
                 onChange={(e) => setOtherAllergy(e.target.value)}
-                placeholder="Dị ứng khác (nếu có)..."
+                placeholder={t("health.otherAllergyPlaceholder")}
                 className="w-full px-2 py-2.5 border-b border-primary-200 bg-transparent text-sm text-sage-800 focus:outline-none focus:border-primary-800 rounded-none transition-all duration-200"
               />
             </div>
@@ -282,16 +286,16 @@ export default function HealthProfile() {
             <div className="relative z-10">
               <h3 className="font-serif text-lg font-bold text-sage-900 mb-2 flex items-center gap-2">
                 <Heart className="h-5 w-5 text-rose-500" />
-                Tình Trạng Thể Chất
+                {t("health.physicalConditionSection")}
               </h3>
               <p className="text-xs sm:text-sm text-sage-500 mb-4 font-light leading-relaxed">
-                Ví dụ: Đau lưng, thoát vị đĩa đệm, huyết áp cao, tiểu đường, đang mang thai... Thông tin này được mã hóa và chỉ Kỹ thuật viên Spa/Vật lý trị liệu mới được xem.
+                {t("health.physicalConditionDesc")}
               </p>
               <textarea
                 value={physicalCondition}
                 onChange={(e) => setPhysicalCondition(e.target.value)}
                 rows={4}
-                placeholder="Mô tả tình trạng sức khỏe thể chất của bạn..."
+                placeholder={t("health.physicalConditionPlaceholder")}
                 className="w-full px-5 py-4 rounded-2xl border border-primary-200 bg-white/60 text-sm text-sage-900 focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-100/50 resize-none transition-all duration-300 placeholder-sage-400"
               />
             </div>
@@ -303,11 +307,11 @@ export default function HealthProfile() {
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <h3 className="font-serif text-xl font-bold text-amber-900">
-                  Chứng Nhận Bảo Mật Dữ Liệu
+                  {t("health.privacyTitle")}
                 </h3>
               </div>
               <p className="text-sm text-amber-700/80 font-light mb-6">
-                Theo Nghị định 356/2025/NĐ-CP, việc thu thập thông tin sức khỏe yêu cầu sự đồng ý rõ ràng và riêng biệt. Dữ liệu của bạn được bảo vệ bằng chuẩn mã hóa AES-256.
+                {t("health.privacyDesc")}
               </p>
 
               <div className="space-y-4">
@@ -325,7 +329,8 @@ export default function HealthProfile() {
                     <Check className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 peer-checked:scale-100 scale-50 transition-all duration-200" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-amber-900 leading-relaxed font-light">
-                    <strong className="font-semibold text-amber-950">Đồng ý Xử lý Dữ liệu Sức khỏe:</strong> Tôi đồng ý cho Ngũ Sơn Resort lưu trữ và xử lý thông tin dị ứng thực phẩm và tình trạng thể chất của tôi nhằm mục đích cung cấp dịch vụ nghỉ dưỡng phù hợp.
+                    <strong className="font-semibold text-amber-950">{t("health.consentProcessingTitle")}</strong>
+                    {t("health.consentProcessingDesc")}
                   </span>
                 </label>
 
@@ -343,7 +348,8 @@ export default function HealthProfile() {
                     <Check className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 peer-checked:scale-100 scale-50 transition-all duration-200" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-amber-900 leading-relaxed font-light">
-                    <strong className="font-semibold text-amber-950">Đồng ý Chia sẻ Có Giới hạn:</strong> Tôi đồng ý để thông tin dị ứng thực phẩm được chia sẻ với bộ phận bếp, và thông tin thể chất được chia sẻ với kỹ thuật viên Spa/trị liệu. Các nhân sự khác không được xem dữ liệu này.
+                    <strong className="font-semibold text-amber-950">{t("health.consentSharingTitle")}</strong>
+                    {t("health.consentSharingDesc")}
                   </span>
                 </label>
               </div>
@@ -351,7 +357,7 @@ export default function HealthProfile() {
               <div className="flex items-start gap-2 mt-5">
                 <Info className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-600 font-light">
-                  Bạn có thể thu hồi sự đồng ý và xóa vĩnh viễn hồ sơ sức khỏe bất cứ lúc nào thông qua nút "Xóa Hồ Sơ" bên dưới.
+                  {t("health.infoNotice")}
                 </p>
               </div>
             </div>
@@ -368,7 +374,7 @@ export default function HealthProfile() {
               ) : (
                 <>
                   <Save className="h-5 w-5 relative z-10" />
-                  <span className="relative z-10">{existingProfile ? "Cập Nhật Hồ Sơ Sức Khỏe" : "Lưu Hồ Sơ Sức Khỏe"}</span>
+                  <span className="relative z-10">{existingProfile ? t("health.updateBtn") : t("health.saveBtn")}</span>
                 </>
               )}
             </button>
@@ -380,9 +386,9 @@ export default function HealthProfile() {
               <div className="flex items-start gap-3 mb-4">
                 <Trash2 className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-bold text-red-700">Quyền Xóa Dữ Liệu Sức Khỏe</h3>
+                  <h3 className="text-sm font-bold text-red-700">{t("health.deleteBtn")}</h3>
                   <p className="text-xs text-red-600 mt-1">
-                    Theo Nghị định 356/2025, bạn có quyền yêu cầu xóa vĩnh viễn toàn bộ hồ sơ sức khỏe và dị ứng thực phẩm của mình. Dữ liệu sẽ bị xóa hoàn toàn khỏi hệ thống và không thể phục hồi.
+                    {t("health.deleteConfirmDesc")}
                   </p>
                 </div>
               </div>
@@ -394,15 +400,15 @@ export default function HealthProfile() {
                   className="w-full py-3 rounded-md text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Xóa Vĩnh Viễn Hồ Sơ Sức Khỏe
+                  {t("health.deleteBtn")}
                 </button>
               ) : (
                 <div className="bg-red-50/70 border-l-4 border-red-500 rounded-md p-5 space-y-4">
                   <p className="text-sm font-semibold text-red-800 text-center">
-                    ⚠️ Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ sức khỏe?
+                    {t("health.deleteConfirmTitle")}
                   </p>
                   <p className="text-xs text-red-600 text-center">
-                    Hành động này không thể hoàn tác. Toàn bộ dữ liệu sức khỏe và dị ứng sẽ bị xóa hoàn toàn.
+                    {t("health.deleteConfirmDesc")}
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <button
@@ -410,7 +416,7 @@ export default function HealthProfile() {
                       onClick={() => setShowDeleteConfirm(false)}
                       className="py-2.5 rounded-md text-sm font-semibold border border-sage-300 text-sage-700 hover:bg-sage-50 transition cursor-pointer"
                     >
-                      Hủy Bỏ
+                      {t("health.cancelBtn")}
                     </button>
                     <button
                       type="button"
@@ -421,7 +427,7 @@ export default function HealthProfile() {
                       {loading ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        "Xác Nhận Xóa"
+                        t("health.confirmDeleteBtn")
                       )}
                     </button>
                   </div>
