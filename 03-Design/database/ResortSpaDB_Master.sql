@@ -22,6 +22,7 @@ GO
 IF OBJECT_ID('dbo.package_highlights', 'U') IS NOT NULL DROP TABLE dbo.package_highlights;
 IF OBJECT_ID('dbo.package_features', 'U') IS NOT NULL DROP TABLE dbo.package_features;
 IF OBJECT_ID('dbo.feedback', 'U') IS NOT NULL DROP TABLE dbo.feedback;
+IF OBJECT_ID('dbo.complaints', 'U') IS NOT NULL DROP TABLE dbo.complaints;
 IF OBJECT_ID('dbo.blog', 'U') IS NOT NULL DROP TABLE dbo.blog;
 IF OBJECT_ID('dbo.payment_transaction_log', 'U') IS NOT NULL DROP TABLE dbo.payment_transaction_log;
 IF OBJECT_ID('dbo.invoice', 'U') IS NOT NULL DROP TABLE dbo.invoice;
@@ -341,6 +342,19 @@ CREATE TABLE dbo.feedback (
 
     CONSTRAINT CK_feedback_rating         CHECK (rating BETWEEN 1 AND 5),
     CONSTRAINT UQ_feedback_room_booking   UNIQUE (room_booking_id)
+);
+GO
+
+-- 2.15.1 Complaints / Support requests
+CREATE TABLE dbo.complaints (
+    id          INT           IDENTITY(1,1) PRIMARY KEY,
+    user_id     INT           NULL REFERENCES dbo.users(user_id) ON DELETE SET NULL,
+    guest_name  NVARCHAR(255) NOT NULL,
+    room_number VARCHAR(50)   NOT NULL,
+    content     NVARCHAR(MAX) NOT NULL,
+    status      VARCHAR(20)   NOT NULL DEFAULT 'Open',
+    created_at  DATETIME2     NOT NULL DEFAULT GETDATE(),
+    feedback    NVARCHAR(MAX) NULL
 );
 GO
 

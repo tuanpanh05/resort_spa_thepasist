@@ -22,17 +22,17 @@ export default function BookingBillSummary({
   if (villaTotal === 0) {
     return (
       <div
-        className={`bg-white border border-primary-100 p-6 shadow-xs text-left sticky top-28 ${radius.card}`}
+        className="bg-[#fbfaf7]/95 border border-[#cda250]/20 p-6 shadow-[0_15px_40px_rgba(26,44,34,0.05)] text-left sticky top-28 rounded-2xl backdrop-blur-md"
       >
-        <h3 className="font-serif text-lg font-bold text-sage-950 border-b border-primary-100 pb-3 mb-4">
+        <h3 className="font-serif text-lg font-normal text-[#1a2f23] border-b border-[#cda250]/15 pb-3 mb-4 tracking-wide uppercase">
           Chi Tiết Thanh Toán
         </h3>
         <div className="py-8 text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-50/50 border border-primary-100">
-            <span className="text-xl">📋</span>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#cda250]/10 border border-[#cda250]/25">
+            <span className="text-[#cda250] text-lg font-serif">📋</span>
           </div>
-          <p className="text-xs text-sage-600 font-medium">Chưa có thông tin thanh toán</p>
-          <p className="text-[11px] text-sage-400 font-light leading-relaxed max-w-[220px] mx-auto">
+          <p className="text-xs text-[#1a2f23] font-medium">Chưa có thông tin thanh toán</p>
+          <p className="text-[11px] text-sage-500 font-light leading-relaxed max-w-[220px] mx-auto">
             Vui lòng hoàn thành khai báo và chọn hạng phòng/biệt thự ở Bước 3 để hiển thị bảng tính phí chi tiết.
           </p>
         </div>
@@ -54,9 +54,9 @@ export default function BookingBillSummary({
 
   return (
     <div
-      className={`bg-white border border-primary-100 p-6 shadow-xs text-left sticky top-28 ${radius.card}`}
+      className="bg-[#fbfaf7]/95 border border-[#cda250]/20 p-6 shadow-[0_15px_40px_rgba(26,44,34,0.05)] text-left sticky top-28 rounded-2xl backdrop-blur-md"
     >
-      <h3 className="font-serif text-lg font-bold text-sage-950 border-b border-primary-100 pb-3 mb-4">
+      <h3 className="font-serif text-lg font-normal text-[#1a2f23] border-b border-[#cda250]/15 pb-3 mb-4 tracking-wide uppercase">
         Chi Tiết Thanh Toán
       </h3>
 
@@ -118,34 +118,34 @@ export default function BookingBillSummary({
         )}
 
         {/* Billing status flags */}
-        <div className="pt-4 border-t border-primary-100 space-y-2.5">
-          <div className="flex justify-between font-serif text-base text-sage-950">
+        <div className="pt-4 border-t border-[#cda250]/15 space-y-2.5">
+          <div className="flex justify-between font-serif text-base text-[#1a2f23]">
             <span>Tổng chi phí:</span>
             <span className="font-bold">{formatCurrency(totalAmount)}</span>
           </div>
 
-          <div className="flex justify-between text-xs font-semibold text-green-700 bg-green-50/50 p-2">
+          <div className="flex justify-between text-xs font-semibold text-[#1a2f23] bg-[#cda250]/10 p-2.5 rounded-lg border border-[#cda250]/20">
             <span>Cọc trước (30%):</span>
             <span className="font-mono">{formatCurrency(depositAmount)}</span>
           </div>
 
-          <div className="flex justify-between text-xs text-sage-500 p-2 border border-dashed border-primary-100">
+          <div className="flex justify-between text-xs text-sage-600 p-2.5 border border-dashed border-[#cda250]/30 rounded-lg bg-white/50">
             <span>Trả tại quầy (70%):</span>
             <span className="font-mono">{formatCurrency(remainingAmount)}</span>
           </div>
         </div>
 
         {/* Technical statuses details */}
-        <div className="pt-4 border-t border-primary-50 space-y-2 text-[10px] font-mono font-medium text-sage-400 bg-primary-50/30 p-3">
+        <div className="pt-4 border-t border-[#cda250]/15 space-y-2 text-[10px] font-mono font-medium text-sage-500 bg-[#cda250]/5 p-3 rounded-lg border border-[#cda250]/10">
           <div className="flex justify-between">
             <span>BOOKING STATUS:</span>
             <span
               className={`font-bold ${
                 bookingStatus === "CONFIRMED"
-                  ? "text-green-700"
+                  ? "text-emerald-700 font-semibold"
                   : bookingStatus === "PENDING_PAYMENT"
-                  ? "text-amber-700"
-                  : "text-sage-500"
+                  ? "text-amber-700 font-semibold"
+                  : "text-sage-600"
               }`}
             >
               {bookingStatus}
@@ -156,10 +156,10 @@ export default function BookingBillSummary({
             <span
               className={`font-bold ${
                 paymentStatus === "PAID"
-                  ? "text-green-700"
+                  ? "text-emerald-700 font-semibold"
                   : paymentStatus === "PENDING"
-                  ? "text-amber-700"
-                  : "text-sage-500"
+                  ? "text-amber-700 font-semibold"
+                  : "text-sage-600"
               }`}
             >
               {paymentStatus}

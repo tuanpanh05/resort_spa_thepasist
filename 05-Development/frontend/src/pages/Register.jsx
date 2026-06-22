@@ -8,7 +8,7 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
-  Leaf,
+  Crown,
   Loader2,
 } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
@@ -39,8 +39,26 @@ export default function Register() {
   // Common UI State
   const [error, setError] = useState("");
   const [policyModal, setPolicyModal] = useState(null); // "privacy" | "terms" | null
+  
+  // Custom states for animated floating placeholders and entrance transitions
+  const [nameFocused, setNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [phoneFocused, setPhoneFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmFocused, setConfirmFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const canResend = timer === 0;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const nameActive = nameFocused || name.length > 0;
+  const emailActive = emailFocused || email.length > 0;
+  const phoneActive = phoneFocused || phone.length > 0;
+  const passwordActive = passwordFocused || password.length > 0;
+  const confirmActive = confirmFocused || confirmPassword.length > 0;
 
   // Countdown for OTP Step
   useEffect(() => {
@@ -206,40 +224,52 @@ export default function Register() {
         className="min-h-screen relative flex items-center justify-center py-20 px-4 sm:px-6 lg:px-8 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroBg})` }}
       >
-        {/* Dark organic overlay */}
-        <div className="absolute inset-0 bg-[#233827]/40 backdrop-blur-sm" />
+        {/* Light warm ivory cover overlay with blur */}
+        <div className="absolute inset-0 bg-[#faf8f5]/85 backdrop-blur-md" />
 
-        {/* Register Card */}
-        <div className="relative z-10 w-full max-w-lg bg-white/95 backdrop-blur-md rounded-md shadow-xl p-8 sm:p-10 transition-all duration-300">
+        {/* Register Card (Ivory glass container) */}
+        <div 
+          className={`relative z-10 w-full max-w-lg bg-white/95 backdrop-blur-xl border border-[#cda250]/25 rounded-2xl shadow-[0_30px_70px_rgba(26,44,34,0.08)] p-8 sm:p-10 transition-all duration-[1200ms] ease-out transform ${
+            mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"
+          }`}
+        >
           
           {/* Back / Navigation button */}
-          {step === 1 ? (
-            <Link
-              to="/"
-              className="inline-flex items-center space-x-2 text-xs font-semibold text-sage-600 hover:text-primary-900 transition-colors duration-200 mb-6 group"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-              <span>Quay lại trang chủ</span>
-            </Link>
-          ) : (
-            <button
-              onClick={() => { setStep(1); setError(""); }}
-              className="inline-flex items-center space-x-2 text-xs font-semibold text-sage-600 hover:text-primary-900 transition-colors duration-200 mb-6 group cursor-pointer border-none bg-transparent"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-              <span>Quay lại đăng ký</span>
-            </button>
-          )}
+          <div 
+            className={`transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "100ms" }}
+          >
+            {step === 1 ? (
+              <Link
+                to="/"
+                className="inline-flex items-center space-x-2 text-xs font-semibold text-sage-600 hover:text-[#b28a50] transition-colors duration-200 mb-6 group cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+                <span>Quay lại trang chủ</span>
+              </Link>
+            ) : (
+              <button
+                onClick={() => { setStep(1); setError(""); }}
+                className="inline-flex items-center space-x-2 text-xs font-semibold text-sage-600 hover:text-[#b28a50] transition-colors duration-200 mb-6 group cursor-pointer border-none bg-transparent"
+              >
+                <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+                <span>Quay lại đăng ký</span>
+              </button>
+            )}
+          </div>
 
           {/* Branding Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex p-3 bg-primary-100 rounded-md text-primary-900 mb-3">
-              <Leaf className="h-6 w-6" />
+          <div 
+            className={`text-center mb-8 space-y-3 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "200ms" }}
+          >
+            <div className="inline-flex p-3 bg-[#faf8f5] border border-[#cda250]/25 rounded-lg text-[#b28a50] mb-1 animate-pulse">
+              <Crown className="h-6 w-6" />
             </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-sage-900">
+            <h2 className="font-serif text-2xl sm:text-3xl font-light text-[#1a2f23] tracking-wide">
               {step === 1 ? "Đăng Ký Thành Viên" : "Xác Thực Email"}
             </h2>
-            <p className="text-xs sm:text-sm text-sage-600 mt-2">
+            <p className="text-xs text-sage-650 font-light leading-relaxed">
               {step === 1 
                 ? "Trở thành hội viên để nhận đặc quyền và ưu đãi nghỉ dưỡng tốt nhất"
                 : `Mã OTP kích hoạt tài khoản đã được gửi đến: ${email}`
@@ -249,7 +279,7 @@ export default function Register() {
 
           {/* Error message */}
           {error && (
-            <div className="mb-6 p-4 rounded-md bg-red-50 text-red-700 text-xs sm:text-sm border border-red-100 flex items-start gap-2">
+            <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-xs sm:text-sm border border-red-250 flex items-start gap-2 animate-fade-in">
               <span className="mt-0.5 shrink-0">⚠️</span>
               <span>{error}</span>
             </div>
@@ -257,123 +287,196 @@ export default function Register() {
 
           {/* STEP 1: Registration Form */}
           {step === 1 && (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
               {/* Full Name field */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block">
-                  Họ và Tên
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
+              <div 
+                className={`space-y-1.5 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                style={{ transitionDelay: "300ms" }}
+              >
+                <div className="relative border-b border-[#cda250]/30 focus-within:border-[#b28a50] transition-colors duration-300 py-2">
+                  <label 
+                    className={`absolute left-9 transition-all duration-300 pointer-events-none ${
+                      nameActive 
+                        ? "-top-3.5 text-[#b28a50] text-[9px] font-bold uppercase tracking-wider" 
+                        : "top-2 text-sage-500 text-xs font-light"
+                    }`}
+                  >
+                    Họ và Tên
+                  </label>
+                  <span className="absolute left-0 top-2 flex items-center text-[#b28a50]/70">
                     <User className="h-4.5 w-4.5" />
                   </span>
                   <input
                     type="text"
                     value={name}
+                    onFocus={() => setNameFocused(true)}
+                    onBlur={() => setNameFocused(false)}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Nguyễn Văn A"
-                    className="w-full pl-9 pr-4 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                    placeholder=""
+                    className="w-full pl-9 pr-4 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                   />
                 </div>
               </div>
 
               {/* Grid for Email and Phone */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Email field */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block">
-                    Địa Chỉ Email
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
+                <div 
+                  className={`space-y-1.5 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                  style={{ transitionDelay: "400ms" }}
+                >
+                  <div className="relative border-b border-[#cda250]/30 focus-within:border-[#b28a50] transition-colors duration-300 py-2">
+                    <label 
+                      className={`absolute left-9 transition-all duration-300 pointer-events-none ${
+                        emailActive 
+                          ? "-top-3.5 text-[#b28a50] text-[9px] font-bold uppercase tracking-wider" 
+                          : "top-2 text-sage-500 text-xs font-light"
+                      }`}
+                    >
+                      Địa Chỉ Email
+                    </label>
+                    <span className="absolute left-0 top-2 flex items-center text-[#b28a50]/70">
                       <Mail className="h-4.5 w-4.5" />
                     </span>
                     <input
                       type="email"
                       value={email}
+                      onFocus={() => setEmailFocused(true)}
+                      onBlur={() => setEmailFocused(false)}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@gmail.com"
-                      className="w-full pl-9 pr-4 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                      placeholder=""
+                      className="w-full pl-9 pr-4 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
                   </div>
                 </div>
 
                 {/* Phone field */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block">
-                    Số Điện Thoại
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
+                <div 
+                  className={`space-y-1.5 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                  style={{ transitionDelay: "500ms" }}
+                >
+                  <div className="relative border-b border-[#cda250]/30 focus-within:border-[#b28a50] transition-colors duration-300 py-2">
+                    <label 
+                      className={`absolute left-9 transition-all duration-300 pointer-events-none ${
+                        phoneActive 
+                          ? "-top-3.5 text-[#b28a50] text-[9px] font-bold uppercase tracking-wider" 
+                          : "top-2 text-sage-500 text-xs font-light"
+                      }`}
+                    >
+                      Số Điện Thoại
+                    </label>
+                    <span className="absolute left-0 top-2 flex items-center text-[#b28a50]/70">
                       <Phone className="h-4.5 w-4.5" />
                     </span>
                     <input
                       type="tel"
                       value={phone}
+                      onFocus={() => setPhoneFocused(true)}
+                      onBlur={() => setPhoneFocused(false)}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="0901234567"
-                      className="w-full pl-9 pr-4 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                      placeholder=""
+                      className="w-full pl-9 pr-4 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Grid for Password and Confirm */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Password field */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block">
-                    Mật Khẩu
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
+                <div 
+                  className={`space-y-1.5 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                  style={{ transitionDelay: "600ms" }}
+                >
+                  <div className="relative border-b border-[#cda250]/30 focus-within:border-[#b28a50] transition-colors duration-300 py-2">
+                    <label 
+                      className={`absolute left-9 transition-all duration-300 pointer-events-none ${
+                        passwordActive 
+                          ? "-top-3.5 text-[#b28a50] text-[9px] font-bold uppercase tracking-wider" 
+                          : "top-2 text-sage-500 text-xs font-light"
+                      }`}
+                    >
+                      Mật Khẩu
+                    </label>
+                    <span className="absolute left-0 top-2 flex items-center text-[#b28a50]/70">
                       <Lock className="h-4.5 w-4.5" />
                     </span>
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full pl-9 pr-11 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                      placeholder=""
+                      className="w-full pl-9 pr-11 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-[#b28a50] focus:outline-none cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                    </button>
                   </div>
                 </div>
 
                 {/* Confirm Password field */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block">
-                    Nhập Lại Mật Khẩu
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-sage-400">
+                <div 
+                  className={`space-y-1.5 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                  style={{ transitionDelay: "700ms" }}
+                >
+                  <div className="relative border-b border-[#cda250]/30 focus-within:border-[#b28a50] transition-colors duration-300 py-2">
+                    <label 
+                      className={`absolute left-9 transition-all duration-300 pointer-events-none ${
+                        confirmActive 
+                          ? "-top-3.5 text-[#b28a50] text-[9px] font-bold uppercase tracking-wider" 
+                          : "top-2 text-sage-500 text-xs font-light"
+                      }`}
+                    >
+                      Nhập Lại Mật Khẩu
+                    </label>
+                    <span className="absolute left-0 top-2 flex items-center text-[#b28a50]/70">
                       <Lock className="h-4.5 w-4.5" />
                     </span>
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
+                      onFocus={() => setConfirmFocused(true)}
+                      onBlur={() => setConfirmFocused(false)}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full pl-9 pr-11 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
+                      placeholder=""
+                      className="w-full pl-9 pr-11 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-1 flex items-center text-sage-400 hover:text-[#b28a50] focus:outline-none cursor-pointer"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                    </button>
                   </div>
                 </div>
               </div>
 
               {/* Terms checkbox */}
-              <div className="pt-2">
-                <label className="flex items-start space-x-2 text-xs text-sage-700 cursor-pointer">
+              <div 
+                className={`pt-2 transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                style={{ transitionDelay: "800ms" }}
+              >
+                <label className="flex items-start space-x-2 text-xs text-sage-600 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={agreeTerms}
                     onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="mt-0.5 rounded-sm border-primary-300 text-primary-900 focus:ring-primary-900 cursor-pointer"
+                    className="mt-0.5 rounded-sm border-[#cda250]/40 bg-transparent text-[#b28a50] focus:ring-0 focus:ring-offset-0 cursor-pointer"
                   />
                   <span className="leading-normal">
                     Tôi đồng ý với các{" "}
                     <button
                       type="button"
                       onClick={() => setPolicyModal("privacy")}
-                      className="font-semibold text-primary-900 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                      className="font-bold text-[#b28a50] hover:text-[#1a2f23] transition-colors bg-transparent border-none p-0 cursor-pointer"
                     >
                       Chính sách bảo mật
                     </button>{" "}
@@ -381,7 +484,7 @@ export default function Register() {
                     <button
                       type="button"
                       onClick={() => setPolicyModal("terms")}
-                      className="font-semibold text-primary-900 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                      className="font-bold text-[#b28a50] hover:text-[#1a2f23] transition-colors bg-transparent border-none p-0 cursor-pointer"
                     >
                       Điều khoản hội viên
                     </button>{" "}
@@ -391,20 +494,25 @@ export default function Register() {
               </div>
 
               {/* Submit button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer mt-6 flex items-center justify-center gap-2"
+              <div 
+                className={`transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+                style={{ transitionDelay: "900ms" }}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Đang gửi yêu cầu...
-                  </>
-                ) : (
-                  "Đăng Ký Tài Khoản"
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest bg-gradient-to-r from-[#cda250] to-[#b1893c] hover:from-[#d9b360] hover:to-[#c29a4a] text-[#070e0a] shadow-md shadow-[#cda250]/10 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer mt-4 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Đang gửi yêu cầu...
+                    </>
+                  ) : (
+                    "Đăng Ký Tài Khoản"
+                  )}
+                </button>
+              </div>
             </form>
           )}
 
@@ -412,7 +520,7 @@ export default function Register() {
           {step === 2 && (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div className="space-y-4">
-                <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block text-center">
+                <label className="text-xs font-bold text-sage-800 uppercase tracking-wider block text-center">
                   Nhập Mã Kích Hoạt OTP
                 </label>
                 <div
@@ -430,7 +538,7 @@ export default function Register() {
                       onChange={(e) => handleOtpChange(e, index)}
                       onKeyDown={(e) => handleOtpKeyDown(e, index)}
                       onFocus={(e) => e.target.select()}
-                      className="w-11 h-13 text-center text-xl font-bold text-primary-950 bg-white border border-primary-300 rounded-md focus:border-primary-900 focus:ring-2 focus:ring-primary-900/20 focus:outline-none transition-all duration-150 shadow-sm"
+                      className="w-11 h-13 text-center text-xl font-bold text-[#1a2f23] bg-white border border-[#cda250]/30 rounded-lg focus:border-[#b28a50] focus:ring-2 focus:ring-[#cda250]/10 focus:outline-none transition-all duration-150 shadow-sm"
                       style={{ height: "52px" }}
                     />
                   ))}
@@ -442,7 +550,7 @@ export default function Register() {
                 {timer > 0 ? (
                   <span className="text-sage-500">
                     Gửi lại mã sau{" "}
-                    <strong className="text-primary-900 font-semibold tabular-nums">
+                    <strong className="text-[#1a2f23] font-semibold tabular-nums">
                       {timer}s
                     </strong>
                   </span>
@@ -451,7 +559,7 @@ export default function Register() {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={isLoading}
-                    className="font-bold text-primary-900 hover:underline cursor-pointer disabled:opacity-50 border-none bg-transparent"
+                    className="font-bold text-[#b28a50] hover:text-[#1a2f23] cursor-pointer disabled:opacity-50 border-none bg-transparent transition-colors"
                   >
                     Gửi lại mã OTP
                   </button>
@@ -462,7 +570,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={isLoading || otpCode.join("").length < 6}
-                className="w-full py-3.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest bg-[#1a2f23] hover:bg-[#070e0a] text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer disabled:opacity-50 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -478,11 +586,14 @@ export default function Register() {
 
           {/* Link to Login (only in step 1) */}
           {step === 1 && (
-            <div className="text-center mt-8 pt-4 border-t border-primary-100/50 text-xs sm:text-sm">
-              <span className="text-sage-600">Bạn đã có tài khoản? </span>
+            <div 
+              className={`text-center mt-8 pt-4 border-t border-[#cda250]/15 text-xs transition-all duration-700 transform ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+              style={{ transitionDelay: "1000ms" }}
+            >
+              <span className="text-sage-500">Bạn đã có tài khoản? </span>
               <Link
                 to="/dang-nhap"
-                className="font-bold text-primary-900 hover:underline"
+                className="font-bold text-[#b28a50] hover:text-[#1a2f23] transition-colors"
               >
                 Đăng nhập ngay
               </Link>

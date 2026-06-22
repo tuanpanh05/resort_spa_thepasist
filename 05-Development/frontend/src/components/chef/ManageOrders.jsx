@@ -76,14 +76,19 @@ export default function ManageOrders({
           </div>
 
           {/* Metadata */}
-          <div className="flex justify-between items-center text-[10px] text-sage-500 font-mono mb-3">
-            <span>Đơn: {ord.id}</span>
-            <span className="text-[10px] bg-sage-100 text-sage-800 px-1.5 py-0.5 rounded font-bold border border-sage-200">
-              Phòng: {ord.room}
-            </span>
-            <span className="truncate max-w-[120px] text-right" title={ord.guestName}>
-              Khách: <strong className="text-sage-800">{ord.guestName}</strong>
-            </span>
+          <div className="mb-3.5 bg-sage-50/50 p-2.5 rounded-lg border border-sage-100/70 text-[11px] space-y-1.5 text-sage-600">
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-[10px] text-sage-400">Đơn: {ord.id}</span>
+              <span className="truncate max-w-[150px] text-right font-medium" title={ord.guestName}>
+                Khách: <strong className="text-sage-900 font-semibold">{ord.guestName}</strong>
+              </span>
+            </div>
+            <div className="pt-1.5 border-t border-sage-100/50 flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-sage-400 tracking-wider">Phòng nhận:</span>
+              <span className="text-[10px] bg-green-50 text-green-800 px-2 py-0.5 rounded font-mono font-bold border border-green-200 shadow-sm">
+                {ord.room}
+              </span>
+            </div>
           </div>
 
           {/* Items List */}

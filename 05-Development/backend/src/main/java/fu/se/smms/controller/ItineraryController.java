@@ -35,4 +35,10 @@ public class ItineraryController {
         ItineraryDTO itinerary = itineraryService.getTimeline(bookingId);
         return ResponseEntity.ok(itinerary);
     }
+
+    @GetMapping("/by-email")
+    public ResponseEntity<ItineraryDTO> getItineraryByEmail(@RequestParam("email") String email) {
+        ItineraryDTO itinerary = itineraryService.getTimelineByEmail(email);
+        return ResponseEntity.ok(itinerary);
+    }
 }

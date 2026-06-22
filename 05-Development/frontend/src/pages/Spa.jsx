@@ -353,26 +353,7 @@ export default function Spa() {
         </div>
 
         {/* Content container */}
-        <div className="relative z-20 max-w-4xl mx-auto px-6">
-          {/* Tagline Badge theo phong cách tối giản không bo cong tròn của Limón */}
-          <div className="inline-flex items-center gap-2 bg-warm-cream/10 border border-warm-cream/25 px-5 py-2 rounded-[1px] mb-6 shadow-none">
-            <Leaf className="w-3.5 h-3.5 text-lemon-zest fill-lemon-zest/20" />
-            <span className="text-[10px] font-bold text-warm-cream uppercase tracking-[0.3em]">
-              Ngũ Sơn Resort & Spa
-            </span>
-          </div>
 
-          {/* Heading với điểm nhấn màu vàng Lemon Zest */}
-          <h1 className="font-serif text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-wide drop-shadow">
-            Trị Liệu & <span className="text-lemon-zest">Chăm Sóc</span> Sức Khỏe
-          </h1>
-
-          {/* Subtitle với độ tương phản cao */}
-          <p className="text-warm-cream/90 text-sm md:text-base leading-relaxed max-w-2xl mx-auto font-light tracking-wide drop-shadow-sm">
-            Khám phá các liệu trình chăm sóc sức khỏe đẳng cấp, được thiết kế tinh tế
-            để phục hồi sự cân bằng giữa <span className="font-semibold text-lemon-zest">thân – tâm – trí</span> trong khung cảnh candlelit thư giãn của Ngũ Sơn.
-          </p>
-        </div>
       </section>
 
       {/* ── Bộ lọc danh mục (Cùng một hàng, bo tròn lại) ── */}

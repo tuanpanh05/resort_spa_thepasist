@@ -360,7 +360,7 @@ export default function GuestDashboard() {
                 </div>
                 <h2 className="font-serif text-2xl font-normal text-sage-900 mb-2">Đã Gửi Yêu Cầu Tới Bếp!</h2>
                 <p className="text-sage-600 text-[13px] mb-6 font-light">
-                  Đơn gọi món của quý khách đã được chuyển thẳng tới Bếp Trưởng. Xin vui lòng giữ mã đơn bên dưới để đối chiếu khi nhận món.
+                  Đơn gọi món của quý khách đã được chuyển thẳng tới Bếp Trưởng. <strong>Tổng tiền gọi món sẽ được tính vào hóa đơn phòng (bill) khi quý khách Check-out.</strong> Xin vui lòng giữ mã đơn bên dưới để đối chiếu khi nhận món.
                 </p>
                 <div className="border border-primary-100 bg-primary-50/20 text-left p-6 space-y-4 mb-8 text-xs sm:text-sm">
                   <div className="flex justify-between pb-3 border-b border-primary-100 font-bold uppercase text-[10px] text-sage-500 tracking-wider items-center">

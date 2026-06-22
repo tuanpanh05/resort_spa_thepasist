@@ -7,34 +7,38 @@ export default function GuestInfoStep({
   formErrors,
   setFormErrors,
   handleNextStep,
+  onLookupEmail,
+  isLookingUp,
+  lookupStatus,
+  setLookupStatus,
 }) {
   return (
     <div className="space-y-6 text-left animate-fade-in">
-      <div className="border-b border-primary-50 pb-3 mb-6">
-        <h2 className="text-resort-section text-sage-950 mb-1">
-          {"B\u01b0\u1edbc 1: Th\u00f4ng Tin Kh\u00e1ch H\u00e0ng"}
+      <div className="border-b border-[#cda250]/15 pb-4 mb-8">
+        <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">
+          {"Bước 1: Thông Tin Khách Hàng"}
         </h2>
-        <p className="text-resort-desc mt-1">
-          {"Vui l\u00f2ng nh\u1eadp c\u00e1c th\u00f4ng tin li\u00ean l\u1ea1c ch\u00ednh x\u00e1c \u0111\u1ec3 t\u1ea1o h\u1ed3 s\u01a1 kh\u00e1ch l\u01b0u tr\u00fa ban \u0111\u1ea7u."}
+        <p className="text-resort-desc mt-1 text-sage-600 font-light">
+          {"Vui lòng nhập các thông tin liên lạc chính xác để tạo hồ sơ khách lưu trú ban đầu."}
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs sm:text-sm">
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
-            {"H\u1ecd v\u00e0 t\u00ean"} <span className="text-red-500">*</span>
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
+            {"Họ và tên"} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
               type="text"
-              placeholder={"Nguy\u1ec5n V\u0103n A"}
+              placeholder={"Nguyễn Văn A"}
               value={guestInfo.fullName}
               onChange={(e) => {
                 setGuestInfo({ ...guestInfo, fullName: e.target.value });
                 setFormErrors({ ...formErrors, fullName: "" });
               }}
-              className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
-                formErrors.fullName ? "border-red-400" : "border-primary-200/50"
+              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                formErrors.fullName ? "border-red-400" : "border-[#cda250]/20"
               }`}
             />
             <User className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -47,8 +51,8 @@ export default function GuestInfoStep({
         </div>
 
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
-            {"S\u1ed1 \u0111i\u1ec7n tho\u1ea1i"} <span className="text-red-500">*</span>
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
+            {"Số điện thoại"} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
@@ -59,8 +63,8 @@ export default function GuestInfoStep({
                 setGuestInfo({ ...guestInfo, phone: e.target.value });
                 setFormErrors({ ...formErrors, phone: "" });
               }}
-              className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
-                formErrors.phone ? "border-red-400" : "border-primary-200/50"
+              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                formErrors.phone ? "border-red-400" : "border-[#cda250]/20"
               }`}
             />
             <Phone className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -73,8 +77,8 @@ export default function GuestInfoStep({
         </div>
 
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
-            {"\u0110\u1ecba ch\u1ec9 Email"} <span className="text-red-500">*</span>
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
+            {"Địa chỉ Email"} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
@@ -84,13 +88,30 @@ export default function GuestInfoStep({
               onChange={(e) => {
                 setGuestInfo({ ...guestInfo, email: e.target.value });
                 setFormErrors({ ...formErrors, email: "" });
+                setLookupStatus && setLookupStatus("idle");
               }}
-              className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
-                formErrors.email ? "border-red-400" : "border-primary-200/50"
+              onBlur={(e) => {
+                const email = e.target.value;
+                if (email && /\S+@\S+\.\S+/.test(email)) {
+                  onLookupEmail && onLookupEmail(email);
+                }
+              }}
+              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                formErrors.email ? "border-red-400" : "border-[#cda250]/20"
               }`}
             />
             <Mail className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
+          {lookupStatus === "searching" && (
+            <span className="text-[10px] text-[#cda250] animate-pulse mt-1.5 block font-medium">
+              Đang kiểm tra lịch sử lưu trú của bạn...
+            </span>
+          )}
+          {lookupStatus === "found" && (
+            <span className="text-[10px] text-emerald-600 mt-1.5 block font-semibold">
+              ✓ Đã tìm thấy và tự động điền hồ sơ khách hàng của bạn.
+            </span>
+          )}
           {formErrors.email && (
             <span className="text-[10px] text-red-500 font-normal mt-1 block">
               {formErrors.email}
@@ -99,21 +120,21 @@ export default function GuestInfoStep({
         </div>
 
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
-            {"S\u1ed1 l\u01b0\u1ee3ng kh\u00e1ch h\u00e0ng"}
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
+            {"Số lượng khách hàng"}
           </label>
           <div className="relative">
             <select
               value={guestInfo.guestsCount}
               onChange={(e) => setGuestInfo({ ...guestInfo, guestsCount: Number(e.target.value) })}
-              className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 appearance-none"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-[#cda250]/20 text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all appearance-none"
             >
-              <option value="1">{"1 Kh\u00e1ch ngh\u1ec9"}</option>
-              <option value="2">{"2 Kh\u00e1ch ngh\u1ec9"}</option>
-              <option value="3">{"3 Kh\u00e1ch ngh\u1ec9"}</option>
-              <option value="4">{"4 Kh\u00e1ch ngh\u1ec9"}</option>
-              <option value="5">{"5 Kh\u00e1ch ngh\u1ec9"}</option>
-              <option value="6">{"\u0110o\u00e0n ngh\u1ec9 \u0111\u00f4ng (6+)"}</option>
+              <option value="1">{"1 Khách nghỉ"}</option>
+              <option value="2">{"2 Khách nghỉ"}</option>
+              <option value="3">{"3 Khách nghỉ"}</option>
+              <option value="4">{"4 Khách nghỉ"}</option>
+              <option value="5">{"5 Khách nghỉ"}</option>
+              <option value="6">{"Đoàn nghỉ đông (6+)"}</option>
             </select>
             <Users className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
@@ -121,7 +142,7 @@ export default function GuestInfoStep({
 
         {/* Guest Age */}
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
             Số tuổi <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -135,8 +156,8 @@ export default function GuestInfoStep({
                 setGuestInfo({ ...guestInfo, age: e.target.value ? Number(e.target.value) : "" });
                 setFormErrors({ ...formErrors, age: "" });
               }}
-              className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
-                formErrors.age ? "border-red-400" : "border-primary-200/50"
+              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                formErrors.age ? "border-red-400" : "border-[#cda250]/20"
               }`}
             />
             <User className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -150,8 +171,8 @@ export default function GuestInfoStep({
 
         {/* Check In Date */}
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
-            {"Ng\u00e0y nh\u1eadn ph\u00f2ng d\u1ef1 ki\u1ebfn"} <span className="text-red-500">*</span>
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
+            {"Ngày nhận phòng dự kiến"} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
@@ -161,7 +182,7 @@ export default function GuestInfoStep({
                 setGuestInfo({ ...guestInfo, checkInDate: e.target.value });
                 setFormErrors({ ...formErrors, checkInDate: "" });
               }}
-              className="w-full pl-10 pr-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-[#cda250]/20 text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all"
             />
             <Calendar className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
@@ -169,7 +190,7 @@ export default function GuestInfoStep({
 
         {/* Check Out Date */}
         <div>
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
             Ngày trả phòng dự kiến <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -181,8 +202,8 @@ export default function GuestInfoStep({
                 setGuestInfo({ ...guestInfo, checkOutDate: e.target.value });
                 setFormErrors({ ...formErrors, checkOutDate: "" });
               }}
-              className={`w-full pl-10 pr-4 py-3 bg-sage-50/50 border text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400 ${
-                formErrors.checkOutDate ? "border-red-400" : "border-primary-200/50"
+              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                formErrors.checkOutDate ? "border-red-400" : "border-[#cda250]/20"
               }`}
             />
             <Calendar className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -195,26 +216,26 @@ export default function GuestInfoStep({
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-resort-label uppercase text-sage-900 mb-2">
-            {"Y\u00eau c\u1ea7u \u0111\u1eb7c bi\u1ec7t kh\u00e1c"}
+          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
+            {"Yêu cầu đặc biệt khác"}
           </label>
           <div className="relative">
             <textarea
-              placeholder={"VD: Mu\u1ed1n ph\u00f2ng \u1edf khu y\u00ean t\u0129nh, c\u1ea7n b\u1ed1 tr\u00ed th\u00eam 1 n\u00f4i em b\u00e9..."}
+              placeholder={"VD: Muốn phòng ở khu yên tĩnh, cần bố trí thêm 1 nôi em bé..."}
               rows="2"
               value={guestInfo.specialRequest}
               onChange={(e) => setGuestInfo({ ...guestInfo, specialRequest: e.target.value })}
-              className="w-full px-4 py-3 bg-sage-50/50 border border-primary-200/50 text-resort-input text-sage-900 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-400"
+              className="w-full px-4 py-3 bg-white border border-[#cda250]/20 text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all"
             />
           </div>
         </div>
       </div>
 
-      <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-end shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
+      <div className="sticky bottom-0 bg-[#fbfaf7] border-t border-[#cda250]/15 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-end shadow-[0_-8px_20px_-6px_rgba(26,44,34,0.05)]">
         <button
           type="button"
           onClick={handleNextStep}
-          className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-widest uppercase rounded-none transition-all duration-300 flex items-center cursor-pointer"
+          className="px-8 py-3.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] hover:shadow-[0_4px_20px_rgba(205,162,80,0.35)] text-resort-button tracking-widest uppercase font-bold rounded-lg transition-all duration-300 flex items-center cursor-pointer"
         >
           {"Khai báo sức khỏe"} <ChevronRight className="h-4 w-4 ml-1.5" />
         </button>

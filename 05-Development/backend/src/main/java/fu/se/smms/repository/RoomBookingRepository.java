@@ -118,6 +118,15 @@ public interface RoomBookingRepository extends JpaRepository<RoomBooking, Intege
     List<RoomBooking> findByEmailAndPhoneWithFullDetails(@Param("email") String email,
                                                          @Param("phone") String phone);
 
+    @Query("SELECT DISTINCT rb FROM RoomBooking rb " +
+           "LEFT JOIN FETCH rb.details d " +
+           "LEFT JOIN FETCH d.room r " +
+           "LEFT JOIN FETCH r.roomType rt " +
+           "LEFT JOIN FETCH rb.user u " +
+           "WHERE u.email = :email " +
+           "ORDER BY rb.checkInDate DESC")
+    List<RoomBooking> findByEmailWithFullDetails(@Param("email") String email);
+
     /**
      * Overlap check that excludes the booking being updated (avoids self-conflict).
      * Used when guests update their check-in/check-out dates.

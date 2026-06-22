@@ -133,9 +133,18 @@ public class RoomBookingService {
                     .filter(r -> r.getRoomType() != null && r.getRoomType().getRoomTypeId().equals(roomTypeId))
                     .collect(Collectors.toList());
 
+            List<Room> availableRooms = new ArrayList<>();
+            for (Room r : matchingRooms) {
+                if (roomBookingRepository.countOverlappingBookings(r.getRoomId(), checkIn, checkOut) == 0) {
+                    availableRooms.add(r);
+                }
+            }
+
             for (int i = 0; i < qty; i++) {
                 Room assignedRoom = null;
-                if (!matchingRooms.isEmpty()) {
+                if (!availableRooms.isEmpty()) {
+                    assignedRoom = availableRooms.remove(0);
+                } else if (!matchingRooms.isEmpty()) {
                     assignedRoom = matchingRooms.get(i % matchingRooms.size());
                 } else {
                     List<Room> allRooms = roomRepository.findAll();

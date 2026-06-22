@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, Routes, Route, useLocation } from "react-router-dom";
-import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf } from "lucide-react";
+import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf, MessageSquare } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
 import { userApi } from "../api";
 import { fmtDate } from "../utils/formatters";
@@ -10,12 +10,14 @@ import PersonalInfoForm from "../components/profile/PersonalInfoForm";
 import BookingHistory from "../components/profile/BookingHistory";
 import HealthRecords from "../components/profile/HealthRecords";
 import PaymentHistory from "../components/profile/PaymentHistory";
+import SupportRequests from "../components/profile/SupportRequests";
 
 const MENU_ITEMS = [
   { path: "/tai-khoan", label: "Thông tin cá nhân", icon: User },
   { path: "/tai-khoan/suc-khoe", label: "Hồ sơ sức khỏe", icon: Heart },
   { path: "/tai-khoan/lich-su-dat-hang", label: "Lịch sử đặt hàng", icon: CalendarDays },
   { path: "/tai-khoan/lich-su-thanh-toan", label: "Lịch sử thanh toán", icon: CreditCard },
+  { path: "/tai-khoan/ho-tro", label: "Liên hệ hỗ trợ", icon: MessageSquare },
 ];
 
 export default function ProfilePage() {
@@ -157,6 +159,7 @@ export default function ProfilePage() {
               <Route path="suc-khoe" element={<HealthRecords />} />
               <Route path="lich-su-dat-hang" element={<BookingHistory />} />
               <Route path="lich-su-thanh-toan" element={<PaymentHistory profile={profile} />} />
+              <Route path="ho-tro" element={<SupportRequests profile={profile} />} />
             </Routes>
           </div>
         </div>

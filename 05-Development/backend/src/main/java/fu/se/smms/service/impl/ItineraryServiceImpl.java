@@ -200,4 +200,16 @@ public class ItineraryServiceImpl {
 
         return dto;
     }
+
+    @Transactional(readOnly = true)
+    public ItineraryDTO getTimelineByEmail(String email) {
+        List<RoomBooking> bookings = roomBookingRepository.findByEmailWithFullDetails(email);
+        if (bookings == null || bookings.isEmpty()) {
+            throw new BusinessException(
+                    "ITINERARY-000", HttpStatus.NOT_FOUND,
+                    "Không tìm thấy đặt phòng nào cho email: " + email);
+        }
+        // Return timeline for the most recent booking
+        return getTimeline(bookings.get(0).getBookingId());
+    }
 }

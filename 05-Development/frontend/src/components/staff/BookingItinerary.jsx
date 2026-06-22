@@ -28,15 +28,15 @@ export default function BookingItinerary({ bookingId, onClose }) {
   const [itinerary, setItinerary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [searchBookingId, setSearchBookingId] = useState(bookingId || "");
+  const [searchEmail, setSearchEmail] = useState("");
 
   useEffect(() => {
     if (bookingId) {
-      loadItinerary(bookingId);
+      loadItineraryById(bookingId);
     }
   }, [bookingId]);
 
-  const loadItinerary = async (id) => {
+  const loadItineraryById = async (id) => {
     if (!id) return;
     setLoading(true);
     setError(null);
@@ -51,10 +51,25 @@ export default function BookingItinerary({ bookingId, onClose }) {
     }
   };
 
+  const loadItineraryByEmail = async (email) => {
+    if (!email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await staffApi.getItineraryByEmail(email.trim());
+      setItinerary(data);
+    } catch (err) {
+      setError(err.message || "Không thể tải lịch trình.");
+      setItinerary(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchBookingId) {
-      loadItinerary(parseInt(searchBookingId));
+    if (searchEmail.trim()) {
+      loadItineraryByEmail(searchEmail);
     }
   };
 
@@ -150,16 +165,17 @@ export default function BookingItinerary({ bookingId, onClose }) {
         )}
       </div>
 
-      {/* Search by Booking ID */}
+      {/* Search by Guest Email */}
       <form onSubmit={handleSearch} className="bg-white border border-primary-100 p-5 flex gap-4 items-center">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-sage-400" />
           <input
-            type="number"
-            placeholder="Nhập mã đặt phòng (Booking ID)..."
-            value={searchBookingId}
-            onChange={(e) => setSearchBookingId(e.target.value)}
+            type="email"
+            placeholder="Nhập email của khách hàng để tra cứu..."
+            value={searchEmail}
+            onChange={(e) => setSearchEmail(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-primary-100 text-xs focus:outline-primary-200"
+            required
           />
         </div>
         <button
@@ -350,7 +366,7 @@ export default function BookingItinerary({ bookingId, onClose }) {
         <div className="bg-white border border-primary-100 p-12 text-center">
           <Calendar className="h-12 w-12 mx-auto mb-4 text-sage-300" />
           <p className="text-sage-500 text-sm">
-            Nhập mã đặt phòng ở trên để xem chi tiết lịch trình.
+            Nhập email của khách hàng ở trên để xem chi tiết đặt phòng và lịch trình hoạt động.
           </p>
         </div>
       )}

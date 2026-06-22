@@ -22,6 +22,19 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
+            System.out.println("[DB Seeder] Automatically executing patch_utf8.sql to ensure correct Vietnamese encoding on all screens...");
+            org.springframework.jdbc.datasource.init.ResourceDatabasePopulator populator = 
+                new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(
+                    new org.springframework.core.io.ClassPathResource("patch_utf8.sql")
+                );
+            populator.setSqlScriptEncoding("UTF-8");
+            populator.execute(jdbcTemplate.getDataSource());
+            System.out.println("[DB Seeder] Successfully applied Unicode encoding patches from patch_utf8.sql.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not run patch_utf8.sql: " + e.getMessage());
+        }
+
+        try {
             System.out.println("[DB Seeder] Creating booking_packages table if not exists...");
             jdbcTemplate.execute("""
                 IF OBJECT_ID('dbo.booking_packages', 'U') IS NULL
@@ -35,6 +48,27 @@ public class DatabaseSeeder implements CommandLineRunner {
                 """);
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Could not create booking_packages table: " + e.getMessage());
+        }
+
+        try {
+            System.out.println("[DB Seeder] Creating complaints table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.complaints', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.complaints (
+                        id          INT           IDENTITY(1,1) PRIMARY KEY,
+                        user_id     INT           NULL REFERENCES dbo.users(user_id) ON DELETE SET NULL,
+                        guest_name  NVARCHAR(255) NOT NULL,
+                        room_number VARCHAR(50)   NOT NULL,
+                        content     NVARCHAR(MAX) NOT NULL,
+                        status      VARCHAR(20)   NOT NULL DEFAULT 'Open',
+                        created_at  DATETIME2     NOT NULL DEFAULT GETDATE(),
+                        feedback    NVARCHAR(MAX) NULL
+                    );
+                END
+                """);
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not create complaints table: " + e.getMessage());
         }
 
         try {
@@ -110,6 +144,19 @@ public class DatabaseSeeder implements CommandLineRunner {
         seedUser("physio@nguson.com", "Physiotherapist", "0900000006", "THERAPIST");
 
         try {
+            // Check if database is already seeded to avoid losing user data
+            Integer existingRooms = 0;
+            try {
+                existingRooms = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM room", Integer.class);
+            } catch (Exception e) {
+                // Table might not exist yet
+            }
+
+            if (existingRooms != null && existingRooms > 0) {
+                System.out.println("[DB Seeder] Database is already seeded (found " + existingRooms + " rooms). Skipping database wipe to preserve your data.");
+                return;
+            }
+
             System.out.println("[DB Seeder] Re-aligning Room Type Prices, cleaning and setting up exactly 70 Rooms...");
 
             // 2. Clean child tables of Room/Booking to prevent constraint errors
@@ -121,6 +168,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.update("DELETE FROM food_order_detail"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM food_order"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM feedback"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM complaints"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM booking_packages"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM room_booking"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM room"); } catch (Exception e) {}
@@ -198,7 +246,69 @@ public class DatabaseSeeder implements CommandLineRunner {
                     jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 1800000.00)", booking2, room2Id);
                     jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (6, ?, 3600000.00, 0.00, 0.00, 360000.00, 3960000.00, 2700000.00, 1260000.00, 'UNPAID')", booking2);
                 }
+
+                // Seed default complaints
+                try {
+                    jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -3, GETDATE()), ?)",
+                            5, "Trần Khách Hàng", "Vip-201", "Gối hơi cao, cần đổi 2 gối lông vũ mềm hơn.", "Resolved", "Đã giao gối mới lúc 15:00");
+                    jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -1, GETDATE()), NULL)",
+                            6, "Lê Minh Châu", "Vip-202", "Wifi trong góc phòng hơi yếu, thỉnh thoảng mất kết nối.", "Open");
+                    System.out.println("[DB Seeder] Seeded default complaints successfully.");
+                } catch (Exception e) {
+                    System.err.println("[DB Seeder] Warning: Complaints seeding failed: " + e.getMessage());
+                }
             }
+            
+            try {
+                System.out.println("[DB Seeder] Running data correction patch for overlapping room bookings...");
+                jdbcTemplate.execute("""
+                    -- Fix room assignment for Invoice 44 (assign Vip-202, Vip-203)
+                    DECLARE @booking44 INT;
+                    SELECT @booking44 = room_booking_id FROM invoice WHERE invoice_id = 44;
+    
+                    DECLARE @room2Id INT, @room3Id INT;
+                    SELECT @room2Id = room_id FROM room WHERE room_number = 'Vip-202';
+                    SELECT @room3Id = room_id FROM room WHERE room_number = 'Vip-203';
+    
+                    IF @booking44 IS NOT NULL AND @room2Id IS NOT NULL AND @room3Id IS NOT NULL
+                    BEGIN
+                        -- Update detail that was Vip-201 to Vip-202
+                        UPDATE TOP (1) room_booking_detail
+                        SET room_id = @room2Id
+                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-201');
+    
+                        -- Update detail that was Vip-202 to Vip-203
+                        UPDATE TOP (1) room_booking_detail
+                        SET room_id = @room3Id
+                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-202');
+                    END
+    
+                    -- Fix room assignment for Invoice 45 (assign Vip-204, Vip-205)
+                    DECLARE @booking45 INT;
+                    SELECT @booking45 = room_booking_id FROM invoice WHERE invoice_id = 45;
+    
+                    DECLARE @room4Id INT, @room5Id INT;
+                    SELECT @room4Id = room_id FROM room WHERE room_number = 'Vip-204';
+                    SELECT @room5Id = room_id FROM room WHERE room_number = 'Vip-205';
+    
+                    IF @booking45 IS NOT NULL AND @room4Id IS NOT NULL AND @room5Id IS NOT NULL
+                    BEGIN
+                        -- Update detail that was Vip-201 to Vip-204
+                        UPDATE TOP (1) room_booking_detail
+                        SET room_id = @room4Id
+                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-201');
+    
+                        -- Update detail that was Vip-202 to Vip-205
+                        UPDATE TOP (1) room_booking_detail
+                        SET room_id = @room5Id
+                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-202');
+                    END
+                    """);
+                System.out.println("[DB Seeder] Overlapping room bookings corrected successfully.");
+            } catch (Exception e) {
+                System.err.println("[DB Seeder] Warning: Could not run overlapping room booking patch: " + e.getMessage());
+            }
+
             System.out.println("[DB Seeder] Exactly 70 rooms configured successfully.");
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Room types / rooms seeding failed: " + e.getMessage());

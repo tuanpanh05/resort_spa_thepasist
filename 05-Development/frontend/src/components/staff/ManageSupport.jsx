@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { PlusCircle, Send, X } from "lucide-react";
+import { complaintsApi } from "../../api";
 
 export default function ManageSupport({ complaints, setComplaints, rooms }) {
   const [showAddComplaintModal, setShowAddComplaintModal] = useState(false);
@@ -22,40 +23,39 @@ export default function ManageSupport({ complaints, setComplaints, rooms }) {
     setShowAddComplaintModal(true);
   };
 
-  const handleAddComplaint = (e) => {
+  const handleAddComplaint = async (e) => {
     e.preventDefault();
     if (!complaintForm.guest || !complaintForm.content) {
-      alert("Vui lòng nhập tên khách và nội dung phàn hồi.");
+      alert("Vui lòng nhập tên khách và nội dung phản hồi.");
       return;
     }
-    const newComp = {
-      id: Date.now(),
-      guest: complaintForm.guest,
-      room: complaintForm.room,
-      content: complaintForm.content,
-      status: "Open",
-      time: "Vừa xong",
-      feedback: "",
-    };
-    setComplaints((prev) => [newComp, ...prev]);
-    setShowAddComplaintModal(false);
-    setComplaintForm({ guest: "", room: rooms[0]?.id || "101", content: "" });
-    alert("Đã ghi nhận yêu cầu / khiếu nại của khách hàng.");
+    try {
+      const response = await complaintsApi.submitComplaint(
+        complaintForm.guest,
+        complaintForm.room,
+        complaintForm.content
+      );
+      setComplaints((prev) => [response, ...prev]);
+      setShowAddComplaintModal(false);
+      setComplaintForm({ guest: "", room: rooms[0]?.id || "101", content: "" });
+      alert("Đã ghi nhận yêu cầu / khiếu nại của khách hàng.");
+    } catch (err) {
+      alert("Ghi nhận thất bại: " + err.message);
+    }
   };
 
-  const handleResolveComplaint = (id, responseText) => {
-    setComplaints((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              status: "Resolved",
-              feedback: responseText || "Đã xử lý xong",
-            }
-          : c,
-      ),
-    );
-    alert('Đã cập nhật trạng thái khiếu nại thành "Đã giải quyết".');
+  const handleResolveComplaint = async (id, responseText) => {
+    try {
+      const resolved = await complaintsApi.resolveComplaint(id, responseText || "Đã xử lý xong");
+      setComplaints((prev) =>
+        prev.map((c) =>
+          c.id === id ? resolved : c
+        )
+      );
+      alert('Đã cập nhật trạng thái khiếu nại thành "Đã giải quyết".');
+    } catch (err) {
+      alert("Cập nhật thất bại: " + err.message);
+    }
   };
 
   const handleSendChatMessage = (e) => {
@@ -129,11 +129,13 @@ export default function ManageSupport({ complaints, setComplaints, rooms }) {
                   <tr key={c.id} className="hover:bg-primary-50/10">
                     <td className="p-4 font-bold text-primary-950">{c.id}</td>
                     <td className="p-4 font-bold text-sage-950">
-                      Phòng {c.room}
+                      Phòng {c.roomNumber || c.room}
                     </td>
-                    <td className="p-4 text-sage-700">{c.guest}</td>
+                    <td className="p-4 text-sage-700">{c.guestName || c.guest}</td>
                     <td className="p-4 text-sage-800 max-w-xs">{c.content}</td>
-                    <td className="p-4 text-sage-500 font-mono">{c.time}</td>
+                    <td className="p-4 text-sage-500 font-mono">
+                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString("vi-VN") + " " + new Date(c.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }) : c.time}
+                    </td>
                     <td className="p-4">
                       <span
                         className={`px-2 py-0.5 rounded-none text-[10px] font-semibold uppercase tracking-wider ${

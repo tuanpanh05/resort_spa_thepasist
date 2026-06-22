@@ -201,4 +201,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             GROUP BY ws.staff_id
             """, nativeQuery = true)
     List<Object[]> findTherapistScheduledMinutes(@Param("year") Integer year, @Param("month") Integer month);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = """
+            DELETE FROM dbo.invoice
+            WHERE room_booking_id IN (
+                SELECT booking_id
+                FROM dbo.room_booking
+                WHERE status = 'CHECKED_OUT'
+                  AND check_out_date < :thresholdDate
+            )
+            """, nativeQuery = true)
+    int deleteOldInvoices(@Param("thresholdDate") java.time.LocalDateTime thresholdDate);
 }

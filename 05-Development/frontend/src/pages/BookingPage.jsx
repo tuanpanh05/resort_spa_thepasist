@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { colors, radius, shadows } from "../styles/designSystem";
 import axiosClient from "../api/axiosClient";
-import { medicalApi, userApi, masterDataApi } from "../api";
+import { medicalApi, userApi, masterDataApi, bookingLookupApi } from "../api";
 
 import { villasList, servicesList } from "../constants/booking";
 import { detectAllergens } from "../utils/health";
@@ -82,6 +82,56 @@ export default function BookingPage() {
   // Loading States
   const [isConfirming, setIsConfirming] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [lookupStatus, setLookupStatus] = useState("idle"); // idle, searching, found, not_found
+
+  const handleEmailLookup = async (emailToLookup) => {
+    if (!emailToLookup || !/\S+@\S+\.\S+/.test(emailToLookup)) {
+      return;
+    }
+    setIsLookingUp(true);
+    setLookupStatus("searching");
+    try {
+      const profile = await bookingLookupApi.getGuestProfile(emailToLookup);
+      if (profile) {
+        setGuestInfo((prev) => ({
+          ...prev,
+          fullName: profile.fullName || prev.fullName,
+          phone: profile.phone || prev.phone,
+        }));
+        
+        // Auto-fill health profile if exists
+        if (profile.medicalProfile) {
+          const mp = profile.medicalProfile;
+          if (mp.explicitConsentSigned) {
+            setConsentDataProcessing(true);
+            setConsentSharing(true);
+            if (mp.foodAllergies) {
+              try {
+                const parsed = JSON.parse(mp.foodAllergies);
+                setSelectedAllergies(parsed.selected || []);
+                setOtherAllergy(parsed.other || "");
+                setDietaryPreference(parsed.diet || "omnivore");
+              } catch {
+                setOtherAllergy(mp.foodAllergies);
+              }
+            }
+            if (mp.physicalCondition) {
+              setPhysicalCondition(mp.physicalCondition);
+            }
+          }
+        }
+        setLookupStatus("found");
+      } else {
+        setLookupStatus("not_found");
+      }
+    } catch (err) {
+      console.warn("Email lookup failed or user not found:", err);
+      setLookupStatus("not_found");
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -194,9 +244,9 @@ export default function BookingPage() {
     fetchPackagesAndServices();
   }, []);
 
-  // Auto-select recommended package when Step 4 is reached
+  // Auto-select recommended package when Step 5 is reached
   useEffect(() => {
-    if (step === 4 && selectedPackageIds.length === 0 && retreatPackages.length > 0) {
+    if (step === 5 && selectedPackageIds.length === 0 && retreatPackages.length > 0) {
       const guests = guestInfo.guestsCount || 1;
       const age = guestInfo.age || 30;
       let recId = 1;
@@ -391,16 +441,18 @@ export default function BookingPage() {
       }
       setStep(4);
     } else if (step === 4) {
+      setStep(5);
+    } else if (step === 5) {
       if (selectedPackageIds.length === 0) {
-        alert("Vui lòng chọn ít nhất một gói trị liệu ở Bước 4 trước khi tiếp tục.");
+        alert("Vui lòng chọn ít nhất một gói trị liệu ở Bước 5 trước khi tiếp tục.");
         return;
       }
-      setStep(5);
+      setStep(6);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1 && step < 6) {
+    if (step > 1 && step < 7) {
       setStep(step - 1);
     }
   };
@@ -484,27 +536,27 @@ export default function BookingPage() {
   };
 
   return (
-    <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20 font-sans text-sage-950">
+    <div className="bg-[#faf8f5] min-h-screen pt-28 pb-20 font-sans text-[#1a2f23] selection:bg-[#cda250]/20">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         {/* Navigation Breadcrumbs */}
         <div className="mb-8 flex items-center justify-between">
           <Link
             to="/"
-            className="inline-flex items-center text-xs font-semibold tracking-wider text-sage-600 hover:text-primary-800 transition-colors uppercase"
+            className="inline-flex items-center text-xs font-semibold tracking-wider text-sage-600 hover:text-[#cda250] transition-colors uppercase"
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại trang chủ
           </Link>
-          <span className="text-[10px] bg-primary-100/50 border border-primary-200 text-primary-900 px-3 py-1 font-semibold uppercase tracking-wider">
+          <span className="text-[10px] bg-[#cda250]/10 border border-[#cda250]/30 text-[#1a2f23] px-4 py-1.5 font-semibold uppercase tracking-widest rounded-full">
             Booking Wizard
           </span>
         </div>
 
         {/* Page Header Title */}
         <div className="text-center mb-12">
-          <h1 className="text-resort-title text-sage-950 mb-3 uppercase tracking-wide">
+          <h1 className="text-resort-title font-serif text-[#1a2f23] mb-3 uppercase tracking-wider">
             Đặt Lịch Trị Liệu & Nghỉ Dưỡng
           </h1>
-          <p className="text-resort-desc max-w-lg mx-auto">
+          <p className="text-resort-desc max-w-lg mx-auto text-sage-600 font-light">
             Khởi động hành trình phục hồi thân-tâm tại không gian xanh thanh bình của Ngũ Sơn Resort.
           </p>
         </div>
@@ -530,7 +582,7 @@ export default function BookingPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left 8 Columns: Dynamic Step Form Panel */}
-            <div className={`lg:col-span-8 bg-white border border-primary-100 p-6 sm:p-8 shadow-xs ${radius.card}`}>
+            <div className="lg:col-span-8 bg-[#fbfaf7]/95 border border-[#cda250]/20 p-6 sm:p-8 shadow-[0_15px_40px_rgba(26,44,34,0.05)] rounded-2xl backdrop-blur-md transition-all duration-300">
               {step === 1 && (
                 <GuestInfoStep
                   guestInfo={guestInfo}
@@ -538,6 +590,10 @@ export default function BookingPage() {
                   formErrors={formErrors}
                   setFormErrors={setFormErrors}
                   handleNextStep={handleNextStep}
+                  onLookupEmail={handleEmailLookup}
+                  isLookingUp={isLookingUp}
+                  lookupStatus={lookupStatus}
+                  setLookupStatus={setLookupStatus}
                 />
               )}
               {step === 2 && (
@@ -572,6 +628,27 @@ export default function BookingPage() {
                 />
               )}
               {step === 4 && (
+                <MealSelectionStep
+                  mealBookingDays={mealBookingDays}
+                  selectedMealDate={selectedMealDate}
+                  setSelectedMealDate={setSelectedMealDate}
+                  consentDataProcessing={consentDataProcessing}
+                  consentSharing={consentSharing}
+                  packageMenuItems={packageMenuItems}
+                  dietaryPreference={dietaryPreference}
+                  guestInfo={guestInfo}
+                  selectedAllergies={selectedAllergies}
+                  otherAllergy={otherAllergy}
+                  mealSelections={mealSelections}
+                  updateMealQty={updateMealQty}
+                  formatCurrency={formatCurrency}
+                  getMealSelectedCount={getMealSelectedCount}
+                  mealTotal={mealTotal}
+                  handlePrevStep={handlePrevStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {step === 5 && (
                 <PackageSelectionStep
                   retreatPackages={retreatPackages}
                   spaServices={spaServices}
@@ -583,7 +660,7 @@ export default function BookingPage() {
                   handleNextStep={handleNextStep}
                 />
               )}
-              {step === 5 && (
+              {step === 6 && (
                 <ConfirmationStep
                   guestInfo={guestInfo}
                   nightsCount={nightsCount}

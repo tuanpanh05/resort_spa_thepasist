@@ -13,10 +13,10 @@ import {
   staffInitialPayments as initialPayments,
   staffInitialChatMessages
 } from '../mockData';
+import { complaintsApi } from '../api';
 
 // Import sub-components
 import OperationLayout from '../layouts/OperationLayout';
-import StaffOverview from '../components/staff/StaffOverview';
 import ManageBookings from '../components/staff/ManageBookings';
 import ManageRooms from '../components/staff/ManageRooms';
 import ManageServices from '../components/staff/ManageServices';
@@ -27,7 +27,7 @@ import BookingItinerary from '../components/staff/BookingItinerary';
 import StaffProfile from '../components/staff/StaffProfile';
 
 export default function StaffDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('bookings');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -45,6 +45,13 @@ export default function StaffDashboard() {
     }
   }, [navigate]);
 
+  // Load complaints from backend database
+  useEffect(() => {
+    complaintsApi.getAllComplaints()
+      .then(list => setComplaints(list || []))
+      .catch(err => console.error("Lỗi khi tải khiếu nại:", err));
+  }, []);
+
   // Master React States for entities
   const [bookings, setBookings] = useState(initialBookings);
   const [rooms, setRooms] = useState(initialRooms);
@@ -54,11 +61,7 @@ export default function StaffDashboard() {
   const [shiftSwapRequests, setShiftSwapRequests] = useState([]);
   const [selectedItineraryBookingId, setSelectedItineraryBookingId] = useState(null);
 
-  // Modals visibility controller states (shared)
-  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
-  const [showReportRoomModal, setShowReportRoomModal] = useState(false);
-  const [showAddComplaintModal, setShowAddComplaintModal] = useState(false);
-  const [showSwapRequestModal, setShowSwapRequestModal] = useState(false);
+
 
   // Clock Attendance States
   const [clockState, setClockState] = useState({
@@ -127,7 +130,6 @@ export default function StaffDashboard() {
   };
 
   const sidebarItems = [
-    { id: 'dashboard', label: 'Tổng Quan Ca Trực', icon: LayoutDashboard },
     { id: 'bookings', label: 'Quản Lý Đặt Phòng', icon: CalendarRange },
     { id: 'rooms', label: 'Sơ Đồ Phòng Trực', icon: Bed },
     { id: 'itinerary', label: 'Chi Tiết & Lịch Trình', icon: FileText },
@@ -148,7 +150,6 @@ export default function StaffDashboard() {
       setIsMobileMenuOpen={setIsMobileMenuOpen}
       userRoleLabel="Lễ tân"
       headerTitle={
-        activeTab === 'dashboard' ? 'Tổng Quan Ca Làm Việc' :
         activeTab === 'bookings' ? 'Quản Lý Đơn Đặt Phòng' :
         activeTab === 'rooms' ? 'Sơ Đồ Phòng Theo Ca' :
         activeTab === 'itinerary' ? 'Chi Tiết Đặt Phòng & Lịch Trình' :
@@ -169,32 +170,7 @@ export default function StaffDashboard() {
         </div>
       }
     >
-      {activeTab === 'dashboard' && (
-        <StaffOverview
-          bookings={bookings}
-          rooms={rooms}
-          services={services}
-          complaints={complaints}
-          shiftSwapRequests={shiftSwapRequests}
-          setBookings={setBookings}
-          setRooms={setRooms}
-          setServices={setServices}
-          setComplaints={setComplaints}
-          setPayments={setPayments}
-          setShiftSwapRequests={setShiftSwapRequests}
-          clockState={clockState}
-          setClockState={setClockState}
-          setActiveTab={setActiveTab}
-          setShowAddServiceModal={setShowAddServiceModal}
-          setShowReportRoomModal={setShowReportRoomModal}
-          setShowAddComplaintModal={setShowAddComplaintModal}
-          setShowSwapRequestModal={setShowSwapRequestModal}
-          handleCheckIn={handleCheckIn}
-          handleCheckOut={handleCheckOut}
-          handleClockIn={handleClockIn}
-          handleClockOut={handleClockOut}
-        />
-      )}
+
 
       {activeTab === 'bookings' && (
         <ManageBookings

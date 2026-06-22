@@ -110,6 +110,10 @@ public class GuestMealController {
                     detailMap.put("foodId", detail.getFoodMenu().getFoodId());
                     detailMap.put("quantity", detail.getQuantity());
                     detailMap.put("specialNote", detail.getSpecialNote());
+                    if (detail.getFoodMenu() != null) {
+                        detailMap.put("dishName", detail.getFoodMenu().getDishName());
+                    }
+                    detailMap.put("isPackageIncluded", detail.getIsPackageIncluded());
                     detailList.add(detailMap);
                 }
                 orderMap.put("details", detailList);

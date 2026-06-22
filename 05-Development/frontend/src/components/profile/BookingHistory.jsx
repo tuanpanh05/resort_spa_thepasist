@@ -3,25 +3,51 @@ import { Link } from "react-router-dom";
 import { BedDouble, Sparkles, Dumbbell, Leaf, Clock, BadgeCheck } from "lucide-react";
 import { userApi } from "../../api";
 import { fmtDate, fmtDateTime, fmtCurrency } from "../../utils/formatters";
-import StatusBadge, { ROOM_STATUS_MAP, SPA_STATUS_MAP } from "./StatusBadge";
+import StatusBadge, { ROOM_STATUS_MAP, SPA_STATUS_MAP, FOOD_STATUS_MAP } from "./StatusBadge";
+import axiosClient from "../../api/axiosClient";
 
 export default function BookingHistory() {
   const [activeCategory, setActiveCategory] = useState("rooms"); // "rooms" or "others"
   const [serviceFilter, setServiceFilter] = useState("all"); // "all", "spa", "yoga", "food"
   const [roomBookings, setRoomBookings] = useState([]);
   const [spaBookings, setSpaBookings]   = useState([]);
+  const [foodOrders, setFoodOrders]     = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        const [rooms, spas] = await Promise.all([
+        const email = localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail");
+        const [rooms, spas, profileRes] = await Promise.all([
           userApi.getMyBookings().catch(() => []),
           userApi.getMySpaBookings().catch(() => []),
+          email ? axiosClient.get(`/guest/profile?email=${email}`).catch(() => null) : null
         ]);
         setRoomBookings(rooms || []);
         setSpaBookings(spas || []);
+
+        if (profileRes && profileRes.data && profileRes.data.booking && profileRes.data.booking.orders) {
+          const rawOrders = profileRes.data.booking.orders;
+          const mappedOrders = rawOrders.map(o => {
+            const dishNames = o.details.map(d => `${d.quantity}x ${d.dishName || "Món ăn"}`).join(", ");
+            return {
+              spaBookingId: "food-" + o.orderId,
+              serviceName: dishNames || "Đơn hàng ẩm thực",
+              serviceCategory: "Ẩm thực dưỡng sinh",
+              startDatetime: o.orderTime,
+              endDatetime: o.orderTime,
+              status: o.status, // PENDING, PREPARING, READY, DELIVERED, CANCELLED
+              priceAtBooking: o.totalAmount || 0,
+              isPackageIncluded: o.details.some(d => d.isPackageIncluded),
+              type: "food",
+              specialNote: o.details.map(d => d.specialNote).filter(n => n).join("; ")
+            };
+          });
+          setFoodOrders(mappedOrders);
+        } else {
+          setFoodOrders([]);
+        }
       } catch (err) {
         console.error("Lỗi khi tải lịch sử:", err);
       } finally {
@@ -58,37 +84,10 @@ export default function BookingHistory() {
     }
   ];
 
-  const MOCK_FOOD_ORDERS = [
-    {
-      spaBookingId: "food-1",
-      serviceName: "Set Soup Sâm Gà Đông Trùng Hạ Thảo",
-      serviceCategory: "Ẩm thực dưỡng sinh",
-      startDatetime: new Date(Date.now() - 86400000 * 3).toISOString(),
-      endDatetime: new Date(Date.now() - 86400000 * 3).toISOString(),
-      status: "COMPLETED", // mapping to DELIVERED
-      priceAtBooking: 320000,
-      isPackageIncluded: false,
-      type: "food",
-      specialNote: "Không bột ngọt, ít muối"
-    },
-    {
-      spaBookingId: "food-2",
-      serviceName: "Nước ép Detox Cần Tây Táo Xanh",
-      serviceCategory: "Ẩm thực dưỡng sinh",
-      startDatetime: new Date(Date.now() - 3600000 * 2).toISOString(),
-      endDatetime: new Date(Date.now() - 3600000 * 2).toISOString(),
-      status: "COMPLETED",
-      priceAtBooking: 95000,
-      isPackageIncluded: true,
-      type: "food",
-      specialNote: "Không đường, nhiều đá"
-    }
-  ];
-
   const allOtherServices = [
     ...spaBookings.map(s => ({ ...s, type: "spa" })),
     ...MOCK_YOGA_BOOKINGS,
-    ...MOCK_FOOD_ORDERS
+    ...foodOrders
   ];
 
   const filteredOtherServices = allOtherServices.filter(item => {
@@ -220,7 +219,7 @@ export default function BookingHistory() {
                         <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">Ghi chú: {s.specialNote}</p>
                       )}
                     </div>
-                    <StatusBadge status={s.status} map={SPA_STATUS_MAP} />
+                    <StatusBadge status={s.status} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
                   </div>
                   <div className="flex items-center justify-between text-xs text-sage-500 mt-3 pt-3 border-t border-primary-50">
                     <span className="flex items-center gap-1">

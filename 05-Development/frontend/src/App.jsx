@@ -56,26 +56,14 @@ function App() {
                 <HealthProfile />
               </ProtectedRoute>
             } />
-            <Route path="/dat-lich" element={
-              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
-                <BookingPage />
-              </ProtectedRoute>
-            } />
+            <Route path="/dat-lich" element={<BookingPage />} />
             <Route path="/guest-dashboard" element={
               <ProtectedRoute allowedRoles={["CUSTOMER"]}>
                 <GuestDashboard />
               </ProtectedRoute>
             } />
-            <Route path="/payment" element={
-              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
-                <Payment />
-              </ProtectedRoute>
-            } />
-            <Route path="/payment-result" element={
-              <ProtectedRoute allowedRoles={["CUSTOMER"]}>
-                <PaymentResult />
-              </ProtectedRoute>
-            } />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/payment-result" element={<PaymentResult />} />
             <Route path="/tai-khoan/*" element={
               <ProtectedRoute>
                 <ProfilePage />

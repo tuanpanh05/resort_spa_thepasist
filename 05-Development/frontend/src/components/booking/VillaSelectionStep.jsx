@@ -33,18 +33,18 @@ export default function VillaSelectionStep({
 
   return (
     <div className="space-y-8 text-left animate-fade-in">
-      <div className="border-b border-primary-50 pb-3 mb-6">
-        <h2 className="text-resort-section text-sage-950 mb-1">
+      <div className="border-b border-[#cda250]/15 pb-4 mb-8">
+        <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">
           Bước 3: Chọn Không Gian & Trải Nghiệm
         </h2>
-        <p className="text-resort-desc">
+        <p className="text-resort-desc mt-1 text-sage-600 font-light">
           Lựa chọn 1 hoặc nhiều biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
         </p>
       </div>
 
       {/* Villa Selection Row */}
       <div className="space-y-4">
-        <h3 className="font-serif text-lg font-bold text-sage-900 border-l-2 border-primary-700 pl-3">
+        <h3 className="font-serif text-base font-bold text-[#1a2f23] border-l-2 border-[#cda250] pl-3 uppercase tracking-wide mb-4">
           Hạng Phòng & Biệt Thự Nghỉ Dưỡng
         </h3>
 
@@ -67,12 +67,12 @@ export default function VillaSelectionStep({
                     }));
                   }
                 }}
-                className={`border transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+                className={`border shadow-xs rounded-2xl transition-all duration-300 overflow-hidden flex flex-col justify-between hover:shadow-md ${
                   !isAvailable
                     ? "border-red-100 bg-red-50/5 opacity-65 cursor-not-allowed"
                     : isSelected
-                    ? "border-primary-800 ring-2 ring-primary-800/10 bg-primary-50/10 cursor-pointer"
-                    : "border-primary-100 hover:border-primary-300 bg-white cursor-pointer"
+                    ? "border-[#cda250] ring-2 ring-[#cda250]/20 bg-[#cda250]/5 cursor-pointer"
+                    : "border-[#cda250]/15 hover:border-[#cda250]/40 bg-white cursor-pointer"
                 }`}
               >
                 <div className="relative h-44 overflow-hidden">
@@ -82,21 +82,21 @@ export default function VillaSelectionStep({
                     className={`w-full h-full object-cover transition-all duration-500 ${!isAvailable ? "grayscale contrast-75" : ""}`}
                   />
                   {!isAvailable && (
-                    <div className="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider shadow-sm">
+                    <div className="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider shadow-sm rounded">
                       Hết phòng
                     </div>
                   )}
-                  <div className="absolute top-3 right-3 bg-white/95 px-3 py-1 font-mono text-xs font-bold text-primary-950 border border-primary-200">
+                  <div className="absolute top-3 right-3 bg-white/95 px-3 py-1 font-mono text-xs font-bold text-[#1a2f23] border border-[#cda250]/20 rounded-lg shadow-sm">
                     {formatCurrency(villa.basePricePerNight)}/đêm
                   </div>
                 </div>
 
                 <div className="p-5 flex-grow space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-[9px] font-bold text-primary-700 uppercase tracking-wider bg-primary-100/50 px-2 py-0.5">
+                    <span className="text-[9px] font-bold text-[#cda250] uppercase tracking-wider bg-[#cda250]/10 px-2 py-0.5 rounded-full">
                       {villaView}
                     </span>
-                    <span className="text-[10px] text-sage-400 font-mono font-medium">
+                    <span className="text-[10px] text-sage-500 font-mono font-medium">
                       {villa.areaSqm || 50} m² | {villa.maxOccupancy || 2} Người lớn
                       {villa.availableRoomsCount !== undefined && (
                         <span className={villa.availableRoomsCount > 0 ? "text-sage-500 font-semibold" : "text-red-500 font-semibold"}>
@@ -105,7 +105,7 @@ export default function VillaSelectionStep({
                       )}
                     </span>
                   </div>
-                  <h4 className="font-serif text-base font-bold text-sage-950">
+                  <h4 className="font-serif text-base font-bold text-[#1a2f23]">
                     {villa.typeName}
                   </h4>
                   <p className="text-xs text-sage-600 font-light leading-relaxed">
@@ -115,8 +115,8 @@ export default function VillaSelectionStep({
 
                 <div className="px-5 pb-5 pt-1 flex items-center justify-between gap-4">
                   {isSelected ? (
-                    <div className="flex items-center space-x-2 bg-sage-50 border border-sage-200 px-2 py-1">
-                      <span className="text-[10px] font-medium text-sage-600 uppercase tracking-wider">Số lượng:</span>
+                    <div className="flex items-center space-x-2 bg-[#fbfaf7] border border-[#cda250]/15 px-2.5 py-1 rounded-lg">
+                      <span className="text-[10px] font-semibold text-sage-600 uppercase tracking-wider">Số lượng:</span>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -132,11 +132,11 @@ export default function VillaSelectionStep({
                             return next;
                           });
                         }}
-                        className="w-6 h-6 flex items-center justify-center bg-white border border-sage-300 hover:bg-sage-100 text-sage-800 text-xs font-bold transition-colors"
+                        className="w-6 h-6 flex items-center justify-center bg-white border border-[#cda250]/20 hover:bg-[#cda250]/10 text-sage-800 text-xs font-bold transition-colors rounded"
                       >
                         -
                       </button>
-                      <span className="font-mono text-xs font-bold px-1.5 text-sage-950">{roomQty}</span>
+                      <span className="font-mono text-xs font-bold px-1.5 text-[#1a2f23]">{roomQty}</span>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -147,7 +147,7 @@ export default function VillaSelectionStep({
                             [villa.roomTypeId]: Math.min(maxCount, roomQty + 1),
                           }));
                         }}
-                        className="w-6 h-6 flex items-center justify-center bg-white border border-sage-300 hover:bg-sage-100 text-sage-800 text-xs font-bold transition-colors"
+                        className="w-6 h-6 flex items-center justify-center bg-white border border-[#cda250]/20 hover:bg-[#cda250]/10 text-sage-800 text-xs font-bold transition-colors rounded"
                       >
                         +
                       </button>
@@ -157,12 +157,12 @@ export default function VillaSelectionStep({
                   )}
 
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 transition-colors duration-200 ${
+                    className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 transition-all duration-300 rounded-lg shadow-sm ${
                       !isAvailable
                         ? "bg-red-50 text-red-600 border border-red-200"
                         : isSelected
-                        ? "bg-primary-800 text-white"
-                        : "bg-white border border-primary-200 text-sage-600 hover:bg-primary-50"
+                        ? "bg-[#cda250] text-[#070e0a] hover:bg-[#d9b360] font-bold hover:shadow-[0_4px_15px_rgba(205,162,80,0.3)]"
+                        : "bg-white border border-[#cda250]/20 text-sage-600 hover:bg-[#cda250]/5"
                     }`}
                   >
                     {!isAvailable ? "Hết phòng" : isSelected ? "✓ Đang chọn" : "Chọn phòng"}
@@ -174,14 +174,12 @@ export default function VillaSelectionStep({
         </div>
       </div>
 
-
-
       {/* Navigation actions */}
-      <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-between gap-4 shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
+      <div className="sticky bottom-0 bg-[#fbfaf7] border-t border-[#cda250]/15 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-between gap-4 shadow-[0_-8px_20px_-6px_rgba(26,44,34,0.05)]">
         <button
           type="button"
           onClick={handlePrevStep}
-          className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
+          className="px-8 py-3.5 border border-[#1a2f23]/30 text-[#1a2f23] text-resort-button tracking-wider hover:bg-[#1a2f23]/5 transition-all uppercase rounded-lg flex items-center font-semibold cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
         </button>
@@ -189,9 +187,9 @@ export default function VillaSelectionStep({
         <button
           type="button"
           onClick={handleNextStep}
-          className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider hover:bg-primary-950 transition-all uppercase rounded-none flex items-center cursor-pointer"
+          className="px-8 py-3.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] hover:shadow-[0_4px_20px_rgba(205,162,80,0.35)] text-resort-button tracking-wider transition-all uppercase rounded-lg flex items-center cursor-pointer font-bold"
         >
-          Chọn thực đơn <ChevronRight className="h-4 w-4 ml-1.5" />
+          Đặt Đồ Ăn <ChevronRight className="h-4 w-4 ml-1.5" />
         </button>
       </div>
     </div>

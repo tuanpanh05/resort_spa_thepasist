@@ -230,6 +230,10 @@ export const bookingLookupApi = {
       body: JSON.stringify(dto),
     }),
 
+  /** GET /guest/profile — Lấy thông tin hồ sơ của khách (public) */
+  getGuestProfile: (email) =>
+    apiRequest(`/guest/profile?email=${encodeURIComponent(email)}`),
+
   /** GET /bookings/:id/itinerary — Lịch trình khách hàng */
   getItinerary: (bookingId) =>
     apiRequest(`/bookings/${bookingId}/itinerary`),
@@ -262,6 +266,8 @@ export const staffApi = {
 
   /** UC10: GET /v1/itineraries/:bookingId — Xem lịch trình khách */
   getItinerary: (bookingId) => apiRequest(`/v1/itineraries/${bookingId}`),
+
+  getItineraryByEmail: (email) => apiRequest(`/v1/itineraries/by-email?email=${encodeURIComponent(email)}`),
 };
 
 // ============================================================
@@ -325,4 +331,27 @@ export const paymentApi = {
 
   getOccupancyReport: (year) => 
     apiRequest(`/revenue/occupancy-report?year=${year}`),
+};
+
+// ============================================================
+// COMPLAINTS / SUPPORT REQUESTS APIs
+// ============================================================
+export const complaintsApi = {
+  submitComplaint: (guestName, roomNumber, content, userId = null) =>
+    apiRequest("/complaints/submit", {
+      method: "POST",
+      body: JSON.stringify({ guestName, roomNumber, content, userId }),
+    }),
+
+  getMyComplaints: (userId) =>
+    apiRequest(`/complaints/user/${userId}`),
+
+  getAllComplaints: () =>
+    apiRequest("/complaints/all"),
+
+  resolveComplaint: (id, feedback) =>
+    apiRequest(`/complaints/${id}/resolve`, {
+      method: "PUT",
+      body: JSON.stringify({ feedback }),
+    }),
 };

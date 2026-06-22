@@ -24,18 +24,17 @@ export default function MealSelectionStep({
 }) {
   return (
     <div className="space-y-6 text-left animate-fade-in">
-      <div className="border-b border-primary-50 pb-3 mb-6">
-        <h2 className="text-resort-section text-sage-950 mb-1">
-          Bước 4: Chọn Thực Đơn Trong Gói
+      <div className="border-b border-[#cda250]/15 pb-4 mb-8">
+        <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">
+          Bước 4: Đặt Đồ Ăn & Thiết Kế Thực Đơn
         </h2>
-        <p className="text-resort-desc">
-          Lựa chọn các bữa ăn dinh dưỡng đi kèm trong gói dịch vụ nghỉ dưỡng. Món trong gói miễn
-          phí (1 phần/ngày).
+        <p className="text-resort-desc mt-1 text-sage-600 font-light">
+          Lựa chọn các bữa ăn dinh dưỡng đi kèm trong gói dịch vụ nghỉ dưỡng. Món trong gói được miễn phí (1 phần/ngày).
         </p>
       </div>
 
       {/* Date Selection Bar */}
-      <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-4 border-b border-primary-100/50">
+      <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-6 border-b border-[#cda250]/15">
         {mealBookingDays.map((date, idx) => {
           const isActive = selectedMealDate === date;
           const dateParts = date.split("-");
@@ -44,11 +43,10 @@ export default function MealSelectionStep({
             <button
               key={date}
               onClick={() => setSelectedMealDate(date)}
-              className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer ${isActive
-                  ? "bg-primary-850 border-primary-900 text-white shadow-md -translate-y-0.5"
-                  : "bg-white border-primary-100 text-sage-600 hover:border-primary-300 hover:bg-primary-50/30"
+              className={`px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 flex flex-col items-center justify-center min-w-[90px] border shadow-xs cursor-pointer rounded-xl ${isActive
+                  ? "bg-[#cda250] border-[#cda250] text-[#070e0a] font-bold shadow-md -translate-y-0.5"
+                  : "bg-white border-[#cda250]/20 text-[#1a2f23] hover:border-[#cda250]/50 hover:bg-[#cda250]/5"
                 }`}
-              style={{ borderRadius: "16px" }}
             >
               <span className="text-[9px] opacity-75 font-semibold">Ngày {idx + 1}</span>
               <span className="font-mono mt-0.5 text-sm">{displayDate}</span>
@@ -59,22 +57,22 @@ export default function MealSelectionStep({
 
       {/* Auto Filter Banner */}
       {consentDataProcessing && consentSharing ? (
-        <div className="mb-6 p-4 bg-primary-50/50 border border-primary-200 text-xs text-primary-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="mb-6 p-4 bg-[#cda250]/5 border border-[#cda250]/20 rounded-xl text-xs text-[#1a2f23] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2.5">
-            <Info className="h-4.5 w-4.5 text-primary-750 flex-shrink-0" />
+            <Info className="h-4.5 w-4.5 text-[#cda250] flex-shrink-0" />
             <span>
               <strong>Thực đơn đã được tự động quét theo hồ sơ bệnh lý & chế độ ăn uống.</strong>{" "}
               Các món ăn không phù hợp đã được cảnh báo và khóa tự động.
             </span>
           </div>
-          <span className="bg-primary-100 text-primary-800 border border-primary-200 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider self-start sm:self-auto">
+          <span className="bg-[#cda250]/10 text-[#cda250] border border-[#cda250]/20 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider self-start sm:self-auto rounded">
             Đã Lọc Tự Động
           </span>
         </div>
       ) : (
-        <div className="mb-6 p-4 bg-amber-50 text-amber-800 border border-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="mb-6 p-4 bg-amber-50/50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2.5">
-            <AlertTriangle className="h-4.5 w-4.5 flex-shrink-0" />
+            <AlertTriangle className="h-4.5 w-4.5 text-amber-600 flex-shrink-0" />
             <span>
               Hệ thống chưa được phép xử lý dữ liệu y tế. Các món ăn gây dị ứng sẽ{" "}
               <strong>không</strong> được tự động cảnh báo.
@@ -87,10 +85,10 @@ export default function MealSelectionStep({
       {mealPeriods.map((period) => {
         const PeriodIcon = period.icon;
         return (
-          <div key={period.key} className="space-y-4 mb-6">
-            <div className="flex items-center space-x-2 border-l-2 border-primary-700 pl-3">
-              <PeriodIcon className="h-5 w-5 text-primary-800" />
-              <h3 className="font-serif text-base font-bold text-sage-900">
+          <div key={period.key} className="space-y-4 mb-8">
+            <div className="flex items-center space-x-2 border-l-2 border-[#cda250] pl-3">
+              <PeriodIcon className="h-5 w-5 text-[#cda250]" />
+              <h3 className="font-serif text-base font-bold text-[#1a2f23]">
                 {period.label} ({period.time})
               </h3>
             </div>
@@ -139,86 +137,86 @@ export default function MealSelectionStep({
                       return lowerOA && (allergensStr.includes(lowerOA) || tagsStr.includes(lowerOA));
                     }));
 
-              return (
-              <div
-                key={dish.foodId}
-                className={`border transition-all duration-300 overflow-hidden ${isAllergen
-                    ? "border-red-200 bg-red-50/20 opacity-60"
-                    : currentQty > 0
-                      ? "border-primary-300 bg-primary-50/10"
-                      : "border-primary-100 bg-white hover:border-primary-200"
-                  }`}
-              >
-                <div className="relative h-32 overflow-hidden">
-                  <img
-                    src={dish.image}
-                    alt={dish.dishName}
-                    className="w-full h-full object-cover"
-                  />
-                  {dish.isPackageIncluded && (
-                    <span className="absolute top-2 left-2 bg-green-700 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm">
-                      Trong Gói
-                    </span>
-                  )}
-                  {isAllergen && (
-                    <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 flex items-center gap-1 shadow-sm">
-                      <AlertTriangle className="h-3 w-3" /> Dị ứng
-                    </span>
-                  )}
-                </div>
-                <div className="p-4 space-y-2">
-                  <h4 className="font-serif text-sm font-bold text-sage-950">
-                    {dish.dishName}
-                  </h4>
-                  <p className="text-[11px] text-sage-500 font-light leading-relaxed line-clamp-2">
-                    {dish.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {dish.dietaryTags.split(",").map((tag) => (
-                      <span
-                        key={tag.trim()}
-                        className="text-[9px] font-bold uppercase tracking-wider border border-primary-200 text-primary-800 px-2 py-0.5 bg-primary-50/30"
-                      >
-                        {tag.trim()}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-primary-50">
-                    <span className="font-serif text-sm font-bold text-sage-950">
-                      {formatCurrency(dish.price)}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateMealQty(selectedMealDate, period.key, dish.foodId, -1)
-                        }
-                        disabled={currentQty === 0 || isAllergen}
-                        className="h-7 w-7 flex items-center justify-center border border-primary-200 text-sage-600 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                      >
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-                      <span className="font-mono text-sm font-bold text-sage-950 w-6 text-center">
-                        {currentQty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateMealQty(selectedMealDate, period.key, dish.foodId, 1)
-                        }
-                        disabled={isAllergen}
-                        className={`h-7 w-7 flex items-center justify-center border transition-colors ${isAllergen
-                            ? "bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed"
-                            : "border-primary-800 bg-primary-800 text-white hover:bg-primary-900 cursor-pointer"
-                          }`}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
+                  return (
+                    <div
+                      key={dish.foodId}
+                      className={`border transition-all duration-300 overflow-hidden shadow-xs rounded-2xl hover:shadow-md ${isAllergen
+                          ? "border-red-200 bg-red-50/10 opacity-60 rounded-2xl"
+                          : currentQty > 0
+                            ? "border-[#cda250] ring-2 ring-[#cda250]/20 bg-[#cda250]/5 rounded-2xl"
+                            : "border-[#cda250]/15 bg-white hover:border-[#cda250]/30 rounded-2xl"
+                        }`}
+                    >
+                      <div className="relative h-32 overflow-hidden">
+                        <img
+                          src={dish.image}
+                          alt={dish.dishName}
+                          className="w-full h-full object-cover"
+                        />
+                        {dish.isPackageIncluded && (
+                          <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 shadow-sm rounded">
+                            Trong Gói
+                          </span>
+                        )}
+                        {isAllergen && (
+                          <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 flex items-center gap-1 shadow-sm rounded">
+                            <AlertTriangle className="h-3 w-3" /> Dị ứng
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <h4 className="font-serif text-sm font-bold text-[#1a2f23]">
+                          {dish.dishName}
+                        </h4>
+                        <p className="text-[11px] text-sage-600 font-light leading-relaxed line-clamp-2">
+                          {dish.description}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {dish.dietaryTags.split(",").map((tag) => (
+                            <span
+                              key={tag.trim()}
+                              className="text-[9px] font-bold uppercase tracking-wider border border-[#cda250]/15 text-sage-600 px-2 py-0.5 bg-[#fbfaf7] rounded-full"
+                            >
+                              {tag.trim()}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-[#cda250]/15">
+                          <span className="font-serif text-sm font-bold text-[#1a2f23]">
+                            {formatCurrency(dish.price)}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateMealQty(selectedMealDate, period.key, dish.foodId, -1)
+                              }
+                              disabled={currentQty === 0 || isAllergen}
+                              className="h-7 w-7 flex items-center justify-center border border-[#1a2f23]/30 text-[#1a2f23] hover:bg-[#1a2f23]/5 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="font-mono text-sm font-bold text-[#1a2f23] w-6 text-center">
+                              {currentQty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateMealQty(selectedMealDate, period.key, dish.foodId, 1)
+                              }
+                              disabled={isAllergen}
+                              className={`h-7 w-7 flex items-center justify-center border transition-colors rounded-lg ${isAllergen
+                                  ? "bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "border-[#cda250] bg-[#cda250] text-[#070e0a] hover:bg-[#d9b360] cursor-pointer"
+                                }`}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-              );
+                  );
                 })}
             </div>
           </div>
@@ -226,36 +224,36 @@ export default function MealSelectionStep({
       })}
 
       {/* Footer Summary */}
-      <div className="bg-primary-50/30 border border-primary-100 p-4 space-y-1">
-        <div className="text-xs text-sage-700">
+      <div className="bg-[#cda250]/5 border border-[#cda250]/20 p-5 rounded-2xl space-y-1">
+        <div className="text-xs text-sage-600 font-medium">
           Tổng cộng chọn: <strong>{getMealSelectedCount()} món</strong>
         </div>
-        <div className="text-sm font-semibold text-sage-900">
+        <div className="text-sm font-semibold text-[#1a2f23]">
           Phụ phí dự kiến ngoài gói:{" "}
-          <span className="text-primary-900 font-bold font-serif">
+          <span className="text-[#cda250] font-bold font-serif">
             {formatCurrency(mealTotal)}
           </span>
         </div>
-        <div className="text-[10px] text-sage-400 italic">
+        <div className="text-[10px] text-sage-500 italic">
           * Các món Green Juice & Salad được tính 0đ trong giới hạn gói Detox (1 phần/ngày).
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-between gap-4 shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
+      <div className="sticky bottom-0 bg-[#fbfaf7] border-t border-[#cda250]/15 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-between gap-4 shadow-[0_-8px_20px_-6px_rgba(26,44,34,0.05)]">
         <button
           type="button"
           onClick={handlePrevStep}
-          className="px-8 py-3.5 border border-sage-800 text-sage-800 text-resort-button tracking-wider hover:bg-sage-50 transition-all uppercase rounded-none flex items-center"
+          className="px-8 py-3.5 border border-[#1a2f23]/30 text-[#1a2f23] text-resort-button tracking-wider hover:bg-[#1a2f23]/5 transition-all uppercase rounded-lg flex items-center font-semibold cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4 mr-1.5" /> Quay lại
         </button>
         <button
           type="button"
           onClick={handleNextStep}
-          className="px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-resort-button tracking-wider transition-all uppercase rounded-none flex items-center cursor-pointer"
+          className="px-8 py-3.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] hover:shadow-[0_4px_20px_rgba(205,162,80,0.35)] text-resort-button tracking-wider transition-all uppercase rounded-lg flex items-center cursor-pointer font-bold"
         >
-          Kiểm tra đơn đặt <ChevronRight className="h-4 w-4 ml-1.5" />
+          Chọn Gói Trị Liệu <ChevronRight className="h-4 w-4 ml-1.5" />
         </button>
       </div>
     </div>

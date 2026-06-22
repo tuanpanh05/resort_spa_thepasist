@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, Clock, UtensilsCrossed } from "lucide-react";
+import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, Clock, UtensilsCrossed, MessageSquare } from "lucide-react";
 import { userApi } from "../api";
 
 import { useLanguage } from "../context/LanguageContext";
@@ -265,6 +265,11 @@ export default function Header() {
                           <CreditCard className="h-3.5 w-3.5 text-primary-600" />
                           {t("nav.paymentHistory")}
                         </Link>
+                        <Link to="/tai-khoan/ho-tro" onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                          <MessageSquare className="h-3.5 w-3.5 text-primary-600" />
+                          Liên hệ hỗ trợ
+                        </Link>
                         
                         {/* Lịch trình section inside dropdown */}
                         <div className="border-t border-primary-100 my-1" />
@@ -434,6 +439,10 @@ export default function Header() {
                 <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setIsOpen(false)}
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-primary-600" /> {t("nav.paymentHistory")}
+                </Link>
+                <Link to="/tai-khoan/ho-tro" onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-primary-600" /> Liên hệ hỗ trợ
                 </Link>
                 <div className="px-3 py-2 border border-primary-100 rounded-lg bg-primary-50/20">
                   <div className="flex items-center gap-2 text-sm font-bold text-sage-900 mb-1.5">
