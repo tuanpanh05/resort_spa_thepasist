@@ -6,6 +6,8 @@ export default function BookingBillSummary({
   nightsCount,
   villaTotal,
   mealTotal,
+  selectedRooms,
+  roomTypes,
   selectedServices,
   guestInfo,
   totalAmount,
@@ -60,12 +62,20 @@ export default function BookingBillSummary({
 
       {/* Villa total display */}
       <div className="space-y-3.5 text-xs sm:text-sm">
-        <div className="flex justify-between font-medium">
-          <span className="text-sage-800">
-            {selectedVilla ? `${selectedVilla.title} (${nightsCount} đêm):` : "Biệt thự (chưa chọn):"}
-          </span>
-          <span className="text-sage-950 font-mono">{formatCurrency(villaTotal)}</span>
-        </div>
+        {selectedRooms && Object.entries(selectedRooms).map(([roomTypeId, qty]) => {
+          const roomType = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+          if (!roomType || qty <= 0) return null;
+          return (
+            <div key={roomTypeId} className="flex justify-between font-medium">
+              <span className="text-sage-800">
+                🏡 {roomType.typeName} ({qty} phòng × {nightsCount} đêm):
+              </span>
+              <span className="text-sage-950 font-mono">
+                {formatCurrency(roomType.basePricePerNight * nightsCount * qty)}
+              </span>
+            </div>
+          );
+        })}
 
         {/* Retreat package display */}
         {selectedPackages && selectedPackages.map((pkg) => (

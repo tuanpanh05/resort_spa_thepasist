@@ -90,7 +90,7 @@ class CheckInServiceImplTest {
         // Arrange
         Room room = new Room();
         room.setRoomId(2);
-        room.setRoomNumber("Villa-101");
+        room.setRoomNumber("Vip-201");
         room.setStatus("AVAILABLE");
 
         RoomBooking booking = new RoomBooking();

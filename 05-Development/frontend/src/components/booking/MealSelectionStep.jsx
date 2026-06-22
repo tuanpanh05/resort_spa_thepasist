@@ -242,7 +242,7 @@ export default function MealSelectionStep({
       </div>
 
       {/* Navigation */}
-      <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
+      <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-between gap-4 shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
         <button
           type="button"
           onClick={handlePrevStep}

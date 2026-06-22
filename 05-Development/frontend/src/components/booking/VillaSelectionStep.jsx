@@ -1,11 +1,11 @@
 import React from "react";
-import { Check, ArrowLeft, ChevronRight } from "lucide-react";
-import { villasList, servicesList } from "../../constants/booking";
+import { ArrowLeft, ChevronRight } from "lucide-react";
+
 
 export default function VillaSelectionStep({
   roomTypes,
-  selectedVillaId,
-  setSelectedVillaId,
+  selectedRooms,
+  setSelectedRooms,
   selectedServiceIds,
   handleToggleService,
   formatCurrency,
@@ -38,7 +38,7 @@ export default function VillaSelectionStep({
           Bước 3: Chọn Không Gian & Trải Nghiệm
         </h2>
         <p className="text-resort-desc">
-          Lựa chọn 1 biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
+          Lựa chọn 1 hoặc nhiều biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
         </p>
       </div>
 
@@ -50,7 +50,8 @@ export default function VillaSelectionStep({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {roomTypes.map((villa) => {
-            const isSelected = selectedVillaId === villa.roomTypeId;
+            const roomQty = selectedRooms[villa.roomTypeId] || 0;
+            const isSelected = roomQty > 0;
             const villaImage = getRoomTypeImage(villa.typeName);
             const villaView = getRoomTypeView(villa.typeName);
             const isAvailable = villa.availableRoomsCount === undefined || villa.availableRoomsCount > 0;
@@ -58,7 +59,14 @@ export default function VillaSelectionStep({
             return (
               <div
                 key={villa.roomTypeId}
-                onClick={() => isAvailable && setSelectedVillaId(villa.roomTypeId)}
+                onClick={() => {
+                  if (isAvailable && roomQty === 0) {
+                    setSelectedRooms((prev) => ({
+                      ...prev,
+                      [villa.roomTypeId]: 1,
+                    }));
+                  }
+                }}
                 className={`border transition-all duration-300 overflow-hidden flex flex-col justify-between ${
                   !isAvailable
                     ? "border-red-100 bg-red-50/5 opacity-65 cursor-not-allowed"
@@ -105,7 +113,49 @@ export default function VillaSelectionStep({
                   </p>
                 </div>
 
-                <div className="px-5 pb-5 pt-1 flex justify-end">
+                <div className="px-5 pb-5 pt-1 flex items-center justify-between gap-4">
+                  {isSelected ? (
+                    <div className="flex items-center space-x-2 bg-sage-50 border border-sage-200 px-2 py-1">
+                      <span className="text-[10px] font-medium text-sage-600 uppercase tracking-wider">Số lượng:</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRooms((prev) => {
+                            const newQty = Math.max(0, roomQty - 1);
+                            const next = { ...prev };
+                            if (newQty === 0) {
+                              delete next[villa.roomTypeId];
+                            } else {
+                              next[villa.roomTypeId] = newQty;
+                            }
+                            return next;
+                          });
+                        }}
+                        className="w-6 h-6 flex items-center justify-center bg-white border border-sage-300 hover:bg-sage-100 text-sage-800 text-xs font-bold transition-colors"
+                      >
+                        -
+                      </button>
+                      <span className="font-mono text-xs font-bold px-1.5 text-sage-950">{roomQty}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const maxCount = villa.availableRoomsCount !== undefined ? villa.availableRoomsCount : 5;
+                          setSelectedRooms((prev) => ({
+                            ...prev,
+                            [villa.roomTypeId]: Math.min(maxCount, roomQty + 1),
+                          }));
+                        }}
+                        className="w-6 h-6 flex items-center justify-center bg-white border border-sage-300 hover:bg-sage-100 text-sage-800 text-xs font-bold transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 transition-colors duration-200 ${
                       !isAvailable
@@ -124,65 +174,10 @@ export default function VillaSelectionStep({
         </div>
       </div>
 
-      {/* Addon Services Selection Row */}
-      <div className="space-y-4 pt-6 border-t border-primary-50">
-        <h3 className="font-serif text-lg font-bold text-sage-900 border-l-2 border-primary-700 pl-3">
-          Dịch Vụ Chăm Sóc Sức Khỏe & Tiện Ích
-        </h3>
 
-        <div className="space-y-3">
-          {servicesList.map((service) => {
-            const isSelected = selectedServiceIds.includes(service.id);
-            return (
-              <div
-                key={service.id}
-                onClick={() => handleToggleService(service.id)}
-                className={`border p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer transition-all duration-300 ${
-                  isSelected
-                    ? "border-primary-800 bg-primary-50/20"
-                    : "border-primary-100 bg-white hover:border-primary-200"
-                }`}
-              >
-                <div className="flex items-start space-x-3 text-left">
-                  <div
-                    className={`h-5 w-5 mt-0.5 border flex items-center justify-center flex-shrink-0 ${
-                      isSelected
-                        ? "bg-primary-800 border-primary-800 text-white"
-                        : "border-primary-300"
-                    }`}
-                  >
-                    {isSelected && <Check className="h-3.5 w-3.5" />}
-                  </div>
-                  <div>
-                    <h4 className="font-serif text-sm sm:text-base font-bold text-sage-950">
-                      {service.title}
-                    </h4>
-                    <p className="text-xs text-sage-500 font-light mt-0.5">
-                      {service.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-right flex-shrink-0">
-                  <span className="font-serif text-xs sm:text-sm font-bold text-primary-950 block">
-                    {formatCurrency(service.price)}
-                  </span>
-                  <span className="text-[9px] text-sage-400 block font-medium">
-                    {service.type === "per-guest"
-                      ? "/khách"
-                      : service.type === "per-guest-per-night"
-                      ? "/khách/đêm"
-                      : "/lượt"}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Navigation actions */}
-      <div className="pt-6 border-t border-primary-50 flex justify-between gap-4">
+      <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex justify-between gap-4 shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
         <button
           type="button"
           onClick={handlePrevStep}

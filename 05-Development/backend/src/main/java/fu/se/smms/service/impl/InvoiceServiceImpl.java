@@ -483,6 +483,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             dto.setBookingStatus(invoice.getRoomBooking().getStatus());
             dto.setCheckInDate(invoice.getRoomBooking().getCheckInDate());
             dto.setCheckOutDate(invoice.getRoomBooking().getCheckOutDate());
+            dto.setCreatedAt(invoice.getRoomBooking().getCreatedAt());
             if (invoice.getRoomBooking().getDetails() != null) {
                 String roomNumbers = invoice.getRoomBooking().getDetails().stream()
                     .map(detail -> detail.getRoom() != null ? detail.getRoom().getRoomNumber() : "")

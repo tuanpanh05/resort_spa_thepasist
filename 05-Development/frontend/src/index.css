@@ -31,6 +31,14 @@
   --color-warm-beige: #f5f5f0;
   --color-dark-forest: #0c2e28;
 
+  /* Limón Theme Tokens */
+  --color-black-olive: #1d0b0d;
+  --color-forest-ink: #103b15;
+  --color-lemon-zest: #f7ea48;
+  --color-warm-cream: #fcf9f0;
+  --color-sage-mist: #dbe2dc;
+  --color-pure-white: #ffffff;
+
   --font-sans: "Outfit", "system-ui", "sans-serif";
   --font-serif: "Cormorant Garamond", "Georgia", "serif";
 
@@ -68,6 +76,17 @@
   @keyframes shimmer {
     100% {
       transform: translateX(100%);
+    }
+  }
+  --animate-slide-down: slideDown 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  @keyframes slideDown {
+    0% {
+      opacity: 0;
+      transform: translateY(-60px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 }

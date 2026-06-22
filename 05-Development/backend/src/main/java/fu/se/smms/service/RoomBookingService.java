@@ -106,36 +106,72 @@ public class RoomBookingService {
         booking.setStatus("PENDING_DEPOSIT");
         booking.setTotalDeposit(BigDecimal.ZERO);
         
-        // 4. Create RoomBookingDetail
-        // Find an available room belonging to the selected room type (villaId)
-        Room room = null;
-        if (dto.getVillaId() != null) {
-            room = roomRepository.findAll().stream()
-                    .filter(r -> r.getRoomType() != null && r.getRoomType().getRoomTypeId().equals(dto.getVillaId()))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (room == null) {
-            // Fallback to first available room if none matches or not specified
-            List<Room> allRooms = roomRepository.findAll();
-            room = allRooms.isEmpty() ? null : allRooms.get(0);
-        }
-        
-        if (room != null) {
-            RoomBookingDetail detail = new RoomBookingDetail();
-            detail.setRoomBooking(booking);
-            detail.setRoom(room);
-            
-            BigDecimal priceAtBooking = BigDecimal.valueOf(5000000); // Fallback price
-            if (room.getRoomType() != null && room.getRoomType().getBasePricePerNight() != null) {
-                priceAtBooking = room.getRoomType().getBasePricePerNight();
+        // 4. Create RoomBookingDetail(s) based on roomTypeQuantities
+        List<RoomBookingDetail> details = new ArrayList<>();
+        Map<String, Integer> roomTypeQuantities = dto.getRoomTypeQuantities();
+        if (roomTypeQuantities == null || roomTypeQuantities.isEmpty()) {
+            Integer vId = dto.getVillaId();
+            int qty = dto.getRoomQuantity() != null ? dto.getRoomQuantity() : 1;
+            if (vId != null) {
+                roomTypeQuantities = Map.of(String.valueOf(vId), qty);
+            } else {
+                roomTypeQuantities = Collections.emptyMap();
             }
-            detail.setPriceAtBooking(priceAtBooking);
-            
-            List<RoomBookingDetail> details = new ArrayList<>();
-            details.add(detail);
-            booking.setDetails(details);
         }
+
+        for (Map.Entry<String, Integer> entry : roomTypeQuantities.entrySet()) {
+            Integer roomTypeId;
+            try {
+                roomTypeId = Integer.parseInt(entry.getKey());
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            int qty = entry.getValue() != null ? entry.getValue() : 0;
+            if (qty < 1) continue;
+
+            List<Room> matchingRooms = roomRepository.findAll().stream()
+                    .filter(r -> r.getRoomType() != null && r.getRoomType().getRoomTypeId().equals(roomTypeId))
+                    .collect(Collectors.toList());
+
+            for (int i = 0; i < qty; i++) {
+                Room assignedRoom = null;
+                if (!matchingRooms.isEmpty()) {
+                    assignedRoom = matchingRooms.get(i % matchingRooms.size());
+                } else {
+                    List<Room> allRooms = roomRepository.findAll();
+                    if (!allRooms.isEmpty()) {
+                        assignedRoom = allRooms.get(0);
+                    }
+                }
+
+                if (assignedRoom != null) {
+                    RoomBookingDetail detail = new RoomBookingDetail();
+                    detail.setRoomBooking(booking);
+                    detail.setRoom(assignedRoom);
+
+                    BigDecimal priceAtBooking = BigDecimal.valueOf(5000000); // Fallback price
+                    if (assignedRoom.getRoomType() != null && assignedRoom.getRoomType().getBasePricePerNight() != null) {
+                        priceAtBooking = assignedRoom.getRoomType().getBasePricePerNight();
+                    }
+                    detail.setPriceAtBooking(priceAtBooking);
+                    details.add(detail);
+                }
+            }
+        }
+
+        if (details.isEmpty()) {
+            List<Room> allRooms = roomRepository.findAll();
+            Room fallbackRoom = allRooms.isEmpty() ? null : allRooms.get(0);
+            if (fallbackRoom != null) {
+                RoomBookingDetail detail = new RoomBookingDetail();
+                detail.setRoomBooking(booking);
+                detail.setRoom(fallbackRoom);
+                detail.setPriceAtBooking(fallbackRoom.getRoomType() != null && fallbackRoom.getRoomType().getBasePricePerNight() != null 
+                    ? fallbackRoom.getRoomType().getBasePricePerNight() : BigDecimal.valueOf(5000000));
+                details.add(detail);
+            }
+        }
+        booking.setDetails(details);
 
         RoomBooking savedBooking = roomBookingRepository.save(booking);
 

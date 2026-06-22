@@ -137,7 +137,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
-            otpService.generateAndSendOtp(request.getEmail());
+            otpService.generateAndSendOtp(request.getEmail(), true);
             return ResponseEntity.ok(Map.of(
                 "message", "Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư."
             ));

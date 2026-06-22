@@ -99,7 +99,7 @@ public class AuthControllerTest {
         ForgotPasswordRequest request = new ForgotPasswordRequest();
         request.setEmail("test@example.com");
 
-        Mockito.doNothing().when(otpService).generateAndSendOtp(anyString());
+        Mockito.doNothing().when(otpService).generateAndSendOtp(anyString(), Mockito.anyBoolean());
 
         mockMvc.perform(post("/auth/forgot-password")
                 .contentType(MediaType.APPLICATION_JSON)

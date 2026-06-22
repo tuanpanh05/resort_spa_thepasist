@@ -17,6 +17,7 @@ public class InvoiceDTO {
     private String status;
     private String vnpayTranId;
     private LocalDateTime paymentTime;
+    private LocalDateTime createdAt;
 
     public Integer getInvoiceId() {
         return invoiceId;
@@ -167,5 +168,13 @@ public class InvoiceDTO {
 
     public void setCheckOutDate(LocalDateTime checkOutDate) {
         this.checkOutDate = checkOutDate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

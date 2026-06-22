@@ -10,6 +10,8 @@ export default function ConfirmationStep({
   otherAllergy,
   physicalCondition,
   selectedVilla,
+  selectedRooms,
+  roomTypes,
   selectedServices,
   villaTotal,
   mealTotal,
@@ -27,7 +29,7 @@ export default function ConfirmationStep({
   return (
     <div className="space-y-6 text-left animate-fade-in">
       <div className="border-b border-primary-50 pb-3 mb-6">
-        <h2 className="text-resort-section text-sage-950 mb-1">Bước 6: Xác Nhận Đơn Đặt Lịch</h2>
+        <h2 className="text-resort-section text-sage-950 mb-1">Bước 5: Xác Nhận Đơn Đặt Lịch</h2>
         <p className="text-resort-desc">
           Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
         </p>
@@ -138,17 +140,23 @@ export default function ConfirmationStep({
 
           <div className="space-y-3.5">
             {/* Villa details */}
-            <div className="flex justify-between items-start gap-4">
-              <div>
-                <span className="font-serif text-sm font-bold text-sage-950 block">
-                  🏡 Biệt thự: {selectedVilla?.typeName || selectedVilla?.title}
-                </span>
-                <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                  Đơn giá: {formatCurrency(selectedVilla?.basePricePerNight || selectedVilla?.price)}/đêm × {nightsCount} Đêm
-                </span>
-              </div>
-              <span className="font-semibold text-sage-900">{formatCurrency(villaTotal)}</span>
-            </div>
+            {selectedRooms && Object.entries(selectedRooms).map(([roomTypeId, qty]) => {
+              const roomType = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+              if (!roomType || qty <= 0) return null;
+              return (
+                <div key={roomTypeId} className="flex justify-between items-start gap-4">
+                  <div>
+                    <span className="font-serif text-sm font-bold text-sage-950 block">
+                      🏡 Biệt thự: {roomType.typeName} (Số lượng: {qty} phòng)
+                    </span>
+                    <span className="text-[10px] text-sage-400 font-light block mt-0.5">
+                      Đơn giá: {formatCurrency(roomType.basePricePerNight)}/đêm × {nightsCount} Đêm × {qty} Phòng
+                    </span>
+                  </div>
+                  <span className="font-semibold text-sage-900">{formatCurrency(roomType.basePricePerNight * nightsCount * qty)}</span>
+                </div>
+              );
+            })}
 
             {/* Retreat Package details */}
             {selectedPackages && selectedPackages.map((pkg) => (
@@ -246,7 +254,7 @@ export default function ConfirmationStep({
         </div>
 
         {/* Submit actions */}
-        <div className="pt-6 border-t border-primary-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="sticky bottom-0 bg-white border-t border-primary-50 py-4 -mx-6 sm:-mx-8 px-6 sm:px-8 -mb-6 sm:-mb-8 rounded-b-2xl z-10 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-[0_-8px_20px_-6px_rgba(0,0,0,0.08)]">
           <span className="text-xs text-sage-500 font-light flex items-center">
             <ShieldCheck className="h-4.5 w-4.5 text-primary-600 mr-1.5" />
             Hệ thống đặt lịch Ngũ Sơn Resort & Spa
