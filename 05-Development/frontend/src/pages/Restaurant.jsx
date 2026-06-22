@@ -1,135 +1,148 @@
-import React from "react";
-import { ChefHat, Heart, Leaf, Star, Calendar } from "lucide-react";
-import serviceDining from "../assets/service_dining.png";
-
-import { restaurantMenus as menus } from "../mockData";
+import React, { useState, useEffect } from "react";
+import { ChefHat, Heart, Leaf, Calendar, ExternalLink } from "lucide-react";
+import axiosClient from "../api/axiosClient";
 
 export default function Restaurant() {
+  const [menus, setMenus] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const res = await axiosClient.get("/guest/menu?userId=0");
+        // Filter out disabled items
+        const activeItems = res.data.filter(item => item.enabled !== false && item.isTodayMenu !== false);
+        setMenus(activeItems);
+      } catch (err) {
+        console.error("Failed to fetch menu:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
+
+  // Group menus by category/period
+  const groupedMenus = {
+    "ĐIỂM TÂM SÁNG": menus.filter(m => m.periods?.includes("Breakfast")),
+    "TRƯA & TỐI": menus.filter(m => m.periods?.includes("Lunch") || m.periods?.includes("Dinner")),
+  };
+
   return (
-    <div className="bg-[#fafbfa] min-h-screen font-sans">
-      {/* HERO BANNER */}
-      <div className="relative w-full h-[50vh] sm:h-[65vh] overflow-hidden mb-20">
-        <div 
-          className="absolute inset-0 bg-fixed bg-cover bg-center opacity-70 mix-blend-multiply"
-          style={{ backgroundImage: `url(${serviceDining})` }}
-        ></div>
-        <div className="absolute inset-0 bg-sage-900/40"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sage-900/60 to-[#fafbfa]"></div>
-        <div className="relative h-full max-w-7xl mx-auto px-6 sm:px-8 flex flex-col justify-end pb-24">
-          <span className="text-primary-200 font-bold tracking-[0.2em] text-xs sm:text-sm uppercase mb-4 animate-slide-up">
-            Nhà hàng Ngũ Sơn
-          </span>
-          <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-bold text-white mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Ẩm Thực Thực Dưỡng
+    <div className="bg-[#fcfbf9] min-h-screen font-sans">
+      
+      {/* HERO BANNER - Split Collage Style */}
+      <div className="relative w-full h-[60vh] sm:h-[80vh] flex">
+        <div className="w-1/3 h-full bg-cover bg-center" style={{ backgroundImage: `url('/images/dishes/dish_pho_bo.png')` }}></div>
+        <div className="w-1/3 h-full bg-cover bg-center" style={{ backgroundImage: `url('/images/dishes/dish_steak_wagyu.png')` }}></div>
+        <div className="w-1/3 h-full bg-cover bg-center" style={{ backgroundImage: `url('/images/dishes/dish_ca_hoi.png')` }}></div>
+        
+        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center">
+          <h1 className="font-serif tracking-[0.2em] text-5xl sm:text-7xl md:text-8xl text-white font-bold mb-4 animate-fade-in drop-shadow-lg">
+            NGŨ SƠN
           </h1>
-          <p className="text-sage-50 max-w-2xl text-sm sm:text-lg font-light leading-relaxed animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            Mỗi món ăn là một vị thuốc lành. Trải nghiệm ẩm thực thuần khiết chế biến từ nguồn rau củ quả sinh thái organic tự trồng, nói không với gia vị hóa học và đường tinh luyện.
+          <p className="text-white text-lg sm:text-2xl tracking-[0.3em] uppercase font-light drop-shadow-md animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            Nâng tầm ẩm thực thực dưỡng
+          </p>
+          <div className="mt-8 border border-white/40 px-8 py-3 text-white/90 text-sm tracking-widest uppercase bg-black/20 backdrop-blur-sm">
+            Ngũ Sơn - A Culinary Journey
+          </div>
+        </div>
+      </div>
+
+      {/* Philosophy Section */}
+      <div className="py-24 px-6 max-w-5xl mx-auto text-center space-y-12">
+        <h2 className="font-serif text-3xl sm:text-4xl tracking-[0.3em] text-[#333] uppercase">
+          Ẩm Thực Ngũ Sơn
+        </h2>
+        <p className="text-[#555] leading-relaxed max-w-3xl mx-auto text-sm sm:text-base font-light">
+          Sự tinh tế và đa dạng của ẩm thực thực dưỡng đã tạo nên một bức tranh ẩm thực độc đáo, đầy màu sắc. Ngũ Sơn mang đến sự kết hợp hài hòa giữa các món ăn truyền thống, rau củ hữu cơ tự trồng và kỹ thuật chế biến hiện đại.
+          <br /><br />
+          Với thực đơn bao gồm các món ăn kinh điển lấy cảm hứng từ thiên nhiên, chúng tôi mong muốn giới thiệu hương vị thuần khiết đến bạn bè quốc tế, để họ có thể cảm nhận trọn vẹn sự tinh túy của nền ẩm thực này.
+        </p>
+
+        <div className="pt-12">
+          <h2 className="font-serif text-2xl sm:text-3xl tracking-[0.3em] text-[#333] uppercase mb-8">
+            Nguyên Liệu Tự Nhiên
+          </h2>
+          <p className="text-[#555] leading-relaxed max-w-3xl mx-auto text-sm sm:text-base font-light">
+            Tại Ngũ Sơn, mọi nguyên liệu đều được đảm bảo nguồn gốc và chất lượng tốt nhất, giúp thực khách có thể cảm nhận được hương vị nguyên bản. Từ các loại rau thơm, gia vị đến các loại hạt, mỗi nguyên liệu đều được tuyển chọn kỹ lưỡng, tạo nên những món ăn không chỉ ngon miệng mà còn đáng nhớ.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
-
-        {/* Philosophy Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32 -mt-32 relative z-10">
-          <div className="bg-white/70 backdrop-blur-xl rounded-[32px] p-10 border-[0.5px] border-white shadow-[0_8px_32px_rgba(0,0,0,0.06)] text-center space-y-6 hover:-translate-y-3 transition-all duration-700 group">
-            <div className="mx-auto w-20 h-20 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-full text-primary-800 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(156,167,144,0.4)] transition-all duration-500">
-              <Leaf className="h-8 w-8" />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-sage-900">
-              100% Nguyên Liệu Sạch
-            </h3>
-            <p className="text-sage-600 text-sm font-light leading-relaxed">
-              Rau củ hữu cơ được thu hoạch trực tiếp tại vườn sinh thái Ngũ Sơn mỗi buổi sáng, đảm bảo độ tươi ngon ngọt tự nhiên.
-            </p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-xl rounded-[32px] p-10 border-[0.5px] border-white shadow-[0_8px_32px_rgba(0,0,0,0.06)] text-center space-y-6 hover:-translate-y-3 transition-all duration-700 group">
-            <div className="mx-auto w-20 h-20 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-full text-primary-800 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(156,167,144,0.4)] transition-all duration-500">
-              <ChefHat className="h-8 w-8" />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-sage-900">
-              Thiết Kế Thực Đơn Riêng
-            </h3>
-            <p className="text-sage-600 text-sm font-light leading-relaxed">
-              Hỗ trợ thiết kế chế độ ăn uống kiêng, ăn chay thực dưỡng hoặc chuyên biệt theo thể trạng sức khỏe.
-            </p>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-xl rounded-[32px] p-10 border-[0.5px] border-white shadow-[0_8px_32px_rgba(0,0,0,0.06)] text-center space-y-6 hover:-translate-y-3 transition-all duration-700 group">
-            <div className="mx-auto w-20 h-20 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-full text-primary-800 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(156,167,144,0.4)] transition-all duration-500">
-              <Heart className="h-8 w-8" />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-sage-900">
-              Không Với Hóa Chất
-            </h3>
-            <p className="text-sage-600 text-sm font-light leading-relaxed">
-              Cam kết không sử dụng bột ngọt hóa học hay chất bảo quản. Độ ngọt thanh mát 100% tự nhiên từ rau củ.
-            </p>
-          </div>
-        </div>
-
-        {/* Menu Showcase Card layout */}
-        <div className="mb-24">
-          <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-sage-900">
-              Thực Đơn Dinh Dưỡng Theo Mùa
+      {/* A-LA-CARTE MENU SECTION */}
+      <div className="bg-[#f0ece6] py-20 px-4 sm:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-4xl sm:text-5xl text-[#5b4d45] tracking-[0.1em] uppercase mb-4">
+              Thực Đơn Ngũ Sơn
             </h2>
-            <div className="h-1 w-24 bg-primary-300 mx-auto mt-6 rounded-full" />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {menus.map((section, idx) => (
-              <div key={idx} className={`bg-white rounded-[40px] p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-[0.5px] border-primary-100/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-2 transition-all duration-700 relative overflow-hidden group ${idx === 1 ? 'lg:mt-12' : ''} ${idx === 2 ? 'lg:mt-24' : ''}`}>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary-100 transition-colors duration-700" />
-                <h3 className="relative font-serif text-2xl font-bold text-sage-900 mb-8 flex items-center gap-3">
-                  <span className="text-primary-600">✤</span>
-                  {section.category}
-                </h3>
-                <div className="relative space-y-8">
-                  {section.items.map((item, itemIdx) => (
-                    <div key={itemIdx} className="group/item">
-                      <h4 className="font-serif text-lg font-bold text-sage-900 group-hover/item:text-primary-800 transition-colors mb-2">
-                        {item.name}
-                      </h4>
-                      <p className="text-sage-500 text-sm font-light leading-relaxed">
-                        {item.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Call to action */}
-        <div className="relative rounded-[48px] p-12 sm:p-20 text-center overflow-hidden mb-12 group shadow-[0_20px_60px_rgba(35,56,39,0.2)]">
-          <div className="absolute inset-0 bg-sage-950"></div>
-          <div
-            className="absolute inset-0 bg-fixed bg-cover bg-center opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-[3s]"
-            style={{ backgroundImage: `url(${serviceDining})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-sage-950 via-sage-900/80 to-transparent"></div>
-          
-          <div className="relative z-10 max-w-2xl mx-auto space-y-10">
-            <h3 className="font-serif text-4xl sm:text-6xl font-bold text-white leading-tight">
-              Tư Vấn Thực Đơn & Đặt Bàn Khép Kín
-            </h3>
-            <p className="text-sage-100 text-base sm:text-lg font-light leading-relaxed px-4 opacity-90">
-              Quý khách có nhu cầu dùng bữa riêng tư ngắm hoàng hôn ven suối hoặc yêu cầu tư vấn thực đơn thực dưỡng cá nhân hóa từ chuyên gia dinh dưỡng, vui lòng đăng ký trước 2 tiếng.
+            <p className="tracking-[0.2em] text-[#7a6b63] text-sm uppercase font-semibold">
+              A-La-Carte
             </p>
-            <a
-              href="/dat-lich"
-              className="relative overflow-hidden inline-flex items-center justify-center px-12 py-5 rounded-full text-sm font-bold uppercase tracking-[0.2em] bg-gradient-to-r from-amber-200 to-amber-400 text-amber-950 hover:to-amber-300 transition-all duration-500 shadow-[0_0_30px_rgba(245,208,129,0.4)] hover:shadow-[0_0_50px_rgba(245,208,129,0.6)] hover:-translate-y-1.5 group/btn"
-            >
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent group-hover/btn:animate-[shimmer_1.5s_infinite]" />
-              <Calendar className="mr-3 h-5 w-5 text-amber-900 relative z-10" /> 
-              <span className="relative z-10">Liên Hệ Đặt Bàn Ngay</span>
-            </a>
+            <p className="mt-4 text-[#7a6b63] text-sm tracking-widest uppercase">Món ăn đặc trưng</p>
           </div>
+
+          {loading ? (
+            <div className="text-center py-20 text-[#5b4d45]">Đang tải thực đơn...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
+              
+              {Object.entries(groupedMenus).map(([category, items]) => (
+                <div key={category} className="bg-white p-8 sm:p-12 shadow-sm border border-[#e6e2db]">
+                  <h3 className="font-serif text-2xl text-[#5b4d45] border-b border-[#e6e2db] pb-4 mb-8 tracking-widest">
+                    {category}
+                  </h3>
+                  
+                  <div className="space-y-10">
+                    {items.map(item => (
+                      <div key={item.foodId} className="flex flex-col sm:flex-row gap-6 group">
+                        <div className="w-full sm:w-1/3 aspect-[4/3] overflow-hidden bg-[#f8f8f8]">
+                          <img 
+                            src={item.image} 
+                            alt={item.dishName}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            onError={(e) => { e.target.src = "/images/dishes/dish_chao_yen_mach.png" }}
+                          />
+                        </div>
+                        <div className="w-full sm:w-2/3 flex flex-col justify-center">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-serif text-lg text-[#333] font-semibold pr-4">
+                              {item.dishName}
+                            </h4>
+                            <span className="font-serif text-[#7a6b63] text-sm italic whitespace-nowrap">
+                              {item.price.toLocaleString("vi-VN")} vnd
+                            </span>
+                          </div>
+                          <p className="text-[#888] text-sm font-light leading-relaxed mb-3">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Call to action */}
+      <div className="py-24 bg-[#ebe6e0] text-center px-6">
+        <h3 className="font-serif text-3xl text-[#5b4d45] tracking-widest uppercase mb-10">
+          Trải Nghiệm Ngay
+        </h3>
+        <a
+          href="/dat-lich"
+          className="inline-block px-12 py-4 bg-[#938173] text-white tracking-[0.2em] uppercase text-sm hover:bg-[#7a6b63] transition-colors duration-300"
+        >
+          Đặt Bàn Ngay
+        </a>
+      </div>
+
     </div>
   );
 }

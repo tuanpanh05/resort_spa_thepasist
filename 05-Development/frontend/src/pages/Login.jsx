@@ -210,7 +210,7 @@ export default function Login() {
         )}
 
         {/* Form fields */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
           {/* Email / Username field */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-sage-800 uppercase tracking-wider block">
@@ -225,6 +225,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@gmail.com"
+                autoComplete="off"
                 className="w-full pl-9 pr-4 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
               />
             </div>
@@ -244,6 +245,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoComplete="new-password"
                 className="w-full pl-9 pr-11 py-2.5 border-b border-primary-200 focus:border-primary-900 focus:outline-none bg-transparent text-sm text-sage-900 placeholder-sage-400 transition-all duration-200"
               />
               <button

@@ -5,7 +5,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import AdminStats from "./AdminStats";
-import { adminApi } from "../../api";
+import { adminApi, paymentApi } from "../../api";
 
 // TODO: Replace with real API when backend provides GET /api/admin/operational-warnings
 const MOCK_WARNINGS = [
@@ -35,6 +35,12 @@ export default function AdminOverview({
   // Fetch real staff count from API
   const [activeStaff, setActiveStaff] = useState(0);
 
+  // Revenue Dashboard Stats State
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [revenueData, setRevenueData] = useState(null);
+  const [revenueLoading, setRevenueLoading] = useState(true);
+  const [hoveredMonth, setHoveredMonth] = useState(null);
+
   useEffect(() => {
     adminApi.getAllUsers()
       .then((users) => {
@@ -48,8 +54,47 @@ export default function AdminOverview({
       });
   }, []);
 
+  useEffect(() => {
+    setRevenueLoading(true);
+    paymentApi.getRevenueDashboard(selectedYear)
+      .then((data) => {
+        setRevenueData(data);
+        setRevenueLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching revenue dashboard data:", err);
+        setRevenueLoading(false);
+      });
+  }, [selectedYear]);
+
   const pendingPayments = payments.filter((p) => p.status?.toUpperCase() === "UNPAID" || p.status === "Unpaid").length;
   const pendingSwaps = swapRequests.length;
+
+  // Donut chart calculations
+  const roomRev = revenueData?.totalRoomRevenue || 0;
+  const spaRev = revenueData?.totalSpaRevenue || 0;
+  const foodRev = revenueData?.totalFoodRevenue || 0;
+  const totalRev = roomRev + spaRev + foodRev;
+
+  const roomPct = totalRev > 0 ? roomRev / totalRev : 0;
+  const spaPct = totalRev > 0 ? spaRev / totalRev : 0;
+  const foodPct = totalRev > 0 ? foodRev / totalRev : 0;
+
+  const circumference = 2 * Math.PI * 50; // ~314.159
+  const roomDash = roomPct * circumference;
+  const spaDash = spaPct * circumference;
+  const foodDash = foodPct * circumference;
+
+  const roomOffset = 0;
+  const spaOffset = roomDash;
+  const foodOffset = roomDash + spaDash;
+
+  // Stacked Bar Chart calculations
+  const monthlyData = revenueData?.monthlyBreakdown || [];
+  const maxTotal = monthlyData.reduce((max, item) => {
+    const val = (item.roomRevenue || 0) + (item.spaRevenue || 0) + (item.foodRevenue || 0);
+    return val > max ? val : max;
+  }, 0) || 1;
 
   return (
     <div className="space-y-8 animate-fade-in text-left">
@@ -61,6 +106,257 @@ export default function AdminOverview({
         activeStaff={activeStaff}
         warningsCount={MOCK_WARNINGS.length}
       />
+
+      {/* Revenue Analytics Section */}
+      <div className="bg-white border border-primary-100 p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-primary-50">
+          <div className="text-left">
+            <h3 className="font-serif text-base font-bold text-sage-950 uppercase tracking-wider">
+              Biểu Đồ Phân Tích Doanh Thu
+            </h3>
+            <p className="text-[10px] text-sage-400 mt-1 uppercase font-mono tracking-wider">
+              Theo Gói Dịch Vụ, Spa và Thực Phẩm
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">Năm thống kê:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="text-xs bg-[#f5f5f0] border border-primary-200 px-2 py-1.5 focus:outline-none font-bold text-sage-950 uppercase tracking-wide cursor-pointer"
+            >
+              <option value={2025}>Năm 2025</option>
+              <option value={2026}>Năm 2026</option>
+              <option value={2027}>Năm 2027</option>
+            </select>
+          </div>
+        </div>
+
+        {revenueLoading ? (
+          <div className="h-64 flex items-center justify-center text-sage-500 font-light text-xs">
+            Đang tải dữ liệu doanh thu...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Donut Chart - Breakdown */}
+            <div className="flex flex-col items-center justify-center p-6 border border-primary-100 bg-[#f5f5f0]/30">
+              <h4 className="text-xs font-bold text-sage-900 uppercase tracking-wider mb-6 text-center">
+                Cơ Cấu Doanh Thu Dịch Vụ
+              </h4>
+              
+              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center justify-center gap-6 w-full">
+                {/* SVG Donut */}
+                <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
+                  <svg width="128" height="128" viewBox="0 0 128 128" className="transform -rotate-90">
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="50"
+                      fill="transparent"
+                      stroke="#f5f5f0"
+                      strokeWidth="16"
+                    />
+                    {totalRev > 0 ? (
+                      <>
+                        {roomDash > 0 && (
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="50"
+                            fill="transparent"
+                            stroke="#5c6d50"
+                            strokeWidth="16"
+                            strokeDasharray={`${roomDash} ${circumference}`}
+                            strokeDashoffset={-roomOffset}
+                            className="transition-all duration-500 ease-out"
+                          />
+                        )}
+                        {spaDash > 0 && (
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="50"
+                            fill="transparent"
+                            stroke="#7fa192"
+                            strokeWidth="16"
+                            strokeDasharray={`${spaDash} ${circumference}`}
+                            strokeDashoffset={-spaOffset}
+                            className="transition-all duration-500 ease-out"
+                          />
+                        )}
+                        {foodDash > 0 && (
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="50"
+                            fill="transparent"
+                            stroke="#dcae68"
+                            strokeWidth="16"
+                            strokeDasharray={`${foodDash} ${circumference}`}
+                            strokeDashoffset={-foodOffset}
+                            className="transition-all duration-500 ease-out"
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="50"
+                        fill="transparent"
+                        stroke="#e2e8f0"
+                        strokeWidth="16"
+                      />
+                    )}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-[9px] text-sage-400 font-bold uppercase tracking-wider">Tổng</span>
+                    <span className="text-xs font-serif font-bold text-sage-950">
+                      {Math.round(totalRev / 1000).toLocaleString("vi-VN")}k
+                    </span>
+                  </div>
+                </div>
+
+                {/* Legends */}
+                <div className="flex-1 space-y-3 text-left w-full">
+                  <div className="flex items-start space-x-2">
+                    <span className="w-3 h-3 bg-[#5c6d50] block shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[9px] font-bold text-sage-900 uppercase tracking-wide">Phòng & Gói nghỉ dưỡng</p>
+                      <p className="text-xs text-sage-600 font-medium">
+                        {roomRev.toLocaleString("vi-VN")} đ ({totalRev > 0 ? Math.round(roomPct * 100) : 0}%)
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="w-3 h-3 bg-[#7fa192] block shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[9px] font-bold text-sage-900 uppercase tracking-wide">Dịch vụ Spa trị liệu</p>
+                      <p className="text-xs text-sage-600 font-medium">
+                        {spaRev.toLocaleString("vi-VN")} đ ({totalRev > 0 ? Math.round(spaPct * 100) : 0}%)
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="w-3 h-3 bg-[#dcae68] block shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[9px] font-bold text-sage-900 uppercase tracking-wide">Thực phẩm & Bếp Resort</p>
+                      <p className="text-xs text-sage-600 font-medium">
+                        {foodRev.toLocaleString("vi-VN")} đ ({totalRev > 0 ? Math.round(foodPct * 100) : 0}%)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stacked Bar Chart - Monthly Trends */}
+            <div className="lg:col-span-2 flex flex-col p-6 border border-primary-100 bg-[#f5f5f0]/30 relative">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-xs font-bold text-sage-900 uppercase tracking-wider">
+                  Doanh Thu Theo Các Tháng
+                </h4>
+                <div className="flex items-center space-x-4 text-[9px] text-sage-400 font-bold uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 bg-[#5c6d50] block shrink-0" />
+                    <span>Phòng/Gói</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 bg-[#7fa192] block shrink-0" />
+                    <span>Spa</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 bg-[#dcae68] block shrink-0" />
+                    <span>Ẩm thực</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="h-44 w-full flex items-end justify-between px-2 border-b border-primary-150 pb-2 relative">
+                {monthlyData.length === 0 ? (
+                  <div className="absolute inset-0 flex items-center justify-center text-sage-500 font-light text-xs">
+                    Chưa có dữ liệu cho năm này.
+                  </div>
+                ) : (
+                  monthlyData.map((item, idx) => {
+                    const r = item.roomRevenue || 0;
+                    const s = item.spaRevenue || 0;
+                    const f = item.foodRevenue || 0;
+                    const tot = r + s + f;
+                    const heightPercent = maxTotal > 0 ? (tot / maxTotal) * 100 : 0;
+                    const isHovered = hoveredMonth === idx;
+                    
+                    return (
+                      <div
+                        key={idx}
+                        className="flex flex-col items-center z-10 w-[7%] group relative cursor-pointer"
+                        onMouseEnter={() => setHoveredMonth(idx)}
+                        onMouseLeave={() => setHoveredMonth(null)}
+                      >
+                        {/* Stacked Bar */}
+                        <div
+                          className="w-full flex flex-col justify-end bg-transparent transition-all duration-300 relative"
+                          style={{ height: `${Math.max(heightPercent, 2)}%`, minHeight: "6px" }}
+                        >
+                          {tot > 0 ? (
+                            <>
+                              <div
+                                style={{ height: `${(f / tot) * 100}%` }}
+                                className="w-full bg-[#dcae68] transition-all"
+                              />
+                              <div
+                                style={{ height: `${(s / tot) * 100}%` }}
+                                className="w-full bg-[#7fa192] transition-all"
+                              />
+                              <div
+                                style={{ height: `${(r / tot) * 100}%` }}
+                                className="w-full bg-[#5c6d50] transition-all animate-height-grow"
+                              />
+                            </>
+                          ) : (
+                            <div className="w-full h-1 bg-sage-200" />
+                          )}
+                        </div>
+                        {/* Month Label */}
+                        <span className="text-[9px] text-sage-500 mt-1 uppercase font-mono tracking-tight whitespace-nowrap">
+                          {item.label?.split("/")[0]?.replace("Tháng ", "T") || `T${idx + 1}`}
+                        </span>
+
+                        {/* Custom hover tooltip */}
+                        {isHovered && tot > 0 && (
+                          <div className="absolute bottom-full mb-2 bg-sage-950 text-white p-3 shadow-xl z-50 text-[10px] w-48 pointer-events-none border border-primary-800 text-left">
+                            <p className="font-bold border-b border-white/20 pb-1 mb-1.5 uppercase font-serif tracking-wider">
+                              {item.label}
+                            </p>
+                            <div className="space-y-1 font-light">
+                              <div className="flex justify-between">
+                                <span className="opacity-80">Gói Villa:</span>
+                                <span className="font-bold text-[#b4cfa9]">{r.toLocaleString("vi-VN")} đ</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="opacity-80">Spa:</span>
+                                <span className="font-bold text-[#a0cfbc]">{s.toLocaleString("vi-VN")} đ</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="opacity-80">Ẩm thực:</span>
+                                <span className="font-bold text-[#ffd79d]">{f.toLocaleString("vi-VN")} đ</span>
+                              </div>
+                              <div className="flex justify-between border-t border-white/20 pt-1 mt-1 font-bold">
+                                <span>Tổng cộng:</span>
+                                <span>{tot.toLocaleString("vi-VN")} đ</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Grid: Actions Checklist & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

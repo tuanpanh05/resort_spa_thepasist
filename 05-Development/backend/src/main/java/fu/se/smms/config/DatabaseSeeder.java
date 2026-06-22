@@ -22,6 +22,22 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
+            System.out.println("[DB Seeder] Creating booking_packages table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.booking_packages', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.booking_packages (
+                        booking_id INT NOT NULL REFERENCES dbo.room_booking(booking_id) ON DELETE CASCADE,
+                        package_id INT NOT NULL REFERENCES dbo.retreat_packages(package_id) ON DELETE CASCADE,
+                        PRIMARY KEY (booking_id, package_id)
+                    );
+                END
+                """);
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not create booking_packages table: " + e.getMessage());
+        }
+
+        try {
             System.out.println("[DB Seeder] Altering columns to NVARCHAR and adding available_days...");
             jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN full_name NVARCHAR(255) NOT NULL");
             jdbcTemplate.execute("ALTER TABLE retreat_packages ALTER COLUMN name NVARCHAR(200) NOT NULL");
@@ -110,6 +126,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.update("DELETE FROM food_order_detail"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM food_order"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM feedback"); } catch (Exception e) {}
+            try { jdbcTemplate.update("DELETE FROM booking_packages"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM room_booking"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM room"); } catch (Exception e) {}
 

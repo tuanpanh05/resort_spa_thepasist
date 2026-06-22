@@ -24,6 +24,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
                  FROM dbo.booking_packages bp
                  INNER JOIN dbo.retreat_packages p ON p.package_id = bp.package_id
                  WHERE bp.booking_id = b.booking_id),
+                (SELECT p.price FROM dbo.retreat_packages p WHERE p.package_id = b.package_id),
                 0
             ) + COALESCE(room_charge.room_subtotal, 0)
             FROM dbo.room_booking b
