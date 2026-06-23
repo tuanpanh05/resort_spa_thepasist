@@ -221,14 +221,35 @@ export default function BookingPage() {
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
-        const data = await masterDataApi.getRoomTypes();
+        const checkIn = guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : null;
+        const checkOut = guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : null;
+        const data = await masterDataApi.getRoomTypes(checkIn, checkOut);
         setRoomTypes(data);
+
+        // Auto-adjust selectedRooms if checkIn/checkOut change makes rooms unavailable or exceeds availability
+        setSelectedRooms((prev) => {
+          const next = { ...prev };
+          let changed = false;
+          Object.keys(next).forEach((roomTypeId) => {
+            const rt = data.find((r) => r.roomTypeId === Number(roomTypeId));
+            const maxCount = rt && rt.availableRoomsCount !== undefined ? rt.availableRoomsCount : 0;
+            if (next[roomTypeId] > maxCount) {
+              if (maxCount === 0) {
+                delete next[roomTypeId];
+              } else {
+                next[roomTypeId] = maxCount;
+              }
+              changed = true;
+            }
+          });
+          return changed ? next : prev;
+        });
       } catch (err) {
         console.error("Failed to fetch room types from database", err);
       }
     };
     fetchRoomTypes();
-  }, []);
+  }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
   useEffect(() => {
     const fetchPackagesAndServices = async () => {
@@ -438,6 +459,17 @@ export default function BookingPage() {
       if (!hasSelectedRoom) {
         alert("Vui lòng chọn ít nhất một biệt thự nghỉ dưỡng ở Bước 3 trước khi tiếp tục.");
         return;
+      }
+      // Check if any selected room type has available rooms < selected quantity
+      for (const [roomTypeId, qty] of Object.entries(selectedRooms)) {
+        if (qty > 0) {
+          const rt = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+          const maxCount = rt && rt.availableRoomsCount !== undefined ? rt.availableRoomsCount : 0;
+          if (qty > maxCount) {
+            alert(`Hạng phòng "${rt ? rt.typeName : ''}" đã không còn đủ phòng trống cho số lượng bạn chọn trong khoảng thời gian này.`);
+            return;
+          }
+        }
       }
       setStep(4);
     } else if (step === 4) {

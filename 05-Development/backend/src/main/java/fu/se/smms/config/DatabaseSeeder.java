@@ -152,12 +152,18 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Table might not exist yet
             }
 
-            if (existingRooms != null && existingRooms > 0) {
+            if (existingRooms != null && existingRooms == 40) {
                 System.out.println("[DB Seeder] Database is already seeded (found " + existingRooms + " rooms). Skipping database wipe to preserve your data.");
+                try {
+                    jdbcTemplate.update("UPDATE dbo.room_booking SET check_in_date = CAST(GETDATE() AS DATE), check_out_date = DATEADD(day, 5, CAST(GETDATE() AS DATE)) WHERE booking_id = (SELECT MIN(booking_id) FROM dbo.room_booking)");
+                    System.out.println("[DB Seeder] Force updated first room booking to check in today.");
+                } catch (Exception e) {
+                    System.err.println("[DB Seeder] Warning: could not force update booking: " + e.getMessage());
+                }
                 return;
             }
 
-            System.out.println("[DB Seeder] Re-aligning Room Type Prices, cleaning and setting up exactly 70 Rooms...");
+            System.out.println("[DB Seeder] Re-aligning Room Type Prices, cleaning and setting up exactly 40 Rooms...");
 
             // 2. Clean child tables of Room/Booking to prevent constraint errors
             try { jdbcTemplate.update("DELETE FROM room_guest_declaration"); } catch (Exception e) {}
@@ -175,84 +181,70 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.update("DELETE FROM room_types"); } catch (Exception e) {}
 
             // Seed new room types
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'President Room 1 Double Bed', 2500000.00, 2)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'Vip Room 1 Double Bed', 1800000.00, 2)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'Vip Room 1 Single Bed', 1400000.00, 1)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'Vip Room 2 Double Beds', 2200000.00, 4)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'Standard Room 1 Double Bed', 1200000.00, 2)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'Standard Room 1 Single Bed', 900000.00, 1)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity) VALUES (N'Standard Room 2 Double Beds', 1500000.00, 4)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Gỗ Hướng Suối', 3200000.00, 2, 65)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Đá Cuội Bên Rừng', 3800000.00, 2, 75)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Đồi Trà Thiền Định', 5800000.00, 4, 120)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Gia Đình Sen Trắng', 7500000.00, 8, 180)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Sàn Cộng Đồng Đông Sơn', 9000000.00, 25, 250)");
 
             // Get Room Type IDs to ensure we insert with correct IDs
-            Integer presDoubleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'President Room 1 Double Bed'", Integer.class);
-            Integer vipDoubleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Vip Room 1 Double Bed'", Integer.class);
-            Integer vipSingleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Vip Room 1 Single Bed'", Integer.class);
-            Integer vipTwoDoubleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Vip Room 2 Double Beds'", Integer.class);
-            Integer stdDoubleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Standard Room 1 Double Bed'", Integer.class);
-            Integer stdSingleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Standard Room 1 Single Bed'", Integer.class);
-            Integer stdTwoDoubleId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Standard Room 2 Double Beds'", Integer.class);
+            Integer woodBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Gỗ Hướng Suối'", Integer.class);
+            Integer pebbleBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Đá Cuội Bên Rừng'", Integer.class);
+            Integer teaVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Đồi Trà Thiền Định'", Integer.class);
+            Integer lotusVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Gia Đình Sen Trắng'", Integer.class);
+            Integer donSanId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Sàn Cộng Đồng Đông Sơn'", Integer.class);
 
-            if (presDoubleId != null && vipDoubleId != null && vipSingleId != null && vipTwoDoubleId != null && stdDoubleId != null && stdSingleId != null && stdTwoDoubleId != null) {
-                // 10 President Rooms (President-501 to President-510)
+            if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null) {
+                // 10 Bungalow Gỗ Hướng Suối (BG-101 to BG-110)
                 for (int i = 1; i <= 10; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", presDoubleId, String.format("President-%03d", 500 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", woodBungId, String.format("BG-%03d", 100 + i));
                 }
 
-                // 10 VIP Room 1 Double Bed (Vip-201 to Vip-210)
+                // 10 Bungalow Đá Cuội Bên Rừng (BD-101 to BD-110)
                 for (int i = 1; i <= 10; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", vipDoubleId, String.format("Vip-%03d", 200 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", pebbleBungId, String.format("BD-%03d", 100 + i));
                 }
 
-                // 10 VIP Room 1 Single Bed (Vip-211 to Vip-220)
-                for (int i = 11; i <= 20; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", vipSingleId, String.format("Vip-%03d", 200 + i));
-                }
-
-                // 10 VIP Room 2 Double Beds (Vip-221 to Vip-230)
-                for (int i = 21; i <= 30; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", vipTwoDoubleId, String.format("Vip-%03d", 200 + i));
-                }
-
-                // 10 Standard Room 1 Double Bed (Room-101 to Room-110)
+                // 10 Biệt Thự Đồi Trà Thiền Định (BT-101 to BT-110)
                 for (int i = 1; i <= 10; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", stdDoubleId, String.format("Room-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", teaVillaId, String.format("BT-%03d", 100 + i));
                 }
 
-                // 10 Standard Room 1 Single Bed (Room-111 to Room-120)
-                for (int i = 11; i <= 20; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", stdSingleId, String.format("Room-%03d", 100 + i));
+                // 5 Biệt Thự Gia Đình Sen Trắng (BS-101 to BS-105)
+                for (int i = 1; i <= 5; i++) {
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", lotusVillaId, String.format("BS-%03d", 100 + i));
                 }
 
-                // 10 Standard Room 2 Double Beds (Room-121 to Room-130)
-                for (int i = 21; i <= 30; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", stdTwoDoubleId, String.format("Room-%03d", 100 + i));
+                // 5 Nhà Sàn Cộng Đồng Đông Sơn (NS-101 to NS-105)
+                for (int i = 1; i <= 5; i++) {
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", donSanId, String.format("NS-%03d", 100 + i));
                 }
 
                 // Re-seed default bookings so the staff page isn't empty
-                jdbcTemplate.update("INSERT INTO room_booking (user_id, package_id, check_in_date, check_out_date, status, total_deposit) VALUES (5, 1, DATEADD(day, 1, GETDATE()), DATEADD(day, 6, GETDATE()), 'CONFIRMED', 3750000.00)");
+                jdbcTemplate.update("INSERT INTO room_booking (user_id, package_id, check_in_date, check_out_date, status, total_deposit) VALUES (5, 1, GETDATE(), DATEADD(day, 5, GETDATE()), 'CONFIRMED', 3750000.00)");
                 jdbcTemplate.update("INSERT INTO room_booking (user_id, package_id, check_in_date, check_out_date, status, total_deposit) VALUES (6, NULL, DATEADD(day, 2, GETDATE()), DATEADD(day, 4, GETDATE()), 'CONFIRMED', 2700000.00)");
 
                 // Re-seed default booking details
                 Integer booking1 = jdbcTemplate.queryForObject("SELECT TOP 1 booking_id FROM room_booking ORDER BY booking_id ASC", Integer.class);
                 Integer booking2 = jdbcTemplate.queryForObject("SELECT TOP 1 booking_id FROM room_booking ORDER BY booking_id DESC", Integer.class);
-                Integer room1Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'Vip-201'", Integer.class);
-                Integer room2Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'Vip-202'", Integer.class);
+                Integer room1Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'BG-101'", Integer.class);
+                Integer room2Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'BG-102'", Integer.class);
 
                 if (booking1 != null && room1Id != null) {
-                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 1800000.00)", booking1, room1Id);
-                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (5, ?, 9000000.00, 0.00, 0.00, 900000.00, 9900000.00, 3750000.00, 6150000.00, 'UNPAID')", booking1);
+                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 3200000.00)", booking1, room1Id);
+                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (5, ?, 16000000.00, 0.00, 0.00, 1600000.00, 17600000.00, 3750000.00, 13850000.00, 'UNPAID')", booking1);
                 }
                 if (booking2 != null && room2Id != null && !booking2.equals(booking1)) {
-                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 1800000.00)", booking2, room2Id);
-                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (6, ?, 3600000.00, 0.00, 0.00, 360000.00, 3960000.00, 2700000.00, 1260000.00, 'UNPAID')", booking2);
+                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 3200000.00)", booking2, room2Id);
+                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (6, ?, 6400000.00, 0.00, 0.00, 640000.00, 7040000.00, 2700000.00, 4340000.00, 'UNPAID')", booking2);
                 }
 
                 // Seed default complaints
                 try {
                     jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -3, GETDATE()), ?)",
-                            5, "Trần Khách Hàng", "Vip-201", "Gối hơi cao, cần đổi 2 gối lông vũ mềm hơn.", "Resolved", "Đã giao gối mới lúc 15:00");
+                            5, "Trần Khách Hàng", "BG-101", "Gối hơi cao, cần đổi 2 gối lông vũ mềm hơn.", "Resolved", "Đã giao gối mới lúc 15:00");
                     jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -1, GETDATE()), NULL)",
-                            6, "Lê Minh Châu", "Vip-202", "Wifi trong góc phòng hơi yếu, thỉnh thoảng mất kết nối.", "Open");
+                            6, "Lê Minh Châu", "BG-102", "Wifi trong góc phòng hơi yếu, thỉnh thoảng mất kết nối.", "Open");
                     System.out.println("[DB Seeder] Seeded default complaints successfully.");
                 } catch (Exception e) {
                     System.err.println("[DB Seeder] Warning: Complaints seeding failed: " + e.getMessage());
@@ -262,46 +254,46 @@ public class DatabaseSeeder implements CommandLineRunner {
             try {
                 System.out.println("[DB Seeder] Running data correction patch for overlapping room bookings...");
                 jdbcTemplate.execute("""
-                    -- Fix room assignment for Invoice 44 (assign Vip-202, Vip-203)
+                    -- Fix room assignment for Invoice 44 (assign BG-102, BG-103)
                     DECLARE @booking44 INT;
                     SELECT @booking44 = room_booking_id FROM invoice WHERE invoice_id = 44;
     
                     DECLARE @room2Id INT, @room3Id INT;
-                    SELECT @room2Id = room_id FROM room WHERE room_number = 'Vip-202';
-                    SELECT @room3Id = room_id FROM room WHERE room_number = 'Vip-203';
+                    SELECT @room2Id = room_id FROM room WHERE room_number = 'BG-102';
+                    SELECT @room3Id = room_id FROM room WHERE room_number = 'BG-103';
     
                     IF @booking44 IS NOT NULL AND @room2Id IS NOT NULL AND @room3Id IS NOT NULL
                     BEGIN
-                        -- Update detail that was Vip-201 to Vip-202
+                        -- Update detail that was BG-101 to BG-102
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room2Id
-                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-201');
+                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-101');
     
-                        -- Update detail that was Vip-202 to Vip-203
+                        -- Update detail that was BG-102 to BG-103
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room3Id
-                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-202');
+                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-102');
                     END
     
-                    -- Fix room assignment for Invoice 45 (assign Vip-204, Vip-205)
+                    -- Fix room assignment for Invoice 45 (assign BG-104, BG-105)
                     DECLARE @booking45 INT;
                     SELECT @booking45 = room_booking_id FROM invoice WHERE invoice_id = 45;
     
                     DECLARE @room4Id INT, @room5Id INT;
-                    SELECT @room4Id = room_id FROM room WHERE room_number = 'Vip-204';
-                    SELECT @room5Id = room_id FROM room WHERE room_number = 'Vip-205';
+                    SELECT @room4Id = room_id FROM room WHERE room_number = 'BG-104';
+                    SELECT @room5Id = room_id FROM room WHERE room_number = 'BG-105';
     
                     IF @booking45 IS NOT NULL AND @room4Id IS NOT NULL AND @room5Id IS NOT NULL
                     BEGIN
-                        -- Update detail that was Vip-201 to Vip-204
+                        -- Update detail that was BG-101 to BG-104
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room4Id
-                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-201');
+                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-101');
     
-                        -- Update detail that was Vip-202 to Vip-205
+                        -- Update detail that was BG-102 to BG-105
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room5Id
-                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'Vip-202');
+                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-102');
                     END
                     """);
                 System.out.println("[DB Seeder] Overlapping room bookings corrected successfully.");
@@ -309,7 +301,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 System.err.println("[DB Seeder] Warning: Could not run overlapping room booking patch: " + e.getMessage());
             }
 
-            System.out.println("[DB Seeder] Exactly 70 rooms configured successfully.");
+            System.out.println("[DB Seeder] Exactly 40 rooms configured successfully.");
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Room types / rooms seeding failed: " + e.getMessage());
         }

@@ -25,6 +25,7 @@ public class MasterDataServiceImpl implements MasterDataService {
     @Autowired private RetreatPackageRepository retreatPackageRepository;
     @Autowired private RoomTypeRepository roomTypeRepository;
     @Autowired private RoomRepository roomRepository;
+    @Autowired private fu.se.smms.repository.RoomBookingRepository roomBookingRepository;
 
     // ========== SPA SERVICES ==========
     @Override @Transactional(readOnly = true)
@@ -173,8 +174,10 @@ public class MasterDataServiceImpl implements MasterDataService {
 
     // ========== ROOM TYPES ==========
     @Override @Transactional(readOnly = true)
-    public List<RoomTypeDTO> getAllRoomTypes() {
-        return roomTypeRepository.findAll().stream().map(this::toRoomTypeDTO).collect(Collectors.toList());
+    public List<RoomTypeDTO> getAllRoomTypes(String checkIn, String checkOut) {
+        return roomTypeRepository.findAll().stream()
+                .map(rt -> toRoomTypeDTO(rt, checkIn, checkOut))
+                .collect(Collectors.toList());
     }
 
     @Override @Transactional(readOnly = true)
@@ -296,6 +299,10 @@ public class MasterDataServiceImpl implements MasterDataService {
     }
 
     private RoomTypeDTO toRoomTypeDTO(RoomType e) {
+        return toRoomTypeDTO(e, null, null);
+    }
+
+    private RoomTypeDTO toRoomTypeDTO(RoomType e, String checkIn, String checkOut) {
         RoomTypeDTO dto = new RoomTypeDTO();
         dto.setRoomTypeId(e.getRoomTypeId());
         dto.setTypeName(e.getTypeName());
@@ -303,8 +310,34 @@ public class MasterDataServiceImpl implements MasterDataService {
         dto.setBasePricePerNight(e.getBasePricePerNight());
         dto.setMaxOccupancy(e.getMaxOccupancy());
         dto.setAreaSqm(e.getAreaSqm());
+        
         if (e.getRoomTypeId() != null) {
-            dto.setAvailableRoomsCount(roomRepository.countAvailableByRoomTypeId(e.getRoomTypeId()));
+            if (StringUtils.hasText(checkIn) && StringUtils.hasText(checkOut)) {
+                try {
+                    java.time.LocalDateTime startDateTime = java.time.LocalDate.parse(checkIn.split("T")[0]).atTime(14, 0, 0);
+                    java.time.LocalDateTime endDateTime = java.time.LocalDate.parse(checkOut.split("T")[0]).atTime(12, 0, 0);
+                    
+                    long availableCount = 0;
+                    List<fu.se.smms.entity.Room> rooms = roomRepository.findAll().stream()
+                            .filter(r -> r.getRoomType() != null && r.getRoomType().getRoomTypeId().equals(e.getRoomTypeId()))
+                            .collect(Collectors.toList());
+                    for (fu.se.smms.entity.Room r : rooms) {
+                        String status = r.getStatus();
+                        boolean isBookable = "AVAILABLE".equalsIgnoreCase(status)
+                                || "CLEANING".equalsIgnoreCase(status)
+                                || "DIRTY".equalsIgnoreCase(status)
+                                || "VACANT_NEEDS_CLEANING".equalsIgnoreCase(status);
+                        if (isBookable && roomBookingRepository.countOverlappingBookings(r.getRoomId(), startDateTime, endDateTime) == 0) {
+                            availableCount++;
+                        }
+                    }
+                    dto.setAvailableRoomsCount(availableCount);
+                } catch (Exception ex) {
+                    dto.setAvailableRoomsCount(roomRepository.countAvailableByRoomTypeId(e.getRoomTypeId()));
+                }
+            } else {
+                dto.setAvailableRoomsCount(roomRepository.countAvailableByRoomTypeId(e.getRoomTypeId()));
+            }
         } else {
             dto.setAvailableRoomsCount(0L);
         }

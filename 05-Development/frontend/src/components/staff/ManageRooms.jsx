@@ -84,6 +84,7 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
       case "DIRTY": return "Cần dọn";
       case "CLEANING": return "Dọn phòng";
       case "VACANT_NEEDS_CLEANING": return "Cần dọn dẹp";
+      case "DEPOSITED": return "Đã cọc";
       default: return status;
     }
   };
@@ -96,6 +97,7 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
       case "DIRTY":
       case "VACANT_NEEDS_CLEANING": return "bg-blue-50 text-blue-700 border-blue-200";
       case "MAINTENANCE": return "bg-yellow-50 text-yellow-750 border-yellow-200";
+      case "DEPOSITED": return "bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse";
       default: return "bg-gray-50 text-gray-600 border-gray-200";
     }
   };
@@ -124,6 +126,8 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
         return <span className="text-blue-750 font-medium italic">Đang dọn dẹp vệ sinh...</span>;
       case "AVAILABLE":
         return <span className="text-green-750 font-medium italic">Sẵn sàng đón khách</span>;
+      case "DEPOSITED":
+        return <span className="text-indigo-750 font-semibold italic">Đã cọc - Chờ check-in hôm nay</span>;
       default:
         return <span className="text-sage-500 italic">{status}</span>;
     }
@@ -139,6 +143,7 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
       case "DIRTY":
       case "VACANT_NEEDS_CLEANING": bgClass = "bg-sky-100 hover:bg-sky-200/80"; borderClass = "border-sky-350"; break;
       case "MAINTENANCE": bgClass = "bg-amber-100 hover:bg-amber-200/80";    borderClass = "border-amber-350";  break;
+      case "DEPOSITED":   bgClass = "bg-indigo-100 hover:bg-indigo-200/80";   borderClass = "border-indigo-350 shadow-sm"; break;
       default:            bgClass = "bg-white hover:bg-slate-50";             borderClass = "border-slate-200";
     }
     const base = "p-5 flex flex-col justify-between h-60 text-left rounded-2xl transition-all duration-300 relative overflow-hidden";
@@ -177,13 +182,15 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
     { id: "OCCUPIED",    label: "🔴 Có khách" },
     { id: "CLEANING",    label: "🔵 Dọn phòng" },
     { id: "MAINTENANCE", label: "🔧 Bảo trì" },
+    { id: "DEPOSITED",   label: "💰 Đã cọc" },
   ];
 
   const CAPACITY_FILTERS = [
     { id: "all", label: "Mọi sức chứa" },
-    { id: "1",   label: "👤 1 người" },
     { id: "2",   label: "👥 2 người" },
     { id: "4",   label: "👨‍👩‍👧‍👦 4 người" },
+    { id: "8",   label: "👥 8 người" },
+    { id: "25",  label: "👥 25 người" },
   ];
 
   const getTypeCategory = (roomTypeName) => {
@@ -278,23 +285,7 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
             marginBottom: "24px",
           }}
         >
-          {/* Row 1: Type filter */}
-          <div style={{ display: "flex", alignItems: "center", gap: "2px", flexWrap: "wrap" }}>
-            <span style={{
-              fontSize: "11px", fontWeight: "500", color: "#838383",
-              letterSpacing: "0.020em", marginRight: "10px", whiteSpace: "nowrap",
-              fontFamily: "'Inter', ui-sans-serif, sans-serif", minWidth: "70px",
-            }}>
-              Loại phòng
-            </span>
-            {TYPE_FILTERS.map((f) => (
-              <PillTab key={f.id} id={f.id} label={f.label}
-                active={activeTypeFilter === f.id} onClick={setActiveTypeFilter} />
-            ))}
-          </div>
 
-          {/* Hairline divider */}
-          <div style={{ height: "1px", background: "#e6e6e6" }} />
 
           {/* Row 2: Status filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "2px", flexWrap: "wrap" }}>
@@ -424,6 +415,9 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
                           onChange={(e) => handleUpdateRoomStatus(villa.roomId, e.target.value)}
                           className="p-1.5 border border-primary-250 text-[10px] focus:outline-none bg-white cursor-pointer rounded-md w-full font-semibold"
                         >
+                          {villa.status === "DEPOSITED" && (
+                            <option value="DEPOSITED">Đã cọc (Deposited)</option>
+                          )}
                           <option value="AVAILABLE">Sẵn sàng (Available)</option>
                           <option value="OCCUPIED">Có khách (Occupied)</option>
                           <option value="CLEANING">Dọn dẹp (Cleaning)</option>

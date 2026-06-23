@@ -29,6 +29,8 @@ public class ItineraryDTO {
     private String packageName;
     private String packageDescription;
     private Integer packageDurationDays;
+    private List<RetreatPackageInfo> retreatPackages;
+    private BigDecimal packagePrice;
 
     // Timeline events (sorted by datetime)
     private List<TimelineEvent> timeline;
@@ -75,8 +77,45 @@ public class ItineraryDTO {
     public Integer getPackageDurationDays() { return packageDurationDays; }
     public void setPackageDurationDays(Integer packageDurationDays) { this.packageDurationDays = packageDurationDays; }
 
+    public List<RetreatPackageInfo> getRetreatPackages() { return retreatPackages; }
+    public void setRetreatPackages(List<RetreatPackageInfo> retreatPackages) { this.retreatPackages = retreatPackages; }
+
+    public BigDecimal getPackagePrice() { return packagePrice; }
+    public void setPackagePrice(BigDecimal packagePrice) { this.packagePrice = packagePrice; }
+
     public List<TimelineEvent> getTimeline() { return timeline; }
     public void setTimeline(List<TimelineEvent> timeline) { this.timeline = timeline; }
+
+    /**
+     * Inner class representing package details.
+     */
+    public static class RetreatPackageInfo {
+        private Integer packageId;
+        private String name;
+        private String description;
+        private Integer durationDays;
+        private BigDecimal price;
+
+        public RetreatPackageInfo() {}
+        public RetreatPackageInfo(Integer packageId, String name, String description, Integer durationDays, BigDecimal price) {
+            this.packageId = packageId;
+            this.name = name;
+            this.description = description;
+            this.durationDays = durationDays;
+            this.price = price;
+        }
+
+        public Integer getPackageId() { return packageId; }
+        public void setPackageId(Integer packageId) { this.packageId = packageId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public Integer getDurationDays() { return durationDays; }
+        public void setDurationDays(Integer durationDays) { this.durationDays = durationDays; }
+        public BigDecimal getPrice() { return price; }
+        public void setPrice(BigDecimal price) { this.price = price; }
+    }
 
     /**
      * Inner class representing a single event on the itinerary timeline.

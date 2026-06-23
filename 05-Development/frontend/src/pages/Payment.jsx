@@ -15,7 +15,7 @@ import {
   Loader2,
   DollarSign
 } from "lucide-react";
-import { paymentApi } from "../api";
+import { paymentApi, bookingLookupApi } from "../api";
 
 export default function Payment() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,6 +23,7 @@ export default function Payment() {
   
   const [invoiceId, setInvoiceId] = useState(invoiceIdParam ? parseInt(invoiceIdParam) : 2);
   const [invoice, setInvoice] = useState(null);
+  const [itinerary, setItinerary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
   
@@ -44,6 +45,20 @@ export default function Payment() {
         setLoading(false);
       });
   }, [invoiceId]);
+
+  useEffect(() => {
+    if (invoice && invoice.bookingId) {
+      bookingLookupApi.getItinerary(invoice.bookingId)
+        .then((data) => {
+          setItinerary(data);
+        })
+        .catch((err) => {
+          console.warn("Lỗi khi tải lịch trình chi tiết:", err);
+        });
+    } else {
+      setItinerary(null);
+    }
+  }, [invoice]);
 
   const handleSelectInvoice = (e) => {
     const val = parseInt(e.target.value);
@@ -68,6 +83,9 @@ export default function Payment() {
     ? Math.ceil(Number(invoice?.finalAmount || 0) * 0.3)
     : Number(invoice?.amountDue || invoice?.finalAmount || 0);
   const displayDueAmount = isDepositPayment ? depositPayable : Number(invoice?.amountDue || 0);
+
+  const hasSpaBookings = itinerary?.timeline?.some(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"));
+  const hasPackages = (itinerary?.retreatPackages && itinerary.retreatPackages.length > 0) || itinerary?.packageName;
 
   const handleCopy = (text, field) => {
     navigator.clipboard.writeText(text);
@@ -216,6 +234,67 @@ export default function Payment() {
                   <span className="font-semibold text-right text-primary-850">Tiền mặt tại quầy</span>
                 </div>
 
+                {/* Itemized List in Paid Receipt */}
+                <div className="border-t border-dashed border-primary-200/50 pt-4 mt-4 space-y-3.5 text-xs">
+                  <div className="font-bold text-sage-500 uppercase tracking-wider text-[9px]">Chi tiết các dịch vụ:</div>
+                  
+                  {/* Room */}
+                  <div className="flex justify-between text-sage-600 font-light">
+                    <div>
+                      <span className="font-semibold text-sage-800">🛏️ {itinerary?.roomTypeName || invoice?.roomNumber || "Phòng nghỉ"}</span>
+                      <span className="text-[10px] text-sage-500 block">Số phòng: {itinerary?.roomNumber || invoice?.roomNumber || "N/A"}</span>
+                    </div>
+                    <span className="font-mono font-semibold">{invoice?.roomSubtotal ? formatCurrency(invoice.roomSubtotal) : "0 ₫"}</span>
+                  </div>
+
+                  {/* Spa & Retreat Packages */}
+                  {(hasSpaBookings || hasPackages) && (
+                    <div className="space-y-1.5">
+                      <span className="font-semibold text-sage-800 block">💆‍♀️ Trị liệu Spa phát sinh & Gói dịch vụ:</span>
+                      
+                      {/* Packages */}
+                      {itinerary?.retreatPackages && itinerary.retreatPackages.length > 0 ? (
+                        itinerary.retreatPackages.map((pkg, idx) => (
+                          <div key={`rec-pkg-${idx}`} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                            <span>🎁 Gói dịch vụ: {pkg.name} ({pkg.durationDays} ngày)</span>
+                            <span className="font-mono">{formatCurrency(pkg.price)}</span>
+                          </div>
+                        ))
+                      ) : itinerary?.packageName ? (
+                        <div className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                          <span>🎁 Gói dịch vụ: {itinerary.packageName} ({itinerary.packageDurationDays} ngày)</span>
+                          <span className="font-mono">{itinerary.packagePrice ? formatCurrency(itinerary.packagePrice) : "0 ₫"}</span>
+                        </div>
+                      ) : null}
+
+                      {/* Individual Spa Sessions */}
+                      {itinerary?.timeline
+                        ?.filter(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"))
+                        .map((event, idx) => (
+                          <div key={`rec-spa-${idx}`} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                            <span>💆‍♀️ {event.title}</span>
+                            <span className="font-mono">{formatCurrency(event.price)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Food */}
+                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED")).length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="font-semibold text-sage-800 block">🍲 Dịch vụ ẩm thực F&B:</span>
+                      {itinerary.timeline
+                        .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED"))
+                        .map((event, idx) => (
+                          <div key={idx} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                            <span>{event.title} ({event.description || "Số lượng: 1"})</span>
+                            <span className="font-mono">{formatCurrency(event.price)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="pt-3 border-t border-primary-100 flex justify-between items-center text-sm sm:text-base font-serif">
                   <span className="font-normal text-sage-900">
                     {isDepositFlow ? "Tiền cọc đã thanh toán (30%):" : "Tổng thanh toán:"}
@@ -282,6 +361,101 @@ export default function Payment() {
                       <span className="font-semibold text-sage-900">#BK-{invoice?.bookingId}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Detailed Booked Items */}
+                <div className="border-t border-primary-100 pt-6 space-y-4 text-xs">
+                  <h3 className="font-serif font-bold text-sm text-sage-900 uppercase tracking-wider mb-2">
+                    Chi Tiết Dịch Vụ Đã Đặt
+                  </h3>
+
+                  {/* Room & Nights */}
+                  <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
+                    <div className="flex justify-between font-semibold text-sage-900 text-[11px]">
+                      <span>🛏️ {itinerary?.roomTypeName || invoice?.roomNumber || "Phòng nghỉ dưỡng"}</span>
+                      <span className="font-mono">{invoice?.roomSubtotal ? formatCurrency(invoice.roomSubtotal) : "0 ₫"}</span>
+                    </div>
+                    <div className="text-[10px] text-sage-500 pl-4 space-y-0.5 font-light">
+                      <span className="block">Số phòng: {itinerary?.roomNumber || invoice?.roomNumber || "N/A"}</span>
+                      {invoice?.checkInDate && invoice?.checkOutDate && (
+                        <span className="block">
+                          Thời gian: {new Date(invoice.checkInDate).toLocaleDateString("vi-VN")} - {new Date(invoice.checkOutDate).toLocaleDateString("vi-VN")} ({Math.ceil((new Date(invoice.checkOutDate) - new Date(invoice.checkInDate)) / (1000 * 60 * 60 * 24)) || 1} đêm)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Spa & Retreat Packages */}
+                  {(hasSpaBookings || hasPackages) && (
+                    <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
+                      <div className="font-semibold text-sage-900 text-[11px]">
+                        💆‍♀️ Trị liệu Spa & Gói dịch vụ:
+                      </div>
+                      <div className="space-y-2 pl-4">
+                        {/* Retreat Packages */}
+                        {itinerary?.retreatPackages && itinerary.retreatPackages.length > 0 ? (
+                          itinerary.retreatPackages.map((pkg, idx) => (
+                            <div key={`left-pkg-${idx}`} className="text-sage-600 text-[10px] font-light">
+                              <div className="font-medium text-primary-750">
+                                🎁 Gói dịch vụ: {pkg.name} ({pkg.durationDays} ngày)
+                              </div>
+                              <div className="text-[9px] text-sage-400 font-light block leading-relaxed mt-0.5">
+                                {pkg.description}
+                              </div>
+                            </div>
+                          ))
+                        ) : itinerary?.packageName ? (
+                          <div className="text-sage-600 text-[10px] font-light">
+                            <div className="font-medium text-primary-750">
+                              🎁 Gói dịch vụ: {itinerary.packageName} ({itinerary.packageDurationDays} ngày)
+                            </div>
+                            <div className="text-[9px] text-sage-400 font-light block leading-relaxed mt-0.5">
+                              {itinerary.packageDescription}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Individual Spa Sessions */}
+                        {itinerary?.timeline
+                          ?.filter(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"))
+                          .map((event, idx) => (
+                            <div key={`left-spa-${idx}`} className="flex justify-between text-sage-600 text-[10px] font-light pt-1.5 border-t border-dashed border-sage-100/50">
+                              <div>
+                                <span>💆‍♀️ {event.title}</span>
+                                <span className="text-[9px] bg-primary-100 text-primary-800 px-1 py-0.2 ml-1 rounded font-medium">
+                                  {event.status.toUpperCase() === "COMPLETED" ? "Đã thực hiện" : "Đã đặt"}
+                                </span>
+                              </div>
+                              <span className="font-mono">{formatCurrency(event.price)}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Food Orders */}
+                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED")).length > 0 && (
+                    <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
+                      <div className="font-semibold text-sage-900 text-[11px]">
+                        🍲 Dịch vụ ẩm thực F&B:
+                      </div>
+                      <div className="space-y-1.5 pl-4">
+                        {itinerary.timeline
+                          .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED"))
+                          .map((event, idx) => (
+                            <div key={idx} className="flex justify-between text-sage-600 text-[10px] font-light">
+                              <div>
+                                <span>{event.title}</span>
+                                <span className="text-[9px] text-sage-400 font-light block sm:inline sm:ml-1">
+                                  ({event.description || "Số lượng: 1"})
+                                </span>
+                              </div>
+                              <span className="font-mono">{formatCurrency(event.price)}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Price summary table */}

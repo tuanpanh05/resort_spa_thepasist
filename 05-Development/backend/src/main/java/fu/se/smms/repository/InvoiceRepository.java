@@ -19,14 +19,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     // ─── Aggregation queries for recalculate() ──────────────────────────────
 
     @Query(value = """
-            SELECT COALESCE(
-                (SELECT SUM(p.price)
-                 FROM dbo.booking_packages bp
-                 INNER JOIN dbo.retreat_packages p ON p.package_id = bp.package_id
-                 WHERE bp.booking_id = b.booking_id),
-                (SELECT p.price FROM dbo.retreat_packages p WHERE p.package_id = b.package_id),
-                0
-            ) + COALESCE(room_charge.room_subtotal, 0)
+            SELECT COALESCE(room_charge.room_subtotal, 0)
             FROM dbo.room_booking b
             OUTER APPLY (
                 SELECT SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal
@@ -38,11 +31,23 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     BigDecimal sumRoomSubtotal(@Param("bookingId") Integer bookingId);
 
     @Query(value = """
-            SELECT COALESCE(SUM(price_at_booking), 0)
-            FROM dbo.spa_booking
-            WHERE room_booking_id = :bookingId
-              AND is_package_included = 0
-              AND status IN ('CONFIRMED', 'COMPLETED')
+            SELECT COALESCE(
+                (SELECT SUM(price_at_booking)
+                 FROM dbo.spa_booking
+                 WHERE room_booking_id = :bookingId
+                   AND is_package_included = 0
+                   AND status IN ('CONFIRMED', 'COMPLETED')),
+                0
+            ) + COALESCE(
+                (SELECT SUM(p.price)
+                 FROM dbo.booking_packages bp
+                 INNER JOIN dbo.retreat_packages p ON p.package_id = bp.package_id
+                 WHERE bp.booking_id = :bookingId),
+                (SELECT p.price FROM dbo.retreat_packages p 
+                 INNER JOIN dbo.room_booking rb ON rb.package_id = p.package_id
+                 WHERE rb.booking_id = :bookingId),
+                0
+            )
             """, nativeQuery = true)
     BigDecimal sumSpaSubtotal(@Param("bookingId") Integer bookingId);
 

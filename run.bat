@@ -9,7 +9,8 @@ echo.
 
 :: 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 (Tương thích 100% với Lombok)
 set "EMBEDDED_JAVA=C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
-set "SYSTEM_JDK21=C:\Program Files\Java\jdk-21.0.10"
+set "SYSTEM_JDK21=C:\Program Files\Java\jdk-21.0.11"
+if not exist "%SYSTEM_JDK21%" set "SYSTEM_JDK21=C:\Program Files\Java\jdk-21.0.10"
 
 if exist "%SYSTEM_JDK21%" (
     set "JAVA_HOME=%SYSTEM_JDK21%"
@@ -44,7 +45,12 @@ echo.
 
 :: 3. Khởi chạy Backend trong cửa sổ CMD mới (Kế thừa biến môi trường JAVA_HOME/PATH)
 echo [*] Dang khoi dong Backend (Spring Boot)...
-start "Backend - Spring Boot" cmd /k "cd /d 05-Development\backend && set "DB_URL=%DB_URL%" && set "DB_USERNAME=%DB_USERNAME%" && set "DB_PASSWORD=%DB_PASSWORD%" && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
+set "MVN_CMD=mvn"
+where mvn >nul 2>nul
+if %errorlevel% neq 0 (
+    set "MVN_CMD=.\apache-maven-3.9.6\bin\mvn.cmd"
+)
+start "Backend - Spring Boot" cmd /k "cd /d 05-Development\backend && set "DB_URL=%DB_URL%" && set "DB_USERNAME=%DB_USERNAME%" && set "DB_PASSWORD=%DB_PASSWORD%" && %MVN_CMD% spring-boot:run -Dmaven.test.skip=true"
 
 :: 4. Khởi chạy Frontend trong cửa sổ CMD mới
 echo [*] Dang khoi dong Frontend (Vite)...
