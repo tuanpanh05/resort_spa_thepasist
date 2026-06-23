@@ -7,12 +7,18 @@ $root = Get-Location
 
 # 1. Cấu hình JAVA_HOME và PATH để sử dụng JDK 21 (Tương thích 100% với Lombok)
 $embeddedJava = "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64\jre\21.0.10-win32-x86_64"
-$systemJdk21 = "C:\Program Files\Java\jdk-21.0.10"
+$systemJdk21Path = "C:\Program Files\Java\jdk-21.0.10"
+if (Test-Path "C:\Program Files\Java") {
+    $foundJdk = Get-ChildItem "C:\Program Files\Java" -Filter "jdk-21*" | Select-Object -First 1
+    if ($foundJdk) {
+        $systemJdk21Path = $foundJdk.FullName
+    }
+}
 
-if (Test-Path $systemJdk21) {
-    $env:JAVA_HOME = $systemJdk21
-    $env:PATH = "$systemJdk21\bin;" + $env:PATH
-    Write-Host "[*] Da thiet lap JAVA_HOME ve JDK 21 tai $systemJdk21 de tranh crash Lombok." -ForegroundColor Green
+if (Test-Path $systemJdk21Path) {
+    $env:JAVA_HOME = $systemJdk21Path
+    $env:PATH = "$systemJdk21Path\bin;" + $env:PATH
+    Write-Host "[*] Da thiet lap JAVA_HOME ve JDK 21 tai $systemJdk21Path de tranh crash Lombok." -ForegroundColor Green
 } elseif (Test-Path $embeddedJava) {
     $env:JAVA_HOME = $embeddedJava
     $env:PATH = "$embeddedJava\bin;" + $env:PATH
@@ -50,7 +56,11 @@ Write-Host "[*] Su dung database hien tai (Khong reset du lieu)." -ForegroundCol
 
 # 4. Khởi chạy Backend trong cửa sổ PowerShell mới (Ghi log song song ra logs.txt)
 Write-Host "[*] Dang khoi dong Backend (Spring Boot)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit -Command `"cd '$root\05-Development\backend'; `$Host.UI.RawUI.WindowTitle = 'Backend - Spring Boot'; `$env:DB_URL = '$env:DB_URL'; `$env:DB_USERNAME = '$env:DB_USERNAME'; `$env:DB_PASSWORD = '$env:DB_PASSWORD'; .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run '-Dmaven.test.skip=true' 2>&1 | Tee-Object -FilePath logs.txt`""
+$mavenCmd = "mvn"
+if (-not (Get-Command "mvn" -ErrorAction SilentlyContinue)) {
+    $mavenCmd = ".\apache-maven-3.9.6\bin\mvn.cmd"
+}
+Start-Process powershell -ArgumentList "-NoExit -Command `"cd '$root\05-Development\backend'; `$Host.UI.RawUI.WindowTitle = 'Backend - Spring Boot'; `$env:DB_URL = '$env:DB_URL'; `$env:DB_USERNAME = '$env:DB_USERNAME'; `$env:DB_PASSWORD = '$env:DB_PASSWORD'; $mavenCmd spring-boot:run '-Dmaven.test.skip=true' 2>&1 | Tee-Object -FilePath logs.txt`""
 
 # 5. Khởi chạy Frontend trong cửa sổ CMD mới
 Write-Host "[*] Dang khoi dong Frontend (Vite)..." -ForegroundColor Yellow

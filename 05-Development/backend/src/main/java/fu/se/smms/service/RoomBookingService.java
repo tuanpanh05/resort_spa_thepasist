@@ -135,9 +135,23 @@ public class RoomBookingService {
 
             List<Room> availableRooms = new ArrayList<>();
             for (Room r : matchingRooms) {
-                if (roomBookingRepository.countOverlappingBookings(r.getRoomId(), checkIn, checkOut) == 0) {
+                String status = r.getStatus();
+                boolean isBookable = "AVAILABLE".equalsIgnoreCase(status)
+                        || "CLEANING".equalsIgnoreCase(status)
+                        || "DIRTY".equalsIgnoreCase(status)
+                        || "VACANT_NEEDS_CLEANING".equalsIgnoreCase(status);
+                if (isBookable && roomBookingRepository.countOverlappingBookings(r.getRoomId(), checkIn, checkOut) == 0) {
                     availableRooms.add(r);
                 }
+            }
+
+            if (availableRooms.size() < qty) {
+                String typeName = (matchingRooms.isEmpty() || matchingRooms.get(0).getRoomType() == null)
+                        ? "Hạng phòng yêu cầu"
+                        : matchingRooms.get(0).getRoomType().getTypeName();
+                throw new fu.se.smms.exception.BusinessException(
+                        "BOOKING-004", org.springframework.http.HttpStatus.CONFLICT,
+                        "Hạng phòng \"" + typeName + "\" đã hết phòng trống trong khoảng thời gian này. Vui lòng chọn ngày hoặc hạng phòng khác.");
             }
 
             for (int i = 0; i < qty; i++) {

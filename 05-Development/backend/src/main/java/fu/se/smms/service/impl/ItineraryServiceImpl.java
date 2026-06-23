@@ -105,11 +105,40 @@ public class ItineraryServiceImpl {
         }
 
         // Package info
-        RetreatPackage pkg = booking.getRetreatPackage();
-        if (pkg != null) {
-            dto.setPackageName(pkg.getName());
-            dto.setPackageDescription(pkg.getDescription());
-            dto.setPackageDurationDays(pkg.getDurationDays());
+        List<ItineraryDTO.RetreatPackageInfo> pkgList = new ArrayList<>();
+        if (booking.getRetreatPackages() != null && !booking.getRetreatPackages().isEmpty()) {
+            for (RetreatPackage p : booking.getRetreatPackages()) {
+                pkgList.add(new ItineraryDTO.RetreatPackageInfo(
+                    p.getPackageId(),
+                    p.getName(),
+                    p.getDescription(),
+                    p.getDurationDays(),
+                    p.getPrice()
+                ));
+            }
+            dto.setRetreatPackages(pkgList);
+            
+            RetreatPackage firstPkg = booking.getRetreatPackages().get(0);
+            dto.setPackageName(firstPkg.getName());
+            dto.setPackageDescription(firstPkg.getDescription());
+            dto.setPackageDurationDays(firstPkg.getDurationDays());
+            dto.setPackagePrice(firstPkg.getPrice());
+        } else {
+            RetreatPackage pkg = booking.getRetreatPackage();
+            if (pkg != null) {
+                pkgList.add(new ItineraryDTO.RetreatPackageInfo(
+                    pkg.getPackageId(),
+                    pkg.getName(),
+                    pkg.getDescription(),
+                    pkg.getDurationDays(),
+                    pkg.getPrice()
+                ));
+                dto.setRetreatPackages(pkgList);
+                dto.setPackageName(pkg.getName());
+                dto.setPackageDescription(pkg.getDescription());
+                dto.setPackageDurationDays(pkg.getDurationDays());
+                dto.setPackagePrice(pkg.getPrice());
+            }
         }
 
         // Build timeline events

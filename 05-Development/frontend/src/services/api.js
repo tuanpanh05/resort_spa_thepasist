@@ -181,7 +181,13 @@ export const masterDataApi = {
     apiRequest(`/admin/retreat-packages/${id}`, { method: "DELETE" }),
 
   // Room Types
-  getRoomTypes: () => apiRequest("/room-types"),
+  getRoomTypes: (checkIn, checkOut) => {
+    let url = "/room-types";
+    if (checkIn && checkOut) {
+      url += `?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`;
+    }
+    return apiRequest(url);
+  },
 
   createRoomType: (dto) =>
     apiRequest("/admin/room-types", { method: "POST", body: JSON.stringify(dto) }),

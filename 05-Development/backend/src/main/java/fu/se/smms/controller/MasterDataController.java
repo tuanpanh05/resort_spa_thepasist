@@ -173,10 +173,11 @@ public class MasterDataController {
     // ============================================================
     // ROOM TYPES – Public read, Admin write
     // ============================================================
-
     @GetMapping("/room-types")
-    public ResponseEntity<List<RoomTypeDTO>> getAllRoomTypes() {
-        return ResponseEntity.ok(masterDataService.getAllRoomTypes());
+    public ResponseEntity<List<RoomTypeDTO>> getAllRoomTypes(
+            @RequestParam(required = false) String checkIn,
+            @RequestParam(required = false) String checkOut) {
+        return ResponseEntity.ok(masterDataService.getAllRoomTypes(checkIn, checkOut));
     }
 
     @PostMapping("/admin/room-types")

@@ -10,6 +10,12 @@ export default function ManagePayments() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
 
+  // Payment Method Modal States
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentInvoice, setPaymentInvoice] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // "cash" | "vnpay"
+  const [amountGiven, setAmountGiven] = useState("");
+
   useEffect(() => {
     fetchInvoices();
   }, []);
@@ -35,15 +41,13 @@ export default function ManagePayments() {
     }
   };
 
-  const handleConfirmCashPayment = async (invoiceId, bookingId, bookingStatus, checkOutDate) => {
+  const handleExecutePayment = async () => {
+    if (!paymentInvoice) return;
+    const { invoiceId, bookingId, bookingStatus, checkOutDate } = paymentInvoice;
     const isDeposit = bookingStatus === "PENDING_DEPOSIT";
     let isEarlyCheckout = false;
 
-    if (isDeposit) {
-      if (!window.confirm(`Xác nhận thu tiền mặt ĐẶT CỌC (30%) cho hóa đơn #${invoiceId}?`)) {
-        return;
-      }
-    } else {
+    if (!isDeposit) {
       if (checkOutDate) {
         const checkOut = new Date(checkOutDate);
         const now = new Date();
@@ -62,48 +66,49 @@ export default function ManagePayments() {
             return;
           }
           isEarlyCheckout = true;
-        } else {
-          if (!window.confirm(`Xác nhận thanh toán tiền mặt còn lại và CHECK-OUT cho hóa đơn #${invoiceId}?`)) {
-            return;
-          }
-        }
-      } else {
-        if (!window.confirm(`Xác nhận thanh toán tiền mặt còn lại và CHECK-OUT cho hóa đơn #${invoiceId}?`)) {
-          return;
         }
       }
     }
 
     setActionLoading(invoiceId);
+    setShowPaymentModal(false);
     try {
-      if (!isDeposit && !isEarlyCheckout) {
-        // Normal checkout: validate no pending orders first
-        if (bookingId) {
-          try {
-            await paymentApi.validateCheckout(bookingId);
-          } catch (err) {
-            alert(`Không thể checkout: Khách hàng vẫn còn dịch vụ hoặc đơn ăn uống chưa hoàn thành/hủy bỏ! Chi tiết: ${err.message}`);
-            setActionLoading(null);
-            return;
+      if (paymentMethod === "cash") {
+        if (!isDeposit && !isEarlyCheckout) {
+          // Normal checkout: validate no pending orders first
+          if (bookingId) {
+            try {
+              await paymentApi.validateCheckout(bookingId);
+            } catch (err) {
+              alert(`Không thể checkout: Khách hàng vẫn còn dịch vụ hoặc đơn ăn uống chưa hoàn thành/hủy bỏ! Chi tiết: ${err.message}`);
+              setActionLoading(null);
+              return;
+            }
           }
         }
-      }
 
-      // 1. Đánh dấu thanh toán tiền mặt tại quầy
-      await paymentApi.markCashPayment(invoiceId);
+        // 1. Đánh dấu thanh toán tiền mặt tại quầy
+        await paymentApi.markCashPayment(invoiceId);
 
-      // 2. Thực hiện checkout phù hợp với loại
-      if (!isDeposit) {
-        if (isEarlyCheckout) {
-          // Early checkout: backend sẽ tự hủy đơn F&B pending trước
-          await paymentApi.earlyCheckout(invoiceId);
-          alert(`Đã xác nhận thanh toán và hoàn tất TRẢ PHÒNG SỚM cho hóa đơn #${invoiceId}.\nCác đơn ăn uống chưa xử lý đã được hủy tự động. Phòng đã chuyển sang trạng thái DIRTY (đang dọn dẹp).`);
+        // 2. Thực hiện checkout phù hợp với loại
+        if (!isDeposit) {
+          if (isEarlyCheckout) {
+            // Early checkout: backend sẽ tự hủy đơn F&B pending trước
+            await paymentApi.earlyCheckout(invoiceId);
+            alert(`Đã xác nhận thanh toán và hoàn tất TRẢ PHÒNG SỚM cho hóa đơn #${invoiceId}.\nCác đơn ăn uống chưa xử lý đã được hủy tự động. Phòng đã chuyển sang trạng thái DIRTY (đang dọn dẹp).`);
+          } else {
+            await paymentApi.performCheckout(invoiceId);
+            alert(`Đã xác nhận thanh toán tiền mặt và hoàn tất check-out cho hóa đơn #${invoiceId}. Phòng đã chuyển sang trạng thái DIRTY (đang dọn dẹp).`);
+          }
         } else {
-          await paymentApi.performCheckout(invoiceId);
-          alert(`Đã xác nhận thanh toán tiền mặt và hoàn tất check-out cho hóa đơn #${invoiceId}. Phòng đã chuyển sang trạng thái DIRTY (đang dọn dẹp).`);
+          alert(`Đã xác nhận thu tiền mặt ĐẶT CỌC thành công cho hóa đơn #${invoiceId}. Đơn đặt phòng đã được chuyển sang trạng thái XÁC NHẬN (CONFIRMED).`);
         }
       } else {
-        alert(`Đã xác nhận thu tiền mặt ĐẶT CỌC thành công cho hóa đơn #${invoiceId}. Đơn đặt phòng đã được chuyển sang trạng thái XÁC NHẬN (CONFIRMED).`);
+        // VNPay Flow
+        const data = await paymentApi.getPaymentUrl(invoiceId);
+        // Open VNPay gateway in a new tab so staff session is preserved
+        window.open(data.paymentUrl, "_blank");
+        alert(`Đã tạo link thanh toán VNPAY thành công cho hóa đơn #${invoiceId}. Một tab thanh toán mới đã được mở.`);
       }
 
       fetchInvoices(); // Refresh list
@@ -111,6 +116,7 @@ export default function ManagePayments() {
       alert(`Gặp lỗi khi xử lý thanh toán: ${err.message}`);
     } finally {
       setActionLoading(null);
+      setPaymentInvoice(null);
     }
   };
 
@@ -277,7 +283,12 @@ export default function ManagePayments() {
                         <div className="flex items-center justify-center space-x-1.5">
                           {!isPaid ? (
                             <button
-                              onClick={() => handleConfirmCashPayment(p.invoiceId, p.bookingId, p.bookingStatus, p.checkOutDate)}
+                              onClick={() => {
+                                setPaymentInvoice(p);
+                                setPaymentMethod("cash");
+                                setAmountGiven("");
+                                setShowPaymentModal(true);
+                              }}
                               disabled={actionLoading === p.invoiceId}
                               className={`px-2.5 py-1.5 text-white rounded-none text-[10px] font-semibold uppercase tracking-wider cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 ${
                                 isPendingDeposit
@@ -531,6 +542,139 @@ export default function ManagePayments() {
           </div>
         </div>
       )}
+
+      {/* Payment Selection Modal */}
+      {showPaymentModal && paymentInvoice && (() => {
+        const isPendingDeposit = paymentInvoice.bookingStatus === "PENDING_DEPOSIT";
+        const payableAmount = isPendingDeposit ? paymentInvoice.depositAmount : paymentInvoice.amountDue;
+        const changeAmount = amountGiven ? Math.max(0, Number(amountGiven) - payableAmount) : 0;
+        const canConfirm = paymentMethod !== "cash" || (Number(amountGiven) >= payableAmount);
+
+        return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white max-w-md w-full p-6 space-y-5 rounded-xl border border-primary-200 shadow-2xl animate-fade-in text-left">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center border-b border-primary-50 pb-3">
+                <h3 className="font-serif text-base font-bold text-sage-950">
+                  Xác Nhận Thanh Toán Hóa Đơn #NS-{paymentInvoice.invoiceId}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setPaymentInvoice(null);
+                  }}
+                  className="text-sage-400 hover:text-sage-900 cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Invoice details */}
+              <div className="space-y-2 text-xs bg-primary-50/20 p-3.5 border border-primary-50">
+                <div className="flex justify-between">
+                  <span className="text-sage-500">Khách hàng:</span>
+                  <span className="font-bold text-sage-950">{paymentInvoice.customerName || "Khách vãng lai"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sage-500">Phòng:</span>
+                  <span className="font-bold text-primary-950">{paymentInvoice.roomNumber || "N/A"}</span>
+                </div>
+                <div className="flex justify-between border-t border-primary-100/50 pt-2 mt-2 font-semibold">
+                  <span className="text-sage-700">Loại giao dịch:</span>
+                  <span className="text-primary-800">{isPendingDeposit ? "Thu tiền đặt cọc (30%)" : "Thanh toán & Check-out"}</span>
+                </div>
+                <div className="flex justify-between font-bold text-sm text-red-700 mt-1">
+                  <span>Số tiền cần thu:</span>
+                  <span>{formatCurrency(payableAmount)}</span>
+                </div>
+              </div>
+
+              {/* Method Selector */}
+              <div className="space-y-2">
+                <span className="block text-xs font-bold text-sage-800">Phương thức thanh toán:</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-primary-300 transition-all ${
+                    paymentMethod === "cash" ? "border-primary-800 bg-primary-50/10" : "border-sage-200"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cash"
+                      checked={paymentMethod === "cash"}
+                      onChange={() => setPaymentMethod("cash")}
+                      className="text-primary-800 focus:ring-primary-800 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-sage-800">Tiền mặt tại quầy</span>
+                  </label>
+
+                  <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-primary-300 transition-all ${
+                    paymentMethod === "vnpay" ? "border-primary-800 bg-primary-50/10" : "border-sage-200"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="vnpay"
+                      checked={paymentMethod === "vnpay"}
+                      onChange={() => setPaymentMethod("vnpay")}
+                      className="text-primary-800 focus:ring-primary-800 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-sage-800">Chuyển khoản VNPAY</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Cash details */}
+              {paymentMethod === "cash" && (
+                <div className="space-y-3.5 border-t border-primary-50 pt-3">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-sage-700">Số tiền khách đưa (VND):</label>
+                    <input
+                      type="number"
+                      placeholder="Nhập số tiền khách đưa..."
+                      value={amountGiven}
+                      onChange={(e) => setAmountGiven(e.target.value)}
+                      className="w-full px-3 py-2 border border-sage-300 rounded focus:outline-none focus:border-primary-800 text-xs font-semibold"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-xs bg-sage-50/50 p-2.5 border border-sage-200/60 rounded">
+                    <span className="text-sage-600 font-medium">Tiền thừa thối khách:</span>
+                    <span className={`font-mono font-bold text-sm ${changeAmount > 0 ? "text-green-700" : "text-sage-500"}`}>
+                      {formatCurrency(changeAmount)}
+                    </span>
+                  </div>
+                  {amountGiven && Number(amountGiven) < payableAmount && (
+                    <p className="text-[10px] text-red-650 font-semibold">⚠️ Số tiền khách đưa chưa đủ để hoàn tất thanh toán.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-2 pt-3 border-t border-primary-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setPaymentInvoice(null);
+                  }}
+                  className="px-4 py-2 border border-primary-100 text-xs font-semibold uppercase tracking-wider hover:bg-primary-50 cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecutePayment}
+                  disabled={!canConfirm || actionLoading === paymentInvoice.invoiceId}
+                  className={`px-5 py-2 text-white text-xs font-semibold uppercase tracking-wider cursor-pointer disabled:opacity-50 ${
+                    paymentMethod === "vnpay" ? "bg-amber-700 hover:bg-amber-800" : "bg-primary-800 hover:bg-primary-900"
+                  }`}
+                >
+                  {paymentMethod === "vnpay" ? "Tạo link VNPAY" : "Xác nhận thanh toán"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

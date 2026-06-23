@@ -15,7 +15,7 @@ import {
   Loader2,
   DollarSign
 } from "lucide-react";
-import { paymentApi } from "../api";
+import { paymentApi, bookingLookupApi } from "../api";
 
 export default function Payment() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,6 +23,7 @@ export default function Payment() {
   
   const [invoiceId, setInvoiceId] = useState(invoiceIdParam ? parseInt(invoiceIdParam) : 2);
   const [invoice, setInvoice] = useState(null);
+  const [itinerary, setItinerary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
   
@@ -38,12 +39,29 @@ export default function Payment() {
       .then((data) => {
         setInvoice(data);
         setLoading(false);
+        if (data.status === "PAID") {
+          setIsPaid(true);
+        }
       })
       .catch((err) => {
         setErrorMsg(err.message || `Không thể tìm thấy hóa đơn #${invoiceId} trong hệ thống.`);
         setLoading(false);
       });
   }, [invoiceId]);
+
+  useEffect(() => {
+    if (invoice && invoice.bookingId) {
+      bookingLookupApi.getItinerary(invoice.bookingId)
+        .then((data) => {
+          setItinerary(data);
+        })
+        .catch((err) => {
+          console.warn("Lỗi khi tải lịch trình chi tiết:", err);
+        });
+    } else {
+      setItinerary(null);
+    }
+  }, [invoice]);
 
   const handleSelectInvoice = (e) => {
     const val = parseInt(e.target.value);
@@ -68,6 +86,9 @@ export default function Payment() {
     ? Math.ceil(Number(invoice?.finalAmount || 0) * 0.3)
     : Number(invoice?.amountDue || invoice?.finalAmount || 0);
   const displayDueAmount = isDepositPayment ? depositPayable : Number(invoice?.amountDue || 0);
+
+  const hasSpaBookings = itinerary?.timeline?.some(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"));
+  const hasPackages = (itinerary?.retreatPackages && itinerary.retreatPackages.length > 0) || itinerary?.packageName;
 
   const handleCopy = (text, field) => {
     navigator.clipboard.writeText(text);
@@ -120,6 +141,30 @@ export default function Payment() {
     }
   };
 
+  const handleRefreshStatus = () => {
+    setIsProcessing(true);
+    paymentApi.getInvoice(invoiceId)
+      .then((data) => {
+        setInvoice(data);
+        setIsProcessing(false);
+        
+        const isPaidNow = data.status === "PAID";
+        const isDepositConfirmed = 
+          isDepositPayment && 
+          data.bookingStatus === "CONFIRMED";
+
+        if (isPaidNow || isDepositConfirmed) {
+          setIsPaid(true);
+        } else {
+          alert("Hóa đơn hiện vẫn chưa được xác nhận thanh toán. Vui lòng liên hệ quầy lễ tân.");
+        }
+      })
+      .catch((err) => {
+        setIsProcessing(false);
+        alert(err.message || "Không thể tải lại thông tin hóa đơn.");
+      });
+  };
+
   if (loading) {
     return (
       <div className="bg-[#fafbfa] min-h-screen pt-36 pb-20 flex flex-col items-center justify-center font-sans text-sage-950">
@@ -138,26 +183,14 @@ export default function Payment() {
     <div className="bg-[#fafbfa] min-h-screen pt-28 pb-20 font-sans text-sage-950">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         
-        {/* Navigation & Selector Header */}
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Navigation Header */}
+        <div className="mb-8">
           <Link
             to="/"
             className="inline-flex items-center text-xs font-semibold tracking-wider text-sage-600 hover:text-primary-800 transition-colors uppercase"
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại trang chủ
           </Link>
-          
-          <div className="flex items-center space-x-2 bg-primary-50/50 border border-primary-200/50 px-3 py-1.5 self-stretch sm:self-auto">
-            <span className="text-[10px] text-sage-500 font-bold uppercase tracking-wider">Mô phỏng hóa đơn test:</span>
-            <select 
-              value={invoiceId} 
-              onChange={handleSelectInvoice}
-              className="bg-white border border-primary-200 text-xs text-sage-950 font-bold px-2.5 py-1 focus:outline-none"
-            >
-              <option value={1}>HĐ #1 (Trần Khách Hàng - Cọc Detox)</option>
-              <option value={2}>HĐ #2 (Lê Minh Châu - Phòng thường)</option>
-            </select>
-          </div>
         </div>
 
         {errorMsg && (
@@ -214,6 +247,67 @@ export default function Payment() {
 
                   <span className="text-sage-500 font-light">Hình thức thanh toán:</span>
                   <span className="font-semibold text-right text-primary-850">Tiền mặt tại quầy</span>
+                </div>
+
+                {/* Itemized List in Paid Receipt */}
+                <div className="border-t border-dashed border-primary-200/50 pt-4 mt-4 space-y-3.5 text-xs">
+                  <div className="font-bold text-sage-500 uppercase tracking-wider text-[9px]">Chi tiết các dịch vụ:</div>
+                  
+                  {/* Room */}
+                  <div className="flex justify-between text-sage-600 font-light">
+                    <div>
+                      <span className="font-semibold text-sage-800">🛏️ {itinerary?.roomTypeName || invoice?.roomNumber || "Phòng nghỉ"}</span>
+                      <span className="text-[10px] text-sage-500 block">Số phòng: {itinerary?.roomNumber || invoice?.roomNumber || "N/A"}</span>
+                    </div>
+                    <span className="font-mono font-semibold">{invoice?.roomSubtotal ? formatCurrency(invoice.roomSubtotal) : "0 ₫"}</span>
+                  </div>
+
+                  {/* Spa & Retreat Packages */}
+                  {(hasSpaBookings || hasPackages) && (
+                    <div className="space-y-1.5">
+                      <span className="font-semibold text-sage-800 block">💆‍♀️ Trị liệu Spa phát sinh & Gói dịch vụ:</span>
+                      
+                      {/* Packages */}
+                      {itinerary?.retreatPackages && itinerary.retreatPackages.length > 0 ? (
+                        itinerary.retreatPackages.map((pkg, idx) => (
+                          <div key={`rec-pkg-${idx}`} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                            <span>🎁 Gói dịch vụ: {pkg.name} ({pkg.durationDays} ngày)</span>
+                            <span className="font-mono">{formatCurrency(pkg.price)}</span>
+                          </div>
+                        ))
+                      ) : itinerary?.packageName ? (
+                        <div className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                          <span>🎁 Gói dịch vụ: {itinerary.packageName} ({itinerary.packageDurationDays} ngày)</span>
+                          <span className="font-mono">{itinerary.packagePrice ? formatCurrency(itinerary.packagePrice) : "0 ₫"}</span>
+                        </div>
+                      ) : null}
+
+                      {/* Individual Spa Sessions */}
+                      {itinerary?.timeline
+                        ?.filter(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"))
+                        .map((event, idx) => (
+                          <div key={`rec-spa-${idx}`} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                            <span>💆‍♀️ {event.title}</span>
+                            <span className="font-mono">{formatCurrency(event.price)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Food */}
+                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED")).length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="font-semibold text-sage-800 block">🍲 Dịch vụ ẩm thực F&B:</span>
+                      {itinerary.timeline
+                        .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED"))
+                        .map((event, idx) => (
+                          <div key={idx} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
+                            <span>{event.title} ({event.description || "Số lượng: 1"})</span>
+                            <span className="font-mono">{formatCurrency(event.price)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-3 border-t border-primary-100 flex justify-between items-center text-sm sm:text-base font-serif">
@@ -282,6 +376,101 @@ export default function Payment() {
                       <span className="font-semibold text-sage-900">#BK-{invoice?.bookingId}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Detailed Booked Items */}
+                <div className="border-t border-primary-100 pt-6 space-y-4 text-xs">
+                  <h3 className="font-serif font-bold text-sm text-sage-900 uppercase tracking-wider mb-2">
+                    Chi Tiết Dịch Vụ Đã Đặt
+                  </h3>
+
+                  {/* Room & Nights */}
+                  <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
+                    <div className="flex justify-between font-semibold text-sage-900 text-[11px]">
+                      <span>🛏️ {itinerary?.roomTypeName || invoice?.roomNumber || "Phòng nghỉ dưỡng"}</span>
+                      <span className="font-mono">{invoice?.roomSubtotal ? formatCurrency(invoice.roomSubtotal) : "0 ₫"}</span>
+                    </div>
+                    <div className="text-[10px] text-sage-500 pl-4 space-y-0.5 font-light">
+                      <span className="block">Số phòng: {itinerary?.roomNumber || invoice?.roomNumber || "N/A"}</span>
+                      {invoice?.checkInDate && invoice?.checkOutDate && (
+                        <span className="block">
+                          Thời gian: {new Date(invoice.checkInDate).toLocaleDateString("vi-VN")} - {new Date(invoice.checkOutDate).toLocaleDateString("vi-VN")} ({Math.ceil((new Date(invoice.checkOutDate) - new Date(invoice.checkInDate)) / (1000 * 60 * 60 * 24)) || 1} đêm)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Spa & Retreat Packages */}
+                  {(hasSpaBookings || hasPackages) && (
+                    <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
+                      <div className="font-semibold text-sage-900 text-[11px]">
+                        💆‍♀️ Trị liệu Spa & Gói dịch vụ:
+                      </div>
+                      <div className="space-y-2 pl-4">
+                        {/* Retreat Packages */}
+                        {itinerary?.retreatPackages && itinerary.retreatPackages.length > 0 ? (
+                          itinerary.retreatPackages.map((pkg, idx) => (
+                            <div key={`left-pkg-${idx}`} className="text-sage-600 text-[10px] font-light">
+                              <div className="font-medium text-primary-750">
+                                🎁 Gói dịch vụ: {pkg.name} ({pkg.durationDays} ngày)
+                              </div>
+                              <div className="text-[9px] text-sage-400 font-light block leading-relaxed mt-0.5">
+                                {pkg.description}
+                              </div>
+                            </div>
+                          ))
+                        ) : itinerary?.packageName ? (
+                          <div className="text-sage-600 text-[10px] font-light">
+                            <div className="font-medium text-primary-750">
+                              🎁 Gói dịch vụ: {itinerary.packageName} ({itinerary.packageDurationDays} ngày)
+                            </div>
+                            <div className="text-[9px] text-sage-400 font-light block leading-relaxed mt-0.5">
+                              {itinerary.packageDescription}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Individual Spa Sessions */}
+                        {itinerary?.timeline
+                          ?.filter(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"))
+                          .map((event, idx) => (
+                            <div key={`left-spa-${idx}`} className="flex justify-between text-sage-600 text-[10px] font-light pt-1.5 border-t border-dashed border-sage-100/50">
+                              <div>
+                                <span>💆‍♀️ {event.title}</span>
+                                <span className="text-[9px] bg-primary-100 text-primary-800 px-1 py-0.2 ml-1 rounded font-medium">
+                                  {event.status.toUpperCase() === "COMPLETED" ? "Đã thực hiện" : "Đã đặt"}
+                                </span>
+                              </div>
+                              <span className="font-mono">{formatCurrency(event.price)}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Food Orders */}
+                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED")).length > 0 && (
+                    <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
+                      <div className="font-semibold text-sage-900 text-[11px]">
+                        🍲 Dịch vụ ẩm thực F&B:
+                      </div>
+                      <div className="space-y-1.5 pl-4">
+                        {itinerary.timeline
+                          .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED"))
+                          .map((event, idx) => (
+                            <div key={idx} className="flex justify-between text-sage-600 text-[10px] font-light">
+                              <div>
+                                <span>{event.title}</span>
+                                <span className="text-[9px] text-sage-400 font-light block sm:inline sm:ml-1">
+                                  ({event.description || "Số lượng: 1"})
+                                </span>
+                              </div>
+                              <span className="font-mono">{formatCurrency(event.price)}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Price summary table */}
@@ -379,45 +568,7 @@ export default function Payment() {
                           : "Bạn sẽ được chuyển hướng an toàn sang cổng **VNPay Sandbox** (môi trường test) để thực hiện thanh toán dư nợ hóa đơn."}
                       </p>
 
-                      <div className="bg-[#f3f7f5] border border-primary-100 p-5 space-y-4">
-                        <h4 className="font-serif text-sm font-bold text-sage-900 flex items-center space-x-1.5">
-                          <ShieldCheck className="h-4.5 w-4.5 text-primary-800" />
-                          <span>Thông tin thẻ test VNPay Sandbox (NCB)</span>
-                        </h4>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5 text-xs font-light text-sage-700">
-                          <div>
-                            <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Ngân hàng</span>
-                            <span className="font-semibold text-sage-950">NCB (Ngân hàng Quốc Dân)</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Số thẻ test</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-semibold font-mono text-sage-950">970419852613143212</span>
-                              <button 
-                                type="button"
-                                onClick={() => handleCopy("970419852613143212", "card")}
-                                className="text-sage-400 hover:text-primary-800 p-0.5"
-                                title="Copy số thẻ"
-                              >
-                                {copiedField === "card" ? <Check className="h-3.5 w-3.5 text-green-700" /> : <Copy className="h-3.5 w-3.5" />}
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Tên chủ thẻ</span>
-                            <span className="font-semibold text-sage-950">NGUYEN VAN A</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Ngày phát hành</span>
-                            <span className="font-semibold text-sage-950 font-mono">07/15</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Mã xác thực OTP</span>
-                            <span className="font-semibold text-sage-950 font-mono">123456</span>
-                          </div>
-                        </div>
-                      </div>
+                      {/* Removed sandbox test card NCB info box for production look */}
 
                       <div className="pt-4 border-t border-primary-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
                         <span className="text-sage-500 font-light flex items-center">
@@ -446,43 +597,49 @@ export default function Payment() {
                     /* 2. CASH PAYMENT AT COUNTER */
                     <div className="space-y-6 animate-fade-in">
                       <p className="text-xs sm:text-sm font-light text-sage-600 leading-relaxed">
-                        Phương thức thanh toán tiền mặt tại quầy lễ tân. Lễ tân sẽ xác nhận thu tiền trực tiếp từ khách hàng và đóng hóa đơn.
+                        Quý khách vui lòng di chuyển đến quầy Lễ tân của Ngũ Sơn Resort & Spa để thanh toán trực tiếp bằng tiền mặt hoặc thẻ tín dụng (qua máy POS).
                       </p>
 
                       <div className="bg-sage-50 border border-primary-100 p-5 space-y-4">
                         <h4 className="font-serif text-sm font-bold text-sage-900">
-                          Quy trình thanh toán tại quầy
+                          Hướng dẫn thanh toán tại quầy
                         </h4>
-                        <ol className="list-decimal list-inside space-y-2 text-xs text-sage-700 font-light leading-relaxed">
+                        <ol className="list-decimal list-inside space-y-2.5 text-xs text-sage-700 font-light leading-relaxed">
                           <li>
-                            Lễ tân kiểm tra kỹ bảng dồn dịch vụ (Folio) để đảm bảo không còn buổi spa hay đơn ăn nào ở trạng thái chờ (Consolidated Constraint).
+                            Vui lòng cung cấp mã đặt phòng <span className="font-semibold font-mono">#BK-{invoice?.bookingId}</span> hoặc mã hóa đơn <span className="font-semibold font-mono">#NS-{invoice?.invoiceId}</span> cho nhân viên Lễ tân.
                           </li>
                           <li>
-                            Khách hàng thanh toán {formatCurrency(displayDueAmount)} bằng tiền mặt hoặc thẻ POS tại quầy.
+                            Nhân viên Lễ tân sẽ đối chiếu chi tiết các dịch vụ sử dụng trong suốt thời gian lưu trú (Guest Folio) và thực hiện thu ngân.
                           </li>
                           <li>
-                            Lễ tân nhấn nút "Xác nhận đã thu tiền" để hệ thống tự động ghi nhật ký (Audit Trail) và chuyển phòng sang trạng thái cần dọn dẹp (**DIRTY**).
+                            Sau khi Lễ tân xác nhận đã thu tiền trên hệ thống, trạng thái hóa đơn của quý khách sẽ tự động cập nhật và hiển thị biên lai thành công tại đây.
                           </li>
                         </ol>
                       </div>
 
-                      <div className="pt-4 border-t border-primary-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-                        <span className="text-sage-500 font-light flex items-center">
-                          <AlertCircle className="h-4.5 w-4.5 text-primary-600 mr-1.5 flex-shrink-0" />
-                          Hệ thống sẽ cập nhật trạng thái phòng nghỉ lập tức sau khi nhấn xác nhận.
-                        </span>
+                      <div className="p-4 bg-primary-50/30 border border-dashed border-primary-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center space-x-3 text-xs">
+                          <div className="h-2.5 w-2.5 bg-amber-500 rounded-full animate-pulse flex-shrink-0" />
+                          <div>
+                            <span className="font-bold text-sage-800 block">Trạng thái: Chờ Lễ tân xác nhận</span>
+                            <span className="text-sage-500 font-light text-[10px] block mt-0.5">
+                              Sau khi hoàn tất thanh toán tại quầy, vui lòng nhấn nút bên cạnh để kiểm tra lại trạng thái.
+                            </span>
+                          </div>
+                        </div>
+
                         <button
                           type="button"
-                          onClick={handlePaymentSubmit}
+                          onClick={handleRefreshStatus}
                           disabled={isProcessing}
-                          className="w-full sm:w-auto px-8 py-3.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold uppercase tracking-wider rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center flex items-center justify-center"
+                          className="w-full sm:w-auto px-6 py-2.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-semibold uppercase tracking-wider rounded-none transition-all duration-300 disabled:opacity-75 cursor-pointer text-center flex items-center justify-center font-sans"
                         >
                           {isProcessing ? (
                             <>
-                              <Loader2 className="animate-spin mr-2 h-4 w-4" /> Đang xác nhận...
+                              <Loader2 className="animate-spin mr-2 h-3.5 w-3.5" /> Đang cập nhật...
                             </>
                           ) : (
-                            "Xác nhận đã thu tiền"
+                            "Kiểm tra trạng thái"
                           )}
                         </button>
                       </div>

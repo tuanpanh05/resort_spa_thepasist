@@ -31,6 +31,9 @@ public class VillaController {
     @Autowired
     private RoomRepository roomRepository;
 
+    @Autowired
+    private fu.se.smms.repository.RoomBookingRepository roomBookingRepository;
+
     /**
      * Valid villa/room statuses per database CHECK constraint.
      */
@@ -45,11 +48,18 @@ public class VillaController {
     @GetMapping
     public ResponseEntity<List<VillaStatusDTO>> getAllVillas() {
         List<Room> rooms = roomRepository.findAllWithRoomType();
+        java.time.LocalDate today = java.time.LocalDate.now();
         List<VillaStatusDTO> villas = rooms.stream().map(room -> {
             VillaStatusDTO dto = new VillaStatusDTO();
             dto.setRoomId(room.getRoomId());
             dto.setRoomNumber(room.getRoomNumber());
-            dto.setStatus(room.getStatus());
+            
+            String status = room.getStatus();
+            if ("AVAILABLE".equals(status) && roomBookingRepository.hasConfirmedBookingOnDate(room.getRoomId(), today) > 0) {
+                status = "DEPOSITED";
+            }
+            dto.setStatus(status);
+            
             if (room.getRoomType() != null) {
                 dto.setRoomTypeName(room.getRoomType().getTypeName());
                 dto.setCapacity(room.getRoomType().getMaxOccupancy());

@@ -285,7 +285,7 @@ export default function Header() {
                               <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
                               <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
                               <Link 
-                                to="/tai-khoan/lich-trinh" 
+                                to="/tai-khoan/lich-su-dat-hang" 
                                 onClick={() => setDropdownOpen(false)}
                                 className="block text-center text-[10px] font-bold text-primary-700 hover:text-primary-900 hover:underline mt-1.5 pt-1 border-t border-primary-100/50"
                               >
@@ -475,7 +475,7 @@ export default function Header() {
                       <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
                       <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
                       <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
-                      <Link to="/tai-khoan/lich-trinh" onClick={() => setIsOpen(false)}
+                      <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
                         className="block text-center text-xs font-bold text-primary-700 hover:text-primary-900 hover:underline mt-2 pt-1.5 border-t border-primary-100/50">
                         {t("nav.viewDetails")}
                       </Link>

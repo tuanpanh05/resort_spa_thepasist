@@ -30,7 +30,7 @@ public interface MasterDataService {
     List<RetreatPackageDTO> filterPackages(PackageFilterRequest filter);
 
     // Room Types
-    List<RoomTypeDTO> getAllRoomTypes();
+    List<RoomTypeDTO> getAllRoomTypes(String checkIn, String checkOut);
     RoomTypeDTO getRoomTypeById(Integer id);
     RoomTypeDTO createRoomType(RoomTypeDTO dto);
     RoomTypeDTO updateRoomType(Integer id, RoomTypeDTO dto);

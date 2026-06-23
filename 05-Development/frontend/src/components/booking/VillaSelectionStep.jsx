@@ -20,15 +20,19 @@ export default function VillaSelectionStep({
   };
 
   const getRoomTypeImage = (name) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes("standard")) {
-      return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
-    } else if (lowerName.includes("vip") || lowerName.includes("pool")) {
-      return "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80";
-    } else if (lowerName.includes("presidential") || lowerName.includes("suite")) {
-      return "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80";
+    const lowerName = (name || "").toLowerCase();
+    if (lowerName.includes("gỗ") || lowerName.includes("wood")) {
+      return "/room_luxury.png";
+    } else if (lowerName.includes("đá") || lowerName.includes("pebble") || lowerName.includes("cuội")) {
+      return "/room_pebble.jpg";
+    } else if (lowerName.includes("đồi trà") || lowerName.includes("tea") || lowerName.includes("thiền")) {
+      return "/hero_bg.png";
+    } else if (lowerName.includes("sen") || lowerName.includes("lotus")) {
+      return "/room_lotus.jpg";
+    } else if (lowerName.includes("sàn") || lowerName.includes("đông sơn") || lowerName.includes("collective")) {
+      return "/room_community.png";
     }
-    return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
+    return "/room_luxury.png";
   };
 
   return (
@@ -83,7 +87,7 @@ export default function VillaSelectionStep({
                   />
                   {!isAvailable && (
                     <div className="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider shadow-sm rounded">
-                      Hết phòng
+                      Không còn phòng
                     </div>
                   )}
                   <div className="absolute top-3 right-3 bg-white/95 px-3 py-1 font-mono text-xs font-bold text-[#1a2f23] border border-[#cda250]/20 rounded-lg shadow-sm">
@@ -99,8 +103,10 @@ export default function VillaSelectionStep({
                     <span className="text-[10px] text-sage-500 font-mono font-medium">
                       {villa.areaSqm || 50} m² | {villa.maxOccupancy || 2} Người lớn
                       {villa.availableRoomsCount !== undefined && (
-                        <span className={villa.availableRoomsCount > 0 ? "text-sage-500 font-semibold" : "text-red-500 font-semibold"}>
-                          {` | Còn ${villa.availableRoomsCount} phòng`}
+                        <span className={villa.availableRoomsCount > 0 ? "text-sage-500 font-semibold" : "text-red-500 font-bold"}>
+                          {villa.availableRoomsCount > 0 
+                            ? ` | Còn ${villa.availableRoomsCount} phòng` 
+                            : ` | Không còn phòng tại thời điểm bạn đặt`}
                         </span>
                       )}
                     </span>
@@ -165,7 +171,7 @@ export default function VillaSelectionStep({
                         : "bg-white border border-[#cda250]/20 text-sage-600 hover:bg-[#cda250]/5"
                     }`}
                   >
-                    {!isAvailable ? "Hết phòng" : isSelected ? "✓ Đang chọn" : "Chọn phòng"}
+                    {!isAvailable ? "Không còn phòng" : isSelected ? "✓ Đang chọn" : "Chọn phòng"}
                   </span>
                 </div>
               </div>

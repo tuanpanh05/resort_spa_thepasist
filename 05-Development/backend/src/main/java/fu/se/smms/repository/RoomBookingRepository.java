@@ -57,6 +57,16 @@ public interface RoomBookingRepository extends JpaRepository<RoomBooking, Intege
                                  @Param("checkIn") LocalDateTime checkIn,
                                  @Param("checkOut") LocalDateTime checkOut);
 
+    @Query(value = """
+            SELECT COUNT(rb.booking_id)
+            FROM dbo.room_booking rb
+            INNER JOIN dbo.room_booking_detail rbd ON rbd.booking_id = rb.booking_id
+            WHERE rbd.room_id = :roomId
+              AND rb.status = 'CONFIRMED'
+              AND CAST(rb.check_in_date AS DATE) = CAST(:today AS DATE)
+            """, nativeQuery = true)
+    int hasConfirmedBookingOnDate(@Param("roomId") Integer roomId, @Param("today") java.time.LocalDate today);
+
     /**
      * UC08: Arrivals Dashboard — Fetch CONFIRMED bookings with check-in date today.
      * Also fetches PENDING_DEPOSIT and CHECKED_IN bookings for a broader arrivals view.

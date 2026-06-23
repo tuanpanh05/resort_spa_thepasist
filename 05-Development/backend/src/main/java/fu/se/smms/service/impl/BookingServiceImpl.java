@@ -138,6 +138,17 @@ public class BookingServiceImpl {
             }
         }
 
+        String status = room.getStatus();
+        boolean isBookable = "AVAILABLE".equalsIgnoreCase(status)
+                || "CLEANING".equalsIgnoreCase(status)
+                || "DIRTY".equalsIgnoreCase(status)
+                || "VACANT_NEEDS_CLEANING".equalsIgnoreCase(status);
+        if (!isBookable) {
+            throw new BusinessException(
+                    "BOOKING-003", HttpStatus.CONFLICT,
+                    "Phòng/Villa này hiện không ở trạng thái sẵn sàng để đặt phòng.");
+        }
+
         // BR-09: Check for overlapping bookings
         if (roomBookingRepository.countOverlappingBookings(roomId, checkIn, checkOut) > 0) {
             throw new BusinessException(

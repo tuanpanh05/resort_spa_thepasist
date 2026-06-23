@@ -25,6 +25,18 @@ class Module2IntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private fu.se.smms.repository.RoomRepository roomRepository;
+
+    @Autowired
+    private fu.se.smms.repository.UserRepository userRepository;
+
+    @Autowired
+    private fu.se.smms.repository.RetreatPackageRepository retreatPackageRepository;
+
+    @Autowired
+    private fu.se.smms.repository.RoomBookingRepository roomBookingRepository;
+
     @Test
     @DisplayName("RESORT-M2-INT-001: Full reservation and check-in flow integration")
     void completeBookingAndCheckInFlow() throws Exception {
@@ -33,14 +45,30 @@ class Module2IntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
+        java.time.LocalDateTime start = java.time.LocalDateTime.of(2026, 6, 20, 14, 0);
+        java.time.LocalDateTime end = java.time.LocalDateTime.of(2026, 6, 25, 12, 0);
+
+        // Get valid records from seeded database
+        fu.se.smms.entity.User guest = userRepository.findByEmail("guest1@gmail.com")
+                .orElseThrow(() -> new AssertionError("guest1@gmail.com not found"));
+        fu.se.smms.entity.Room room = roomRepository.findAll().stream()
+                .filter(r -> "AVAILABLE".equalsIgnoreCase(r.getStatus()))
+                .filter(r -> roomBookingRepository.countOverlappingBookings(r.getRoomId(), start, end) == 0)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No AVAILABLE and conflict-free room found"));
+        fu.se.smms.entity.RetreatPackage pkg = retreatPackageRepository.findAll().stream()
+                .filter(p -> "ACTIVE".equalsIgnoreCase(p.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No ACTIVE retreat package found"));
+
         // Step 2: Client creates a new booking
-        String bookingPayload = "{\n" +
-                "  \"guestId\": 1,\n" +
-                "  \"packageId\": 1,\n" +
-                "  \"roomId\": 1,\n" +
+        String bookingPayload = String.format("{\n" +
+                "  \"guestId\": %d,\n" +
+                "  \"packageId\": %d,\n" +
+                "  \"roomId\": %d,\n" +
                 "  \"checkInDate\": \"2026-06-20T14:00:00\",\n" +
                 "  \"checkOutDate\": \"2026-06-25T12:00:00\"\n" +
-                "}";
+                "}", guest.getUserId(), pkg.getPackageId(), room.getRoomId());
 
         // Since implementation doesn't exist yet, this integration test will fail (RED status confirmed)
         // when production code is not ready.

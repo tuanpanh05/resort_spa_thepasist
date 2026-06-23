@@ -49,7 +49,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     /**
      * Count rooms of a specific type that are AVAILABLE.
      */
-    @Query("SELECT COUNT(r) FROM Room r WHERE r.roomType.roomTypeId = :roomTypeId AND r.status = 'AVAILABLE'")
+    @Query("SELECT COUNT(r) FROM Room r WHERE r.roomType.roomTypeId = :roomTypeId AND r.status IN ('AVAILABLE', 'CLEANING', 'DIRTY', 'VACANT_NEEDS_CLEANING')")
     long countAvailableByRoomTypeId(@Param("roomTypeId") Integer roomTypeId);
 }
 

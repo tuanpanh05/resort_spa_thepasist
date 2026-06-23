@@ -69,46 +69,7 @@ export default function PaymentStep({
           </div>
         </div>
 
-        {/* VNPay Card Details */}
-        <div className="bg-sage-50/40 border border-primary-200/50 p-5 space-y-4">
-          <h4 className="font-serif text-sm font-bold text-sage-900 flex items-center space-x-1.5">
-            <ShieldCheck className="h-4.5 w-4.5 text-primary-800" />
-            <span>Thông tin thẻ test VNPay Sandbox (NCB)</span>
-          </h4>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-xs font-light text-sage-700">
-            <div>
-              <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Ngân hàng</span>
-              <span className="font-semibold text-sage-950">NCB (Ngân hàng Quốc Dân)</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Số thẻ test</span>
-              <div className="flex items-center space-x-2">
-                <span className="font-semibold font-mono text-sage-950">970419852613143212</span>
-                <button 
-                  type="button"
-                  onClick={() => handleCopy("970419852613143212", "card")}
-                  className="text-sage-400 hover:text-primary-800 p-0.5"
-                  title="Copy số thẻ"
-                >
-                  {copiedField === "card" ? <Check className="h-3.5 w-3.5 text-green-700" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Tên chủ thẻ</span>
-              <span className="font-semibold text-sage-950">NGUYEN VAN A</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Ngày phát hành</span>
-              <span className="font-semibold text-sage-950 font-mono">07/15</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-sage-400 uppercase tracking-wider block">Mã xác thực OTP</span>
-              <span className="font-semibold text-sage-950 font-mono">123456</span>
-            </div>
-          </div>
-        </div>
+        {/* Removed sandbox test card NCB info box for production look */}
 
         {/* Submit Actions */}
         <div className="pt-6 border-t border-primary-50 flex flex-col sm:flex-row justify-between items-center gap-4">

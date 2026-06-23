@@ -322,6 +322,16 @@ if exist "C:\Users\Administrator\.vscode\extensions\redhat.java-1.54.0-win32-x64
     set "VALID_JAVA=1"
     goto java_found
 )
+if exist "C:\Program Files\Java\jdk-21.0.11\bin\java.exe" (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-21.0.11"
+    set "VALID_JAVA=1"
+    goto java_found
+)
+if exist "C:\Program Files\Java\jdk-21.0.10\bin\java.exe" (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-21.0.10"
+    set "VALID_JAVA=1"
+    goto java_found
+)
 if exist "C:\Program Files\Java\jdk-21\bin\java.exe" (
     set "JAVA_HOME=C:\Program Files\Java\jdk-21"
     set "VALID_JAVA=1"
@@ -378,7 +388,12 @@ if not exist "%~dp005-Development\frontend\node_modules\" (
 :: 6. Khoi dong cac server
 echo.
 echo [*] Dang khoi dong Backend (Spring Boot)...
-start "Backend - Spring Boot" cmd /k "cd /d %~dp005-Development\backend && title Backend - Spring Boot && set "DB_URL=%DB_URL%" && set "DB_USERNAME=%DB_USERNAME%" && set "DB_PASSWORD=%DB_PASSWORD%" && .\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run -Dmaven.test.skip=true"
+set "MVN_CMD=mvn"
+where mvn >nul 2>nul
+if %errorlevel% neq 0 (
+    set "MVN_CMD=.\apache-maven-3.9.6\bin\mvn.cmd"
+)
+start "Backend - Spring Boot" cmd /k "cd /d %~dp005-Development\backend && title Backend - Spring Boot && set "DB_URL=%DB_URL%" && set "DB_USERNAME=%DB_USERNAME%" && set "DB_PASSWORD=%DB_PASSWORD%" && %MVN_CMD% spring-boot:run -Dmaven.test.skip=true"
 
 echo [*] Dang khoi dong Frontend (Vite)...
 start "Frontend - Vite" cmd /k "cd /d %~dp005-Development\frontend && title Frontend - Vite && npm run dev"
