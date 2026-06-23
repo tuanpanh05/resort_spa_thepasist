@@ -1,30 +1,27 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Heart, Sparkles, Clock, Loader2, AlertCircle,
   Search, DollarSign, ArrowRight, Leaf, Flame,
   Smile, Activity, X, CheckCircle, Users, Star,
   Minus, Plus, ChevronUp
 } from "lucide-react";
-import { masterDataApi } from "../api";
+import { masterDataApi, spaApi, userApi, medicalApi, bookingLookupApi } from "../api";
 import resortSpaHeroBg from "../assets/resort_spa_hero_bg.png";
 
 // ─── Bộ lọc danh mục ────────────────────────────────────────────────────────
 const categoryFilters = [
   { label: "Tất cả các gói", value: "", icon: Sparkles },
-  { label: "Yoga phục hồi",  value: "YOGA",         icon: Heart    },
-  { label: "Thanh lọc cơ thể", value: "DETOX",      icon: Leaf     },
-  { label: "Giảm béo",       value: "WEIGHT_LOSS",   icon: Flame    },
-  { label: "Thư giãn Stress", value: "STRESS_RELIEF",icon: Smile    },
-  { label: "Chăm sóc chung", value: "GENERAL",       icon: Activity },
+  { label: "Gói Spa đặc trưng",  value: "SPA",         icon: Flame    },
+  { label: "Gói Yoga phục hồi", value: "YOGA",      icon: Heart     },
+  { label: "Gói Trị liệu chuyên sâu",  value: "THERAPY",   icon: Activity },
 ];
 
 // ─── Nhãn tiếng Việt cho healthGoal ─────────────────────────────────────────
 const healthGoalLabel = {
-  YOGA:         "Yoga phục hồi",
-  DETOX:        "Thanh lọc cơ thể",
-  WEIGHT_LOSS:  "Giảm béo",
-  STRESS_RELIEF:"Thư giãn Stress",
-  GENERAL:      "Chăm sóc chung",
+  SPA:         "Gói Spa & Thư giãn",
+  YOGA:        "Gói Yoga phục hồi",
+  THERAPY:     "Gói Trị liệu chuyên môn",
 };
 
 // ─── Helper: phút → "X giờ Y phút" ──────────────────────────────────────────
@@ -43,6 +40,23 @@ function formatPrice(price) {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" })
     .format(price)
     .replace("₫", "đ");
+}
+
+// ─── Helper: định dạng ngày giờ ───────────────────────────────────────────────
+function formatDateTime(dateStr) {
+  if (!dateStr) return "—";
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (err) {
+    return dateStr;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -94,10 +108,203 @@ function ScrollReveal({ children, delay = 0, className = "" }) {
   );
 }
 
+const STATIC_PACKAGES = [
+  {
+    packageId: 4,
+    name: "Gói Thư Giãn Hoàng Gia (Royal Spa Retreat)",
+    description: "Liệu trình thư giãn hoàng gia kết hợp massage tinh dầu hữu cơ thơm mát và liệu pháp đá muối nóng Himalaya giúp giải tỏa hoàn toàn mọi căng thẳng và phục hồi sinh khí.",
+    price: 2000000,
+    durationDays: 2,
+    includes: "Massage đá muối nóng Himalaya (90 phút);Xông hơi thảo dược hoàng cung;Ngâm chân thảo dược & trà dưỡng nhan",
+    healthGoal: "SPA",
+    imageUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 1,
+    name: "Gói Thanh Lọc & Giải Độc Cơ Thể (Premium Detox)",
+    description: "Hành trình thanh lọc cơ thể toàn diện 5 ngày 4 đêm. Thải độc tố, tái tạo tế bào qua chế độ thực dưỡng lành mạnh kết hợp thủy liệu pháp đại tràng.",
+    price: 5200000,
+    durationDays: 5,
+    includes: "Thực đơn nước ép & chay thực dưỡng;Thủy liệu pháp đại tràng thanh lọc;Tắm khoáng nóng & xông hơi đá muối",
+    healthGoal: "SPA",
+    imageUrl: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 6,
+    name: "Gói Hương Trầm Trị Liệu & Trẻ Hóa",
+    description: "Trải nghiệm sang trọng kết hợp hương trầm tự nhiên Ngũ Sơn và tinh dầu thông đỏ quý hiếm, kích thích tuần hoàn và mang đến làn da tươi trẻ rạng ngời.",
+    price: 2400000,
+    durationDays: 2,
+    includes: "Massage hương trầm tự nhiên (75 phút);Chăm sóc da mặt thảo dược chuyên sâu;Trị liệu massage đầu kiểu Nhật",
+    healthGoal: "SPA",
+    imageUrl: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 7,
+    name: "Gói Sen Vàng Tịnh Tâm (Golden Lotus)",
+    description: "Liệu trình chăm sóc sức khỏe lấy cảm hứng từ hoa sen Việt Nam, kết hợp bùn khoáng thiên nhiên giúp dưỡng ẩm sâu và đem lại giấc ngủ ngon lành.",
+    price: 1800000,
+    durationDays: 1,
+    includes: "Massage toàn thân tinh dầu sen trắng (60 phút);Đắp mặt nạ hạt sen tươi;Tắm bùn khoáng thiên nhiên",
+    healthGoal: "SPA",
+    imageUrl: "https://images.unsplash.com/photo-1590439471364-192aa70c0b53?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 8,
+    name: "Gói Suối Khoáng Nóng Trị Liệu (Onsen Healing)",
+    description: "Liệu trình ngâm tắm suối khoáng nóng kết hợp xông hơi đá muối hồng ngoại Himalaya và massage Shiatsu bấm huyệt Nhật Bản giúp kích thích lưu thông khí huyết và thư giãn sâu cơ khớp.",
+    price: 1600000,
+    durationDays: 1,
+    includes: "Tắm khoáng nóng Onsen thảo dược;Xông hơi đá muối Himalaya;Massage Shiatsu bấm huyệt Nhật Bản (60 phút)",
+    healthGoal: "SPA",
+    imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 9,
+    name: "Gói Thảo Mộc Bản Địa (Sensory Herb Journey)",
+    description: "Liệu trình chăm sóc cơ thể đa giác quan sử dụng thảo dược bản địa tươi mát thu hoạch tại vườn hữu cơ của resort, kết hợp chườm nóng và massage bằng dầu dừa nguyên chất ép lạnh.",
+    price: 2200000,
+    durationDays: 2,
+    includes: "Tẩy tế bào chết bằng bã cà phê & mật ong;Chườm túi thảo dược tươi ấm nóng;Massage dầu dừa tự nhiên ép lạnh",
+    healthGoal: "SPA",
+    imageUrl: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 2,
+    name: "Yoga & Thiền Định Phục Hồi (Mindfulness Weekend)",
+    description: "Khóa thiền định và yoga phục hồi tinh thần 3 ngày 2 đêm bên rừng thông. Giúp cân bằng luân xa, xoa dịu tâm trí và tái tạo năng lượng tích cực.",
+    price: 3500000,
+    durationDays: 3,
+    includes: "Lớp học Hatha Yoga cá nhân hóa 1-1;Thiền hành & Thiền chuông xoay Tây Tạng;Tư vấn dinh dưỡng & lối sống lành mạnh",
+    healthGoal: "YOGA",
+    imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 10,
+    name: "Gói Yoga Cân Bằng Năng Lượng (Energy Balance)",
+    description: "Huấn luyện Yoga nâng cao kết hợp Vinyasa Yoga năng động và các kỹ thuật hít thở sâu, hỗ trợ giải phóng năng lượng tắc nghẽn ở các cơ cốt lõi.",
+    price: 4200000,
+    durationDays: 4,
+    includes: "3 buổi tập Vinyasa Yoga dòng chảy;Tập thở kiểm soát năng lượng Pranayama;Tắm khoáng phục hồi cơ bắp",
+    healthGoal: "YOGA",
+    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 11,
+    name: "Khóa Thiền Tịnh Khẩu & Tắm Rừng (Silent Zen)",
+    description: "Khóa trải nghiệm im lặng tuyệt đối trong 2 ngày, kết nối sâu sắc với tự nhiên qua liệu pháp tắm rừng (Shinrin-yoku) và thiền chuông xoay.",
+    price: 2000000,
+    durationDays: 2,
+    includes: "Hướng dẫn tắm rừng Shinrin-yoku;Thiền trà tĩnh tâm bên suối;Trị liệu âm thanh bằng chuông xoay",
+    healthGoal: "YOGA",
+    imageUrl: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 12,
+    name: "Gói Yoga Thiền Định Cho Giấc Ngủ (Sleep Well)",
+    description: "Liệu trình đặc trị mất ngủ, kết hợp lớp tập Yoga phục hồi nhẹ nhàng buổi tối và thực hành Yoga Nidra (thiền ngủ) để làm dịu hệ thần kinh.",
+    price: 2800000,
+    durationDays: 3,
+    includes: "Huấn luyện thiền giấc ngủ Yoga Nidra;Massage body tinh dầu oải hương;Trà thảo mộc an thần trước khi ngủ",
+    healthGoal: "YOGA",
+    imageUrl: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 13,
+    name: "Khóa Thiền Sound Bath & Cân Bằng Luân Xa",
+    description: "Sử dụng liệu pháp âm thanh cộng hưởng tần số cao của chuông xoay pha lê kết hợp các tư thế yoga phục hồi nhẹ nhàng để đả thông bế tắc ở 7 luân xa chính.",
+    price: 3000000,
+    durationDays: 3,
+    includes: "Liệu pháp Sound Bath bằng chuông pha lê;Lớp học Restorative Yoga phục hồi;Tư vấn kiểm tra tần số luân xa cá nhân",
+    healthGoal: "YOGA",
+    imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 14,
+    name: "Yoga Đón Bình Minh (Sunrise Yoga Retreat)",
+    description: "Đánh thức mọi giác quan buổi sáng bên hồ nước tĩnh lặng của resort với chuỗi động tác chào mặt trời, thực hành kỹ thuật thở thanh lọc cơ thể Pranayama và thiền định ngắn.",
+    price: 1500000,
+    durationDays: 2,
+    includes: "3 buổi tập Yoga đón bình minh bên hồ;Kỹ thuật thở thanh lọc Pranayama nâng cao;Bữa sáng dinh dưỡng thực dưỡng sau tập",
+    healthGoal: "YOGA",
+    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 5,
+    name: "Nắn Chỉnh Cột Sống & Vật Lý Trị Liệu",
+    description: "Gói trị liệu chuyên sâu phục hồi cột sống 4 ngày 3 đêm, chẩn đoán bởi bác sĩ chuyên khoa xương khớp kết hợp nắn chỉnh cơ Chiropractic.",
+    price: 4800000,
+    durationDays: 4,
+    includes: "Khám chẩn đoán cột sống bởi bác sĩ chuyên khoa;2 buổi nắn chỉnh cột sống Chiropractic;Tập phục hồi chức năng cơ cốt lõi",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 15,
+    name: "Trị Liệu Cổ Vai Gáy Chuyên Sâu (Deep Healing)",
+    description: "Liệu pháp đặc trị đau mỏi cổ vai gáy kinh niên cho giới văn phòng, sử dụng kỹ thuật ấn huyệt Đông y kết hợp túi chườm thảo dược nóng.",
+    price: 1200000,
+    durationDays: 1,
+    includes: "Ấn huyệt đả thông kinh lạc cổ vai gáy (75 phút);Chườm thảo dược ngải cứu nóng;Ngâm chân thảo dược gừng tươi",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 3,
+    name: "Gói Giảm Cân & Thon Gọn Dáng Vóc (Slimming)",
+    description: "Hành trình thon gọn vóc dáng khoa học 7 ngày 6 đêm. Bao gồm huấn luyện thể chất PT 1-1 chuyên sâu và tư vấn chế độ dinh dưỡng lành mạnh.",
+    price: 8500000,
+    durationDays: 7,
+    includes: "Tư vấn dinh dưỡng từ chuyên gia;Tập luyện PT 1-1 đốt mỡ cá nhân hóa;Massage bùn nóng hóa lỏng mỡ thừa",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 16,
+    name: "Phục Hồi Chấn Thương & Giãn Cơ Thể Thao",
+    description: "Dành riêng cho những người hoạt động thể thao cường độ cao, giúp thư giãn cơ sâu bằng máy sóng xung kích và giải tỏa axit lactic.",
+    price: 3800000,
+    durationDays: 3,
+    includes: "Giãn cơ sâu bằng máy sóng xung kích;Massage thể thao giải tỏa axit lactic;Ngâm bồn sục jacuzzi phục hồi",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 17,
+    name: "Điều Trị Đau Cột Sống & Thắt Lưng Chuyên Sâu",
+    description: "Hành trình điều trị chuyên biệt cho người thoát vị đĩa đệm, thoái hóa cột sống bằng công nghệ xung điện hiện đại, nắn chỉnh Chiropractic cột sống thắt lưng và bài tập phục hồi cơ cốt lõi chuyên sâu.",
+    price: 5800000,
+    durationDays: 5,
+    includes: "Châm cứu & Xung điện phục hồi xung thần kinh;Nắn chỉnh Chiropractic chuyên khoa cột sống;Bài tập phục hồi nhóm cơ lưng & cơ bụng dưới",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 18,
+    name: "Phục Hồi Thần Kinh & Giải Tỏa Stress Cực Hạn",
+    description: "Liệu trình kết hợp y học cổ truyền Đông y như châm cứu ngải cứu vùng đầu cổ gáy, massage ấn huyệt phản xạ cơ bàn chân và ngâm bồn tắm thuốc Dao đỏ giúp giải phóng căng thẳng tâm lý.",
+    price: 3200000,
+    durationDays: 3,
+    includes: "Châm cứu ngải thảo dược ấm đầu cổ gáy;Massage bấm huyệt phản xạ lòng bàn tay/bàn chân;Ngâm bồn tắm gỗ sồi thuốc Dao Đỏ thảo dược",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    packageId: 19,
+    name: "Thải Độc Hệ Bạch Huyết Toàn Diện (Lymphatic Drainage)",
+    description: "Liệu pháp kích thích tuần hoàn lưu thông bạch huyết cơ thể nhằm tăng cường hệ thống miễn dịch, giải quyết tình trạng ứ dịch và đào thải độc tố tích tụ.",
+    price: 4100000,
+    durationDays: 4,
+    includes: "Massage dẫn lưu cơ học hệ bạch huyết toàn diện;Liệu pháp quấn nóng thải độc cơ thể bằng tảo biển;Thực đơn nước ép detox hữu cơ hàng ngày",
+    healthGoal: "THERAPY",
+    imageUrl: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&w=800&q=80"
+  }
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Modal chi tiết gói
 // ═══════════════════════════════════════════════════════════════════════════════
-function PackageDetailModal({ pkg, onClose }) {
+function PackageDetailModal({ pkg, onClose, onBook }) {
   if (!pkg) return null;
   const [guestsCount, setGuestsCount] = useState(1);
   const includesList = pkg.includes ? pkg.includes.split(";").filter(Boolean) : [];
@@ -192,7 +399,7 @@ function PackageDetailModal({ pkg, onClose }) {
                   <Clock className="w-5 h-5 shrink-0" />
                   <div>
                     <span className="block text-[10px] text-forest-ink/75 uppercase tracking-wider">Thời lượng</span>
-                    <span className="font-bold text-xs">{formatDuration(pkg.durationDays)}</span>
+                    <span className="font-bold text-xs">{pkg.durationDays} ngày</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-forest-ink">
@@ -252,13 +459,14 @@ function PackageDetailModal({ pkg, onClose }) {
 
               {/* Action buttons (Black Olive filled CTA on Warm Cream dialog) */}
               <div className="flex flex-col gap-2 pt-2">
-                <a
-                  href={`/dat-lich?packageId=${pkg.packageId}&guests=${guestsCount}&totalPrice=${pkg.price * guestsCount}`}
-                  className="w-full bg-black-olive hover:bg-black-olive/90 text-warm-cream text-center py-3 rounded-[1px] text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-black-olive"
+                <button
+                  type="button"
+                  onClick={() => onBook && onBook(pkg.packageId)}
+                  className="w-full bg-black-olive hover:bg-black-olive/90 text-warm-cream text-center py-3 rounded-[1px] text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-black-olive cursor-pointer"
                 >
                   <span>Đặt dịch vụ ngay</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </a>
+                </button>
                 <button
                   onClick={onClose}
                   className="w-full py-3 border border-black-olive text-black-olive bg-transparent rounded-[1px] text-xs font-semibold uppercase tracking-wider hover:bg-black-olive hover:text-warm-cream transition-all cursor-pointer"
@@ -278,6 +486,11 @@ function PackageDetailModal({ pkg, onClose }) {
 // Trang Spa chính
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Spa() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get("tab"); // "packages" or "schedule"
+
   const [packages, setPackages]             = useState([]);
   const [loading, setLoading]               = useState(true);
   const [error, setError]                   = useState(null);
@@ -291,21 +504,278 @@ export default function Spa() {
     maxDurationDays: "",
   });
 
-  // Tải / lọc danh sách gói
+  // Tab State
+  const [activeTab, setActiveTab] = useState(tabParam || "packages"); // "packages" or "schedule"
+
+  useEffect(() => {
+    if (tabParam === "packages" || tabParam === "schedule") {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+  
+  // Scheduler States
+  const [loadingScheduler, setLoadingScheduler] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userBookings, setUserBookings] = useState([]);
+  const [spaServices, setSpaServices] = useState([]);
+  const [medicalProfile, setMedicalProfile] = useState(null);
+  const [healthConsentCheck, setHealthConsentCheck] = useState(false);
+
+  // Form states for spa scheduling
+  const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [startDatetime, setStartDatetime] = useState("");
+  const [isPackageIncluded, setIsPackageIncluded] = useState(false);
+  const [selectedRoomBookingId, setSelectedRoomBookingId] = useState("");
+  const [isAutoMatching, setIsAutoMatching] = useState(false);
+  
+  // Auto matched details
+  const [matchedTherapist, setMatchedTherapist] = useState(null);
+  const [matchedRoom, setMatchedRoom] = useState(null);
+  const [matchedEndDatetime, setMatchedEndDatetime] = useState("");
+  const [matchError, setMatchError] = useState("");
+
+  // Booking result/status
+  const [bookingSuccessData, setBookingSuccessData] = useState(null);
+  const [bookingError, setBookingError] = useState("");
+  const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
+
+  // Gói trị liệu đăng ký thêm ở Spa Page
+  const [regSelectedBookingId, setRegSelectedBookingId] = useState("");
+  const [regSelectedPackageId, setRegSelectedPackageId] = useState("");
+  const [regSubmitting, setRegSubmitting] = useState(false);
+  const [regSuccess, setRegSuccess] = useState("");
+  const [regError, setRegError] = useState("");
+
+  // Tải / lọc danh sách gói từ Database (có fallback sang dữ liệu tĩnh)
   useEffect(() => {
     setLoading(true);
-    masterDataApi
-      .filterRetreatPackages(filters)
+    
+    // Helper function thực hiện việc lọc trên một mảng các gói
+    const filterList = (list) => {
+      return (list || []).filter(pkg => {
+        // Lọc theo Category
+        if (filters.healthGoal && pkg.healthGoal !== filters.healthGoal) {
+          return false;
+        }
+        
+        // Lọc theo từ khóa (Tìm trong Tên, Mô tả, và Dịch vụ bao gồm)
+        if (filters.keyword.trim()) {
+          const query = filters.keyword.toLowerCase().trim();
+          const inName = pkg.name.toLowerCase().includes(query);
+          const inDesc = pkg.description.toLowerCase().includes(query);
+          const inIncludes = pkg.includes ? pkg.includes.toLowerCase().includes(query) : false;
+          if (!inName && !inDesc && !inIncludes) {
+            return false;
+          }
+        }
+        
+        // Lọc theo giá tối thiểu
+        if (filters.minPrice && pkg.price < Number(filters.minPrice)) {
+          return false;
+        }
+        
+        // Lọc theo giá tối đa
+        if (filters.maxPrice && pkg.price > Number(filters.maxPrice)) {
+          return false;
+        }
+        
+        // Lọc theo số ngày tối đa
+        if (filters.maxDurationDays && pkg.durationDays > Number(filters.maxDurationDays)) {
+          return false;
+        }
+        
+        return true;
+      });
+    };
+
+    // Gọi API lấy các gói từ Database
+    masterDataApi.getRetreatPackages()
       .then((data) => {
-        setPackages(data);
+        const filtered = filterList(data);
+        setPackages(filtered);
         setError(null);
-        setLoading(false);
       })
       .catch((err) => {
-        setError(err.message || "Không thể tải danh sách gói trị liệu.");
+        console.warn("Không thể tải các gói trị liệu từ database, chuyển sang dùng dữ liệu tĩnh:", err);
+        const filtered = filterList(STATIC_PACKAGES);
+        setPackages(filtered);
+        setError(null);
+      })
+      .finally(() => {
         setLoading(false);
       });
-  }, [filters.healthGoal]);
+  }, [filters]);
+
+  // Load scheduler data
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setIsLoggedIn(false);
+      return;
+    }
+    setIsLoggedIn(true);
+
+    if (activeTab === "schedule") {
+      setLoadingScheduler(true);
+      Promise.all([
+        userApi.getProfile().catch(() => null),
+        userApi.getMyBookings().catch(() => []),
+        masterDataApi.getSpaServices().catch(() => []),
+        medicalApi.getMyProfile().catch(() => null),
+      ])
+        .then(([profile, bookings, services, medProfile]) => {
+          setCurrentUser(profile);
+          // Only show confirmed room bookings
+          const confirmedBookings = (bookings || []).filter(
+            b => b.status === "CONFIRMED" || b.status === "CHECK_IN" || b.status === "COMPLETED"
+          );
+          setUserBookings(confirmedBookings);
+          setSpaServices(services || []);
+          setMedicalProfile(medProfile);
+          setHealthConsentCheck(medProfile?.explicitConsentSigned || false);
+          setLoadingScheduler(false);
+        })
+        .catch((err) => {
+          console.error("Error loading scheduler data:", err);
+          setLoadingScheduler(false);
+        });
+    }
+  }, [activeTab]);
+
+  // Auto-matching trigger
+  useEffect(() => {
+    if (selectedServiceId && startDatetime) {
+      setMatchError("");
+      setMatchedTherapist(null);
+      setMatchedRoom(null);
+      setIsAutoMatching(true);
+
+      const start = new Date(startDatetime);
+      if (start < new Date()) {
+        setMatchError("Thời gian bắt đầu không được ở trong quá khứ.");
+        setIsAutoMatching(false);
+        return;
+      }
+
+      // If package included is checked, validate time falls within selected room booking check-in/out
+      if (isPackageIncluded && selectedRoomBookingId) {
+        const roomBooking = userBookings.find(b => b.bookingId === Number(selectedRoomBookingId));
+        if (roomBooking) {
+          const checkIn = new Date(roomBooking.checkInDate);
+          const checkOut = new Date(roomBooking.checkOutDate);
+          if (start < checkIn || start > checkOut) {
+            setMatchError(`Thời gian chọn phải nằm trong khoảng lưu trú (${roomBooking.checkInDate.split('T')[0]} - ${roomBooking.checkOutDate.split('T')[0]}).`);
+            setIsAutoMatching(false);
+            return;
+          }
+        }
+      }
+
+      spaApi.autoMatch(Number(selectedServiceId), startDatetime)
+        .then((res) => {
+          setMatchedTherapist({ id: res.therapistId, name: res.therapistName });
+          setMatchedRoom({ id: res.treatmentRoomId, name: res.roomName });
+          setMatchedEndDatetime(res.endDatetime);
+        })
+        .catch((err) => {
+          setMatchError(err.message || "Không tìm thấy kỹ thuật viên hoặc phòng trống.");
+        })
+        .finally(() => {
+          setIsAutoMatching(false);
+        });
+    }
+  }, [selectedServiceId, startDatetime, isPackageIncluded, selectedRoomBookingId, userBookings]);
+
+  const handleRegisterPackage = async (e) => {
+    e.preventDefault();
+    setRegSuccess("");
+    setRegError("");
+
+    if (!regSelectedBookingId) {
+      setRegError("Vui lòng chọn đơn đặt phòng.");
+      return;
+    }
+    if (!regSelectedPackageId) {
+      setRegError("Vui lòng chọn gói trị liệu muốn đăng ký.");
+      return;
+    }
+
+    setRegSubmitting(true);
+    try {
+      const roomBooking = userBookings.find(b => b.bookingId === Number(regSelectedBookingId));
+      if (!roomBooking) {
+        throw new Error("Không tìm thấy đơn đặt phòng hợp lệ.");
+      }
+
+      // Update room booking via lookup-update api
+      const payload = {
+        email: currentUser.email,
+        phone: currentUser.phone,
+        packageId: Number(regSelectedPackageId)
+      };
+
+      await bookingLookupApi.update(roomBooking.bookingId, payload);
+
+      setRegSuccess(`Đăng ký gói thành công! Chi phí đã được cộng vào hóa đơn phòng BK-${String(roomBooking.bookingId).padStart(4, '0')}.`);
+      setRegSelectedPackageId("");
+
+      // Refresh stay bookings list from server
+      const updatedBookings = await userApi.getMyBookings().catch(() => []);
+      const confirmedBookings = (updatedBookings || []).filter(
+        b => b.status === "CONFIRMED" || b.status === "CHECK_IN" || b.status === "COMPLETED"
+      );
+      setUserBookings(confirmedBookings);
+    } catch (err) {
+      setRegError(err.message || "Đăng ký gói trị liệu thất bại.");
+    } finally {
+      setRegSubmitting(false);
+    }
+  };
+
+  const handleScheduleSpaSubmit = async (e) => {
+    e.preventDefault();
+    setBookingError("");
+    setBookingSuccessData(null);
+
+    if (!selectedServiceId) {
+      setBookingError("Vui lòng chọn dịch vụ trị liệu.");
+      return;
+    }
+    if (!startDatetime) {
+      setBookingError("Vui lòng chọn thời gian bắt đầu.");
+      return;
+    }
+    if (!healthConsentCheck) {
+      setBookingError("Bạn cần hoàn thành và cam kết hồ sơ sức khỏe trước khi đặt lịch.");
+      return;
+    }
+
+    setIsBookingSubmitting(true);
+
+    const dto = {
+      spaServiceId: Number(selectedServiceId),
+      startDatetime: startDatetime,
+      roomBookingId: selectedRoomBookingId ? Number(selectedRoomBookingId) : null,
+      therapistId: matchedTherapist?.id || null,
+      treatmentRoomId: matchedRoom?.id || null,
+      isPackageIncluded: isPackageIncluded
+    };
+
+    try {
+      const res = await spaApi.schedule(dto);
+      setBookingSuccessData(res);
+      // Reset fields
+      setSelectedServiceId("");
+      setStartDatetime("");
+      setMatchedTherapist(null);
+      setMatchedRoom(null);
+    } catch (err) {
+      setBookingError(err.message || "Không thể đặt lịch. Vui lòng kiểm tra lại thông tin.");
+    } finally {
+      setIsBookingSubmitting(false);
+    }
+  };
 
   // Back to top scroll listener
   useEffect(() => {
@@ -324,6 +794,123 @@ export default function Spa() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const renderPackageSection = (title, desc, filteredPkgs, IconComponent) => {
+    if (filteredPkgs.length === 0) return null;
+    return (
+      <div className="mb-20 last:mb-0">
+        {/* Section Header */}
+        <div className="flex items-center gap-4 mb-5 pb-3.5 border-b border-forest-ink/15 text-left">
+          <div className="w-10 h-10 rounded-full bg-forest-ink/5 border border-forest-ink/15 flex items-center justify-center text-forest-ink shrink-0">
+            {IconComponent && <IconComponent className="w-5 h-5 stroke-[1.5]" />}
+          </div>
+          <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
+            <h3 className="text-xl md:text-2xl font-serif font-light text-forest-ink uppercase tracking-wider">
+              {title}
+            </h3>
+            <span className="bg-forest-ink/10 text-forest-ink text-[11px] font-semibold px-2.5 py-0.5 rounded-full w-fit">
+              {filteredPkgs.length} gói
+            </span>
+          </div>
+        </div>
+        <p className="text-xs md:text-sm text-black-olive/75 mb-10 max-w-3xl leading-relaxed text-left font-light">
+          {desc}
+        </p>
+
+        {/* Grid Container */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {filteredPkgs.map((pkg, idx) => {
+            const priceFormatted = formatPrice(pkg.price);
+            const includesList   = pkg.includes ? pkg.includes.split(";").filter(Boolean) : [];
+            const goalLabel      = healthGoalLabel[pkg.healthGoal] || pkg.healthGoal;
+            const imgSrc         = pkg.imageUrl || "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
+            const delay          = (idx % 3) * 150;
+
+            return (
+              <ScrollReveal key={pkg.packageId} delay={delay}>
+                <div
+                  onClick={() => setSelectedPackage(pkg)}
+                  className="group bg-warm-cream border border-forest-ink/12 rounded-2xl p-6 flex flex-col justify-between text-left cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:border-forest-ink/35 hover:shadow-[0_12px_30px_-10px_rgba(29,35,27,0.15)] h-full"
+                >
+                  <div>
+                    {/* Image Container with Badges */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl mb-5">
+                      <img
+                        src={imgSrc}
+                        alt={pkg.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.src = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black-olive/10 group-hover:bg-transparent transition-colors duration-300" />
+                      
+                      {/* Duration Tag */}
+                      <div className="absolute top-3.5 right-3.5">
+                        <span className="bg-black-olive/80 backdrop-blur-[2px] text-warm-cream text-[9px] font-bold uppercase px-3 py-1 rounded-full tracking-wider border border-warm-cream/10">
+                          {pkg.durationDays} ngày
+                        </span>
+                      </div>
+                      {/* Goal Tag */}
+                      <div className="absolute top-3.5 left-3.5">
+                        <span className="bg-forest-ink/90 backdrop-blur-[2px] text-warm-cream text-[9px] font-bold uppercase px-3 py-1 rounded-full tracking-wider border border-warm-cream/10">
+                          {goalLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h4 className="font-serif text-[17px] md:text-[18px] font-semibold text-forest-ink leading-snug tracking-normal line-clamp-2 uppercase min-h-[50px] group-hover:text-forest-ink/85 transition-colors">
+                      {pkg.name}
+                    </h4>
+
+                    {/* Description */}
+                    <p className="mt-2 text-black-olive/75 text-xs leading-relaxed line-clamp-3 min-h-[54px] font-light">
+                      {pkg.description}
+                    </p>
+
+                    {/* Highlights */}
+                    {includesList.length > 0 && (
+                      <div className="mt-5 pt-4 border-t border-sage-mist/20">
+                        <span className="text-[10px] font-bold text-forest-ink/85 uppercase tracking-wider block mb-2.5">
+                          Dịch vụ bao gồm:
+                        </span>
+                        <ul className="space-y-2 text-xs text-black-olive/80">
+                          {includesList.slice(0, 3).map((inc, i) => (
+                            <li key={i} className="flex items-start gap-2.5">
+                              <CheckCircle className="w-3.5 h-3.5 text-forest-ink/70 shrink-0 mt-0.5" />
+                              <span className="line-clamp-1 font-light">{inc.trim()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price and CTA */}
+                  <div className="mt-5 pt-4 border-t border-sage-mist/20 flex items-center justify-between">
+                    <div>
+                      <span className="block text-[9px] uppercase tracking-wider text-forest-ink/60">Giá trọn gói</span>
+                      <span className="text-forest-ink font-serif font-bold text-[17px]">{priceFormatted}</span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPackage(pkg);
+                      }}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase border border-forest-ink/40 text-forest-ink bg-transparent rounded-full px-4 py-2 transition-all duration-300 hover:bg-forest-ink hover:text-warm-cream hover:border-forest-ink cursor-pointer"
+                    >
+                      <span>Chi tiết</span> <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  </div>
+                </div>
+              </ScrollReveal>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-forest-ink">
       {/* ── Modal chi tiết ── */}
@@ -331,6 +918,18 @@ export default function Spa() {
         <PackageDetailModal
           pkg={selectedPackage}
           onClose={() => setSelectedPackage(null)}
+          onBook={(packageId) => {
+            setSelectedPackage(null);
+            setActiveTab("schedule");
+            setIsPackageIncluded(true);
+            navigate("/spa?tab=schedule", { replace: true });
+            setTimeout(() => {
+              const element = document.getElementById("spa-scheduler");
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 100);
+          }}
         />
       )}
 
@@ -353,243 +952,718 @@ export default function Spa() {
         </div>
 
         {/* Content container */}
-
+        <div className="relative z-10 max-w-4xl mx-auto px-6">
+          <span className="block text-xs font-bold text-lemon-zest uppercase tracking-[0.3em] mb-4">
+            Khơi Nguồn Sinh Khí · Trị Liệu Tự Nhiên
+          </span>
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light text-warm-cream leading-tight tracking-[0.05em] uppercase mb-6">
+            {activeTab === "packages" ? "Gói Trị Liệu Đặc Trưng" : "Đặt Lịch Spa & Trị Liệu"}
+          </h1>
+          <p className="font-sans text-sm md:text-base text-warm-cream/80 max-w-2xl mx-auto font-light leading-relaxed">
+            {activeTab === "packages" 
+              ? "Trải nghiệm các liệu trình spa thảo dược, yoga phục hồi và trị liệu chuyên sâu được thiết kế riêng cho kỳ nghỉ dưỡng của bạn."
+              : "Lên lịch hẹn trực tuyến với đội ngũ kỹ thuật viên chuyên nghiệp để được chăm sóc sức khỏe toàn diện."}
+          </p>
+        </div>
       </section>
 
-      {/* ── Bộ lọc danh mục (Cùng một hàng, bo tròn lại) ── */}
-      <div className="sticky top-20 z-30 bg-forest-ink border-b border-sage-mist/30 shadow-none py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
-          {/* Dòng các danh mục - Cuộn ngang trên mobile/màn hình nhỏ, hiển thị hàng đơn, căn giữa */}
-          <div className="flex items-center gap-2 overflow-x-auto flex-nowrap pb-1 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
-            {categoryFilters.map(({ label, value, icon: Icon }) => (
-              <button
-                key={value}
-                onClick={() => setFilters({ ...filters, healthGoal: value })}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase border transition-all cursor-pointer flex-shrink-0 ${
-                  filters.healthGoal === value
-                    ? "bg-lemon-zest text-black-olive border-lemon-zest"
-                    : "bg-transparent text-warm-cream border-sage-mist hover:border-lemon-zest"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Danh sách gói (Nền màu nâu nhẹ `#e6dac9`) ── */}
-      <div className="bg-[#e6dac9] text-black-olive">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-            <div className="max-w-2xl text-left border-l border-forest-ink pl-5 md:pl-6">
-              <span className="block text-xs font-bold text-forest-ink uppercase tracking-[0.25em] mb-2.5">
-                Liệu Pháp Chữa Lành
-              </span>
-              <h2 className="font-sans text-[30px] md:text-[36px] font-medium text-forest-ink mb-4 leading-tight tracking-[1.08px] uppercase">
-                Các Gói Trị Liệu <span className="font-serif italic font-normal text-forest-ink ml-1 lowercase">Đặc Trưng</span>
-              </h2>
-              <p className="text-forest-ink/90 text-[19px] leading-[1.30] tracking-[0.57px] font-normal max-w-[640px]">
-                Được thiết kế tinh tế để khôi phục sự cân bằng giữa <span className="font-medium text-forest-ink">thân – tâm – trí</span>,
-                mỗi liệu trình tại Ngũ Sơn là một cuộc hành trình cảm giác riêng biệt và đáng nhớ.
-              </p>
-            </div>
-          </div>
-
-          {/* Trạng thái: loading / lỗi / trống / dữ liệu */}
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <Loader2 className="h-10 w-10 animate-spin text-forest-ink" />
-              <span className="text-sm text-forest-ink/70">Đang tải danh sách gói trị liệu...</span>
-            </div>
-          ) : error ? (
-            <div className="max-w-md mx-auto p-6 bg-forest-ink/20 border border-sage-mist text-forest-ink rounded-[1px] flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <div className="text-left">
-                <h3 className="font-bold text-sm">Lỗi tải dữ liệu</h3>
-                <p className="text-xs mt-1 leading-relaxed">{error}</p>
-              </div>
-            </div>
-          ) : packages.length === 0 ? (
-            <div className="text-center py-16 border border-dashed border-sage-mist rounded-none p-8">
-              <p className="text-sm text-forest-ink/70">Không tìm thấy gói trị liệu nào phù hợp với bộ lọc của bạn.</p>
-              <button
-                onClick={() => setFilters({ keyword: "", healthGoal: "", minPrice: "", maxPrice: "", maxDurationDays: "" })}
-                className="mt-4 px-5 py-2 bg-black-olive text-warm-cream text-xs font-semibold rounded-[1px] hover:bg-black-olive/90 transition-colors cursor-pointer border border-black-olive"
-              >
-                Xóa bộ lọc
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {packages.map((pkg, idx) => {
-                const isFeatured     = idx % 5 === 4;
-                const priceFormatted = new Intl.NumberFormat("vi-VN").format(pkg.price / 1000) + "k";
-                const includesList   = pkg.includes ? pkg.includes.split(";").filter(Boolean) : [];
-                const goalLabel      = healthGoalLabel[pkg.healthGoal] || pkg.healthGoal;
-                const imgSrc         = pkg.imageUrl ||
-                  "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
-
-                const delay = isFeatured ? 0 : (idx % 3) * 200;
-
-                if (isFeatured) {
-                  return (
-                    <ScrollReveal key={pkg.packageId} delay={delay} className="md:col-span-3">
-                      <div
-                        className="group bg-black-olive w-full rounded-2xl overflow-hidden border border-sage-mist/20 shadow-none hover:border-lemon-zest transition-all duration-500 cursor-pointer flex flex-col md:flex-row text-warm-cream text-left"
-                      >
-                        <div className="p-10 md:w-[45%] flex flex-col justify-center space-y-6">
-                          <div className="space-y-2">
-                            <span className="block font-sans text-xs font-bold text-sage-mist uppercase tracking-widest">
-                              Dịch Vụ Đặc Trưng
-                            </span>
-                            <span className="text-xs font-semibold text-lemon-zest uppercase tracking-wider block">
-                              {goalLabel}
-                            </span>
-                          </div>
-                          <h3 className="font-sans text-[30px] md:text-[36px] font-medium text-lemon-zest leading-tight tracking-[1.08px] uppercase">
-                            {pkg.name}
-                          </h3>
-                          <p className="text-warm-cream/90 text-[19px] leading-[1.30] tracking-[0.57px] font-normal line-clamp-3">
-                            {pkg.description}
-                          </p>
-
-                          {includesList.length > 0 && (
-                            <div className="pt-4 border-t border-sage-mist/25">
-                              <span className="text-[10px] font-bold text-sage-mist uppercase tracking-wider block mb-2">
-                                Dịch vụ đi kèm:
-                              </span>
-                              <ul className="space-y-1 text-xs">
-                                {includesList.slice(0, 3).map((inc, i) => (
-                                  <li key={i} className="flex items-center gap-1.5 text-warm-cream/80">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-warm-cream" />
-                                    <span className="truncate">{inc.trim()}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between pt-4 border-t border-sage-mist/20">
-                            <div>
-                              <span className="text-[10px] block opacity-70 uppercase tracking-wider text-sage-mist">Giá dịch vụ</span>
-                              <span className="text-2xl font-bold font-serif text-lemon-zest">{priceFormatted}</span>
-                              <span className="flex items-center gap-1 mt-1 text-sage-mist text-xs">
-                                <Clock className="h-3.5 w-3.5" />
-                                {formatDuration(pkg.durationDays)}
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => setSelectedPackage(pkg)}
-                              className="bg-lemon-zest text-black-olive hover:bg-lemon-zest/90 border border-lemon-zest px-6 py-3 rounded-[1px] text-[16px] font-semibold uppercase tracking-[0.64px] transition-colors cursor-pointer"
-                            >
-                              Xem chi tiết
-                            </button>
-                          </div>
-                        </div>
-                        <div className="relative min-h-[300px] md:w-[55%] overflow-hidden">
-                          <img
-                            src={imgSrc}
-                            alt={pkg.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            onError={(e) => {
-                              e.target.src = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black-olive/20" />
-                        </div>
-                      </div>
-                    </ScrollReveal>
-                  );
-                }
-
-                // Card thường (Có viền bo tròn 2px đậm rõ nét, nền warm-cream, ảnh aspect-[4/3] bo tròn, tên gói trên ảnh)
-                return (
-                  <ScrollReveal key={pkg.packageId} delay={delay}>
-                    <div
-                      onClick={() => setSelectedPackage(pkg)}
-                      className="group bg-warm-cream border-2 border-forest-ink/25 rounded-2xl p-6 flex flex-col justify-between text-left cursor-pointer transition-all duration-300 hover:border-forest-ink/65 hover:shadow-md h-full"
+      {activeTab === "packages" ? (
+        <>
+          {/* ── Bộ lọc danh mục & các bộ lọc bổ sung ── */}
+          <div className="sticky top-20 z-30 bg-forest-ink/95 backdrop-blur-md border-b border-white/10 shadow-lg py-5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              {/* Category tabs */}
+              <div className="flex justify-center">
+                <div className="flex items-center gap-2 overflow-x-auto flex-nowrap pb-1 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {categoryFilters.map(({ label, value, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setFilters({ ...filters, healthGoal: value })}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase border transition-all cursor-pointer flex-shrink-0 ${
+                        filters.healthGoal === value
+                          ? "bg-lemon-zest text-black-olive border-lemon-zest font-bold shadow-md shadow-lemon-zest/10"
+                          : "bg-transparent text-warm-cream border-white/20 hover:border-lemon-zest"
+                      }`}
                     >
-                      <div>
-                        {/* Ảnh bo góc với kích thước lớn aspect-[4/3] và tên gói đè lên ảnh */}
-                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl">
-                          <img
-                            src={imgSrc}
-                            alt={pkg.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            onError={(e) => {
-                              e.target.src = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80";
-                            }}
-                          />
-                          {/* Gradient đen che mờ chân ảnh để chữ hiển thị rõ ràng */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black-olive/90 via-black-olive/30 to-transparent" />
+                      <Icon className="w-3.5 h-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                          {/* Category badge ở góc trên trái */}
-                          <div className="absolute top-3 left-3">
-                            <span className="bg-forest-ink text-warm-cream text-[10px] font-medium uppercase px-2.5 py-0.5 rounded-[1px] border border-sage-mist/30 tracking-wider">
-                              {goalLabel}
-                            </span>
-                          </div>
+              {/* Advanced search and filters */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5 max-w-5xl mx-auto pt-1">
+                {/* Search Keyword */}
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sage-mist/60">
+                    <Search className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Tìm tên gói, dịch vụ..."
+                    value={filters.keyword}
+                    onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-full text-xs text-warm-cream placeholder-warm-cream/60 focus:outline-none focus:bg-white/15 focus:border-lemon-zest focus:ring-1 focus:ring-lemon-zest transition-all"
+                  />
+                  {filters.keyword && (
+                    <button
+                      onClick={() => setFilters({ ...filters, keyword: "" })}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-warm-cream/50 hover:text-lemon-zest transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
 
-                          {/* Tên gói hiển thị đè trên ảnh ở góc dưới */}
-                          <div className="absolute bottom-3 left-3 right-3">
-                            <h3 className="font-sans text-[18px] font-semibold text-warm-cream leading-snug tracking-wide line-clamp-2 uppercase">
-                              {pkg.name}
-                            </h3>
-                          </div>
-                        </div>
+                {/* Min Price Dropdown / Select */}
+                <div>
+                  <select
+                    value={filters.minPrice}
+                    onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-full text-xs text-warm-cream focus:outline-none focus:bg-white/15 focus:border-lemon-zest transition-all cursor-pointer appearance-none animate-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M7 9l3 3 3-3' stroke='%23fef6e4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundPosition: 'right 14px center', backgroundSize: '14px', backgroundRepeat: 'no-repeat' }}
+                  >
+                    <option value="" className="bg-forest-ink text-warm-cream">Giá tối thiểu (Tất cả)</option>
+                    <option value="1000000" className="bg-forest-ink text-warm-cream">Từ 1.000.000 đ</option>
+                    <option value="2000000" className="bg-forest-ink text-warm-cream">Từ 2.000.000 đ</option>
+                    <option value="3000000" className="bg-forest-ink text-warm-cream">Từ 3.000.000 đ</option>
+                    <option value="5000000" className="bg-forest-ink text-warm-cream">Từ 5.000.000 đ</option>
+                  </select>
+                </div>
 
-                        {/* Dịch vụ đi kèm (Lược bỏ phần mô tả giới thiệu như yêu cầu) */}
-                        <div className="mt-4">
-                          {includesList.length > 0 && (
-                            <div className="pt-1">
-                              <span className="text-[10px] font-bold text-forest-ink uppercase tracking-wider block mb-1.5">
-                                Bao gồm:
-                              </span>
-                              <ul className="space-y-1.5 text-xs text-forest-ink/90">
-                                {includesList.slice(0, 3).map((inc, i) => (
-                                  <li key={i} className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 bg-forest-ink rounded-full" />
-                                    <span className="truncate">{inc.trim()}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
+                {/* Max Price Dropdown / Select */}
+                <div>
+                  <select
+                    value={filters.maxPrice}
+                    onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-full text-xs text-warm-cream focus:outline-none focus:bg-white/15 focus:border-lemon-zest transition-all cursor-pointer appearance-none animate-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M7 9l3 3 3-3' stroke='%23fef6e4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundPosition: 'right 14px center', backgroundSize: '14px', backgroundRepeat: 'no-repeat' }}
+                  >
+                    <option value="" className="bg-forest-ink text-warm-cream">Giá tối đa (Tất cả)</option>
+                    <option value="2000000" className="bg-forest-ink text-warm-cream">Đến 2.000.000 đ</option>
+                    <option value="3000000" className="bg-forest-ink text-warm-cream">Đến 3.000.000 đ</option>
+                    <option value="5000000" className="bg-forest-ink text-warm-cream">Đến 5.000.000 đ</option>
+                    <option value="8000000" className="bg-forest-ink text-warm-cream">Đến 8.000.000 đ</option>
+                  </select>
+                </div>
+
+                {/* Duration select */}
+                <div>
+                  <select
+                    value={filters.maxDurationDays}
+                    onChange={(e) => setFilters({ ...filters, maxDurationDays: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-full text-xs text-warm-cream focus:outline-none focus:bg-white/15 focus:border-lemon-zest transition-all cursor-pointer appearance-none animate-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M7 9l3 3 3-3' stroke='%23fef6e4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundPosition: 'right 14px center', backgroundSize: '14px', backgroundRepeat: 'no-repeat' }}
+                  >
+                    <option value="" className="bg-forest-ink text-warm-cream">Số ngày tối đa (Tất cả)</option>
+                    <option value="1" className="bg-forest-ink text-warm-cream">Trong 1 ngày</option>
+                    <option value="2" className="bg-forest-ink text-warm-cream">Tối đa 2 ngày</option>
+                    <option value="4" className="bg-forest-ink text-warm-cream">Tối đa 4 ngày</option>
+                    <option value="7" className="bg-forest-ink text-warm-cream">Tối đa 7 ngày</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Reset button if filters active */}
+              {(filters.keyword || filters.healthGoal || filters.minPrice || filters.maxPrice || filters.maxDurationDays) && (
+                <div className="flex justify-center pt-1">
+                  <button
+                    onClick={() => setFilters({ keyword: "", healthGoal: "", minPrice: "", maxPrice: "", maxDurationDays: "" })}
+                    className="text-[11px] font-bold tracking-wider uppercase text-lemon-zest hover:text-lemon-zest/80 transition-colors flex items-center gap-1.5 cursor-pointer bg-transparent border-none"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Xóa tất cả bộ lọc
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>          {/* ── Danh sách gói (Nền màu nâu nhẹ `#e6dac9`) ── */}
+          <div className="bg-[#e6dac9] text-black-olive">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+
+              {/* Trạng thái: loading / lỗi / trống / dữ liệu */}
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <Loader2 className="h-10 w-10 animate-spin text-forest-ink" />
+                  <span className="text-sm text-forest-ink/70">Đang tải danh sách gói trị liệu...</span>
+                </div>
+              ) : error ? (
+                <div className="max-w-md mx-auto p-6 bg-forest-ink/20 border border-sage-mist text-forest-ink rounded-[1px] flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <div className="text-left">
+                    <h3 className="font-bold text-sm">Lỗi tải dữ liệu</h3>
+                    <p className="text-xs mt-1 leading-relaxed">{error}</p>
+                  </div>
+                </div>
+              ) : packages.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-forest-ink/20 rounded-2xl p-8 bg-warm-cream/30">
+                  <p className="text-sm text-forest-ink/75 font-medium">Không tìm thấy gói trị liệu nào phù hợp với bộ lọc của bạn.</p>
+                  <button
+                    onClick={() => setFilters({ keyword: "", healthGoal: "", minPrice: "", maxPrice: "", maxDurationDays: "" })}
+                    className="mt-5 px-6 py-2.5 bg-forest-ink text-warm-cream text-xs font-bold uppercase tracking-wider rounded-full hover:bg-forest-ink/90 transition-colors cursor-pointer border border-forest-ink shadow-sm"
+                  >
+                    Xóa tất cả bộ lọc
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-16">
+                  {(() => {
+                    const spaPackages = packages.filter(p => p.healthGoal === "SPA");
+                    const yogaPackages = packages.filter(p => p.healthGoal === "YOGA");
+                    const therapyPackages = packages.filter(p => p.healthGoal === "THERAPY");
+                    const otherPackages = packages.filter(p => p.healthGoal !== "SPA" && p.healthGoal !== "YOGA" && p.healthGoal !== "THERAPY");
+
+                    return (
+                      <>
+                        {renderPackageSection(
+                          "Gói Spa & Thư Giãn Đặc Trưng",
+                          "Khơi nguồn năng lượng tươi mới với các liệu trình xông hơi đá muối hồng ngoại, tắm khoáng Onsen, ngâm thảo dược cổ truyền và liệu pháp massage đá muối nóng Himalaya chuyên sâu.",
+                          spaPackages,
+                          Leaf
+                        )}
+
+                        {renderPackageSection(
+                          "Gói Yoga & Thiền Định Phục Hồi",
+                          "Tìm lại sự thanh tịnh trong tâm hồn bên rừng thông yên tĩnh. Khóa tu dưỡng với các kỹ thuật thở Pranayama, thiền hành, phục hồi luân xa bằng trị liệu chuông xoay Tây Tạng.",
+                          yogaPackages,
+                          Heart
+                        )}
+
+                        {renderPackageSection(
+                          "Gói Trị Liệu Chuyên Môn Chuyên Sâu",
+                          "Liệu pháp điều trị cột sống, đau vai gáy và phục hồi chấn thương được tư vấn trực tiếp bởi bác sĩ chuyên khoa. Kết hợp nắn chỉnh Chiropractic và công nghệ xung điện phục hồi.",
+                          therapyPackages,
+                          Activity
+                        )}
+
+                        {otherPackages.length > 0 && renderPackageSection(
+                          "Các Gói Trị Liệu Khác",
+                          "Các gói chăm sóc sức khỏe và phục hồi toàn diện khác tại resort.",
+                          otherPackages,
+                          Sparkles
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </section>
+          </div>
+        </>
+      ) : (
+        /* ── INTERACTIVE SPA SCHEDULER TAB (Nền màu nâu nhẹ `#e6dac9`) ── */
+        <div id="spa-scheduler" className="bg-[#e6dac9] text-black-olive py-20 px-4 min-h-[60vh] text-left">
+          <div className="max-w-6xl mx-auto">
+            {!isLoggedIn ? (
+              /* Require Login View */
+              <div className="max-w-md mx-auto bg-warm-cream border border-forest-ink/10 p-10 text-center rounded-2xl shadow-xl">
+                <Sparkles className="w-12 h-12 text-forest-ink mx-auto mb-6 animate-pulse" />
+                <h3 className="font-serif text-2xl font-semibold text-forest-ink mb-4 uppercase tracking-wider">
+                  Yêu Cầu Đăng Nhập
+                </h3>
+                <p className="text-black-olive/80 text-sm leading-relaxed mb-8 font-light">
+                  Vui lòng đăng nhập tài khoản Hội viên của bạn để lên lịch trị liệu miễn phí theo gói nghỉ dưỡng hoặc đặt thêm dịch vụ trị liệu ngoài gói.
+                </p>
+                <button
+                  onClick={() => navigate("/dang-nhap")}
+                  className="w-full bg-forest-ink hover:bg-forest-ink/90 text-warm-cream py-3.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Đăng Nhập Ngay
+                </button>
+              </div>
+            ) : loadingScheduler ? (
+              /* Loader View */
+              <div className="flex flex-col items-center justify-center py-24 space-y-4">
+                <Loader2 className="h-10 w-10 animate-spin text-forest-ink" />
+                <span className="text-sm text-forest-ink/75 font-semibold uppercase tracking-widest">Đang tải cấu hình lịch hẹn...</span>
+              </div>
+            ) : bookingSuccessData ? (
+              /* Booking Success view */
+              <div className="max-w-2xl mx-auto bg-white border border-forest-ink/20 p-8 sm:p-12 text-center shadow-xl rounded-2xl relative overflow-hidden animate-fade-in">
+                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-forest-ink via-lemon-zest to-forest-ink" />
+                <div className="inline-flex p-4 bg-green-50 text-forest-ink rounded-full mb-6">
+                  <CheckCircle className="h-12 w-12" />
+                </div>
+                <h2 className="font-serif text-3xl font-normal text-forest-ink mb-3 uppercase tracking-wide">Đặt Lịch Hẹn Thành Công!</h2>
+                <p className="text-black-olive/75 text-sm mb-8 font-light leading-relaxed">
+                  Lịch hẹn trị liệu của quý khách đã được xác nhận tự động. Thông tin chi tiết lịch làm việc và mã đặt chỗ được cung cấp bên dưới.
+                </p>
+                
+                <div className="border border-sage-mist bg-warm-cream/50 text-left p-6 space-y-4 mb-8 rounded-xl text-sm">
+                  <div className="flex justify-between items-center pb-3 border-b border-sage-mist">
+                    <span className="font-bold text-[10px] text-black-olive/60 uppercase tracking-wider">Mã đặt hẹn Spa:</span>
+                    <span className="text-forest-ink font-mono font-bold text-lg">SPA-{String(bookingSuccessData.spaBookingId).padStart(4, '0')}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-black-olive/70 font-light">Dịch vụ:</span>
+                      <span className="font-semibold text-black-olive">{bookingSuccessData.serviceName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-black-olive/70 font-light">Thời gian:</span>
+                      <span className="font-semibold text-black-olive">{new Date(bookingSuccessData.startDatetime).toLocaleString('vi-VN')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-black-olive/70 font-light">Chuyên gia:</span>
+                      <span className="font-semibold text-black-olive">{bookingSuccessData.therapistName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-black-olive/70 font-light">Phòng trị liệu:</span>
+                      <span className="font-semibold text-black-olive">{bookingSuccessData.roomName}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-dashed border-sage-mist">
+                      <span className="text-black-olive/70 font-light">Hình thức:</span>
+                      <span className="font-semibold text-forest-ink">
+                        {bookingSuccessData.isPackageIncluded ? "Miễn phí theo gói" : "Tính phí ngoài gói"}
+                      </span>
+                    </div>
+                    {!bookingSuccessData.isPackageIncluded && (
+                      <div className="flex justify-between font-bold text-black-olive">
+                        <span>Chi phí (Billed to Folio):</span>
+                        <span>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(bookingSuccessData.priceAtBooking)}</span>
                       </div>
+                    )}
+                  </div>
+                </div>
 
-                      {/* Order / View Detail & Giá dịch vụ */}
-                      <div className="mt-5 flex items-center justify-between border-t border-sage-mist/30 pt-3">
-                        <div>
-                          <span className="block text-[9px] uppercase tracking-wider text-forest-ink/60">Giá dịch vụ</span>
-                          <span className="text-forest-ink font-serif font-bold text-[18px]">{priceFormatted}</span>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="flex items-center gap-1 text-forest-ink/75 text-xs">
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>{formatDuration(pkg.durationDays)}</span>
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedPackage(pkg);
-                            }}
-                            className="inline-flex items-center gap-1 text-[13px] font-semibold tracking-[0.04em] uppercase text-forest-ink hover:underline cursor-pointer bg-transparent border-none p-0 mt-1"
-                          >
-                            Xem chi tiết <ArrowRight className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button 
+                    onClick={() => setBookingSuccessData(null)} 
+                    className="bg-forest-ink text-warm-cream hover:bg-forest-ink/90 px-8 py-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Đặt lịch trị liệu khác
+                  </button>
+                  <button 
+                    onClick={() => navigate("/tai-khoan/lich-su-dat-hang")} 
+                    className="border border-forest-ink text-forest-ink hover:bg-forest-ink hover:text-warm-cream px-8 py-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Xem lịch trình cá nhân
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8 animate-fade-in text-left">
+                {/* 🎁 KÍCH HOẠT GÓI TRỊ LIỆU CHO KỲ LƯU TRÚ */}
+                {userBookings.length > 0 && (
+                  <div className="bg-white border-l-4 border-forest-ink shadow-md p-6 rounded-2xl text-left space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-forest-ink/5 rounded-full text-forest-ink">
+                        <Sparkles className="w-5 h-5 text-forest-ink" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif text-lg font-bold text-forest-ink uppercase tracking-wide">
+                          🎁 Kích hoạt Gói Trị Liệu Cho Kỳ Lưu Trú
+                        </h4>
+                        <p className="text-black-olive/70 text-xs mt-1 font-light leading-relaxed">
+                          Chọn một kỳ nghỉ đang hoạt động của bạn và chọn gói trị liệu muốn kích hoạt thêm. Chi phí của gói trị liệu sẽ được tự động cộng vào hóa đơn phòng (folio) cuối cùng của bạn tại resort.
+                        </p>
                       </div>
                     </div>
-                  </ScrollReveal>
-                );
-              })}
+
+                    <form onSubmit={handleRegisterPackage} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end pt-2">
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-[9px] font-bold text-black-olive/60 uppercase">
+                          Chọn mã đặt phòng:
+                        </label>
+                        <select
+                          value={regSelectedBookingId}
+                          onChange={(e) => {
+                            setRegSelectedBookingId(e.target.value);
+                            setRegSuccess("");
+                            setRegError("");
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg border border-sage-mist bg-white text-xs focus:outline-none focus:border-forest-ink"
+                          required
+                        >
+                          <option value="">-- Chọn đơn đặt phòng --</option>
+                          {userBookings.map(b => (
+                            <option key={b.bookingId} value={b.bookingId}>
+                              BK-{String(b.bookingId).padStart(4, '0')} ({b.checkInDate.split('T')[0]} - {b.checkOutDate.split('T')[0]}) {b.packageName ? `· Gói: ${b.packageName}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5 text-left">
+                        <label className="block text-[9px] font-bold text-black-olive/60 uppercase">
+                          Chọn Gói Trị Liệu muốn mua:
+                        </label>
+                        <select
+                          value={regSelectedPackageId}
+                          onChange={(e) => {
+                            setRegSelectedPackageId(e.target.value);
+                            setRegSuccess("");
+                            setRegError("");
+                          }}
+                          className="w-full px-3 py-2.5 rounded-lg border border-sage-mist bg-white text-xs focus:outline-none focus:border-forest-ink"
+                          required
+                        >
+                          <option value="">-- Chọn Gói Trị Liệu --</option>
+                          {STATIC_PACKAGES.map((p, idx) => (
+                            <option key={idx} value={p.packageId}>
+                              {p.name} ({new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(p.price)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <button
+                          type="submit"
+                          disabled={regSubmitting || !regSelectedBookingId || !regSelectedPackageId}
+                          className="w-full bg-forest-ink hover:bg-forest-ink/90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs py-3 rounded-lg uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 text-white"
+                        >
+                          {regSubmitting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-white" />
+                              <span>Đang đăng ký...</span>
+                            </>
+                          ) : (
+                            <span>Đăng ký Gói & Ghi hóa đơn</span>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+
+                    {regSuccess && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        <span>{regSuccess}</span>
+                      </div>
+                    )}
+
+                    {regError && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                        <span>{regError}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Scheduler Form Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  {/* Form area: 7 cols */}
+                  <form onSubmit={handleScheduleSpaSubmit} className="lg:col-span-7 bg-warm-cream border border-forest-ink/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-lg">
+                  <div className="border-b border-sage-mist pb-4 mb-4">
+                    <h3 className="font-serif text-2xl font-light text-forest-ink uppercase tracking-wide">Đăng ký Lịch trị liệu</h3>
+                    <p className="text-black-olive/70 text-xs mt-1 font-light">Vui lòng điền thông tin để hệ thống khớp nối chuyên gia và phòng trống.</p>
+                  </div>
+
+                  {/* Step 1: Chọn dịch vụ Spa */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold text-forest-ink uppercase tracking-wider">
+                      1. Chọn dịch vụ trị liệu
+                    </label>
+                    <select
+                      value={selectedServiceId}
+                      onChange={(e) => {
+                        setSelectedServiceId(e.target.value);
+                        setBookingError("");
+                      }}
+                      className="w-full px-4 py-3 rounded-lg border border-sage-mist bg-white text-sm focus:outline-none focus:border-forest-ink"
+                      required
+                    >
+                      <option value="">-- Click chọn dịch vụ Spa --</option>
+                      {spaServices.map((svc) => (
+                        <option key={svc.serviceId} value={svc.serviceId}>
+                          {svc.name} ({svc.durationMinutes} phút) - {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(svc.price)}
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedServiceId && (
+                      <div className="p-3.5 bg-sage-mist/20 rounded-lg text-xs text-black-olive/80 font-light leading-relaxed">
+                        {spaServices.find(s => s.serviceId === Number(selectedServiceId))?.description}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 2: Chọn hình thức đặt lịch (Gói vs Extra) */}
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-bold text-forest-ink uppercase tracking-wider">
+                      2. Hình thức đăng ký
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <label className={`flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        isPackageIncluded 
+                          ? "border-forest-ink bg-forest-ink/5" 
+                          : "border-sage-mist bg-white/50 hover:border-forest-ink/30"
+                      }`}>
+                        <input
+                          type="radio"
+                          name="isPackageIncluded"
+                          checked={isPackageIncluded}
+                          onChange={() => {
+                            setIsPackageIncluded(true);
+                            setBookingError("");
+                            // Auto select first room booking if available
+                            if (userBookings.length > 0) {
+                              setSelectedRoomBookingId(String(userBookings[0].bookingId));
+                            }
+                          }}
+                          className="sr-only"
+                        />
+                        <span className="font-bold text-xs text-forest-ink uppercase">Theo gói nghỉ dưỡng</span>
+                        <span className="text-[10px] text-black-olive/60 mt-1 font-light">Sử dụng buổi trị liệu miễn phí có sẵn trong gói.</span>
+                      </label>
+
+                      <label className={`flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        !isPackageIncluded 
+                          ? "border-forest-ink bg-forest-ink/5" 
+                          : "border-sage-mist bg-white/50 hover:border-forest-ink/30"
+                      }`}>
+                        <input
+                          type="radio"
+                          name="isPackageIncluded"
+                          checked={!isPackageIncluded}
+                          onChange={() => {
+                            setIsPackageIncluded(false);
+                            setSelectedRoomBookingId("");
+                            setBookingError("");
+                          }}
+                          className="sr-only"
+                        />
+                        <span className="font-bold text-xs text-forest-ink uppercase">Đặt ngoài gói (Tính phí)</span>
+                        <span className="text-[10px] text-black-olive/60 mt-1 font-light">Tính phí theo giá dịch vụ và cộng vào hóa đơn phòng.</span>
+                      </label>
+                    </div>
+
+                    {/* Room Booking Selector if package selected */}
+                    {isPackageIncluded && (
+                      <div className="p-4 bg-sage-mist/20 rounded-xl border border-sage-mist/40 space-y-2 mt-2">
+                        <span className="block text-[9px] font-bold text-black-olive/60 uppercase">Liên kết mã đặt phòng:</span>
+                        {userBookings.length === 0 ? (
+                          <p className="text-xs text-red-600 font-medium">Bạn hiện không có phòng đặt đang hoạt động có đi kèm gói trị liệu. Vui lòng chọn đặt ngoài gói.</p>
+                        ) : (
+                          <select
+                            value={selectedRoomBookingId}
+                            onChange={(e) => {
+                              setSelectedRoomBookingId(e.target.value);
+                              setBookingError("");
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border border-sage-mist bg-white text-xs focus:outline-none focus:border-forest-ink"
+                            required={isPackageIncluded}
+                          >
+                            <option value="">-- Chọn mã đặt phòng để hưởng ưu đãi --</option>
+                            {userBookings.map(b => (
+                              <option key={b.bookingId} value={b.bookingId}>
+                                BK-{String(b.bookingId).padStart(4, '0')} (Gói: {b.packageName || "Tiêu chuẩn"}) · {b.checkInDate.split('T')[0]} - {b.checkOutDate.split('T')[0]}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step 3: Chọn ngày & giờ */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold text-forest-ink uppercase tracking-wider">
+                      3. Chọn ngày & giờ trị liệu
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={startDatetime}
+                      onChange={(e) => {
+                        setStartDatetime(e.target.value);
+                        setBookingError("");
+                      }}
+                      className="w-full px-4 py-3 rounded-lg border border-sage-mist bg-white text-sm focus:outline-none focus:border-forest-ink"
+                      required
+                    />
+                    {isPackageIncluded && selectedRoomBookingId && (
+                      <p className="text-[10px] text-forest-ink font-light">
+                        * Giờ trị liệu phải nằm trong ngày lưu trú phòng nghỉ.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Step 4: Auto-matching Result display */}
+                  {selectedServiceId && startDatetime && (
+                    <div className="p-5 rounded-xl border border-forest-ink/10 bg-white space-y-3 shadow-inner">
+                      <span className="block text-[9px] font-bold text-forest-ink uppercase tracking-widest">
+                        Khớp Nối Tài Nguyên Tự Động (Auto-match)
+                      </span>
+                      {isAutoMatching ? (
+                        <div className="flex items-center gap-2 py-2 text-xs text-black-olive/60">
+                          <Loader2 className="w-4 h-4 animate-spin text-forest-ink" />
+                          <span>Đang kiểm tra và tìm chuyên gia trống lịch...</span>
+                        </div>
+                      ) : matchError ? (
+                        <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>{matchError}</span>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                          <div className="bg-sage-50/50 p-3 rounded-lg border border-sage-mist">
+                            <span className="block text-[9px] text-black-olive/50 uppercase font-bold">Kỹ thuật viên đề xuất:</span>
+                            <span className="font-semibold text-black-olive text-sm mt-1 block">{matchedTherapist?.name}</span>
+                          </div>
+                          <div className="bg-sage-50/50 p-3 rounded-lg border border-sage-mist">
+                            <span className="block text-[9px] text-black-olive/50 uppercase font-bold">Phòng trị liệu đề xuất:</span>
+                            <span className="font-semibold text-black-olive text-sm mt-1 block">{matchedRoom?.name}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* GDPR / Decree 13/2023/ND-CP Compliance */}
+                  <div className="p-4 bg-sage-50 rounded-xl border border-sage-200 space-y-3">
+                    <span className="block text-[9px] font-bold text-black-olive uppercase tracking-wider">
+                      Cam kết bảo mật & Quyền lợi y tế
+                    </span>
+                    {medicalProfile === null ? (
+                      <div className="p-4 bg-red-900/10 border border-red-500/30 text-red-900 text-xs rounded-xl flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold">Chưa có Hồ sơ Sức khỏe:</span> Quý khách bắt buộc phải hoàn thành hồ sơ y tế và cam kết điều khoản trước khi đặt hẹn.
+                          <Link to="/ho-so-suc-khoe" className="underline font-semibold block mt-1 hover:text-red-700">Tạo hồ sơ sức khỏe ngay &rarr;</Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex items-start gap-3 cursor-pointer group text-xs text-black-olive/80 select-none">
+                        <input
+                          type="checkbox"
+                          checked={healthConsentCheck}
+                          onChange={(e) => {
+                            setHealthConsentCheck(e.target.checked);
+                            setBookingError("");
+                            // Silent auto-save in backend to enable frictionless scheduling
+                            medicalApi.saveMyProfile(medicalProfile.physicalCondition || "", medicalProfile.foodAllergies || "", e.target.checked)
+                              .then(res => setMedicalProfile(res))
+                              .catch(err => console.error("Error auto-saving consent:", err));
+                          }}
+                          className="mt-0.5 rounded border-sage-mist focus:ring-forest-ink text-forest-ink"
+                        />
+                        <span>Đồng ý cam kết điều khoản y tế và cho phép bộ phận kỹ thuật viên trị liệu truy cập hồ sơ thể trạng để bảo đảm an toàn trị liệu (Nghị định 13/2023/NĐ-CP).</span>
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Error display */}
+                  {bookingError && (
+                    <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{bookingError}</span>
+                    </div>
+                  )}
+
+                  {/* Submit CTA */}
+                  <button
+                    type="submit"
+                    disabled={isBookingSubmitting || !selectedServiceId || !startDatetime || !healthConsentCheck || isAutoMatching || !!matchError}
+                    className="w-full bg-forest-ink text-warm-cream hover:bg-forest-ink/90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs py-4 rounded-lg uppercase tracking-widest transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {isBookingSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Đang xử lý đặt lịch...</span>
+                      </>
+                    ) : (
+                      <span>Xác nhận Đăng ký Lịch hẹn</span>
+                    )}
+                  </button>
+                </form>
+
+                {/* Sidebar summary: 5 cols */}
+                <div className="lg:col-span-5 bg-white border border-sage-mist rounded-2xl p-6 space-y-6 shadow-md">
+                  <h4 className="font-serif text-lg font-bold text-black-olive border-b border-sage-mist pb-3">Chi tiết phiếu đặt hẹn</h4>
+                  
+                  <div className="space-y-4 text-xs">
+                    {/* Selected Service Detail */}
+                    <div>
+                      <span className="block text-[9px] text-black-olive/50 uppercase font-bold mb-1">Dịch vụ:</span>
+                      {selectedServiceId ? (
+                        <div>
+                          <p className="font-bold text-sm text-black-olive">{spaServices.find(s => s.serviceId === Number(selectedServiceId))?.name}</p>
+                          <p className="text-black-olive/60 mt-0.5">{spaServices.find(s => s.serviceId === Number(selectedServiceId))?.durationMinutes} phút trị liệu chuyên sâu</p>
+                        </div>
+                      ) : (
+                        <p className="text-black-olive/40 italic">Chưa chọn dịch vụ</p>
+                      )}
+                    </div>
+
+                    {/* Time Detail */}
+                    <div>
+                      <span className="block text-[9px] text-black-olive/50 uppercase font-bold mb-1">Thời gian:</span>
+                      {startDatetime ? (
+                        <p className="font-bold text-black-olive">{formatDateTime(startDatetime)}</p>
+                      ) : (
+                        <p className="text-black-olive/40 italic">Chưa chọn thời gian</p>
+                      )}
+                    </div>
+
+                    {/* Therapist Proposal */}
+                    <div>
+                      <span className="block text-[9px] text-black-olive/50 uppercase font-bold mb-1">Kỹ thuật viên (Khóa lịch):</span>
+                      {matchedTherapist ? (
+                        <p className="font-semibold text-forest-ink flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          {matchedTherapist.name} (Đã khóa giữ chỗ)
+                        </p>
+                      ) : (
+                        <p className="text-black-olive/40 italic">Đang chờ thông tin khớp nối</p>
+                      )}
+                    </div>
+
+                    {/* Treatment Room Proposal */}
+                    <div>
+                      <span className="block text-[9px] text-black-olive/50 uppercase font-bold mb-1">Phòng trị liệu:</span>
+                      {matchedRoom ? (
+                        <p className="font-semibold text-forest-ink">
+                          {matchedRoom.name}
+                        </p>
+                      ) : (
+                        <p className="text-black-olive/40 italic">Đang chờ thông tin khớp nối</p>
+                      )}
+                    </div>
+
+                    <div className="h-px bg-sage-mist" />
+
+                    {/* Price breakdown */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-black-olive/70 font-light">
+                        <span>Đơn giá niêm yết:</span>
+                        <span>
+                          {selectedServiceId 
+                            ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(spaServices.find(s => s.serviceId === Number(selectedServiceId))?.price || 0) 
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-black-olive/70 font-light">
+                        <span>Ưu đãi áp dụng:</span>
+                        <span className="text-forest-ink font-semibold">
+                          {isPackageIncluded ? "Trọn gói miễn phí (100% discount)" : "Đặt ngoài gói (Billed to room)"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-dashed border-sage-mist font-bold text-black-olive text-sm">
+                        <span>Tổng chi phí phát sinh:</span>
+                        <span className="text-base font-serif text-forest-ink">
+                          {isPackageIncluded 
+                            ? "0đ" 
+                            : selectedServiceId 
+                              ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(spaServices.find(s => s.serviceId === Number(selectedServiceId))?.price || 0)
+                              : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-sage-50 rounded-xl border border-sage-mist text-xs leading-relaxed text-black-olive/80 font-light">
+                    <span className="font-bold text-forest-ink block mb-1">💡 Hướng dẫn lưu ý:</span>
+                    Lịch hẹn sau khi đã đặt thành công sẽ tự động hiển thị trong Lịch trình cá nhân tại mục <span className="font-semibold">Lịch sử đặt hàng</span> trong Trang cá nhân. Vui lòng có mặt đúng giờ hẹn.
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </section>
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Newsletter (Nền màu xanh lá cây Forest Ink) ── */}
       <section className="bg-forest-ink text-warm-cream py-20 relative overflow-hidden text-center border-t border-sage-mist/30">

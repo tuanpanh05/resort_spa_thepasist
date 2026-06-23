@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, Clock, UtensilsCrossed, MessageSquare } from "lucide-react";
+import { Menu, X, Leaf, Heart, LogOut, User, ChevronDown, CalendarDays, CreditCard, Clock, UtensilsCrossed, MessageSquare, Globe } from "lucide-react";
 import { userApi } from "../api";
 
 import { useLanguage } from "../context/LanguageContext";
@@ -8,7 +8,13 @@ import { useLanguage } from "../context/LanguageContext";
 const navItems = [
   { key: "home", href: "/" },
   { key: "rooms", href: "/phong-o" },
-  { key: "spa", href: "/spa" },
+  {
+    key: "spa",
+    dropdown: [
+      { key: "spaPackages", href: "/spa?tab=packages" },
+      { key: "spaBooking", href: "/spa?tab=schedule" }
+    ]
+  },
   {
     key: "dining",
     dropdown: [
@@ -16,8 +22,6 @@ const navItems = [
       { key: "mealPlanner", href: "/guest-dashboard" }
     ]
   },
-  { key: "promotions", href: "/khuyen-mai" },
-  { key: "blog", href: "/blog" },
   { key: "lookup", href: "/tra-cuu" },
 ];
 
@@ -161,14 +165,14 @@ export default function Header() {
           </Link>
 
           {/* Center Side: Simplified Menu Items with Sliding Underlines */}
-          <nav className="hidden xl:flex space-x-8 font-medium text-sm tracking-wide flex-shrink-0">
+          <nav className="hidden xl:flex space-x-6 font-medium text-sm tracking-wide flex-shrink-0">
             {navItems.map((item, index) => {
               const isActive = location.pathname === item.href || (item.dropdown && item.dropdown.some(sub => location.pathname === sub.href));
 
               if (item.dropdown) {
                 return (
                   <div key={index} className="relative group">
-                    <span className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${isActive ? "after:scale-x-100" : "after:scale-x-0 group-hover:after:scale-x-100"} ${showGlass ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${isActive ? "text-primary-900 font-semibold" : ""}` : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white font-semibold" : ""}`} cursor-pointer flex items-center gap-1`}>
+                    <span className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-center after:transition-transform after:duration-300 ${isActive ? "after:scale-x-100" : "after:scale-x-0 group-hover:after:scale-x-100"} ${showGlass ? `text-sage-700 hover:text-primary-900 after:bg-primary-850 ${isActive ? "text-primary-950" : ""}` : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white" : ""}`} cursor-pointer flex items-center gap-1`}>
                       {t("nav." + item.key)} <ChevronDown className="w-3.5 h-3.5" />
                     </span>
                     <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-primary-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
@@ -188,24 +192,20 @@ export default function Header() {
                 <Link
                   key={index}
                   to={item.href}
-                  className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-left after:transition-transform after:duration-300 ${isActive
+                  className={`whitespace-nowrap relative py-1 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:w-full after:origin-center after:transition-transform after:duration-300 ${isActive
                     ? "after:scale-x-100"
                     : "after:scale-x-0 hover:after:scale-x-100"
                     } ${showGlass
-                      ? `text-sage-700 hover:text-primary-900 after:bg-primary-800 ${isActive ? "text-primary-900 font-semibold" : ""
-                      }`
-                      : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white font-semibold" : ""
-                      }`
+                      ? `text-sage-700 hover:text-primary-900 after:bg-primary-850 ${isActive ? "text-primary-955" : ""}`
+                      : `text-white/80 hover:text-white after:bg-white ${isActive ? "text-white" : ""}`
                     }`}
                 >
                   {t("nav." + item.key)}
                 </Link>
               );
             })}
-          </nav>
-
-          {/* Right Side: Auth buttons or user avatar dropdown */}
-          <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
+          </nav>          {/* Right Side: Auth buttons or user avatar dropdown */}
+          <div className="hidden xl:flex items-center space-x-6 flex-shrink-0">
             {isLoggedIn ? (
               <>
                 {/* Avatar Dropdown */}
@@ -309,44 +309,65 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <>
+              <div className="flex items-center space-x-1">
                 <Link
                   to="/dang-nhap"
-                  className={`whitespace-nowrap px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-                    }`}
+                  className={`whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold tracking-wider transition-colors duration-300 hover:text-[#cda250] ${
+                    showGlass ? "text-sage-700" : "text-white/80"
+                  }`}
                 >
                   {t("nav.signIn")}
                 </Link>
+                <span className={`text-[10px] ${showGlass ? "text-sage-300" : "text-white/20"}`}>|</span>
                 <Link
                   to="/dang-ky"
-                  className={`whitespace-nowrap px-4 py-2 text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 ${showGlass ? "text-sage-700 hover:text-primary-900" : "text-white/80 hover:text-white"
-                    }`}
+                  className={`whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold tracking-wider transition-colors duration-300 hover:text-[#cda250] ${
+                    showGlass ? "text-sage-700" : "text-white/80"
+                  }`}
                 >
                   {t("nav.register")}
                 </Link>
-              </>
+              </div>
             )}
 
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border hover:scale-105 mr-2 cursor-pointer ${
-                showGlass
-                  ? "border-sage-300 hover:bg-primary-50 text-sage-850"
-                  : "border-white/30 hover:bg-white/10 text-white"
-              }`}
-            >
-              <span className={language === "VIE" ? (showGlass ? "text-primary-850 font-extrabold scale-110" : "text-primary-200 font-extrabold scale-110") : "opacity-60"}>VIE</span>
-              <span className="opacity-30">|</span>
-              <span className={language === "ENG" ? (showGlass ? "text-primary-850 font-extrabold scale-110" : "text-primary-200 font-extrabold scale-110") : "opacity-60"}>ENG</span>
-            </button>
+            {/* Language Selector Dropdown */}
+            <div className="relative group z-50">
+              <button
+                className={`flex items-center gap-1.5 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-colors duration-300 cursor-pointer ${
+                  showGlass ? "text-sage-750 hover:text-primary-950" : "text-white/80 hover:text-white"
+                }`}
+              >
+                <Globe className="h-3.5 w-3.5" />
+                <span className="leading-none">{language === "VIE" ? "VI" : "EN"}</span>
+                <ChevronDown className="h-3 w-3 opacity-50 transition-transform duration-200 group-hover:rotate-180" />
+              </button>
+              
+              {/* Dropdown Options */}
+              <div className="absolute right-0 top-full mt-2 w-32 bg-white border border-primary-100 rounded-xl shadow-xl py-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <button
+                  onClick={() => setLanguage("VIE")}
+                  className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer ${
+                    language === "VIE" ? "text-primary-955 bg-primary-50/70 font-extrabold" : "text-sage-750 hover:bg-primary-50/40 hover:text-primary-900"
+                  }`}
+                >
+                  <span>Tiếng Việt</span>
+                  {language === "VIE" && <span className="h-1.5 w-1.5 rounded-full bg-primary-850" />}
+                </button>
+                <button
+                  onClick={() => setLanguage("ENG")}
+                  className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer ${
+                    language === "ENG" ? "text-primary-955 bg-primary-50/70 font-extrabold" : "text-sage-750 hover:bg-primary-50/40 hover:text-primary-900"
+                  }`}
+                >
+                  <span>English</span>
+                  {language === "ENG" && <span className="h-1.5 w-1.5 rounded-full bg-primary-850" />}
+                </button>
+              </div>
+            </div>
 
             <Link
               to="/dat-lich"
-              className={`whitespace-nowrap px-5 py-2.5 rounded-none text-xs font-semibold tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-md ${showGlass
-                ? "bg-primary-800 hover:bg-primary-900 text-white"
-                : "bg-white hover:bg-white/95 text-primary-955"
-                }`}
+              className="whitespace-nowrap px-6 py-2.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_15px_rgba(205,162,80,0.35)] shadow-sm"
             >
               {t("nav.bookNow")}
             </Link>

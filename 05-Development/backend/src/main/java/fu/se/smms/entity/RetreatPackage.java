@@ -38,6 +38,9 @@ public class RetreatPackage {
     @Column(name = "image_url", columnDefinition = "NVARCHAR(255)")
     private String imageUrl;
 
+    @Column(name = "goal", columnDefinition = "NVARCHAR(255)")
+    private String goal;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
@@ -73,4 +76,7 @@ public class RetreatPackage {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getGoal() { return goal; }
+    public void setGoal(String goal) { this.goal = goal; }
 }

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   BookOpen,
   Calendar,
@@ -14,8 +15,16 @@ import {
 } from "../mockData";
 
 export default function Blog() {
-  const [selectedCategory, setSelectedCategory] = useState("Tất cả");
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get("category");
+  const [selectedCategory, setSelectedCategory] = useState(categoryParam || "Tất cả");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [categoryParam]);
 
   const filteredPosts = blogPosts.filter((post) => {
     const matchesCategory =

@@ -9,8 +9,7 @@ export default function BookingWizardHeader({ step, bookingStatus }) {
     { number: 2, label: "Hồ sơ sức khỏe" },
     { number: 3, label: "Chọn Villa & Dịch vụ" },
     { number: 4, label: "Đặt Đồ Ăn" },
-    { number: 5, label: "Chọn Gói Trị Liệu" },
-    { number: 6, label: "Xác nhận đơn" },
+    { number: 5, label: "Xác nhận đơn" },
   ];
 
   return (
@@ -20,7 +19,7 @@ export default function BookingWizardHeader({ step, bookingStatus }) {
         <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] bg-[#cda250]/15 z-0" />
         <div
           className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-[#cda250] transition-all duration-500 z-0"
-          style={{ width: `${((step - 1) / 5) * 100}%` }}
+          style={{ width: `${((step - 1) / 4) * 100}%` }}
         />
 
         {/* Step indicator node points */}

@@ -414,10 +414,27 @@ public class RoomBookingService {
             booking.setCheckOutDate(newCheckOut);
         }
 
+        // 3d. Update package if provided
+        boolean packageChanged = false;
+        if (dto.getPackageIds() != null && !dto.getPackageIds().isEmpty()) {
+            List<RetreatPackage> packages = new ArrayList<>();
+            for (Integer pkgId : dto.getPackageIds()) {
+                retreatPackageRepository.findById(pkgId).ifPresent(packages::add);
+            }
+            booking.setRetreatPackages(packages);
+            packageChanged = true;
+        } else if (dto.getPackageId() != null) {
+            Optional<RetreatPackage> pkgOpt = retreatPackageRepository.findById(dto.getPackageId());
+            if (pkgOpt.isPresent()) {
+                booking.setRetreatPackage(pkgOpt.get());
+                packageChanged = true;
+            }
+        }
+
         RoomBooking saved = roomBookingRepository.save(booking);
 
-        // 4. Recalculate invoice if dates changed
-        if (dto.getCheckInDate() != null && dto.getCheckOutDate() != null) {
+        // 4. Recalculate invoice if dates or package changed
+        if ((dto.getCheckInDate() != null && dto.getCheckOutDate() != null) || packageChanged) {
             try {
                 invoiceService.createInvoice(bookingId);
             } catch (Exception ignored) {

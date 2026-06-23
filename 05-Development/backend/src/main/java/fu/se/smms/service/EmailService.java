@@ -15,4 +15,13 @@ public interface EmailService {
      * @param isForgotPassword true if for password reset, false if for registration/activation
      */
     void sendOtpEmail(String toEmail, String otpCode, boolean isForgotPassword);
+
+    /**
+     * Sends an HTML email reminder for an upcoming spa session.
+     * @param toEmail recipient's email address
+     * @param guestName name of the guest
+     * @param serviceName name of the booked spa service
+     * @param startDatetime the scheduled start date and time
+     */
+    void sendSpaReminderEmail(String toEmail, String guestName, String serviceName, java.time.LocalDateTime startDatetime);
 }

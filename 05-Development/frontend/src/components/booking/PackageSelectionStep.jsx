@@ -140,7 +140,7 @@ export default function PackageSelectionStep({
     <div className="space-y-8 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
         <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">
-          Bước 4: Chọn Gói Trị Liệu & Nghỉ Dưỡng
+          Bước 5: Chọn Gói Trị Liệu & Nghỉ Dưỡng
         </h2>
         <p className="text-resort-desc mt-1 text-sage-600 font-light">
           Lựa chọn gói trị liệu toàn diện. Đây là phần cốt lõi của hành trình phục hồi sức khỏe tại resort.

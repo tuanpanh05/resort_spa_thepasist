@@ -149,6 +149,8 @@ public class MasterDataServiceImpl implements MasterDataService {
         entity.setPrice(dto.getPrice());
         entity.setIncludes(dto.getIncludes());
         entity.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
+        entity.setGoal(dto.getHealthGoal());
+        entity.setImageUrl(dto.getImageUrl());
         return toPackageDTO(retreatPackageRepository.save(entity));
     }
 
@@ -162,6 +164,8 @@ public class MasterDataServiceImpl implements MasterDataService {
         entity.setPrice(dto.getPrice());
         entity.setIncludes(dto.getIncludes());
         if (dto.getStatus() != null) entity.setStatus(dto.getStatus());
+        entity.setGoal(dto.getHealthGoal());
+        entity.setImageUrl(dto.getImageUrl());
         return toPackageDTO(retreatPackageRepository.save(entity));
     }
 
@@ -266,17 +270,21 @@ public class MasterDataServiceImpl implements MasterDataService {
 
         String lowerName = e.getName() != null ? e.getName().toLowerCase() : "";
 
-        // --- healthGoal: derive from name keywords ---
-        if (lowerName.contains("detox")) {
-            dto.setHealthGoal("DETOX");
-        } else if (lowerName.contains("yoga") || lowerName.contains("mindfulness")) {
-            dto.setHealthGoal("YOGA");
-        } else if (lowerName.contains("slim") || lowerName.contains("weight") || lowerName.contains("béo")) {
-            dto.setHealthGoal("WEIGHT_LOSS");
-        } else if (lowerName.contains("stress") || lowerName.contains("de-stress") || lowerName.contains("thư giãn")) {
-            dto.setHealthGoal("STRESS_RELIEF");
+        // --- healthGoal: use database value if present, fall back to keyword derivation ---
+        if (e.getGoal() != null && !e.getGoal().isBlank()) {
+            dto.setHealthGoal(e.getGoal());
         } else {
-            dto.setHealthGoal("GENERAL");
+            if (lowerName.contains("detox")) {
+                dto.setHealthGoal("DETOX");
+            } else if (lowerName.contains("yoga") || lowerName.contains("mindfulness")) {
+                dto.setHealthGoal("YOGA");
+            } else if (lowerName.contains("slim") || lowerName.contains("weight") || lowerName.contains("béo")) {
+                dto.setHealthGoal("WEIGHT_LOSS");
+            } else if (lowerName.contains("stress") || lowerName.contains("de-stress") || lowerName.contains("thư giãn")) {
+                dto.setHealthGoal("STRESS_RELIEF");
+            } else {
+                dto.setHealthGoal("GENERAL");
+            }
         }
 
         // --- imageUrl: prefer DB value, fall back to curated Unsplash by keyword ---
