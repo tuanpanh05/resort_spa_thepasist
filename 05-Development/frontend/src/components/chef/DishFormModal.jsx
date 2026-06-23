@@ -1,5 +1,6 @@
 import React from "react";
 import { PlusCircle, AlertTriangle } from "lucide-react";
+import axiosClient from "../../api/axiosClient";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 
@@ -191,14 +192,40 @@ export default function DishFormModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-semibold text-sage-800">Đường dẫn hình ảnh (URL)</label>
+            <label className="font-semibold text-sage-800">Hình ảnh món ăn</label>
             <input
-              type="text"
-              value={dishForm.image}
-              onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))}
-              placeholder="Ví dụ: /images/dishes/ten_anh.png hoặc https://..."
-              className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const file = e.target.files[0];
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  try {
+                    const apiUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api") + "/chef/menu/upload";
+                    const res = await fetch(apiUrl, {
+                      method: "POST",
+                      body: formData,
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                      setForm((prev) => ({ ...prev, image: data.imageUrl }));
+                    } else {
+                      throw new Error(data.message || "Failed to upload");
+                    }
+                  } catch (err) {
+                    console.error("Upload failed", err);
+                    alert("Lỗi khi tải ảnh lên: " + err.message);
+                  }
+                }
+              }}
+              className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-sage-100 file:text-sage-800 hover:file:bg-sage-200"
             />
+            {dishForm.image && (
+              <div className="mt-2">
+                <img src={dishForm.image} alt="Preview" className="h-20 w-32 object-cover rounded border border-sage-200" />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">

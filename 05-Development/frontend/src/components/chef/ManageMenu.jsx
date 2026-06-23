@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Trash2, Utensils, AlertTriangle, Clock, Archive } from "lucide-react";
 import Button from "../ui/Button";
 import Card from "../ui/Card";
 
 export default function ManageMenu({
   dishes,
+  orders = [],
   handleToggleSoldOut,
   handleToggleTodayMenu,
 }) {
@@ -16,8 +17,80 @@ export default function ManageMenu({
 
   const inactiveDishes = dishes.filter((d) => !d.isTodayMenu);
 
+  const totalMenuToday = activeTodayDishes.length;
+  const soldOutCount = activeTodayDishes.filter(d => d.soldOut).length;
+  const pendingOrdersCount = orders.filter(o => o.status === "Pending" || o.status === "Cooking").length;
+  const inactiveCount = inactiveDishes.length;
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
+      {/* 4 Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="p-5 flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] font-bold text-sage-500 uppercase tracking-wider">Tổng món hôm nay</span>
+            <div className="bg-sage-100 p-1.5 rounded">
+              <Utensils className="w-4 h-4 text-sage-600" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-2xl font-bold text-sage-950 font-serif flex items-baseline space-x-2">
+              <span>{totalMenuToday}</span>
+              <span className="text-sm font-medium text-sage-800">món</span>
+            </h4>
+            <p className="text-[10px] text-sage-500 mt-1">Đang mở phục vụ</p>
+          </div>
+        </Card>
+
+        <Card className="p-5 flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] font-bold text-sage-500 uppercase tracking-wider">Món đã hết hàng</span>
+            <div className="bg-sage-100 p-1.5 rounded">
+              <AlertTriangle className="w-4 h-4 text-sage-600" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-2xl font-bold text-sage-950 font-serif flex items-baseline space-x-2">
+              <span>{soldOutCount}</span>
+              <span className="text-sm font-medium text-sage-800">món</span>
+            </h4>
+            <p className="text-[10px] text-sage-500 mt-1">{soldOutCount === 0 ? "Nguyên liệu đầy đủ" : "Cần bổ sung"}</p>
+          </div>
+        </Card>
+
+        <Card className="p-5 flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] font-bold text-sage-500 uppercase tracking-wider">Tổng đơn chờ nấu</span>
+            <div className="bg-sage-100 p-1.5 rounded">
+              <Clock className="w-4 h-4 text-sage-600" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-2xl font-bold text-sage-950 font-serif flex items-baseline space-x-2">
+              <span>{pendingOrdersCount}</span>
+              <span className="text-sm font-medium text-sage-800">đơn</span>
+            </h4>
+            <p className="text-[10px] text-sage-500 mt-1">Chưa hoàn tất</p>
+          </div>
+        </Card>
+
+        <Card className="p-5 flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[10px] font-bold text-sage-500 uppercase tracking-wider">Món đang tạm tắt</span>
+            <div className="bg-sage-100 p-1.5 rounded">
+              <Archive className="w-4 h-4 text-sage-600" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-2xl font-bold text-sage-950 font-serif flex items-baseline space-x-2">
+              <span>{inactiveCount}</span>
+              <span className="text-sm font-medium text-sage-800">món</span>
+            </h4>
+            <p className="text-[10px] text-sage-500 mt-1">Lưu trong kho</p>
+          </div>
+        </Card>
+      </div>
+
       {/* Header & Filters */}
       <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -25,23 +98,21 @@ export default function ManageMenu({
             Danh Sách Thực Đơn Hàng Ngày
           </h3>
           <p className="text-xs text-sage-500 mt-1">
-            Đặt món ăn phục vụ cho Sáng, Trưa, Tối. Báo hết hàng hoặc tạm tắt
-            món ăn trên menu trực tuyến.
+            Quản lý món ăn phục vụ Sáng, Trưa, Tối. Cập nhật trạng thái hết hàng và theo dõi số lượng đang chờ nấu.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-0 border border-sage-900 rounded overflow-hidden">
           {["All", "Breakfast", "Lunch", "Dinner"].map((period) => (
-            <Button
+            <button
               key={period}
               onClick={() => setDishFilter(period)}
-              variant={dishFilter === period ? "primary" : "outline"}
-              className="px-4 py-2 text-xs"
+              className={`px-6 py-2 text-xs font-bold uppercase transition-colors ${dishFilter === period ? "bg-sage-900 text-white" : "bg-white text-sage-900 hover:bg-sage-50"} ${period !== "All" ? "border-l border-sage-900" : ""}`}
             >
               {period === "All" && "Tất cả"}
               {period === "Breakfast" && "Sáng"}
               {period === "Lunch" && "Trưa"}
               {period === "Dinner" && "Tối"}
-            </Button>
+            </button>
           ))}
         </div>
       </Card>
@@ -100,25 +171,53 @@ export default function ManageMenu({
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-3.5 border-t border-sage-100 mt-4">
-              <span className="font-bold text-sage-950 font-mono text-sm">
-                {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
-              </span>
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => handleToggleSoldOut(dish.id)}
-                  variant={dish.soldOut ? "secondary" : "danger"}
-                  className="px-3 py-1.5 text-[10px]"
-                >
-                  {dish.soldOut ? "Còn hàng" : "Hết hàng"}
-                </Button>
-                <Button
-                  onClick={() => handleToggleTodayMenu(dish.id)}
-                  variant="outline"
-                  className="px-3 py-1.5 text-[10px]"
-                >
-                  Tắt
-                </Button>
+            <div className="mt-auto">
+              <div className="py-3 border-b border-sage-100 flex items-center justify-between text-[10px] text-sage-500 font-mono">
+                <span>Tình trạng order:</span>
+                <span className={`px-2 py-0.5 font-bold border rounded ${
+                  (() => {
+                    const pendingQty = orders
+                      .filter(o => o.status === "Pending" || o.status === "Cooking")
+                      .reduce((sum, o) => {
+                        const item = o.items.find(i => i.name === dish.name);
+                        return sum + (item ? item.qty : 0);
+                      }, 0);
+                    return pendingQty > 0 ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-sage-50 text-sage-500 border-sage-200";
+                  })()
+                }`}>
+                  {(() => {
+                    const pendingQty = orders
+                      .filter(o => o.status === "Pending" || o.status === "Cooking")
+                      .reduce((sum, o) => {
+                        const item = o.items.find(i => i.name === dish.name);
+                        return sum + (item ? item.qty : 0);
+                      }, 0);
+                    return pendingQty;
+                  })()} suất đang chờ
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-3">
+                <span className="font-bold text-sage-950 font-mono text-sm">
+                  {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
+                </span>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => handleToggleSoldOut(dish.id)}
+                    className={`px-4 py-1.5 text-[10px] font-bold tracking-wider rounded transition-colors ${
+                      dish.soldOut 
+                        ? "bg-sage-200 text-sage-700 hover:bg-sage-300" 
+                        : "bg-[#c81e1e] hover:bg-[#a51919] text-white"
+                    }`}
+                  >
+                    {dish.soldOut ? "CÒN HÀNG" : "HẾT HÀNG"}
+                  </Button>
+                  <Button
+                    onClick={() => handleToggleTodayMenu(dish.id)}
+                    className="px-4 py-1.5 text-[10px] font-bold tracking-wider rounded border border-sage-300 bg-white text-sage-800 hover:bg-sage-50 transition-colors"
+                  >
+                    TẮT
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>

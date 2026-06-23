@@ -236,7 +236,9 @@ public class GuestMealController {
             String warningMsg = "";
 
             if (consentSigned && !allergiesRaw.isEmpty()) {
-                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags() + " " + (item.getIngredients() != null ? item.getIngredients() : "")).toLowerCase();
+                // Use the explicit allergen column from the Chef's database to prevent false positives
+                // (e.g., description containing "dễ tiêu hóa" falsely triggering "tiêu" allergy)
+                String chefAllergens = item.getAllergens() != null ? item.getAllergens().toLowerCase() : "";
 
                 // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to
                 // preserve multi-word allergies
@@ -248,49 +250,49 @@ public class GuestMealController {
 
                     if (trimmed.contains("đậu phộng") || trimmed.contains("peanut") || trimmed.contains("lạc")) {
                         vnName = "Đậu phộng";
-                        if (checkAllergyKeyword(contentToTest, "đậu phộng", "peanut", "lạc")) {
+                        if (checkAllergyKeyword(chefAllergens, "đậu phộng", "peanut", "lạc")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("hải sản") || trimmed.contains("seafood") || trimmed.contains("tôm")
                             || trimmed.contains("shrimp") || trimmed.contains("cua") || trimmed.contains("fish")
                             || trimmed.contains("cá") || trimmed.contains("shellfish")) {
                         vnName = "Hải sản";
-                        if (checkAllergyKeyword(contentToTest, "hải sản", "seafood", "tôm", "shrimp", "cua", "fish", "cá", "shellfish")) {
+                        if (checkAllergyKeyword(chefAllergens, "hải sản", "seafood", "tôm", "shrimp", "cua", "fish", "cá", "shellfish")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("ớt") || trimmed.contains("cay") || trimmed.contains("chili") || trimmed.contains("spicy")) {
                         vnName = "Đồ Cay / Ớt";
-                        if (checkAllergyKeyword(contentToTest, "ớt", "cay", "chili", "spicy")) {
+                        if (checkAllergyKeyword(chefAllergens, "ớt", "cay", "chili", "spicy")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("gluten") || trimmed.contains("lúa mì") || trimmed.contains("wheat")) {
                         vnName = "Gluten / Lúa mì";
-                        if (checkAllergyKeyword(contentToTest, "gluten", "lúa mì", "wheat")) {
+                        if (checkAllergyKeyword(chefAllergens, "gluten", "lúa mì", "wheat")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("dairy") || trimmed.contains("sữa") || trimmed.contains("lactose") || trimmed.contains("milk")) {
                         vnName = "Sữa / Lactose";
-                        if (checkAllergyKeyword(contentToTest, "dairy", "sữa", "lactose", "milk")) {
+                        if (checkAllergyKeyword(chefAllergens, "dairy", "sữa", "lactose", "milk")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("soy") || trimmed.contains("đậu nành")) {
                         vnName = "Đậu nành";
-                        if (checkAllergyKeyword(contentToTest, "soy", "đậu nành")) {
+                        if (checkAllergyKeyword(chefAllergens, "soy", "đậu nành")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("trứng") || trimmed.contains("egg")) {
                         vnName = "Trứng";
-                        if (checkAllergyKeyword(contentToTest, "trứng", "egg")) {
+                        if (checkAllergyKeyword(chefAllergens, "trứng", "egg")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("tree nuts") || trimmed.contains("hạt cây") || trimmed.contains("hạt điều") 
                             || trimmed.contains("óc chó") || trimmed.contains("walnut") || trimmed.contains("cashew") || trimmed.contains("nut")) {
                         vnName = "Các loại hạt (Tree nuts)";
-                        if (checkAllergyKeyword(contentToTest, "tree nuts", "hạt cây", "hạt điều", "óc chó", "walnut", "cashew", "nut")) {
+                        if (checkAllergyKeyword(chefAllergens, "tree nuts", "hạt cây", "hạt điều", "óc chó", "walnut", "cashew", "nut")) {
                             matches = true;
                         }
                     } else {
-                        if (trimmed.length() >= 2 && checkAllergyKeyword(contentToTest, trimmed)) {
+                        if (trimmed.length() >= 2 && checkAllergyKeyword(chefAllergens, trimmed)) {
                             matches = true;
                         }
                     }
@@ -503,7 +505,7 @@ public class GuestMealController {
                     for (RoomBooking b : activeBookings) {
                         java.time.LocalDate checkIn = b.getCheckInDate().toLocalDate();
                         java.time.LocalDate checkOut = b.getCheckOutDate().toLocalDate();
-                        if (!checkIn.isAfter(today) && !checkOut.isBefore(today)) {
+                        if (!checkOut.isBefore(today) && checkIn.isBefore(today.plusDays(3))) {
                             isStayingToday = true;
                             break;
                         }

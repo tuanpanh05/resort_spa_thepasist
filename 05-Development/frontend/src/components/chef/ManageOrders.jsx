@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Flame,
   Clock,
@@ -9,7 +9,9 @@ import {
   Truck,
   Volume2,
   ArrowRight,
-  XCircle
+  XCircle,
+  Search,
+  XSquare
 } from "lucide-react";
 import Button from "../ui/Button";
 import Card from "../ui/Card";
@@ -21,10 +23,23 @@ export default function ManageOrders({
   checkOrderAllergies,
   handleCancelItem,
 }) {
-  const pendingOrders = orders.filter((o) => o.status === "Pending");
-  const cookingOrders = orders.filter((o) => o.status === "Cooking");
-  const deliveringOrders = orders.filter((o) => o.status === "Delivering");
-  const completedOrders = orders.filter((o) => o.status === "Completed");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredOrders = orders.filter(o => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (o.room && o.room.toLowerCase().includes(term)) ||
+      (o.guestName && o.guestName.toLowerCase().includes(term)) ||
+      (o.mealCode && o.mealCode.toLowerCase().includes(term)) ||
+      (o.id && String(o.id).toLowerCase().includes(term))
+    );
+  });
+
+  const pendingOrders = filteredOrders.filter((o) => o.status === "Pending");
+  const cookingOrders = filteredOrders.filter((o) => o.status === "Cooking");
+  const deliveringOrders = filteredOrders.filter((o) => o.status === "Delivering");
+  const completedOrders = filteredOrders.filter((o) => o.status === "Completed");
 
   const speakOrder = (ord, alertInfo) => {
     const alertText = alertInfo.hasAllergyAlert
@@ -130,14 +145,28 @@ export default function ManageOrders({
             {ord.time}
           </span>
           {nextStatus ? (
-            <button
-              type="button"
-              onClick={() => handleUpdateOrderStatus(ord.id, nextStatus)}
-              className={`flex items-center space-x-1.5 px-4 py-2 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-md transition-all hover:-translate-y-0.5 ${nextStatusColor}`}
-            >
-              <span>{nextStatusText}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
+                    handleUpdateOrderStatus(ord.id, "Cancelled");
+                  }
+                }}
+                className="flex items-center justify-center p-2 text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors border border-red-200"
+                title="Hủy đơn hàng"
+              >
+                <XSquare className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUpdateOrderStatus(ord.id, nextStatus)}
+                className={`flex items-center space-x-1.5 px-4 py-2 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-md transition-all hover:-translate-y-0.5 ${nextStatusColor}`}
+              >
+                <span>{nextStatusText}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           ) : (
             <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 flex items-center space-x-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
               <Check className="h-3.5 w-3.5" />
@@ -154,16 +183,30 @@ export default function ManageOrders({
       {/* KDS Control Header */}
       <Card className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-100/40 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl pointer-events-none" />
-        <div className="relative z-10">
-          <h3 className="dashboard-title text-primary-950 flex items-center space-x-3">
-            <div className="p-2 bg-amber-100 rounded-none">
-                <Flame className="h-6 w-6 text-amber-600 animate-pulse" />
+        <div className="relative z-10 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="dashboard-title text-primary-950 flex items-center space-x-3">
+              <div className="p-2 bg-amber-100 rounded-none">
+                  <Flame className="h-6 w-6 text-amber-600 animate-pulse" />
+              </div>
+              <span>Màn Hình Điều Phối Bếp KDS</span>
+            </h3>
+            <p className="text-sm text-sage-500 mt-2 max-w-2xl">
+              Quản lý quy trình chế biến theo mô hình Kanban. Hệ thống tự động đẩy cảnh báo dị ứng lên mức cao nhất đối với các thành phần nguy hiểm.
+            </p>
+          </div>
+          <div className="relative w-full md:w-72">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-sage-400" />
             </div>
-            <span>Màn Hình Điều Phối Bếp KDS</span>
-          </h3>
-          <p className="text-sm text-sage-500 mt-2 max-w-2xl">
-            Quản lý quy trình chế biến theo mô hình Kanban. Hệ thống tự động đẩy cảnh báo dị ứng lên mức cao nhất đối với các thành phần nguy hiểm.
-          </p>
+            <input
+              type="text"
+              placeholder="Tìm kiếm phòng, mã, khách..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 w-full border border-sage-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-500 bg-white/80 backdrop-blur-sm"
+            />
+          </div>
         </div>
       </Card>
 

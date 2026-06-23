@@ -19,7 +19,7 @@ export default function ChefOverview({
   setActiveTab,
   checkOrderAllergies,
 }) {
-  const pendingOrCookingOrders = orders.filter((o) => o.status !== "Completed");
+  const pendingOrCookingOrders = orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled");
   const criticalAllergies = allergies.filter((a) => a.allergies.length > 0);
   const lowStockIngredients = ingredients.filter((i) => i.status !== "Đầy đủ");
   const todayMenuCount = dishes.filter((d) => d.isTodayMenu).length;

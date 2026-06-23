@@ -71,6 +71,21 @@ public class ChefMealController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/menu/upload")
+    public ResponseEntity<?> uploadImage(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String frontendDir = "c:/su26-swp391-se2023-g3/05-Development/frontend/public/images/dishes/";
+            java.io.File dir = new java.io.File(frontendDir);
+            if (!dir.exists()) dir.mkdirs();
+            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+            java.io.File dest = new java.io.File(dir, filename);
+            file.transferTo(dest);
+            return ResponseEntity.ok(Map.of("success", true, "imageUrl", "/images/dishes/" + filename));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to upload image: " + e.getMessage());
+        }
+    }
+
     @PutMapping("/menu/{id}/toggle-sold-out")
     public ResponseEntity<?> toggleSoldOut(@PathVariable Integer id) {
         Optional<FoodMenu> menuOpt = foodMenuRepository.findById(id);

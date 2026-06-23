@@ -226,7 +226,10 @@ export default function ChefDashboard() {
     }
     const order = orders.find((ord) => ord.id === orderId);
     const nextStatusText =
-      newStatus === "Cooking" ? "bắt đầu chuẩn bị" : newStatus === "Delivering" ? "xong món, đang giao" : "hoàn thành giao hàng";
+      newStatus === "Cooking" ? "bắt đầu chuẩn bị" 
+      : newStatus === "Delivering" ? "xong món, đang giao" 
+      : newStatus === "Cancelled" ? "bị hủy" 
+      : "hoàn thành giao hàng";
     const msg = `Đơn hàng ${orderId} của phòng ${order?.room || ""} đã ${nextStatusText}`;
     playVoiceAlert(msg);
   };
@@ -352,7 +355,7 @@ export default function ChefDashboard() {
               id: "orders",
               label: "4. Đơn đặt món",
               icon: Clock,
-              badge: `${orders.filter((o) => o.status !== "Completed").length}`,
+              badge: `${orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled").length}`,
             },
             { id: "dishes", label: "5. Danh mục món ăn", icon: FileText },
             {
@@ -421,6 +424,7 @@ export default function ChefDashboard() {
             {activeTab === "menu" && (
               <ManageMenu
                 dishes={dishes}
+                orders={orders}
                 handleToggleSoldOut={handleToggleSoldOut}
                 handleToggleTodayMenu={handleToggleTodayMenu}
               />
