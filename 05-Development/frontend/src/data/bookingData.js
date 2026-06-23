@@ -50,6 +50,16 @@ export const villasList = [
     view: "Thung Lũng & Rừng Núi",
     image: "/room_community.png",
   },
+  {
+    id: "valley-50-lodge",
+    title: "Nhà Chung 50 Thung Lũng Xanh",
+    description: "Tọa lạc giữa thung lũng xanh mướt, bao bọc bởi đồi thông và suối ngàn. Thiết kế sang trọng pha trộn gỗ mộc, sở hữu khuôn viên vườn và hồ bơi tràn đồi riêng biệt.",
+    price: 12500000,
+    size: "450 m²",
+    capacity: "30 - 50 Khách",
+    view: "Thung Lũng & Rừng Núi",
+    image: "/room_valley_50.jpg",
+  },
 ];
 
 // Mock data list for Wellness Services

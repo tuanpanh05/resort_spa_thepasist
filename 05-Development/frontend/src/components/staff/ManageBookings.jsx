@@ -255,15 +255,26 @@ export default function ManageBookings({
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-none text-[10px] font-bold ${
-                          b.roomNumber
-                            ? "bg-primary-100 text-primary-900"
-                            : "bg-yellow-50 text-yellow-800"
-                        }`}>
-                          {b.roomNumber || "Chưa gán phòng"}
-                        </span>
+                        <div className="flex flex-wrap gap-1 max-w-[220px]">
+                          {b.roomNumber ? (
+                            b.roomNumber.split(", ").map((num) => (
+                              <span
+                                key={num}
+                                className="px-2 py-0.5 bg-primary-100 text-primary-900 border border-primary-200/50 text-[10px] font-bold uppercase rounded-md tracking-wider shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                              >
+                                {num}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="px-2 py-0.5 bg-yellow-50 text-yellow-800 border border-yellow-200/50 text-[10px] font-bold uppercase rounded-md">
+                              Chưa gán phòng
+                            </span>
+                          )}
+                        </div>
                         {b.roomTypeName && (
-                          <div className="text-[10px] text-sage-400 mt-1">{b.roomTypeName}</div>
+                          <div className="text-[10px] text-sage-500 mt-1.5 italic font-medium max-w-[220px] truncate" title={b.roomTypeName}>
+                            {b.roomTypeName}
+                          </div>
                         )}
                       </td>
                       <td className="p-4 text-sage-600 text-[11px]">

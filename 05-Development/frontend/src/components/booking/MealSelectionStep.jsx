@@ -253,7 +253,7 @@ export default function MealSelectionStep({
           onClick={handleNextStep}
           className="px-8 py-3.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] hover:shadow-[0_4px_20px_rgba(205,162,80,0.35)] text-resort-button tracking-wider transition-all uppercase rounded-lg flex items-center cursor-pointer font-bold"
         >
-          Chọn Gói Trị Liệu <ChevronRight className="h-4 w-4 ml-1.5" />
+          Xác nhận đơn <ChevronRight className="h-4 w-4 ml-1.5" />
         </button>
       </div>
     </div>
