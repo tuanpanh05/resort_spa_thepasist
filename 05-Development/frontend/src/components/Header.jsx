@@ -22,7 +22,6 @@ const navItems = [
       { key: "mealPlanner", href: "/guest-dashboard" }
     ]
   },
-  { key: "lookup", href: "/tra-cuu" },
 ];
 
 

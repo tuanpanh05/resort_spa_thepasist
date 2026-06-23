@@ -233,9 +233,70 @@ UPDATE dbo.treatment_room SET room_name = N'Therapy Room B' WHERE treatment_room
 UPDATE dbo.treatment_room SET room_name = N'Red Dao Bath Room 1' WHERE treatment_room_id = 3;
 
 -- Fix Spa Services
-UPDATE dbo.spa_services SET name = N'Hot Volcanic Stone Massage', description = N'Massage trị liệu toàn thân bằng đá núi lửa nóng giúp giảm đau mỏi cơ xương khớp.' WHERE service_id = 1;
-UPDATE dbo.spa_services SET name = N'Dao Red Leaf Herbal Bath', description = N'Tắm lá thuốc người Dao Đỏ hỗ trợ lưu thông khí huyết và thư giãn ngủ ngon.' WHERE service_id = 2;
-UPDATE dbo.spa_services SET name = N'Spinal Adjustment Therapy', description = N'Liệu trình nắn chỉnh và kéo giãn cột sống thắt lưng chống đau mỏi thoái hóa.' WHERE service_id = 3;
+UPDATE dbo.spa_services SET name = N'Massage đá muối nóng Himalaya (90 phút)', description = N'Massage trị liệu toàn thân bằng đá muối nóng Himalaya giúp giải tỏa hoàn toàn mọi căng thẳng và phục hồi sinh khí.', category = 'SPA', price = 1200000.00, duration_minutes = 90 WHERE service_id = 1;
+UPDATE dbo.spa_services SET name = N'Tắm lá thuốc người Dao Đỏ', description = N'Tắm lá thuốc người Dao Đỏ hỗ trợ tuần hoàn, thải độc, lưu thông khí huyết và mang lại giấc ngủ ngon.', category = 'SPA', price = 600000.00, duration_minutes = 45 WHERE service_id = 2;
+UPDATE dbo.spa_services SET name = N'Nắn chỉnh cột sống Chiropractic', description = N'Nắn chỉnh Chiropractic chuyên khoa cột sống giúp điều chỉnh đốt sống lệch, kéo giãn cột sống thắt lưng chống đau mỏi thoái hóa.', category = 'THERAPY', price = 1500000.00, duration_minutes = 60 WHERE service_id = 3;
+
+SET IDENTITY_INSERT dbo.spa_services ON;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 4)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (4, N'Massage toàn thân tinh dầu sen trắng (60 phút)', N'Liệu trình massage toàn thân kết hợp tinh dầu hoa sen trắng nhẹ nhàng dưỡng ẩm sâu và đem lại giấc ngủ ngon lành.', 'SPA', 800000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 5)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (5, N'Massage Shiatsu bấm huyệt Nhật Bản (60 phút)', N'Massage Shiatsu bấm huyệt Nhật Bản giúp kích thích lưu thông khí huyết, giải tỏa căng thẳng sâu cơ khớp.', 'SPA', 900000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 6)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (6, N'Massage hương trầm tự nhiên (75 phút)', N'Trải nghiệm massage sang trọng kết hợp hương trầm tự nhiên Ngũ Sơn giúp thư giãn tinh thần và kích thích tuần hoàn.', 'SPA', 1000000.00, 75, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 7)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (7, N'Xông hơi thảo dược hoàng cung', N'Xông hơi thảo dược tươi hoàng cung giúp đào thải độc tố qua da và mang lại làn da hồng hào, sảng khoái.', 'SPA', 400000.00, 30, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 8)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (8, N'Lớp học Hatha Yoga cá nhân hóa 1-1', N'Lớp tập yoga 1-1 hướng dẫn trực tiếp bởi huấn luyện viên, cá nhân hóa động tác phục hồi thể chất.', 'YOGA', 500000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 9)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (9, N'Thiền hành & Thiền chuông xoay Tây Tạng', N'Liệu pháp chữa lành bằng âm thanh chuông xoay Tây Tạng kết hợp thiền hành giúp cân bằng luân xa và tĩnh lặng tâm trí.', 'YOGA', 450000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 10)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (10, N'Tập thở kiểm soát năng lượng Pranayama', N'Phương pháp thở cổ xưa giúp điều hòa nhịp tim, thanh lọc phổi và tối ưu hóa năng lượng sống.', 'YOGA', 350000.00, 45, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 11)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (11, N'Huấn luyện thiền giấc ngủ Yoga Nidra', N'Kỹ thuật dẫn dụ giấc ngủ sâu thư giãn hệ thần kinh tối đa, hỗ trợ đặc trị mất ngủ mãn tính.', 'YOGA', 400000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 12)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (12, N'Lớp học Restorative Yoga phục hồi', N'Lớp yoga phục hồi sử dụng dụng cụ hỗ trợ nhằm thư giãn hoàn toàn cơ bắp và phục hồi năng lượng luân xa.', 'YOGA', 550000.00, 75, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 13)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (13, N'Ấn huyệt đả thông kinh lạc cổ vai gáy (75 phút)', N'Liệu pháp bấm huyệt Đông y giải tỏa các điểm tắc nghẽn cơ vai gáy kinh niên cho người làm việc văn phòng.', 'THERAPY', 1200000.00, 75, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 14)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (14, N'Giãn cơ sâu bằng máy sóng xung kích', N'Vật lý trị liệu ứng dụng sóng xung kích giúp làm mềm dải xơ cơ co thắt, hỗ trợ phục hồi cơ khớp sau hoạt động.', 'THERAPY', 1400000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 15)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (15, N'Châm cứu & Xung điện phục hồi xung thần kinh', N'Kỹ thuật châm cứu kết hợp xung điện y học giúp kích thích phục hồi chức năng dây thần kinh vận động.', 'THERAPY', 950000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 16)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (16, N'Châm cứu ngải thảo dược ấm đầu cổ gáy', N'Châm cứu kết hợp hơ ngải cứu nóng giúp giãn mạch, hoạt huyết, giảm stress cực hạn và đau nhức vùng cổ vai đầu.', 'THERAPY', 850000.00, 60, 'ACTIVE');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.spa_services WHERE service_id = 17)
+    INSERT INTO dbo.spa_services (service_id, name, description, category, price, duration_minutes, status)
+    VALUES (17, N'Massage dẫn lưu cơ học hệ bạch huyết toàn diện', N'Liệu pháp kích thích tuần hoàn lưu thông bạch huyết nhằm tăng cường hệ thống miễn dịch và đào thải độc tố tích tụ.', 'THERAPY', 1600000.00, 90, 'ACTIVE');
+
+SET IDENTITY_INSERT dbo.spa_services OFF;
+
 
 -- Fix Food Menu
 UPDATE dbo.food_menu SET dish_name = N'Organic Avocado Quinoa Salad', description = N'Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.', dietary_tags = N'Vegan, Gluten-Free' WHERE food_id = 1;

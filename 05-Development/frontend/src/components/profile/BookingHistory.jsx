@@ -56,36 +56,14 @@ export default function BookingHistory() {
     fetchHistory();
   }, []);
 
-  const MOCK_YOGA_BOOKINGS = [
-    {
-      spaBookingId: "yoga-1",
-      serviceName: "Hatha Yoga Phục Hồi",
-      serviceCategory: "Yoga & Mindfulness",
-      startDatetime: new Date(Date.now() - 86400000 * 2).toISOString(),
-      endDatetime: new Date(Date.now() - 86400000 * 2 + 3600000).toISOString(),
-      status: "COMPLETED",
-      priceAtBooking: 250000,
-      therapistName: "Guru Minh Tuấn",
-      isPackageIncluded: true,
-      type: "yoga"
-    },
-    {
-      spaBookingId: "yoga-2",
-      serviceName: "Thiền Định Chuông Xoay Tây Tạng",
-      serviceCategory: "Yoga & Mindfulness",
-      startDatetime: new Date(Date.now() + 86400000).toISOString(),
-      endDatetime: new Date(Date.now() + 86400000 + 3600000).toISOString(),
-      status: "CONFIRMED",
-      priceAtBooking: 300000,
-      therapistName: "Guru Minh Tuấn",
-      isPackageIncluded: false,
-      type: "yoga"
-    }
-  ];
+  const mappedSpaBookings = spaBookings.map(s => {
+    const cat = s.serviceCategory ? s.serviceCategory.toUpperCase() : "";
+    const type = cat.includes("YOGA") ? "yoga" : "spa";
+    return { ...s, type };
+  });
 
   const allOtherServices = [
-    ...spaBookings.map(s => ({ ...s, type: "spa" })),
-    ...MOCK_YOGA_BOOKINGS,
+    ...mappedSpaBookings,
     ...foodOrders
   ];
 
@@ -104,8 +82,8 @@ export default function BookingHistory() {
   );
   const tabs = [
     { key: "rooms", label: "Đặt Phòng", icon: BedDouble, count: roomBookings.length },
-    { key: "spa", label: "Spa & Vật lý trị liệu", icon: Dumbbell, count: spaBookings.length },
-    { key: "yoga", label: "Yoga & Thiền", icon: Sparkles, count: MOCK_YOGA_BOOKINGS.length },
+    { key: "spa", label: "Spa & Vật lý trị liệu", icon: Dumbbell, count: mappedSpaBookings.filter(s => s.type === "spa").length },
+    { key: "yoga", label: "Yoga & Thiền", icon: Sparkles, count: mappedSpaBookings.filter(s => s.type === "yoga").length },
     { key: "food", label: "Ẩm thực dưỡng sinh", icon: Leaf, count: foodOrders.length },
   ];
 

@@ -38,4 +38,8 @@ public class SpaBookingRequestDTO {
 
     public Boolean getIsPackageIncluded() { return isPackageIncluded; }
     public void setIsPackageIncluded(Boolean isPackageIncluded) { this.isPackageIncluded = isPackageIncluded; }
+
+    private java.math.BigDecimal price;
+    public java.math.BigDecimal getPrice() { return price; }
+    public void setPrice(java.math.BigDecimal price) { this.price = price; }
 }

@@ -181,7 +181,7 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         } else {
             // Extra spa service booking (UC15)
             booking.setIsPackageIncluded(false);
-            booking.setPriceAtBooking(service.getPrice());
+            booking.setPriceAtBooking(request.getPrice() != null ? request.getPrice() : service.getPrice());
 
             if (request.getRoomBookingId() != null) {
                 RoomBooking roomBooking = roomBookingRepository.findById(request.getRoomBookingId())
