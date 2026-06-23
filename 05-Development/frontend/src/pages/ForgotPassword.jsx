@@ -31,6 +31,25 @@ export default function ForgotPassword() {
 
   const canResend = timer === 0;
 
+  // Redirect logged-in users away from forgot password page
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token) {
+      const role = (localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "").toUpperCase();
+      if (role === "ADMIN" || role === "MANAGER") {
+        navigate("/admin", { replace: true });
+      } else if (role === "RECEPTIONIST" || role === "STAFF") {
+        navigate("/staff", { replace: true });
+      } else if (role === "CHEF") {
+        navigate("/chef", { replace: true });
+      } else if (role === "SPA" || role === "YOGA" || role === "PHYSIO" || role === "THERAPIST") {
+        navigate("/specialist", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [navigate]);
+
   // Countdown for OTP step
   useEffect(() => {
     let interval = null;

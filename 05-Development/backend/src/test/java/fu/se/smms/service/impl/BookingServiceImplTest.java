@@ -127,6 +127,7 @@ class BookingServiceImplTest {
         user.setUserId(1);
         Room room = new Room();
         room.setRoomId(12);
+        room.setStatus("AVAILABLE");
         RetreatPackage retreatPackage = new RetreatPackage();
         retreatPackage.setPackageId(2);
         retreatPackage.setStatus("ACTIVE");
@@ -156,6 +157,7 @@ class BookingServiceImplTest {
 
         Room room = new Room();
         room.setRoomId(2);
+        room.setStatus("AVAILABLE");
 
         RetreatPackage retreatPackage = new RetreatPackage();
         retreatPackage.setPackageId(1);

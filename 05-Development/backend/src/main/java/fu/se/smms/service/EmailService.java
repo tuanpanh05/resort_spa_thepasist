@@ -24,4 +24,17 @@ public interface EmailService {
      * @param startDatetime the scheduled start date and time
      */
     void sendSpaReminderEmail(String toEmail, String guestName, String serviceName, java.time.LocalDateTime startDatetime);
+
+    /**
+     * Sends an HTML email confirmation for a successfully scheduled spa session.
+     * @param toEmail recipient's email address
+     * @param guestName name of the guest
+     * @param serviceName name of the booked spa service
+     * @param startDatetime the scheduled start date and time
+     * @param therapistName name of the assigned spa therapist
+     * @param roomName name of the treatment room
+     * @param isPackageIncluded true if the session is included in a retreat package (price is zero)
+     * @param price the price of the booking if not included in package
+     */
+    void sendSpaBookingConfirmationEmail(String toEmail, String guestName, String serviceName, java.time.LocalDateTime startDatetime, String therapistName, String roomName, boolean isPackageIncluded, java.math.BigDecimal price);
 }

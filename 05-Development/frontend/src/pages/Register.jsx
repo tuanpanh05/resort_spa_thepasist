@@ -51,8 +51,26 @@ export default function Register() {
   const canResend = timer === 0;
 
   useEffect(() => {
+    // Check if already logged in to redirect away
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token) {
+      const role = (localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "").toUpperCase();
+      if (role === "ADMIN" || role === "MANAGER") {
+        navigate("/admin", { replace: true });
+      } else if (role === "RECEPTIONIST" || role === "STAFF") {
+        navigate("/staff", { replace: true });
+      } else if (role === "CHEF") {
+        navigate("/chef", { replace: true });
+      } else if (role === "SPA" || role === "YOGA" || role === "PHYSIO" || role === "THERAPIST") {
+        navigate("/specialist", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+      return;
+    }
+
     setMounted(true);
-  }, []);
+  }, [navigate]);
 
   const nameActive = nameFocused || name.length > 0;
   const emailActive = emailFocused || email.length > 0;

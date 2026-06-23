@@ -210,9 +210,19 @@ public class SpaBookingServiceImpl implements SpaBookingService {
                 log.error("[Google Calendar Integration Error] {}", ex.getMessage());
             }
             try {
-                log.info("[MOCK SENDGRID EMAIL] Triggering instant booking confirmation email to: {}", guest.getEmail());
+                log.info("[EMAIL] Triggering instant booking confirmation email to: {}", guest.getEmail());
+                emailService.sendSpaBookingConfirmationEmail(
+                        guest.getEmail(),
+                        guest.getFullName(),
+                        service.getName(),
+                        savedBooking.getStartDatetime(),
+                        therapist.getFullName(),
+                        room.getRoomName(),
+                        savedBooking.getIsPackageIncluded(),
+                        savedBooking.getPriceAtBooking()
+                );
             } catch (Exception ex) {
-                log.error("[SendGrid Integration Error] {}", ex.getMessage());
+                log.error("[Email Booking Confirmation Error] {}", ex.getMessage());
             }
         });
 
