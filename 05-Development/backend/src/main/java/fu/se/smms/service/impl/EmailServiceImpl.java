@@ -163,4 +163,97 @@ public class EmailServiceImpl implements EmailService {
             </html>
             """.formatted(title, desc, otpCode, note);
     }
+
+    @Override
+    public void sendSpaReminderEmail(String toEmail, String guestName, String serviceName, java.time.LocalDateTime startDatetime) {
+        // Write reminder to a local file for easy developer access in dev environment
+        try {
+            String content = "========================================\n" +
+                             "SPA REMINDER EMAIL\n" +
+                             "Email: " + toEmail + "\n" +
+                             "Guest Name: " + guestName + "\n" +
+                             "Service Name: " + serviceName + "\n" +
+                             "Start Time: " + startDatetime + "\n" +
+                             "Time Sent: " + java.time.LocalDateTime.now() + "\n" +
+                             "========================================\n";
+            try {
+                java.nio.file.Files.writeString(
+                    java.nio.file.Path.of("./dev-otp.txt"), 
+                    content, 
+                    java.nio.file.StandardOpenOption.CREATE, 
+                    java.nio.file.StandardOpenOption.APPEND
+                );
+            } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.error("Error writing dev-otp.txt file for spa reminder: {}", e.getMessage());
+        }
+
+        // Skip actual SMTP mail sending for mock/dev domains
+        if (toEmail != null && (toEmail.toLowerCase().endsWith("@nguson.com") || toEmail.toLowerCase().endsWith("@nguson.vn"))) {
+            log.info("[MOCK EMAIL] Spa Reminder for {} is simulated. Skipping actual SMTP mail sending.", toEmail);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail, fromName);
+            helper.setTo(toEmail);
+            helper.setSubject("Nhắc nhở lịch hẹn dịch vụ Spa - Ngũ Sơn Resort & Spa");
+
+            String htmlText = """
+                <!DOCTYPE html>
+                <html lang="vi">
+                <head>
+                  <meta charset="UTF-8"/>
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                </head>
+                <body style="margin:0;padding:0;background-color:#f0f4f0;font-family:'Segoe UI',Arial,sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f0;padding:40px 20px;">
+                    <tr>
+                      <td align="center">
+                        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                          <tr>
+                            <td style="background:linear-gradient(135deg,#2d5a27,#4a7c3f);padding:40px 40px 30px;text-align:center;">
+                              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">🌿 Ngũ Sơn Resort & Spa</h1>
+                              <p style="margin:8px 0 0;color:#c8e6c9;font-size:14px;">Nhắc nhở lịch hẹn trị liệu Spa</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding:40px;">
+                              <p style="margin:0 0 20px;color:#37474f;font-size:15px;line-height:1.6;">
+                                Xin chào <strong>%s</strong>,<br/><br/>
+                                Lịch hẹn trị liệu Spa của bạn sẽ bắt đầu sau 1 giờ nữa. Dưới đây là thông tin chi tiết lịch hẹn:
+                              </p>
+                              <div style="background-color:#f9f9f9; border-left:4px solid #2d5a27; padding:15px; margin:20px 0; font-size:14px;">
+                                <p style="margin: 5px 0;"><strong>Dịch vụ:</strong> %s</p>
+                                <p style="margin: 5px 0;"><strong>Thời gian bắt đầu:</strong> %s</p>
+                              </div>
+                              <p style="margin:20px 0 0;color:#37474f;font-size:14px;line-height:1.6;">
+                                Quý khách vui lòng đến trước giờ hẹn 10 phút để chuẩn bị tốt nhất cho buổi trị liệu.
+                              </p>
+                              <hr style="border:none;border-top:1px solid #e8f5e9;margin:24px 0;"/>
+                              <p style="margin:0;color:#90a4ae;font-size:12px;text-align:center;line-height:1.6;">
+                                Email này được gửi tự động, vui lòng không trả lời.<br/>
+                                &copy; 2025 Ngũ Sơn Resort & Spa. Bảo lưu mọi quyền.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(guestName, serviceName, startDatetime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
+
+            helper.setText(htmlText, true);
+            mailSender.send(message);
+            log.info("Spa reminder email sent successfully to: {}", toEmail);
+
+        } catch (Exception e) {
+            log.error("Failed to send Spa reminder email to {}: {}", toEmail, e.getMessage());
+        }
+    }
 }

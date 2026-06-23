@@ -29,7 +29,7 @@ export default function ConfirmationStep({
   return (
     <div className="space-y-6 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
-        <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">Bước 5: Xác Nhận Đơn Đặt Lịch</h2>
+        <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">Bước 6: Xác Nhận Đơn Đặt Lịch</h2>
         <p className="text-resort-desc mt-1 text-sage-600 font-light">
           Xác nhận lại toàn bộ thông tin chi tiết trước khi hệ thống tạo mã đặt phòng tạm thời.
         </p>

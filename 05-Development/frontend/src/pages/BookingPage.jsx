@@ -442,17 +442,11 @@ export default function BookingPage() {
       setStep(4);
     } else if (step === 4) {
       setStep(5);
-    } else if (step === 5) {
-      if (selectedPackageIds.length === 0) {
-        alert("Vui lòng chọn ít nhất một gói trị liệu ở Bước 5 trước khi tiếp tục.");
-        return;
-      }
-      setStep(6);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1 && step < 7) {
+    if (step > 1 && step < 6) {
       setStep(step - 1);
     }
   };
@@ -649,18 +643,6 @@ export default function BookingPage() {
                 />
               )}
               {step === 5 && (
-                <PackageSelectionStep
-                  retreatPackages={retreatPackages}
-                  spaServices={spaServices}
-                  guestInfo={guestInfo}
-                  selectedPackageIds={selectedPackageIds}
-                  setSelectedPackageIds={setSelectedPackageIds}
-                  formatCurrency={formatCurrency}
-                  handlePrevStep={handlePrevStep}
-                  handleNextStep={handleNextStep}
-                />
-              )}
-              {step === 6 && (
                 <ConfirmationStep
                   guestInfo={guestInfo}
                   nightsCount={nightsCount}

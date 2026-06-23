@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Blog from "./pages/Blog";
 import Spa from "./pages/Spa";
 import Restaurant from "./pages/Restaurant";
 import Events from "./pages/Events";
@@ -39,7 +38,6 @@ function App() {
           {/* Public Customer Routes */}
           <Route element={<CustomerLayout />}>
             <Route path="/" element={<Home />} />
-            <Route path="/blog" element={<Blog />} />
             <Route path="/spa" element={<Spa />} />
             <Route path="/nha-hang" element={<Restaurant />} />
             <Route path="/hoi-nghi" element={<Events />} />

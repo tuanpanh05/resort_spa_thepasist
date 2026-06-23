@@ -21,8 +21,20 @@ public class SpaBooking {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_booking_id", referencedColumnName = "booking_id")
+    private RoomBooking roomBooking;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spa_id", referencedColumnName = "service_id")
     private SpaService spaService;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "therapist_id", referencedColumnName = "user_id")
+    private User therapist;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "treatment_room_id", referencedColumnName = "treatment_room_id")
+    private TreatmentRoom treatmentRoom;
 
     @Column(name = "start_datetime", nullable = false)
     private LocalDateTime startDatetime;
@@ -54,8 +66,17 @@ public class SpaBooking {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
+    public RoomBooking getRoomBooking() { return roomBooking; }
+    public void setRoomBooking(RoomBooking roomBooking) { this.roomBooking = roomBooking; }
+
     public SpaService getSpaService() { return spaService; }
     public void setSpaService(SpaService spaService) { this.spaService = spaService; }
+
+    public User getTherapist() { return therapist; }
+    public void setTherapist(User therapist) { this.therapist = therapist; }
+
+    public TreatmentRoom getTreatmentRoom() { return treatmentRoom; }
+    public void setTreatmentRoom(TreatmentRoom treatmentRoom) { this.treatmentRoom = treatmentRoom; }
 
     public LocalDateTime getStartDatetime() { return startDatetime; }
     public void setStartDatetime(LocalDateTime startDatetime) { this.startDatetime = startDatetime; }

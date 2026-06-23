@@ -432,10 +432,7 @@ export default function SpecialistDashboard() {
         )}
 
         {activeRole === "spa" && activeTab === "appointments" && (
-          <ManageAppointments
-            spaAppointments={spaAppointments}
-            setSpaAppointments={setSpaAppointments}
-          />
+          <ManageAppointments />
         )}
 
         {activeRole === "spa" && activeTab === "inventory" && (

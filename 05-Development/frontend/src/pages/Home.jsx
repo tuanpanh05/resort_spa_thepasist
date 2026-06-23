@@ -120,48 +120,48 @@ function ConsultationModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#070e0a]/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-[#fbfaf7]/98 border border-[#cda250]/25 max-w-lg w-full p-8 sm:p-10 shadow-[0_30px_70px_rgba(26,44,34,0.15)] text-left rounded-2xl relative animate-fade-in text-[#1a2f23]">
+    <div className="fixed inset-0 bg-[#070e0a]/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="bg-white/95 border border-[#2d5a3b]/25 max-w-lg w-full p-8 sm:p-10 shadow-[0_30px_70px_rgba(26,44,34,0.18)] text-left rounded-3xl relative animate-fade-in text-[#14291c]">
         <button
           onClick={handleClose}
-          className="absolute top-6 right-6 text-sage-600 hover:text-[#cda250] transition-colors cursor-pointer"
+          className="absolute top-6 right-6 text-sage-600 hover:text-[#2d5a3b] transition-colors cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
 
         {isSubmitted ? (
           <div className="text-center py-6 space-y-4">
-            <div className="inline-flex p-4 bg-[#cda250]/10 text-[#cda250] rounded-full border border-[#cda250]/30 animate-pulse">
+            <div className="inline-flex p-4 bg-[#2d5a3b]/10 text-[#2d5a3b] rounded-full border border-[#2d5a3b]/25 animate-pulse">
               <CheckCircle2 className="h-10 w-10" />
             </div>
-            <h4 className="font-serif text-2xl font-light text-[#1a2f23]">
+            <h4 className="font-serif text-2xl font-light text-[#14291c]">
               Gửi Yêu Cầu Thành Công!
             </h4>
-            <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-[#2b4d37] font-light leading-relaxed max-w-md mx-auto">
               Cảm ơn quý khách <strong className="text-[#070e0a]">{formData.fullName}</strong> đã đăng ký. Đội ngũ chuyên viên tư vấn trị liệu của Ngũ Sơn Resort sẽ liên hệ hỗ trợ bạn qua SĐT <strong className="text-[#070e0a]">{formData.phone}</strong> trong vòng 15 phút.
             </p>
             <button
               onClick={handleClose}
-              className="px-8 py-3 bg-[#cda250] text-[#070e0a] hover:bg-[#d9b360] text-xs font-bold uppercase tracking-widest transition-colors duration-300 cursor-pointer"
+              className="px-8 py-3 bg-[#2d5a3b] text-white hover:bg-[#3b754e] text-xs font-bold uppercase tracking-widest rounded-full transition-colors duration-300 cursor-pointer"
             >
               Đóng hộp thoại
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2 border-b border-[#cda250]/15 pb-4">
-              <span className="text-[9px] font-bold text-[#cda250] uppercase tracking-[0.2em] flex items-center gap-1.5">
-                <Crown className="h-3 w-3 text-[#cda250]" />
+            <div className="space-y-2 border-b border-[#2d5a3b]/15 pb-4">
+              <span className="text-xs font-bold text-[#2d5a3b] uppercase tracking-[0.2em] flex items-center gap-1.5">
+                <Crown className="h-3 w-3 text-[#2d5a3b]" />
                 Royal Consultation Request
               </span>
-              <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#1a2f23]">
+              <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#14291c]">
                 Đăng Ký Tư Vấn Trị Liệu
               </h3>
             </div>
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="block text-[9px] font-bold uppercase tracking-wider text-sage-500">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#375a43]">
                   Họ và tên <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -170,18 +170,18 @@ function ConsultationModal({ isOpen, onClose }) {
                   placeholder="Nguyễn Văn A"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 bg-white border border-[#cda250]/20 rounded-lg text-[#1a2f23] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#cda250] transition-colors text-sm ${
+                  className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${
                     errors.fullName ? "border-red-400" : ""
                   }`}
                 />
                 {errors.fullName && (
-                  <span className="text-[10px] text-red-500 block">{errors.fullName}</span>
+                  <span className="text-xs text-red-600 block">{errors.fullName}</span>
                 )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-bold uppercase tracking-wider text-sage-500">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#375a43]">
                     Số điện thoại <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -190,17 +190,17 @@ function ConsultationModal({ isOpen, onClose }) {
                     placeholder="0901234567"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 bg-white border border-[#cda250]/20 rounded-lg text-[#1a2f23] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#cda250] transition-colors text-sm ${
+                    className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${
                       errors.phone ? "border-red-400" : ""
                     }`}
                   />
                   {errors.phone && (
-                    <span className="text-[10px] text-red-500 block">{errors.phone}</span>
+                    <span className="text-xs text-red-600 block">{errors.phone}</span>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-[9px] font-bold uppercase tracking-wider text-sage-500">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#375a43]">
                     Địa chỉ Email <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -209,25 +209,25 @@ function ConsultationModal({ isOpen, onClose }) {
                     placeholder="khach@gmail.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 bg-white border border-[#cda250]/20 rounded-lg text-[#1a2f23] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#cda250] transition-colors text-sm ${
+                    className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${
                       errors.email ? "border-red-400" : ""
                     }`}
                   />
                   {errors.email && (
-                    <span className="text-[10px] text-red-500 block">{errors.email}</span>
+                    <span className="text-xs text-red-600 block">{errors.email}</span>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[9px] font-bold uppercase tracking-wider text-sage-500">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#375a43]">
                   Lộ trình trị liệu cần tư vấn
                 </label>
                 <select
                   name="interest"
                   value={formData.interest}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white border border-[#cda250]/20 text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] appearance-none font-semibold cursor-pointer text-sm"
+                  className="w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 text-[#14291c] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] appearance-none font-semibold cursor-pointer text-sm"
                 >
                   <option value="spa">Spa & Tắm Lá Thuốc Cổ Truyền</option>
                   <option value="yoga">Thiền & Hatha Yoga Phục Hồi</option>
@@ -238,7 +238,7 @@ function ConsultationModal({ isOpen, onClose }) {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[9px] font-bold uppercase tracking-wider text-sage-500">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#375a43]">
                   Ghi chú tình trạng sức khỏe / Mong muốn đặc biệt
                 </label>
                 <textarea
@@ -247,23 +247,23 @@ function ConsultationModal({ isOpen, onClose }) {
                   rows="3"
                   value={formData.message}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white border border-[#cda250]/20 text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] resize-none text-sm"
+                  className="w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 text-[#14291c] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] resize-none text-sm"
                 />
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end gap-3 border-t border-[#cda250]/15">
+            <div className="pt-4 flex justify-end gap-3 border-t border-[#2d5a3b]/15">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-6 py-3 border border-[#cda250]/30 text-sage-600 hover:bg-[#cda250]/5 text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer"
+                className="px-6 py-2.5 border border-[#2d5a3b]/25 text-sage-600 hover:bg-[#2d5a3b]/5 text-xs font-bold uppercase tracking-widest rounded-full transition-colors cursor-pointer"
               >
                 Hủy bỏ
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-8 py-3 bg-gradient-to-r from-[#cda250] to-[#b1893c] hover:from-[#d9b360] hover:to-[#c29a4a] text-[#070e0a] text-xs font-bold uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center gap-2"
+                className="px-8 py-2.5 bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] hover:from-[#3b754e] hover:to-[#264a30] text-white text-xs font-bold uppercase tracking-widest rounded-full transition-all duration-300 cursor-pointer flex items-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -392,42 +392,38 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-[#faf8f5] text-[#1a2f23] min-h-screen font-sans overflow-x-hidden selection:bg-[#cda250] selection:text-[#070e0a]">
+    <div className="bg-gradient-to-b from-[#d5e5d3] via-[#e2ebe0] to-[#cbdcc9] text-[#14291c] min-h-screen font-sans overflow-x-hidden selection:bg-[#2d5a3b]/20 selection:text-[#2d5a3b]">
       
-      {/* 1. Cinematic Hero Banner with Double Gold Borders */}
-      <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-32 border-b border-[#cda250]/15">
+      {/* 1. Cinematic Hero Banner */}
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-32 border-b border-[#2d5a3b]/10">
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-30 transition-transform duration-[12000ms] scale-105"
           style={{ backgroundImage: `url(${resortHeroBg})` }}
         />
-        {/* Soft Warm Ivory Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#faf8f5]/20 via-[#faf8f5]/75 to-[#faf8f5]" />
+        {/* Soft Natural Sage Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#d5e5d3]/15 via-[#e2ebe0]/80 to-[#d5e5d3]" />
         
-        {/* Double luxury thin gold wire frames */}
-        <div className="absolute inset-x-6 inset-y-10 border border-[#cda250]/20 pointer-events-none rounded-[36px]" />
-        <div className="absolute inset-x-10 inset-y-14 border border-[#cda250]/10 pointer-events-none rounded-[28px]" />
-
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8">
           <ScrollReveal>
-            <span className="inline-flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#b28a50] bg-white border border-[#cda250]/25 px-6 py-3 rounded-full shadow-md shadow-[#cda250]/5">
-              <Crown className="h-3 w-3 text-[#b28a50] animate-pulse" />
+            <span className="inline-flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.3em] text-[#2d5a3b] bg-white/90 border border-[#2d5a3b]/20 px-6 py-3 rounded-full shadow-sm shadow-[#2d5a3b]/5">
+              <Crown className="h-3.5 w-3.5 text-[#2d5a3b] animate-pulse" />
               Ngũ Sơn Signature Living
             </span>
           </ScrollReveal>
 
           <ScrollReveal delay={150}>
-            <h1 className="font-serif text-4xl sm:text-6xl md:text-8xl font-light tracking-wide text-[#1a2f23] leading-tight">
+            <h1 className="font-serif text-4xl sm:text-6xl md:text-8xl font-light tracking-wide text-[#14291c] leading-tight">
               NƠI TRẢI NGHIỆM <br/>
-              <span className="italic font-serif text-[#cda250] font-normal">Trị Liệu Hoàng Gia</span>
+              <span className="italic font-serif text-[#2d5a3b] font-normal">Trị Liệu Tự Nhiên</span>
             </h1>
           </ScrollReveal>
 
           <ScrollReveal delay={300}>
-            <div className="w-24 h-[1px] bg-[#cda250]/40 mx-auto my-8" />
+            <div className="w-24 h-[1px] bg-[#2d5a3b]/30 mx-auto my-8" />
           </ScrollReveal>
 
           <ScrollReveal delay={450}>
-            <p className="text-sage-700 text-sm sm:text-lg leading-relaxed max-w-2xl mx-auto font-light tracking-wide opacity-95">
+            <p className="text-[#2b4d37] text-sm sm:text-lg leading-relaxed max-w-2xl mx-auto font-light tracking-wide opacity-95">
               Hãy đặt chân vào vùng đất của tĩnh lặng và phục hồi. Nơi mỗi vị khách đều được đón tiếp như những vị hoàng đế, trải nghiệm các liệu trình y học cổ truyền và tận hưởng đặc quyền sống chánh niệm trọn vẹn.
             </p>
           </ScrollReveal>
@@ -436,13 +432,13 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6">
               <a
                 href="/dat-lich"
-                className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest bg-gradient-to-r from-[#cda250] to-[#b1893c] text-[#070e0a] hover:from-[#d9b360] hover:to-[#c29a4a] transition-all duration-300 shadow-md hover:-translate-y-0.5 uppercase cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] transition-all duration-300 shadow-md hover:-translate-y-0.5 hover:scale-105 uppercase cursor-pointer rounded-full"
               >
                 Đặt lịch trải nghiệm
               </a>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest border border-[#cda250]/30 text-[#1a2f23] hover:bg-[#cda250]/5 transition-all duration-300 uppercase cursor-pointer bg-transparent"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest border border-[#2d5a3b]/30 text-[#2d5a3b] hover:bg-[#2d5a3b]/10 hover:text-[#14291c] transition-all duration-300 uppercase cursor-pointer bg-white/40 backdrop-blur-sm shadow-sm rounded-full"
               >
                 Nhận tư vấn y khoa
               </button>
@@ -452,23 +448,23 @@ export default function Home() {
       </div>
 
       {/* 2. Philosophy Section (Triết Lý Sống Chậm) */}
-      <div className="py-32 bg-[#f4f2ec] relative border-b border-[#cda250]/10">
+      <div className="py-32 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
           <ScrollReveal>
             <div className="text-center max-w-2xl mx-auto mb-24 space-y-4">
-              <span className="text-[10px] font-bold tracking-[0.25em] text-[#b28a50] uppercase block">
+              <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
                 NỀN TẢNG CHỮA LÀNH
               </span>
-              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#1a2f23] leading-tight">
+              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#14291c] leading-tight">
                 Triết Lý Sống Chậm Thân - Tâm - Trí
               </h2>
               <div className="flex items-center justify-center space-x-3 mt-6">
-                <div className="h-[1px] w-8 bg-[#cda250]/40" />
-                <Leaf className="h-4 w-4 text-[#cda250]/75" />
-                <div className="h-[1px] w-8 bg-[#cda250]/40" />
+                <div className="h-[1px] w-8 bg-[#2d5a3b]/30" />
+                <Leaf className="h-4 w-4 text-[#2d5a3b]/75" />
+                <div className="h-[1px] w-8 bg-[#2d5a3b]/30" />
               </div>
-              <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed max-w-lg mx-auto">
+              <p className="text-sm text-[#2b4d37] font-light leading-relaxed max-w-lg mx-auto">
                 Tại Ngũ Sơn, sự thư thái và tái sinh đích thực đạt được khi ba yếu tố cốt lõi của sinh mệnh được kết nối đồng điệu với nhịp đập tự nhiên.
               </p>
             </div>
@@ -478,16 +474,16 @@ export default function Home() {
             
             {/* Thân */}
             <ScrollReveal delay={100}>
-              <div className="bg-white/90 border border-[#cda250]/20 p-8 sm:p-10 rounded-2xl relative shadow-xl hover:border-[#cda250]/40 transition-all duration-500 group flex flex-col justify-between min-h-[380px]">
-                <div className="absolute -top-10 right-6 font-serif text-[110px] font-bold text-[#cda250]/10 select-none group-hover:text-[#cda250]/15 transition-colors duration-500">I</div>
+              <div className="bg-white/70 backdrop-blur-md border border-[#2d5a3b]/10 p-8 sm:p-10 rounded-3xl relative shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:border-[#2d5a3b]/30 hover:shadow-[0_25px_60px_rgba(45,90,59,0.07)] hover:-translate-y-2 transition-all duration-550 group flex flex-col justify-between min-h-[380px]">
+                <div className="absolute -top-10 right-6 font-serif text-[110px] font-bold text-[#2d5a3b]/5 select-none group-hover:text-[#2d5a3b]/10 transition-colors duration-500">I</div>
                 <div className="space-y-4">
-                  <div className="w-12 h-12 bg-[#faf8f5] text-[#b28a50] border border-[#cda250]/30 flex items-center justify-center font-serif text-lg rounded-lg">Thân</div>
-                  <h3 className="font-serif text-xl sm:text-2xl font-light text-[#1a2f23] tracking-wide pt-2">Nuôi Dưỡng Bản Thể</h3>
-                  <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed">
+                  <div className="w-12 h-12 bg-[#eef4ed] text-[#2d5a3b] border border-[#2d5a3b]/25 flex items-center justify-center font-serif text-lg rounded-xl">Thân</div>
+                  <h3 className="font-serif text-xl sm:text-2xl font-light text-[#14291c] tracking-wide pt-2">Nuôi Dưỡng Bản Thể</h3>
+                  <p className="text-sm text-[#2b4d37] font-light leading-relaxed">
                     Giải phóng mọi tắc nghẽn thể chất bằng liệu pháp tắm lá thuốc Dao Đỏ, ngâm mình trong dòng khoáng nóng gỗ Tuyết Tùng và các chế độ dinh dưỡng trị liệu thực dưỡng.
                   </p>
                 </div>
-                <ul className="text-[11px] text-[#b28a50] space-y-2 pt-6 border-t border-[#cda250]/15 mt-6 font-semibold">
+                <ul className="text-xs text-[#2d5a3b] space-y-2 pt-6 border-t border-[#2d5a3b]/10 mt-6 font-semibold">
                   <li className="flex items-center gap-2">• Ẩm thực hữu cơ 100% tự nhiên</li>
                   <li className="flex items-center gap-2">• Ngâm lá thuốc Dao Đỏ lộ thiên</li>
                   <li className="flex items-center gap-2">• Phục hồi cơ khớp cột sống</li>
@@ -497,16 +493,16 @@ export default function Home() {
 
             {/* Tâm */}
             <ScrollReveal delay={200}>
-              <div className="bg-white/90 border border-[#cda250]/20 p-8 sm:p-10 rounded-2xl relative shadow-xl hover:border-[#cda250]/40 transition-all duration-500 group flex flex-col justify-between min-h-[380px]">
-                <div className="absolute -top-10 right-6 font-serif text-[110px] font-bold text-[#cda250]/10 select-none group-hover:text-[#cda250]/15 transition-colors duration-500">II</div>
+              <div className="bg-white/70 backdrop-blur-md border border-[#2d5a3b]/10 p-8 sm:p-10 rounded-3xl relative shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:border-[#2d5a3b]/30 hover:shadow-[0_25px_60px_rgba(45,90,59,0.07)] hover:-translate-y-2 transition-all duration-550 group flex flex-col justify-between min-h-[380px]">
+                <div className="absolute -top-10 right-6 font-serif text-[110px] font-bold text-[#2d5a3b]/5 select-none group-hover:text-[#2d5a3b]/10 transition-colors duration-500">II</div>
                 <div className="space-y-4">
-                  <div className="w-12 h-12 bg-[#faf8f5] text-[#b28a50] border border-[#cda250]/30 flex items-center justify-center font-serif text-lg rounded-lg">Tâm</div>
-                  <h3 className="font-serif text-xl sm:text-2xl font-light text-[#1a2f23] tracking-wide pt-2">Tìm Về Tĩnh Lặng</h3>
-                  <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed">
+                  <div className="w-12 h-12 bg-[#eef4ed] text-[#2d5a3b] border border-[#2d5a3b]/25 flex items-center justify-center font-serif text-lg rounded-xl">Tâm</div>
+                  <h3 className="font-serif text-xl sm:text-2xl font-light text-[#14291c] tracking-wide pt-2">Tìm Về Tĩnh Lặng</h3>
+                  <p className="text-sm text-[#2b4d37] font-light leading-relaxed">
                     Lắng nghe hơi thở giữa sương mai đồi thông. Xoa dịu tâm trí thông qua những buổi Hatha Yoga phục hồi sức sống và âm thanh trầm bổng từ chuông xoay Tây Tạng.
                   </p>
                 </div>
-                <ul className="text-[11px] text-[#b28a50] space-y-2 pt-6 border-t border-[#cda250]/15 mt-6 font-semibold">
+                <ul className="text-xs text-[#2d5a3b] space-y-2 pt-6 border-t border-[#2d5a3b]/10 mt-6 font-semibold">
                   <li className="flex items-center gap-2">• Thiền định Forest Bathing sớm mai</li>
                   <li className="flex items-center gap-2">• Yoga dòng chảy năng lượng phục hồi</li>
                   <li className="flex items-center gap-2">• Liệu pháp chuông xoay Tây Tạng</li>
@@ -516,16 +512,16 @@ export default function Home() {
 
             {/* Trí */}
             <ScrollReveal delay={300}>
-              <div className="bg-white/90 border border-[#cda250]/20 p-8 sm:p-10 rounded-2xl relative shadow-xl hover:border-[#cda250]/40 transition-all duration-500 group flex flex-col justify-between min-h-[380px]">
-                <div className="absolute -top-10 right-6 font-serif text-[110px] font-bold text-[#cda250]/10 select-none group-hover:text-[#cda250]/15 transition-colors duration-500">III</div>
+              <div className="bg-white/70 backdrop-blur-md border border-[#2d5a3b]/10 p-8 sm:p-10 rounded-3xl relative shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:border-[#2d5a3b]/30 hover:shadow-[0_25px_60px_rgba(45,90,59,0.07)] hover:-translate-y-2 transition-all duration-550 group flex flex-col justify-between min-h-[380px]">
+                <div className="absolute -top-10 right-6 font-serif text-[110px] font-bold text-[#2d5a3b]/5 select-none group-hover:text-[#2d5a3b]/10 transition-colors duration-500">III</div>
                 <div className="space-y-4">
-                  <div className="w-12 h-12 bg-[#faf8f5] text-[#b28a50] border border-[#cda250]/30 flex items-center justify-center font-serif text-lg rounded-lg">Trí</div>
-                  <h3 className="font-serif text-xl sm:text-2xl font-light text-[#1a2f23] tracking-wide pt-2">Khai Mở Tuệ Giác</h3>
-                  <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed">
+                  <div className="w-12 h-12 bg-[#eef4ed] text-[#2d5a3b] border border-[#2d5a3b]/25 flex items-center justify-center font-serif text-lg rounded-xl">Trí</div>
+                  <h3 className="font-serif text-xl sm:text-2xl font-light text-[#14291c] tracking-wide pt-2">Khai Mở Tuệ Giác</h3>
+                  <p className="text-sm text-[#2b4d37] font-light leading-relaxed">
                     Khám phá sự uyên bác từ y học cổ truyền. Khởi động chương trình Digital Detox để ngắt kết nối với thế giới công nghệ ồn ào và quay về đối thoại nội tâm.
                   </p>
                 </div>
-                <ul className="text-[11px] text-[#b28a50] space-y-2 pt-6 border-t border-[#cda250]/15 mt-6 font-semibold">
+                <ul className="text-xs text-[#2d5a3b] space-y-2 pt-6 border-t border-[#2d5a3b]/10 mt-6 font-semibold">
                   <li className="flex items-center gap-2">• Không gian Digital Detox ngắt kết nối</li>
                   <li className="flex items-center gap-2">• Thư viện sách sức khỏe & triết học</li>
                   <li className="flex items-center gap-2">• Trà đạo đàm đạo y học tự nhiên</li>
@@ -538,25 +534,25 @@ export default function Home() {
       </div>
 
       {/* 3. Wellness Experiences (Trải Nghiệm Trị Liệu) */}
-      <div className="py-32 bg-[#faf8f5] relative border-b border-[#cda250]/10">
+      <div className="py-16 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <ScrollReveal>
-            <div className="max-w-2xl mb-24 space-y-4 text-left">
-              <span className="text-[10px] font-bold tracking-[0.25em] text-[#b28a50] uppercase block">
+            <div className="max-w-2xl mb-12 space-y-4 text-left">
+              <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
                 LỘ TRÌNH ĐỘC BẢN
               </span>
-              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#1a2f23] leading-tight">
-                Liệu Pháp Chữa Lành Trị Liệu Hoàng Gia
+              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#14291c] leading-tight">
+                Liệu Pháp Chữa Lành Trị Liệu Cao Cấp
               </h2>
-              <div className="w-16 h-[1.5px] bg-[#cda250] mt-4" />
-              <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed pt-2">
+              <div className="w-16 h-[1.5px] bg-[#2d5a3b] mt-4" />
+              <p className="text-sm text-[#2b4d37] font-light leading-relaxed pt-2">
                 Các phương pháp chăm sóc sức khỏe chủ động được nghiên cứu và thiết kế chuyên biệt bởi các bác sĩ đầu ngành y học tự nhiên.
               </p>
             </div>
           </ScrollReveal>
 
-          <div className="space-y-36">
+          <div className="space-y-16">
             {experiences.map((exp, index) => {
               const isEven = index % 2 === 0;
               const formattedNumber = String(index + 1).padStart(2, "0");
@@ -565,53 +561,53 @@ export default function Home() {
                   <div className={`flex flex-col lg:flex-row items-stretch ${isEven ? "" : "lg:flex-row-reverse"} relative`}>
                     
                     {/* Serif Numbering background */}
-                    <span className="hidden lg:block absolute -top-16 left-1/2 -translate-x-1/2 font-serif text-[180px] font-bold text-[#cda250]/10 select-none pointer-events-none z-0">
+                    <span className="hidden lg:block absolute -top-16 left-1/2 -translate-x-1/2 font-serif text-[180px] font-bold text-[#2d5a3b]/6 select-none pointer-events-none z-0">
                       {formattedNumber}
                     </span>
 
                     {/* Image Column */}
-                    <div className="w-full lg:w-[62%] rounded-tl-[90px] rounded-br-[90px] rounded-tr-[16px] rounded-bl-[16px] overflow-hidden shadow-xl relative min-h-[380px] lg:min-h-[460px] flex items-stretch border border-[#cda250]/15 group z-0">
+                    <div className="w-full lg:w-[62%] rounded-tl-[90px] rounded-br-[90px] rounded-tr-[16px] rounded-bl-[16px] overflow-hidden shadow-xl relative min-h-[380px] lg:min-h-[460px] flex items-stretch border border-[#2d5a3b]/12 group z-0">
                       <img
                         src={exp.image}
                         alt={exp.title}
                         className="w-full h-full object-cover transition-transform duration-[8000ms] group-hover:scale-105"
                       />
                       {/* Light Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#faf8f5]/85 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#ebf2ea]/85 via-transparent to-transparent pointer-events-none" />
                       
-                      <span className="absolute top-6 left-6 text-[9px] font-bold uppercase tracking-[0.2em] bg-[#faf8f5]/90 backdrop-blur-md text-[#b28a50] border border-[#cda250]/20 px-5 py-2.5 rounded-full shadow-md">
+                      <span className="absolute top-6 left-6 text-xs font-semibold uppercase tracking-[0.2em] bg-white/95 backdrop-blur-md text-[#2d5a3b] border border-[#2d5a3b]/15 px-5 py-2.5 rounded-full shadow-sm">
                         Ngũ Sơn Retreat
                       </span>
                     </div>
 
                     {/* Overlapping Details Card */}
-                    <div className={`w-full lg:w-[46%] bg-white/95 border border-[#cda250]/20 p-8 sm:p-12 shadow-[0_30px_70px_rgba(26,44,34,0.06)] rounded-2xl z-10 flex flex-col justify-between space-y-6 lg:self-center ${
+                    <div className={`w-full lg:w-[46%] bg-white/80 backdrop-blur-md border border-white/60 p-8 sm:p-12 shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:shadow-[0_30px_70px_rgba(45,90,59,0.07)] rounded-3xl z-10 flex flex-col justify-between space-y-6 lg:self-center transition-all duration-500 ${
                       isEven ? "lg:-ml-24" : "lg:-mr-24"
                     }`}>
                       <div className="space-y-4">
-                        <span className="text-[9px] font-bold text-[#b28a50] uppercase tracking-[0.2em] bg-[#faf8f5] border border-[#cda250]/20 px-3 py-1.5 rounded inline-flex items-center gap-1.5">
-                          <Crown className="h-3 w-3 text-[#b28a50]" />
+                        <span className="text-xs font-bold text-[#2d5a3b] uppercase tracking-[0.2em] bg-[#eef4ed] border border-[#2d5a3b]/15 px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5">
+                          <Crown className="h-3.5 w-3.5 text-[#2d5a3b]" />
                           {exp.tag}
                         </span>
                         
-                        <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#1a2f23] tracking-wide leading-tight border-b border-[#cda250]/15 pb-4">
+                        <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#14291c] tracking-wide leading-tight border-b border-[#2d5a3b]/10 pb-4">
                           {exp.title}
                         </h3>
 
-                        <p className="text-sage-750 text-xs sm:text-sm font-light leading-relaxed opacity-95">
+                        <p className="text-[#2b4d37] text-sm font-light leading-relaxed opacity-95 text-left">
                           {exp.description}
                         </p>
                       </div>
 
                       {/* Spa Menu Specs */}
-                      <div className="pt-4 border-t border-[#cda250]/15">
-                        <span className="text-[9px] text-[#b28a50] font-bold uppercase tracking-[0.2em] block mb-3 pl-2 border-l border-[#cda250]">
+                      <div className="pt-4 border-t border-[#2d5a3b]/10">
+                        <span className="text-xs text-[#2d5a3b] font-bold uppercase tracking-[0.2em] block mb-3 pl-2 border-l-2 border-[#2d5a3b]">
                           Liệu trình chi tiết bao gồm
                         </span>
-                        <ul className="space-y-2 text-xs text-sage-600 font-light pl-2">
+                        <ul className="space-y-2 text-xs text-[#2b4d37] font-light pl-2">
                           {exp.benefits.map((benefit, bIdx) => (
-                            <li key={bIdx} className="flex items-center gap-2.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#cda250]" />
+                             <li key={bIdx} className="flex items-center gap-2.5 text-left">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#2d5a3b]" />
                               <span>{benefit}</span>
                             </li>
                           ))}
@@ -621,7 +617,7 @@ export default function Home() {
                       <div className="pt-4 flex justify-start">
                         <button
                           onClick={() => setIsModalOpen(true)}
-                          className="inline-flex items-center gap-2 text-xs font-bold text-[#b28a50] hover:text-[#1a2f23] uppercase tracking-widest transition-colors duration-300 cursor-pointer group"
+                          className="inline-flex items-center gap-2 text-xs font-bold text-[#2d5a3b] hover:text-[#14291c] uppercase tracking-widest transition-colors duration-300 cursor-pointer group"
                         >
                           <span>Liên hệ đặt lịch</span>
                           <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -639,21 +635,21 @@ export default function Home() {
       </div>
 
       {/* 4. Rooms Showcase Section */}
-      <div className="py-32 bg-[#f4f2ec] border-b border-[#cda250]/10">
+      <div className="py-16 bg-gradient-to-b from-transparent via-[#dce8db]/25 to-transparent border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <ScrollReveal>
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-24 gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 text-left">
               <div className="max-w-xl">
-                <span className="text-[10px] font-bold tracking-[0.25em] text-[#b28a50] uppercase block">
+                <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
                   BIỆT THỰ NGHỈ DƯỠNG
                 </span>
-                <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#1a2f23] leading-tight mt-3">
-                  Không Gian Lưu Trú Độc Bản Của Hoàng Gia
+                <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#14291c] leading-tight mt-3">
+                  Không Gian Lưu Trú Độc Bản Gần Gũi Thiên Nhiên
                 </h2>
-                <div className="w-16 h-[1.5px] bg-[#cda250] mt-4" />
+                <div className="w-16 h-[1.5px] bg-[#2d5a3b] mt-4" />
               </div>
-              <p className="text-sage-650 font-light text-xs sm:text-sm max-w-md leading-relaxed">
+              <p className="text-[#2b4d37] font-light text-sm max-w-md leading-relaxed">
                 Tọa lạc riêng tư bên bờ suối róc rách hay ẩn mình giữa vạt thông xanh. Từng căn Bungalow, Villa được xây dựng hoàn toàn từ gỗ tuyết tùng, đá cuội và lá tranh organic mang lại năng lượng phong thủy vượng khí.
               </p>
             </div>
@@ -664,62 +660,62 @@ export default function Home() {
               const formattedNumber = String(index + 1).padStart(2, "0");
               return (
                 <ScrollReveal key={index} delay={index * 150}>
-                  <div className="group relative flex flex-col justify-between h-full bg-white/90 border border-[#cda250]/20 hover:border-[#cda250]/40 rounded-3xl overflow-hidden transition-all duration-500 shadow-xl">
+                  <div className="group relative flex flex-col justify-between h-full bg-white/80 backdrop-blur-md border border-[#2d5a3b]/10 hover:border-[#2d5a3b]/25 rounded-3xl overflow-hidden transition-all duration-500 shadow-[0_15px_45px_rgba(45,90,59,0.03)] hover:shadow-[0_25px_60px_rgba(45,90,59,0.08)]">
                     
                     {/* Number Overlay */}
-                    <span className="absolute top-4 right-6 font-serif text-6xl font-bold text-[#cda250]/10 select-none pointer-events-none group-hover:text-[#cda250]/15 transition-colors duration-500 z-10">
+                    <span className="absolute top-4 right-6 font-serif text-6xl font-bold text-[#2d5a3b]/10 select-none pointer-events-none group-hover:text-[#2d5a3b]/15 transition-colors duration-500 z-10">
                       {formattedNumber}
                     </span>
 
                     {/* Image */}
-                    <div className="w-full aspect-[16/10] overflow-hidden relative border-b border-[#cda250]/15">
+                    <div className="w-full aspect-[16/10] overflow-hidden relative border-b border-[#2d5a3b]/10">
                       <img
                         src={room.image}
                         alt={room.title}
                         className="w-full h-full object-cover transition-transform duration-[6000ms] group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-[#faf8f5]/10 group-hover:bg-transparent transition-colors duration-500" />
+                      <div className="absolute inset-0 bg-[#f5f7f4]/5 group-hover:bg-transparent transition-colors duration-500" />
                     </div>
 
                     {/* Details Box */}
                     <div className="p-8 sm:p-10 space-y-6 flex flex-col justify-between flex-grow">
-                      <div className="space-y-3">
-                        <span className="text-[8px] font-bold text-[#b28a50] uppercase tracking-[0.2em] bg-[#faf8f5] border border-[#cda250]/20 px-2.5 py-1 rounded inline-block">
+                      <div className="space-y-3 text-left">
+                        <span className="text-xs font-bold text-[#2d5a3b] uppercase tracking-[0.2em] bg-[#eef4ed] border border-[#2d5a3b]/15 px-3 py-1 rounded-full inline-block">
                           {room.amenity}
                         </span>
-                        <h3 className="font-serif text-2xl font-light text-[#1a2f23] group-hover:text-[#b28a50] transition-colors duration-300">
+                        <h3 className="font-serif text-2xl font-light text-[#14291c] group-hover:text-[#2d5a3b] transition-colors duration-300">
                           {room.title}
                         </h3>
-                        <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed">
+                        <p className="text-sm text-[#2b4d37] font-light leading-relaxed">
                           {room.description}
                         </p>
                       </div>
 
                       {/* Specs */}
-                      <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-[#cda250]/15 text-xs text-left">
+                      <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-[#2d5a3b]/10 text-xs text-left">
                         <div>
-                          <span className="text-[8px] text-sage-400 font-bold uppercase tracking-wider block mb-1">Diện tích</span>
-                          <span className="font-serif text-sm font-light text-[#1a2f23]">{room.size}</span>
+                          <span className="text-[10px] text-[#4d7058] font-bold uppercase tracking-wider block mb-1">Diện tích</span>
+                          <span className="font-serif text-sm font-light text-[#14291c]">{room.size}</span>
                         </div>
                         <div>
-                          <span className="text-[8px] text-sage-400 font-bold uppercase tracking-wider block mb-1">Sức chứa</span>
-                          <span className="font-serif text-sm font-light text-[#1a2f23]">{room.capacity}</span>
+                          <span className="text-[10px] text-[#4d7058] font-bold uppercase tracking-wider block mb-1">Sức chứa</span>
+                          <span className="font-serif text-sm font-light text-[#14291c]">{room.capacity}</span>
                         </div>
                         <div>
-                          <span className="text-[8px] text-sage-400 font-bold uppercase tracking-wider block mb-1">Dịch vụ</span>
-                          <span className="font-serif text-sm font-light text-[#1a2f23]">Thực dưỡng</span>
+                          <span className="text-[10px] text-[#4d7058] font-bold uppercase tracking-wider block mb-1">Dịch vụ</span>
+                          <span className="font-serif text-sm font-light text-[#14291c]">Thực dưỡng</span>
                         </div>
                       </div>
 
                       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-4">
                         <div className="text-left">
-                          <span className="text-[8px] text-[#b28a50] font-bold uppercase tracking-wider block">Giá tham khảo</span>
+                          <span className="text-[8px] text-[#2d5a3b] font-bold uppercase tracking-wider block">Giá tham khảo</span>
                           <span className="font-serif text-lg text-[#1a2f23] font-light mt-0.5 block">{room.price} <span className="text-[10px] text-sage-400">/ đêm</span></span>
                         </div>
                         
                         <Link
                           to="/phong-o"
-                          className="px-6 py-3 bg-gradient-to-r from-[#cda250] to-[#b1893c] text-[#070e0a] hover:from-[#d9b360] hover:to-[#c29a4a] text-[10px] font-bold uppercase tracking-widest text-center transition-all duration-300 shadow-md hover:-translate-y-0.5"
+                          className="px-6 py-3 bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] text-[10px] font-bold uppercase tracking-widest text-center transition-all duration-300 shadow-md hover:-translate-y-0.5 rounded-full"
                         >
                           Xem chi tiết
                         </Link>
@@ -736,7 +732,7 @@ export default function Home() {
             <ScrollReveal>
               <Link
                 to="/phong-o"
-                className="inline-flex items-center gap-2 px-10 py-4 text-xs font-bold uppercase tracking-widest border border-[#cda250]/30 text-[#b28a50] hover:text-[#1a2f23] hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                className="inline-flex items-center gap-2 px-10 py-4 text-xs font-bold uppercase tracking-widest border border-[#2d5a3b]/30 text-[#2d5a3b] hover:text-[#1a2f23] hover:bg-white/5 transition-all duration-300 cursor-pointer rounded-full"
               >
                 <span>Khám Phá Tất Cả Hạng Phòng</span>
                 <ChevronRight className="h-4 w-4" />
@@ -748,55 +744,55 @@ export default function Home() {
       </div>
 
       {/* 5. A Day at Ngu Son Timeline Section */}
-      <div className="py-32 bg-[#faf8f5] relative border-b border-[#cda250]/10">
+      <div className="py-16 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <ScrollReveal>
-            <div className="text-center max-w-2xl mx-auto mb-24 space-y-4">
-              <span className="text-[10px] font-bold tracking-[0.25em] text-[#b28a50] uppercase block">
+            <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
+              <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
                 NHỊP ĐIỆU HOÀNG GIA
               </span>
-              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#1a2f23] leading-tight">
+              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#14291c] leading-tight">
                 Một Ngày Trải Nghiệm Chánh Niệm
               </h2>
               <div className="flex items-center justify-center space-x-3 mt-6">
-                <div className="h-[1px] w-8 bg-[#cda250]/40" />
-                <Leaf className="h-4 w-4 text-[#cda250]/75" />
-                <div className="h-[1px] w-8 bg-[#cda250]/40" />
+                <div className="h-[1px] w-8 bg-[#2d5a3b]/30" />
+                <Leaf className="h-4 w-4 text-[#2d5a3b]/75" />
+                <div className="h-[1px] w-8 bg-[#2d5a3b]/30" />
               </div>
-              <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed max-w-lg mx-auto">
+              <p className="text-sm text-[#2b4d37] font-light leading-relaxed max-w-lg mx-auto">
                 Hành trình nghỉ dưỡng được thiết kế khoa học dựa theo nhịp sinh học tự nhiên của cơ thể để tối ưu khả năng tự chữa lành của tế bào.
               </p>
             </div>
           </ScrollReveal>
 
           {/* Timeline */}
-          <div className="relative border-l border-[#cda250]/30 max-w-3xl mx-auto pl-8 sm:pl-16 space-y-12 py-2">
+          <div className="relative border-l border-[#2d5a3b]/20 max-w-3xl mx-auto pl-8 sm:pl-16 space-y-8 py-2">
             {schedule.map((item, idx) => (
               <ScrollReveal key={idx} delay={idx * 100}>
                 <div className="relative group text-left">
                   
                   {/* Bullet */}
-                  <span className="absolute -left-[45px] sm:-left-[69px] top-1.5 h-8 w-8 rounded-full bg-[#faf8f5] border border-[#cda250]/40 flex items-center justify-center text-[10px] sm:text-xs font-mono font-bold text-[#b28a50] group-hover:bg-[#cda250] group-hover:text-[#070e0a] group-hover:border-[#cda250] transition-colors duration-300 shadow-md">
+                  <span className="absolute -left-[45px] sm:-left-[69px] top-1.5 h-8 w-8 rounded-full bg-[#eef4ed] border border-[#2d5a3b]/20 flex items-center justify-center text-xs font-mono font-bold text-[#2d5a3b] group-hover:bg-[#2d5a3b] group-hover:text-white group-hover:border-[#2d5a3b] transition-colors duration-300 shadow-md">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
 
                   {/* Card Content */}
-                  <div className="bg-white/80 border border-[#cda250]/15 p-6 sm:p-8 space-y-3 rounded-2xl shadow-lg hover:border-[#cda250]/30 transition-all duration-300">
+                  <div className="bg-white/80 backdrop-blur-md border border-[#2d5a3b]/10 p-6 sm:p-8 space-y-3 rounded-2xl shadow-[0_10px_35px_rgba(45,90,59,0.02)] hover:border-[#2d5a3b]/25 transition-all duration-300">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-[#b28a50] bg-[#faf8f5] px-3 py-1 border border-[#cda250]/20 rounded">
+                      <span className="text-xs font-mono font-bold text-[#2d5a3b] bg-[#eef4ed] px-3 py-1 border border-[#2d5a3b]/15 rounded">
                         ⏱ {item.time}
                       </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-sage-400">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#4d7058]">
                         {item.activity}
                       </span>
                     </div>
 
-                    <h3 className="font-serif text-lg sm:text-xl font-light text-[#1a2f23] pt-1">
+                    <h3 className="font-serif text-lg sm:text-xl font-light text-[#14291c] pt-1">
                       {item.title}
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed">
+                    <p className="text-sm text-[#2b4d37] font-light leading-relaxed">
                       {item.description}
                     </p>
                   </div>
@@ -810,23 +806,23 @@ export default function Home() {
       </div>
 
       {/* 6. Guest Stories Section (Thư Tay Trải Nghiệm) */}
-      <div className="py-32 bg-[#f4f2ec] relative border-b border-[#cda250]/10">
+      <div className="py-16 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <ScrollReveal>
-            <div className="text-center max-w-2xl mx-auto mb-24 space-y-4">
-              <span className="text-[10px] font-bold tracking-[0.25em] text-[#b28a50] uppercase block">
+            <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
+              <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
                 CẢM NHẬN KHÁCH LƯU TRÚ
               </span>
-              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#1a2f23] leading-tight">
-                Nhật Ký Trải Nghiệm Hoàng Gia
+              <h2 className="font-serif text-3xl sm:text-5xl font-light text-[#14291c] leading-tight">
+                Nhật Ký Trải Nghiệm Chữa Lành
               </h2>
               <div className="flex items-center justify-center space-x-3 mt-6">
-                <div className="h-[1px] w-8 bg-[#cda250]/40" />
-                <Leaf className="h-4 w-4 text-[#cda250]/75" />
-                <div className="h-[1px] w-8 bg-[#cda250]/40" />
+                <div className="h-[1px] w-8 bg-[#2d5a3b]/30" />
+                <Leaf className="h-4 w-4 text-[#2d5a3b]/75" />
+                <div className="h-[1px] w-8 bg-[#2d5a3b]/30" />
               </div>
-              <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed max-w-lg mx-auto">
+              <p className="text-sm text-[#2b4d37] font-light leading-relaxed max-w-lg mx-auto">
                 Những bức thư cảm ơn từ những tâm hồn đã tìm lại nguồn sức sống sảng khoái và sự thư thái viên mãn tại Ngũ Sơn.
               </p>
             </div>
@@ -835,10 +831,10 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {guestStories.map((story, i) => (
               <ScrollReveal key={i} delay={i * 100}>
-                <div className="bg-white border border-[#cda250]/15 p-8 flex flex-col justify-between text-left shadow-lg rounded-2xl group hover:border-[#cda250]/35 transition-all duration-300 min-h-[340px]">
+                <div className="bg-white/80 backdrop-blur-md border border-[#2d5a3b]/10 p-8 flex flex-col justify-between text-left shadow-[0_15px_45px_rgba(45,90,59,0.03)] rounded-2xl group hover:border-[#2d5a3b]/25 transition-all duration-300 min-h-[340px]">
                   <div className="space-y-4">
                     {/* Header */}
-                    <div className="flex justify-between items-center text-[9px] text-[#b28a50] font-semibold border-b border-[#cda250]/10 pb-3">
+                    <div className="flex justify-between items-center text-xs text-[#2d5a3b] font-semibold border-b border-[#2d5a3b]/10 pb-3">
                       <span className="font-bold uppercase tracking-wider">{story.roomType}</span>
                       <div className="flex items-center gap-0.5 text-amber-500">
                         {[...Array(5)].map((_, idx) => (
@@ -847,21 +843,21 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <h3 className="font-serif text-lg font-light text-[#1a2f23] italic leading-snug">
+                    <h3 className="font-serif text-lg font-light text-[#14291c] italic leading-snug">
                       "{story.title}"
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-sage-600 font-light leading-relaxed italic">
+                    <p className="text-sm text-[#2b4d37] font-light leading-relaxed italic">
                       "{story.text}"
                     </p>
                   </div>
 
-                  <div className="pt-6 mt-6 border-t border-[#cda250]/15 flex justify-between items-center text-xs">
+                  <div className="pt-6 mt-6 border-t border-[#2d5a3b]/10 flex justify-between items-center text-xs">
                     <div>
-                      <span className="font-bold text-[#1a2f23] block">{story.name}</span>
+                      <span className="font-bold text-[#14291c] block">{story.name}</span>
                       <span className="text-[10px] text-sage-400 font-light block mt-0.5">{story.stayDate}</span>
                     </div>
-                    <span className="text-[9px] font-bold text-[#b28a50] bg-[#cda250]/10 border border-[#cda250]/20 px-3 py-1 rounded uppercase tracking-wider">
+                    <span className="text-xs font-bold text-[#2d5a3b] bg-[#eef4ed] border border-[#2d5a3b]/15 px-3 py-1 rounded-full uppercase tracking-wider">
                       Khách Thân Thiết
                     </span>
                   </div>
@@ -874,60 +870,62 @@ export default function Home() {
       </div>
 
       {/* 7. Bottom Booking CTA Section (Royal Invite Scroll) */}
-      <div className="py-36 bg-[#faf8f5] relative overflow-hidden text-center border-t border-[#cda250]/10">
-        <div className="absolute top-1/2 left-0 w-96 h-96 bg-[#cda250]/5 rounded-full filter blur-3xl -translate-y-1/2 pointer-events-none" />
-        <div className="absolute -bottom-20 right-0 w-96 h-96 bg-[#cda250]/5 rounded-full filter blur-3xl pointer-events-none" />
+      <div className="py-16 bg-transparent relative overflow-hidden text-center">
+        <div className="absolute top-1/2 left-0 w-96 h-96 bg-[#2d5a3b]/5 rounded-full filter blur-3xl -translate-y-1/2 pointer-events-none" />
+        <div className="absolute -bottom-20 right-0 w-96 h-96 bg-[#2d5a3b]/5 rounded-full filter blur-3xl pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto px-6 sm:px-8 relative z-10">
-          <ScrollReveal>
-            <div className="space-y-8 max-w-3xl mx-auto">
-              <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#b28a50] bg-white border border-[#cda250]/20 px-5 py-2.5 rounded-full shadow-md">
-                <Crown className="h-3.5 w-3.5 text-[#b28a50]" />
-                Royal Invitation
-              </span>
-              
-              <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-light text-[#1a2f23] leading-tight">
-                Khởi Đầu Hành Trình <br/>
-                <span className="italic font-serif text-[#cda250] font-normal">Tái Sinh Sức Khỏe</span>
-              </h2>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="bg-gradient-to-br from-[#dce8db] via-[#edf4ed] to-[#dce8db] border border-[#2d5a3b]/15 rounded-[40px] p-12 sm:p-20 shadow-[0_20px_50px_rgba(45,90,59,0.06)] relative overflow-hidden text-center">
+            <ScrollReveal>
+              <div className="space-y-8 max-w-3xl mx-auto">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#2d5a3b] bg-white border border-[#2d5a3b]/20 px-5 py-2.5 rounded-full shadow-sm">
+                  <Crown className="h-3.5 w-3.5 text-[#2d5a3b]" />
+                  Royal Invitation
+                </span>
+                
+                <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-light text-[#14291c] leading-tight">
+                  Khởi Đầu Hành Trình <br/>
+                  <span className="italic font-serif text-[#2d5a3b] font-normal">Tái Sinh Sức Khỏe</span>
+                </h2>
 
-              <div className="flex items-center justify-center space-x-3 py-2">
-                <div className="h-[1px] w-12 bg-[#cda250]/30" />
-                <Leaf className="h-4 w-4 text-[#cda250]/75" />
-                <div className="h-[1px] w-12 bg-[#cda250]/30" />
-              </div>
-
-              <p className="text-sage-650 font-light text-xs sm:text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-                Chọn biệt thự nghỉ dưỡng lý tưởng bên sườn đồi, lên lịch trình spa trị liệu cá nhân hóa và các buổi thiền định chuyên sâu. Mọi đặc quyền cao cấp nhất đang đón chờ hành trình chữa lành của quý khách.
-              </p>
-
-              <div className="pt-8">
-                <Link
-                  to="/dat-lich"
-                  className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-r from-[#cda250] to-[#b1893c] text-[#070e0a] hover:from-[#d9b360] hover:to-[#c29a4a] text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-lg hover:-translate-y-0.5 cursor-pointer group"
-                >
-                  <Calendar className="h-4 w-4 mr-2 group-hover:rotate-6 transition-transform" />
-                  Đặt biệt thự & Liệu trình trị liệu
-                </Link>
-              </div>
-
-              {/* Benefits list */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-16 max-w-2xl mx-auto text-[10px] text-sage-500 font-semibold border-t border-[#cda250]/15">
-                <div className="flex items-center justify-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-[#cda250]" />
-                  <span>Bảo mật giao dịch tuyệt đối</span>
+                <div className="flex items-center justify-center space-x-3 py-2">
+                  <div className="h-[1px] w-12 bg-[#2d5a3b]/30" />
+                  <Leaf className="h-4 w-4 text-[#2d5a3b]/75" />
+                  <div className="h-[1px] w-12 bg-[#2d5a3b]/30" />
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <Compass className="h-4 w-4 text-[#cda250]" />
-                  <span>Lộ trình cá nhân hóa 1:1</span>
+
+                <p className="text-[#2b4d37] font-light text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+                  Chọn biệt thự nghỉ dưỡng lý tưởng bên sườn đồi, lên lịch trình spa trị liệu cá nhân hóa và các buổi thiền định chuyên sâu. Mọi đặc quyền cao cấp nhất đang đón chờ hành trình chữa lành của quý khách.
+                </p>
+
+                <div className="pt-8">
+                  <Link
+                    to="/dat-lich"
+                    className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-lg hover:shadow-[#2d5a3b]/20 hover:-translate-y-0.5 hover:scale-103 cursor-pointer group rounded-full"
+                  >
+                    <Calendar className="h-4 w-4 mr-2 group-hover:rotate-6 transition-transform" />
+                    Đặt biệt thự & Liệu trình trị liệu
+                  </Link>
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <Leaf className="h-4 w-4 text-[#cda250]" />
-                  <span>Hoàn hủy phòng linh hoạt 48h</span>
+
+                {/* Benefits list */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-16 max-w-2xl mx-auto text-xs text-[#2b4d37] font-semibold border-t border-[#2d5a3b]/15">
+                  <div className="flex items-center justify-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#2d5a3b]" />
+                    <span>Bảo mật giao dịch tuyệt đối</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Compass className="h-4 w-4 text-[#2d5a3b]" />
+                    <span>Lộ trình cá nhân hóa 1:1</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Leaf className="h-4 w-4 text-[#2d5a3b]" />
+                    <span>Hoàn hủy phòng linh hoạt 48h</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </ScrollReveal>
+            </ScrollReveal>
+          </div>
         </div>
       </div>
 

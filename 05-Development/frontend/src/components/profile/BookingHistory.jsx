@@ -7,8 +7,7 @@ import StatusBadge, { ROOM_STATUS_MAP, SPA_STATUS_MAP, FOOD_STATUS_MAP } from ".
 import axiosClient from "../../api/axiosClient";
 
 export default function BookingHistory() {
-  const [activeCategory, setActiveCategory] = useState("rooms"); // "rooms" or "others"
-  const [serviceFilter, setServiceFilter] = useState("all"); // "all", "spa", "yoga", "food"
+  const [activeTab, setActiveTab] = useState("rooms"); // "rooms", "all", "spa", "yoga", "food"
   const [roomBookings, setRoomBookings] = useState([]);
   const [spaBookings, setSpaBookings]   = useState([]);
   const [foodOrders, setFoodOrders]     = useState([]);
@@ -90,10 +89,7 @@ export default function BookingHistory() {
     ...foodOrders
   ];
 
-  const filteredOtherServices = allOtherServices.filter(item => {
-    if (serviceFilter === "all") return true;
-    return item.type === serviceFilter;
-  });
+  const filteredOtherServices = allOtherServices.filter(item => item.type === activeTab);
 
   const EmptyState = ({ icon: Icon, message }) => (
     <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -106,20 +102,36 @@ export default function BookingHistory() {
       </Link>
     </div>
   );
+  const tabs = [
+    { key: "rooms", label: "Đặt Phòng", icon: BedDouble, count: roomBookings.length },
+    { key: "spa", label: "Spa & Vật lý trị liệu", icon: Dumbbell, count: spaBookings.length },
+    { key: "yoga", label: "Yoga & Thiền", icon: Sparkles, count: MOCK_YOGA_BOOKINGS.length },
+    { key: "food", label: "Ẩm thực dưỡng sinh", icon: Leaf, count: foodOrders.length },
+  ];
 
   return (
     <div className="space-y-5">
-      {/* Category selector */}
-      <div className="flex gap-2 bg-primary-50 p-1 rounded-md w-fit">
-        {[
-          { key: "rooms", label: "Đặt Phòng", icon: BedDouble, count: roomBookings.length },
-          { key: "others", label: "Dịch Vụ Khác (Spa, Yoga, Food)", icon: Sparkles, count: allOtherServices.length },
-        ].map(({ key, label, icon: Icon, count }) => (
-          <button key={key} onClick={() => setActiveCategory(key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold transition-all cursor-pointer ${activeCategory === key ? "bg-white text-primary-900 shadow-sm" : "text-sage-600 hover:text-sage-800"}`}>
+      {/* Category selector / Tabs */}
+      <div className="flex gap-2 overflow-x-auto flex-nowrap bg-primary-50 p-1.5 rounded-md w-full md:w-fit max-w-full scrollbar-none">
+        {tabs.map(({ key, label, icon: Icon, count }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+              activeTab === key
+                ? "bg-white text-primary-900 shadow-sm"
+                : "text-sage-600 hover:text-sage-800"
+            }`}
+          >
             <Icon className="h-3.5 w-3.5" />
             {label}
-            <span className={`ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${activeCategory === key ? "bg-primary-100 text-primary-800" : "bg-sage-200 text-sage-600"}`}>
+            <span
+              className={`ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                activeTab === key
+                  ? "bg-primary-100 text-primary-800"
+                  : "bg-sage-200 text-sage-600"
+              }`}
+            >
               {count}
             </span>
           </button>
@@ -130,7 +142,7 @@ export default function BookingHistory() {
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-3 border-primary-800 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : activeCategory === "rooms" ? (
+      ) : activeTab === "rooms" ? (
         roomBookings.length === 0 ? (
           <EmptyState icon={BedDouble} message="Bạn chưa có lịch đặt phòng nào." />
         ) : (
@@ -175,69 +187,52 @@ export default function BookingHistory() {
           </div>
         )
       ) : (
-        /* Category: others */
-        <div className="space-y-4">
-          {/* Sub filters */}
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { key: "all", label: "Tất cả dịch vụ" },
-              { key: "spa", label: "Spa & Vật lý trị liệu" },
-              { key: "yoga", label: "Yoga & Thiền" },
-              { key: "food", label: "Ẩm thực dưỡng sinh" },
-            ].map(({ key, label }) => (
-              <button key={key} onClick={() => setServiceFilter(key)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${serviceFilter === key ? "bg-primary-900 text-white border-primary-900 shadow-sm" : "bg-white border-primary-200 text-sage-600 hover:border-primary-400"}`}>
-                {label}
-              </button>
+        /* Other services */
+        filteredOtherServices.length === 0 ? (
+          <EmptyState icon={Sparkles} message="Không có lịch sử sử dụng dịch vụ nào." />
+        ) : (
+          <div className="space-y-3">
+            {filteredOtherServices.map((s) => (
+              <div key={s.spaBookingId} className="bg-white rounded-md border-b border-primary-100 p-5">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div>
+                    <p className="text-[10px] text-sage-400 font-bold uppercase tracking-wider mb-1">
+                      {s.type === "spa" ? "Spa Booking" : s.type === "yoga" ? "Yoga Booking" : "Room Service Food"}
+                    </p>
+                    <p className="text-sm font-semibold text-sage-900">{s.serviceName}</p>
+                    {s.serviceCategory && (
+                      <p className="text-xs text-primary-600 mt-0.5 flex items-center gap-1">
+                        {s.type === "spa" && <Dumbbell className="h-3.5 w-3.5" />}
+                        {s.type === "yoga" && <Sparkles className="h-3.5 w-3.5" />}
+                        {s.type === "food" && <Leaf className="h-3.5 w-3.5" />}
+                        {s.serviceCategory}
+                      </p>
+                    )}
+                    {s.therapistName && (
+                      <p className="text-xs text-sage-500 mt-1">Hướng dẫn: {s.therapistName}</p>
+                    )}
+                    {s.specialNote && (
+                      <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">Ghi chú: {s.specialNote}</p>
+                    )}
+                  </div>
+                  <StatusBadge status={s.status} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
+                </div>
+                <div className="flex items-center justify-between text-xs text-sage-500 mt-3 pt-3 border-t border-primary-50">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {s.type === "food" ? fmtDate(s.startDatetime) : `${fmtDateTime(s.startDatetime)} — ${fmtDateTime(s.endDatetime)}`}
+                  </span>
+                  <span className="font-bold text-sage-900">{fmtCurrency(s.priceAtBooking)}</span>
+                </div>
+                {s.isPackageIncluded && (
+                   <p className="mt-2 text-[11px] text-emerald-600 flex items-center gap-1">
+                    <BadgeCheck className="h-3.5 w-3.5" /> Thuộc gói nghỉ dưỡng
+                  </p>
+                )}
+              </div>
             ))}
           </div>
-
-          {filteredOtherServices.length === 0 ? (
-            <EmptyState icon={Sparkles} message="Không có lịch sử sử dụng dịch vụ nào." />
-          ) : (
-            <div className="space-y-3">
-              {filteredOtherServices.map((s) => (
-                <div key={s.spaBookingId} className="bg-white rounded-md border-b border-primary-100 p-5">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <p className="text-[10px] text-sage-400 font-bold uppercase tracking-wider mb-1">
-                        {s.type === "spa" ? "Spa Booking" : s.type === "yoga" ? "Yoga Booking" : "Room Service Food"}
-                      </p>
-                      <p className="text-sm font-semibold text-sage-900">{s.serviceName}</p>
-                      {s.serviceCategory && (
-                        <p className="text-xs text-primary-600 mt-0.5 flex items-center gap-1">
-                          {s.type === "spa" && <Dumbbell className="h-3.5 w-3.5" />}
-                          {s.type === "yoga" && <Sparkles className="h-3.5 w-3.5" />}
-                          {s.type === "food" && <Leaf className="h-3.5 w-3.5" />}
-                          {s.serviceCategory}
-                        </p>
-                      )}
-                      {s.therapistName && (
-                        <p className="text-xs text-sage-500 mt-1">Hướng dẫn: {s.therapistName}</p>
-                      )}
-                      {s.specialNote && (
-                        <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">Ghi chú: {s.specialNote}</p>
-                      )}
-                    </div>
-                    <StatusBadge status={s.status} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-sage-500 mt-3 pt-3 border-t border-primary-50">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {s.type === "food" ? fmtDate(s.startDatetime) : `${fmtDateTime(s.startDatetime)} — ${fmtDateTime(s.endDatetime)}`}
-                    </span>
-                    <span className="font-bold text-sage-900">{fmtCurrency(s.priceAtBooking)}</span>
-                  </div>
-                  {s.isPackageIncluded && (
-                     <p className="mt-2 text-[11px] text-emerald-600 flex items-center gap-1">
-                      <BadgeCheck className="h-3.5 w-3.5" /> Thuộc gói nghỉ dưỡng
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )
       )}
     </div>
   );

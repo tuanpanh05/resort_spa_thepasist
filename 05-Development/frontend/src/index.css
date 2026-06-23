@@ -42,8 +42,8 @@
   --font-sans: "Inter", "system-ui", "sans-serif";
   --font-serif: "Playfair Display", "Georgia", "serif";
 
-  --animate-fade-in: fadeIn 1s ease-out forwards;
-  --animate-slide-up: slideUp 0.8s ease-out forwards;
+  --animate-fade-in: fadeIn 0.35s ease-out forwards;
+  --animate-slide-up: slideUp 0.4s ease-out forwards;
   --animate-pulse-subtle: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   @keyframes fadeIn {
@@ -78,7 +78,7 @@
       transform: translateX(100%);
     }
   }
-  --animate-slide-down: slideDown 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-slide-down: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   @keyframes slideDown {
     0% {
       opacity: 0;
@@ -590,3 +590,104 @@ header div a {
     font-size: 1.2rem;
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   NATURE GREEN BRAND THEME OVERRIDES (Replacing Gold/Bronze)
+   ══════════════════════════════════════════════════════════ */
+
+/* Solid Backgrounds */
+[class~="bg-[#cda250]"] {
+  background-color: #2d5a3b !important;
+  color: #ffffff !important;
+}
+
+/* Hover States */
+[class~="bg-[#cda250]"]:hover,
+[class~="hover:bg-[#d9b360]"]:hover,
+[class~="hover:bg-[#cda250]"]:hover {
+  background-color: #3b754e !important;
+  color: #ffffff !important;
+}
+
+/* Text Colors */
+[class~="text-[#cda250]"] {
+  color: #2d5a3b !important;
+}
+[class~="text-[#b28a50]"] {
+  color: #1e3d27 !important;
+}
+
+/* Hover Text Colors */
+[class~="hover:text-[#cda250]"]:hover {
+  color: #3b754e !important;
+}
+[class~="hover:text-[#b28a50]"]:hover {
+  color: #264a30 !important;
+}
+
+/* Opacity Backgrounds */
+[class~="bg-[#cda250]/10"] {
+  background-color: rgba(45, 90, 59, 0.1) !important;
+  color: #2d5a3b !important;
+}
+[class~="bg-[#cda250]/15"] {
+  background-color: rgba(45, 90, 59, 0.15) !important;
+}
+[class~="bg-[#cda250]/20"] {
+  background-color: rgba(45, 90, 59, 0.2) !important;
+}
+[class~="bg-[#cda250]/25"] {
+  background-color: rgba(45, 90, 59, 0.25) !important;
+}
+[class~="bg-[#cda250]/30"] {
+  background-color: rgba(45, 90, 59, 0.3) !important;
+}
+
+/* Borders */
+[class~="border-[#cda250]"] {
+  border-color: #2d5a3b !important;
+}
+[class~="border-[#cda250]/10"] {
+  border-color: rgba(45, 90, 59, 0.1) !important;
+}
+[class~="border-[#cda250]/15"] {
+  border-color: rgba(45, 90, 59, 0.15) !important;
+}
+[class~="border-[#cda250]/20"] {
+  border-color: rgba(45, 90, 59, 0.2) !important;
+}
+[class~="border-[#cda250]/25"] {
+  border-color: rgba(45, 90, 59, 0.25) !important;
+}
+[class~="border-[#cda250]/30"] {
+  border-color: rgba(45, 90, 59, 0.3) !important;
+}
+[class~="border-[#cda250]/40"] {
+  border-color: rgba(45, 90, 59, 0.4) !important;
+}
+[class~="border-[#b28a50]"] {
+  border-color: #1e3d27 !important;
+}
+
+/* Premium Gradient Button overrides */
+[class*="bg-gradient"][class*="from-[#cda250]"] {
+  background-image: linear-gradient(to right, #2d5a3b, #1e3d27) !important;
+  color: #ffffff !important;
+}
+[class*="bg-gradient"][class*="from-[#cda250]"]:hover {
+  background-image: linear-gradient(to right, #3b754e, #264a30) !important;
+  color: #ffffff !important;
+}
+
+/* Shadows */
+[class*="shadow-[#cda250]"] {
+  --tw-shadow-color: rgba(45, 90, 59, 0.15) !important;
+  box-shadow: 0 4px 20px rgba(45, 90, 59, 0.2) !important;
+}
+
+/* Selection Highlight */
+[class*="selection:bg-[#cda250]"]::selection {
+  background-color: rgba(45, 90, 59, 0.2) !important;
+  color: inherit !important;
+}
+
