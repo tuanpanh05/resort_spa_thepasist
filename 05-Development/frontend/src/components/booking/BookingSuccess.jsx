@@ -73,14 +73,6 @@ export default function BookingSuccess({
             }
           </span>
 
-          {selectedPackages && selectedPackages.map((pkg) => (
-            <React.Fragment key={pkg.packageId}>
-              <span className="text-sage-500 font-light">Gói trị liệu:</span>
-              <span className="font-semibold text-right text-primary-800">
-                {pkg.name}
-              </span>
-            </React.Fragment>
-          ))}
 
           {selectedServices.length > 0 && (
             <>

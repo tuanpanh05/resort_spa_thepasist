@@ -137,6 +137,13 @@ export const adminInitialRooms = [
   { id: "NS-103", type: "Nhà Sàn Cộng Đồng Đông Sơn", status: "vacant", floor: 1, price: "9,000,000đ", maxGuests: 25, photo: "room_community.png" },
   { id: "NS-104", type: "Nhà Sàn Cộng Đồng Đông Sơn", status: "vacant", floor: 1, price: "9,000,000đ", maxGuests: 25, photo: "room_community.png" },
   { id: "NS-105", type: "Nhà Sàn Cộng Đồng Đông Sơn", status: "vacant", floor: 1, price: "9,000,000đ", maxGuests: 25, photo: "room_community.png" },
+
+  // Nhà Chung 50 Thung Lũng Xanh (5 rooms)
+  { id: "NC-101", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", maxGuests: 50, photo: "room_valley_50.jpg" },
+  { id: "NC-102", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", maxGuests: 50, photo: "room_valley_50.jpg" },
+  { id: "NC-103", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", maxGuests: 50, photo: "room_valley_50.jpg" },
+  { id: "NC-104", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", maxGuests: 50, photo: "room_valley_50.jpg" },
+  { id: "NC-105", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", maxGuests: 50, photo: "room_valley_50.jpg" },
 ];
 
 export const adminInitialServices = [
@@ -433,6 +440,13 @@ export const staffInitialRooms = [
   { id: "NS-103", type: "Nhà Sàn Cộng Đồng Đông Sơn", status: "vacant", floor: 1, price: "9,000,000đ", guestName: "" },
   { id: "NS-104", type: "Nhà Sàn Cộng Đồng Đông Sơn", status: "vacant", floor: 1, price: "9,000,000đ", guestName: "" },
   { id: "NS-105", type: "Nhà Sàn Cộng Đồng Đông Sơn", status: "vacant", floor: 1, price: "9,000,000đ", guestName: "" },
+
+  // Nhà Chung 50 Thung Lũng Xanh (5 rooms)
+  { id: "NC-101", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", guestName: "" },
+  { id: "NC-102", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", guestName: "" },
+  { id: "NC-103", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", guestName: "" },
+  { id: "NC-104", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", guestName: "" },
+  { id: "NC-105", type: "Nhà Chung 50 Thung Lũng Xanh", status: "vacant", floor: 1, price: "12,500,000đ", guestName: "" },
 ];
 
 export const staffInitialBookings = [
@@ -1436,6 +1450,16 @@ export const roomsPageAllRooms = [
     capacity: "15 - 25 Khách",
     amenity: "Phù hợp Teambuilding",
     image: "/room_community.png",
+  },
+  {
+    title: "Nhà Chung 50 Thung Lũng Xanh",
+    category: "Phòng Cộng Đồng/Tập Thể",
+    description:
+      "Tọa lạc giữa thung lũng xanh mướt, bao bọc bởi đồi thông và suối ngàn. Thiết kế sang trọng pha trộn gỗ mộc, sở hữu khuôn viên vườn và hồ bơi tràn đồi riêng biệt. Không gian lý tưởng cho các buổi khóa tu trị liệu, hội ngộ gia đình quy mô lớn hoặc sự kiện teambuilding đặc biệt.",
+    size: "450 m²",
+    capacity: "30 - 50 Khách",
+    amenity: "Hồ bơi tràn đồi & Vườn riêng",
+    image: "/room_valley_50.jpg",
   },
 ];
 

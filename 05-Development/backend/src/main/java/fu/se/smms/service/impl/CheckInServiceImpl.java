@@ -5,6 +5,7 @@ import fu.se.smms.entity.Room;
 import fu.se.smms.entity.RoomBooking;
 import fu.se.smms.entity.RoomBookingDetail;
 import fu.se.smms.entity.User;
+import fu.se.smms.entity.RoomType;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
@@ -129,16 +130,25 @@ public class CheckInServiceImpl {
                 dto.setPackageName(booking.getRetreatPackage().getName());
             }
 
-            // Room info (from first detail)
+            // Room info (from all details)
             List<RoomBookingDetail> details = booking.getDetails();
             if (details != null && !details.isEmpty()) {
-                Room room = details.get(0).getRoom();
-                if (room != null) {
-                    dto.setRoomNumber(room.getRoomNumber());
-                    if (room.getRoomType() != null) {
-                        dto.setRoomTypeName(room.getRoomType().getTypeName());
-                    }
-                }
+                String roomNumbers = details.stream()
+                        .map(RoomBookingDetail::getRoom)
+                        .filter(java.util.Objects::nonNull)
+                        .map(Room::getRoomNumber)
+                        .collect(java.util.stream.Collectors.joining(", "));
+                dto.setRoomNumber(roomNumbers);
+
+                String roomTypes = details.stream()
+                        .map(RoomBookingDetail::getRoom)
+                        .filter(java.util.Objects::nonNull)
+                        .map(Room::getRoomType)
+                        .filter(java.util.Objects::nonNull)
+                        .map(RoomType::getTypeName)
+                        .distinct()
+                        .collect(java.util.stream.Collectors.joining(", "));
+                dto.setRoomTypeName(roomTypes);
             }
 
             arrivals.add(dto);

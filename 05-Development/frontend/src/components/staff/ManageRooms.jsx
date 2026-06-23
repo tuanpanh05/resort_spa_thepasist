@@ -191,6 +191,7 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
     { id: "4",   label: "👨‍👩‍👧‍👦 4 người" },
     { id: "8",   label: "👥 8 người" },
     { id: "25",  label: "👥 25 người" },
+    { id: "50",  label: "👥 50 người" },
   ];
 
   const getTypeCategory = (roomTypeName) => {

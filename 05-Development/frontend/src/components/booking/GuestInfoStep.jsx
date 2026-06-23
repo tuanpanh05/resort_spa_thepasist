@@ -140,34 +140,6 @@ export default function GuestInfoStep({
           </div>
         </div>
 
-        {/* Guest Age */}
-        <div>
-          <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
-            Số tuổi <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              min="1"
-              max="120"
-              placeholder="Ví dụ: 30"
-              value={guestInfo.age || ""}
-              onChange={(e) => {
-                setGuestInfo({ ...guestInfo, age: e.target.value ? Number(e.target.value) : "" });
-                setFormErrors({ ...formErrors, age: "" });
-              }}
-              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
-                formErrors.age ? "border-red-400" : "border-[#cda250]/20"
-              }`}
-            />
-            <User className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          </div>
-          {formErrors.age && (
-            <span className="text-[10px] text-red-500 font-normal mt-1 block">
-              {formErrors.age}
-            </span>
-          )}
-        </div>
 
         {/* Check In Date */}
         <div>
