@@ -13,5 +13,7 @@ public interface SpaBookingService {
 
     List<SpecialistSpaAppointmentDTO> getTherapistSchedule(Integer therapistId, LocalDate date);
 
+    List<SpecialistSpaAppointmentDTO> getTherapistScheduleRange(Integer therapistId, LocalDate start, LocalDate end);
+
     SpaBookingResponseDTO updateSessionStatus(Integer spaBookingId, String status, Integer therapistId);
 }

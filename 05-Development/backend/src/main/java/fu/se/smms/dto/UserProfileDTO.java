@@ -11,10 +11,15 @@ public class UserProfileDTO {
     private String role;
     private String status;
     private LocalDateTime createdAt;
+    private Boolean googleCalendarSyncEnabled;
+    private String googleCalendarId;
+    private Boolean calendarRemindersEnabled;
+    private Integer reminderLeadTimeMins;
 
     public UserProfileDTO() {}
 
-    public UserProfileDTO(Integer userId, String email, String fullName, String phone, String idPassport, String role, String status, LocalDateTime createdAt) {
+    public UserProfileDTO(Integer userId, String email, String fullName, String phone, String idPassport, String role, String status, LocalDateTime createdAt,
+                          Boolean googleCalendarSyncEnabled, String googleCalendarId, Boolean calendarRemindersEnabled, Integer reminderLeadTimeMins) {
         this.userId = userId;
         this.email = email;
         this.fullName = fullName;
@@ -23,6 +28,10 @@ public class UserProfileDTO {
         this.role = role;
         this.status = status;
         this.createdAt = createdAt;
+        this.googleCalendarSyncEnabled = googleCalendarSyncEnabled;
+        this.googleCalendarId = googleCalendarId;
+        this.calendarRemindersEnabled = calendarRemindersEnabled;
+        this.reminderLeadTimeMins = reminderLeadTimeMins;
     }
 
     public static Builder builder() {
@@ -38,6 +47,10 @@ public class UserProfileDTO {
         private String role;
         private String status;
         private LocalDateTime createdAt;
+        private Boolean googleCalendarSyncEnabled;
+        private String googleCalendarId;
+        private Boolean calendarRemindersEnabled;
+        private Integer reminderLeadTimeMins;
 
         public Builder userId(Integer userId) {
             this.userId = userId;
@@ -79,8 +92,29 @@ public class UserProfileDTO {
             return this;
         }
 
+        public Builder googleCalendarSyncEnabled(Boolean googleCalendarSyncEnabled) {
+            this.googleCalendarSyncEnabled = googleCalendarSyncEnabled;
+            return this;
+        }
+
+        public Builder googleCalendarId(String googleCalendarId) {
+            this.googleCalendarId = googleCalendarId;
+            return this;
+        }
+
+        public Builder calendarRemindersEnabled(Boolean calendarRemindersEnabled) {
+            this.calendarRemindersEnabled = calendarRemindersEnabled;
+            return this;
+        }
+
+        public Builder reminderLeadTimeMins(Integer reminderLeadTimeMins) {
+            this.reminderLeadTimeMins = reminderLeadTimeMins;
+            return this;
+        }
+
         public UserProfileDTO build() {
-            return new UserProfileDTO(userId, email, fullName, phone, idPassport, role, status, createdAt);
+            return new UserProfileDTO(userId, email, fullName, phone, idPassport, role, status, createdAt,
+                    googleCalendarSyncEnabled, googleCalendarId, calendarRemindersEnabled, reminderLeadTimeMins);
         }
     }
 
@@ -147,5 +181,37 @@ public class UserProfileDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getGoogleCalendarSyncEnabled() {
+        return googleCalendarSyncEnabled;
+    }
+
+    public void setGoogleCalendarSyncEnabled(Boolean googleCalendarSyncEnabled) {
+        this.googleCalendarSyncEnabled = googleCalendarSyncEnabled;
+    }
+
+    public String getGoogleCalendarId() {
+        return googleCalendarId;
+    }
+
+    public void setGoogleCalendarId(String googleCalendarId) {
+        this.googleCalendarId = googleCalendarId;
+    }
+
+    public Boolean getCalendarRemindersEnabled() {
+        return calendarRemindersEnabled;
+    }
+
+    public void setCalendarRemindersEnabled(Boolean calendarRemindersEnabled) {
+        this.calendarRemindersEnabled = calendarRemindersEnabled;
+    }
+
+    public Integer getReminderLeadTimeMins() {
+        return reminderLeadTimeMins;
+    }
+
+    public void setReminderLeadTimeMins(Integer reminderLeadTimeMins) {
+        this.reminderLeadTimeMins = reminderLeadTimeMins;
     }
 }

@@ -5,7 +5,7 @@ import Button from "../ui/Button";
 import RoomTable from "./RoomTable";
 import { RoomModalForm } from "./ModalForm";
 
-export default function ManageRooms({ rooms, setRooms, handleDeleteRoom }) {
+export default function ManageRooms({ rooms, handleCreateRoom, handleUpdateRoom, handleDeleteRoom }) {
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
   const [showEditRoomModal, setShowEditRoomModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -39,42 +39,29 @@ export default function ManageRooms({ rooms, setRooms, handleDeleteRoom }) {
       price: room.price,
       maxGuests: room.maxGuests,
       photo: room.photo || "",
+      status: room.status,
     });
     setShowEditRoomModal(true);
   };
 
-  const localSubmitCreate = (e) => {
+  const localSubmitCreate = async (e) => {
     e.preventDefault();
-    if (!roomForm.id || !roomForm.price) {
-      alert("Vui lòng điền mã phòng và giá phòng.");
+    if (!roomForm.id) {
+      alert("Vui lòng điền mã phòng.");
       return;
     }
-    const exists = rooms.some((r) => r.id === roomForm.id);
-    if (exists) {
-      alert("Mã phòng này đã tồn tại trên hệ thống!");
-      return;
+    const success = await handleCreateRoom(roomForm);
+    if (success) {
+      setShowAddRoomModal(false);
     }
-    const newRoom = {
-      ...roomForm,
-      floor: parseInt(roomForm.floor),
-      status: "vacant",
-    };
-    setRooms((prev) => [...prev, newRoom]);
-    setShowAddRoomModal(false);
-    alert(`Phòng ${roomForm.id} đã được khởi tạo thành công.`);
   };
 
-  const localSubmitUpdate = (e) => {
+  const localSubmitUpdate = async (e) => {
     e.preventDefault();
-    setRooms((prev) =>
-      prev.map((r) =>
-        r.id === selectedRoom.id
-          ? { ...r, ...roomForm, floor: parseInt(roomForm.floor) }
-          : r,
-      ),
-    );
-    setShowEditRoomModal(false);
-    alert("Thông tin phòng nghỉ đã được cập nhật.");
+    const success = await handleUpdateRoom(selectedRoom.roomId, roomForm);
+    if (success) {
+      setShowEditRoomModal(false);
+    }
   };
 
   return (

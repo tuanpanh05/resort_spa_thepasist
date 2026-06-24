@@ -104,6 +104,20 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
+            System.out.println("[DB Seeder] Adding calendar configuration columns to users table...");
+            try { jdbcTemplate.execute("ALTER TABLE users ADD google_calendar_sync_enabled BIT DEFAULT 0"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE users ADD google_calendar_id VARCHAR(255) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE users ADD calendar_reminders_enabled BIT DEFAULT 1"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE users ADD reminder_lead_time_mins INT DEFAULT 30"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("UPDATE users SET google_calendar_sync_enabled = 0 WHERE google_calendar_sync_enabled IS NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("UPDATE users SET calendar_reminders_enabled = 1 WHERE calendar_reminders_enabled IS NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("UPDATE users SET reminder_lead_time_mins = 30 WHERE reminder_lead_time_mins IS NULL"); } catch (Exception e) {}
+            System.out.println("[DB Seeder] Successfully added/verified calendar columns in users table.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not add calendar columns to users: " + e.getMessage());
+        }
+
+        try {
             System.out.println("[DB Seeder] Skipping hardcoded Food Menu updates to preserve user edits.");
             /* 
             jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Cháo Yến Mạch Hạt Chia', description=N'Cháo yến mạch nguyên cám nấu cùng hạt chia, hạt óc chó và dâu tây tươi.', dietary_tags='Vegan, Healthy', price=120000, available_days='1,3,5', image_url='/images/dishes/dish_chao_yen_mach.png', is_package_included=1, periods='Breakfast' WHERE food_id=1");

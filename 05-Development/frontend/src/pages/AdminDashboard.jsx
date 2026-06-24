@@ -15,7 +15,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { paymentApi } from "../api";
+import { paymentApi, staffApi, complaintsApi } from "../api";
 
 import {
   adminInitialAccounts as initialAccounts,
@@ -49,25 +49,196 @@ export default function AdminDashboard() {
 
   // Master states
   const [accounts, setAccounts] = useState(initialAccounts);
-  const [rooms, setRooms] = useState(initialRooms);
+  const [rooms, setRooms] = useState([]);
   const [services, setServices] = useState(initialServices);
-  const [payments, setPayments] = useState(initialPayments);
-  const [feedbacks, setFeedbacks] = useState(initialFeedbacks);
-  const [complaints, setComplaints] = useState(initialComplaints);
-  const [inventory, setInventory] = useState(initialInventory);
-  const [shifts] = useState(initialShifts);
-  const [swapRequests, setSwapRequests] = useState(initialSwapRequests);
-  const [warnings] = useState(initialWarnings);
+  const [payments, setPayments] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [inventory, setInventory] = useState(() => {
+    const local = localStorage.getItem("admin_inventory");
+    return local ? JSON.parse(local) : initialInventory;
+  });
+  const [shifts, setShifts] = useState(() => {
+    const local = localStorage.getItem("admin_shifts");
+    return local ? JSON.parse(local) : [
+      { id: 1, name: "Lê Thị Thu", role: "Lễ tân chính", time: "Ca Sáng (06:00 - 14:00)", department: "Lễ tân", status: "Checked-in" },
+      { id: 2, name: "Nguyễn Văn Huy", role: "Trưởng bộ phận Spa", time: "Ca Chiều (14:00 - 22:00)", department: "Bộ phận Spa", status: "Checked-in" },
+      { id: 3, name: "Phạm Văn Long", role: "Kỹ thuật viên", time: "Ca Đêm (22:00 - 06:00)", department: "Kỹ thuật", status: "Absent" }
+    ];
+  });
+  const [swapRequests, setSwapRequests] = useState(() => {
+    const local = localStorage.getItem("admin_swap_requests");
+    return local ? JSON.parse(local) : [
+      {
+        id: 201,
+        sender: "Lê Thị Thu",
+        shift: "Ca Sáng (06:00 - 14:00)",
+        date: "2026-05-26",
+        receiver: "Nguyễn Văn Huy",
+        reason: "Giải quyết việc gia đình đột xuất",
+        status: "Pending"
+      }
+    ];
+  });
+
+  const loadRooms = async () => {
+    try {
+      const data = await staffApi.getVillas();
+      const mapped = data.map((v) => {
+        let mappedStatus = "vacant";
+        if (v.status === "OCCUPIED" || v.status === "DEPOSITED") {
+          mappedStatus = "occupied";
+        } else if (v.status === "MAINTENANCE") {
+          mappedStatus = "maintenance";
+        } else if (v.status === "DIRTY" || v.status === "CLEANING" || v.status === "VACANT_NEEDS_CLEANING") {
+          mappedStatus = "cleaning";
+        }
+        return {
+          id: v.roomNumber,
+          roomId: v.roomId,
+          type: v.roomTypeName || "Standard",
+          status: mappedStatus,
+          floor: parseInt(v.roomNumber?.split("-")[1]?.charAt(0)) || 1,
+          price: (v.basePrice || 1800000).toLocaleString("vi-VN") + "đ",
+          maxGuests: v.capacity || 2,
+          photo: v.roomTypeName?.includes("Bungalow Gỗ")
+            ? "room_luxury.png"
+            : v.roomTypeName?.includes("Biệt Thự")
+              ? "hero_bg.png"
+              : "room_community.png",
+        };
+      });
+      setRooms(mapped);
+    } catch (err) {
+      console.error("Error loading rooms:", err);
+    }
+  };
+
+  const loadComplaints = async () => {
+    try {
+      const data = await complaintsApi.getAllComplaints();
+      const mapped = data.map((c) => ({
+        id: c.id,
+        roomId: c.roomNumber,
+        customerName: c.guestName,
+        details: c.content,
+        timeReceived: new Date(c.createdAt).toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        status: c.status,
+        solution: c.feedback || "",
+      }));
+      setComplaints(mapped);
+    } catch (err) {
+      console.error("Error loading complaints:", err);
+    }
+  };
+
+  const loadFeedbacks = async () => {
+    try {
+      const data = await paymentApi.getAllFeedbacks(true); // Get all, including toxic
+      const mapped = data.map((f) => ({
+        id: f.feedbackId,
+        customerName: f.userFullName || "Khách ẩn danh",
+        serviceUsed: `Gói Đặt #${f.bookingId}`,
+        date: new Date(f.createdAt).toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        rating: f.rating,
+        comment: f.comment,
+        isToxic: f.isToxic,
+        reply: f.isToxic ? "[Bị ẩn vì chứa nội dung độc hại]" : "",
+      }));
+      setFeedbacks(mapped);
+    } catch (err) {
+      console.error("Error loading feedbacks:", err);
+    }
+  };
+
+  const loadPayments = async () => {
+    try {
+      const data = await paymentApi.getAllInvoices();
+      setPayments(data || []);
+    } catch (err) {
+      console.error("Error loading payments:", err);
+    }
+  };
 
   useEffect(() => {
-    paymentApi.getAllInvoices()
-      .then((data) => {
-        setPayments(data || []);
-      })
-      .catch((err) => {
-        console.error("Error loading operational payments:", err);
-      });
+    Promise.all([
+      loadRooms(),
+      loadComplaints(),
+      loadFeedbacks(),
+      loadPayments()
+    ]).catch((err) => {
+      console.error("Error initializing dashboard data:", err);
+    });
   }, []);
+
+  // Save local data to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem("admin_inventory", JSON.stringify(inventory));
+  }, [inventory]);
+
+  useEffect(() => {
+    localStorage.setItem("admin_shifts", JSON.stringify(shifts));
+  }, [shifts]);
+
+  useEffect(() => {
+    localStorage.setItem("admin_swap_requests", JSON.stringify(swapRequests));
+  }, [swapRequests]);
+
+  // Room CRUD handlers
+  const handleCreateRoom = async (roomData) => {
+    try {
+      const payload = {
+        roomNumber: roomData.id,
+        roomTypeName: roomData.type,
+        status: "AVAILABLE",
+      };
+      await staffApi.createVilla(payload);
+      await loadRooms();
+      return true;
+    } catch (err) {
+      alert("Lỗi khi thêm phòng: " + err.message);
+      return false;
+    }
+  };
+
+  const handleUpdateRoom = async (roomId, roomData) => {
+    try {
+      const payload = {
+        roomNumber: roomData.id,
+        roomTypeName: roomData.type,
+        status: roomData.status === "vacant" ? "AVAILABLE" : roomData.status === "occupied" ? "OCCUPIED" : roomData.status === "cleaning" ? "DIRTY" : "MAINTENANCE",
+      };
+      await staffApi.updateVilla(roomId, payload);
+      await loadRooms();
+      return true;
+    } catch (err) {
+      alert("Lỗi khi cập nhật phòng: " + err.message);
+      return false;
+    }
+  };
+
+  const handleDeleteRoom = async (roomId, roomNumber) => {
+    if (
+      window.confirm(`Bạn có chắc chắn muốn xóa Phòng ${roomNumber} khỏi hệ thống?`)
+    ) {
+      try {
+        await staffApi.deleteVilla(roomId);
+        await loadRooms();
+        alert(`Phòng ${roomNumber} đã được xóa thành công.`);
+      } catch (err) {
+        alert("Lỗi khi xóa phòng: " + err.message);
+      }
+    }
+  };
 
   // Stats calculation
   const totalRoomsCount = rooms.length;
@@ -90,16 +261,6 @@ export default function AdminDashboard() {
     { id: "shifts", label: "Điều Hành Ca Trực", icon: Clock },
     { id: "inventory", label: "Kho Vật Tư Tiêu Hao", icon: Package },
   ];
-
-  // Room CRUD helper
-  const handleDeleteRoom = (id) => {
-    if (
-      window.confirm(`Bạn có chắc chắn muốn xóa Phòng ${id} khỏi hệ thống?`)
-    ) {
-      setRooms((prev) => prev.filter((r) => r.id !== id));
-      alert(`Phòng ${id} đã được xóa.`);
-    }
-  };
 
   const handleLogout = () => {
     alert("Đang đăng xuất khỏi phiên làm việc Admin...");
@@ -168,7 +329,7 @@ export default function AdminDashboard() {
             <AdminOverview
               accounts={accounts}
               rooms={rooms}
-              warnings={warnings}
+              complaints={complaints}
               occupancyRate={occupancyRate}
               occupiedRoomsCount={occupiedRoomsCount}
               setActiveTab={setActiveTab}
@@ -185,7 +346,8 @@ export default function AdminDashboard() {
           {activeTab === "rooms" && (
             <ManageRooms
               rooms={rooms}
-              setRooms={setRooms}
+              handleCreateRoom={handleCreateRoom}
+              handleUpdateRoom={handleUpdateRoom}
               handleDeleteRoom={handleDeleteRoom}
             />
           )}
@@ -197,9 +359,9 @@ export default function AdminDashboard() {
           {activeTab === "support" && (
             <ManageSupport
               feedbacks={feedbacks}
-              setFeedbacks={setFeedbacks}
               complaints={complaints}
-              setComplaints={setComplaints}
+              loadFeedbacks={loadFeedbacks}
+              loadComplaints={loadComplaints}
             />
           )}
 

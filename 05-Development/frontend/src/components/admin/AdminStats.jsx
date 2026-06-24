@@ -7,18 +7,20 @@ export default function AdminStats({
   occupancyRate,
   activeStaff,
   warningsCount,
+  todayRevenue = 0,
+  newBookingsCount = 0,
 }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 text-left">
       <StatCard
         title="Doanh thu ngày"
-        value="15,650k"
-        change="+12%"
-        changeType="positive"
+        value={todayRevenue > 0 ? `${Math.round(todayRevenue / 1000).toLocaleString("vi-VN")}k` : "0 đ"}
+        change={todayRevenue > 0 ? "+100%" : "0%"}
+        changeType={todayRevenue > 0 ? "positive" : "neutral"}
       />
       <StatCard
         title="Booking mới"
-        value="4 đơn"
+        value={`${newBookingsCount} đơn`}
         change="Hôm nay"
         changeType="neutral"
       />

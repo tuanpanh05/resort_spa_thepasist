@@ -31,6 +31,7 @@ export default function AdminOverview({
   occupancyChartData,
   payments,
   swapRequests,
+  complaints = [],
 }) {
   // Fetch real staff count from API
   const [activeStaff, setActiveStaff] = useState(0);
@@ -70,6 +71,25 @@ export default function AdminOverview({
   const pendingPayments = payments.filter((p) => p.status?.toUpperCase() === "UNPAID" || p.status === "Unpaid").length;
   const pendingSwaps = swapRequests.length;
 
+  // Calculate stats dynamically
+  const today = new Date().toDateString();
+  const todayRevenue = payments
+    .filter((p) => p.status?.toUpperCase() === "PAID" && p.paymentTime && new Date(p.paymentTime).toDateString() === today)
+    .reduce((sum, p) => sum + (p.finalAmount || 0), 0);
+
+  const newBookingsCount = payments
+    .filter((p) => p.createdAt && new Date(p.createdAt).toDateString() === today)
+    .length;
+
+  const activeWarnings = complaints
+    .filter((c) => c.status?.toLowerCase() === "open")
+    .map((c) => ({
+      id: c.id,
+      text: `Phòng ${c.roomId}: ${c.details}`,
+      type: "maintenance",
+      time: c.timeReceived || "Vừa xong",
+    }));
+
   // Donut chart calculations
   const roomRev = revenueData?.totalRoomRevenue || 0;
   const spaRev = revenueData?.totalSpaRevenue || 0;
@@ -104,7 +124,9 @@ export default function AdminOverview({
         totalRoomsCount={rooms.length}
         occupancyRate={occupancyRate}
         activeStaff={activeStaff}
-        warningsCount={MOCK_WARNINGS.length}
+        warningsCount={activeWarnings.length}
+        todayRevenue={todayRevenue}
+        newBookingsCount={newBookingsCount}
       />
 
       {/* Revenue Analytics Section */}
@@ -490,26 +512,30 @@ export default function AdminOverview({
             </div>
           </div>
 
-          {/* Active alerts log feed – TODO: Replace with real GET /api/admin/warnings */}
+          {/* Active alerts log feed */}
           <div className="bg-white border border-primary-100 p-6 space-y-4">
             <h3 className="font-serif text-sm font-bold text-sage-950 uppercase tracking-wider mb-2">
               Cảnh Báo Vận Hành
             </h3>
             <div className="space-y-3">
-              {MOCK_WARNINGS.slice(0, 3).map((w) => (
-                <div
-                  key={w.id}
-                  className="p-3 bg-red-50/20 border border-red-150 flex items-start space-x-2 text-[11px]"
-                >
-                  <AlertTriangle className="h-4 w-4 text-red-750 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-red-950">{w.text}</p>
-                    <p className="text-sage-400 text-[9px] mt-0.5 font-mono">
-                      {w.time}
-                    </p>
+              {activeWarnings.length === 0 ? (
+                <p className="text-xs text-sage-450 italic">Không có cảnh báo vận hành nào cần xử lý.</p>
+              ) : (
+                activeWarnings.slice(0, 3).map((w) => (
+                  <div
+                    key={w.id}
+                    className="p-3 bg-red-50/20 border border-red-150 flex items-start space-x-2 text-[11px]"
+                  >
+                    <AlertTriangle className="h-4 w-4 text-red-750 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-red-950">{w.text}</p>
+                      <p className="text-sage-400 text-[9px] mt-0.5 font-mono">
+                        {w.time}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

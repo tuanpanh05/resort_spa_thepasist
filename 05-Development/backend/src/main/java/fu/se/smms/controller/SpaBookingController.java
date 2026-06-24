@@ -102,6 +102,31 @@ public class SpaBookingController {
     }
 
     /**
+     * Get therapist schedule over a date range.
+     * Accessible by THERAPIST role.
+     */
+    @GetMapping("/therapist-schedule/range")
+    public ResponseEntity<List<SpecialistSpaAppointmentDTO>> getTherapistScheduleRange(
+            Principal principal,
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+
+        if (principal == null) {
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+        }
+
+        User therapist = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin tài khoản kỹ thuật viên."));
+
+        if (!"THERAPIST".equalsIgnoreCase(therapist.getRole())) {
+            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "Chỉ kỹ thuật viên trị liệu mới có quyền xem lịch làm việc này.");
+        }
+
+        List<SpecialistSpaAppointmentDTO> schedule = spaBookingService.getTherapistScheduleRange(therapist.getUserId(), start, end);
+        return ResponseEntity.ok(schedule);
+    }
+
+    /**
      * UC14: Update session status (Scheduled -> In Progress -> Completed/No Show).
      * Accessible by THERAPIST role.
      */

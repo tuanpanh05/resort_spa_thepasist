@@ -7,6 +7,7 @@ import fu.se.smms.repository.*;
 import fu.se.smms.service.SpaBookingService;
 import fu.se.smms.service.InvoiceService;
 import fu.se.smms.service.EmailService;
+import fu.se.smms.service.GoogleCalendarService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,9 @@ public class SpaBookingServiceImpl implements SpaBookingService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private GoogleCalendarService googleCalendarService;
 
     @Override
     @Transactional(readOnly = true)
@@ -204,8 +208,8 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         // Asynchronous Integrations: Google Calendar and SendGrid reminder email triggers
         CompletableFuture.runAsync(() -> {
             try {
-                log.info("[MOCK GOOGLE CALENDAR API] Synchronizing spa session ID {} for guest {} on Google Calendar.", 
-                        savedBooking.getSpaBookingId(), guest.getEmail());
+                googleCalendarService.syncBookingToCalendar(guest, savedBooking);
+                googleCalendarService.syncBookingToCalendar(therapist, savedBooking);
             } catch (Exception ex) {
                 log.error("[Google Calendar Integration Error] {}", ex.getMessage());
             }
@@ -263,6 +267,36 @@ public class SpaBookingServiceImpl implements SpaBookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<SpecialistSpaAppointmentDTO> getTherapistScheduleRange(Integer therapistId, LocalDate start, LocalDate end) {
+        LocalDateTime startDt = start.atStartOfDay();
+        LocalDateTime endDt = end.plusDays(1).atStartOfDay();
+
+        List<SpaBooking> bookings = spaBookingRepository.findTherapistSchedule(therapistId, startDt, endDt);
+
+        return bookings.stream().map(sb -> {
+            SpecialistSpaAppointmentDTO dto = new SpecialistSpaAppointmentDTO();
+            dto.setSpaBookingId(sb.getSpaBookingId());
+            dto.setGuestId(sb.getUser().getUserId());
+            dto.setGuestName(sb.getUser().getFullName());
+            dto.setServiceName(sb.getSpaService().getName());
+            dto.setStartDatetime(sb.getStartDatetime());
+            dto.setEndDatetime(sb.getEndDatetime());
+            dto.setStatus(sb.getStatus());
+            dto.setTreatmentRoomName(sb.getTreatmentRoom() != null ? sb.getTreatmentRoom().getRoomName() : "N/A");
+            dto.setTherapistName(sb.getTherapist().getFullName());
+
+            Optional<MedicalProfile> profileOpt = medicalProfileRepository.findByUserUserId(sb.getUser().getUserId());
+            if (profileOpt.isPresent()) {
+                MedicalProfile profile = profileOpt.get();
+                dto.setNote(profile.getPhysicalConditionEncrypted());
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public SpaBookingResponseDTO updateSessionStatus(Integer spaBookingId, String status, Integer therapistId) {
         SpaBooking booking = spaBookingRepository.findById(spaBookingId)
@@ -294,6 +328,16 @@ public class SpaBookingServiceImpl implements SpaBookingService {
 
         SpaBooking savedBooking = spaBookingRepository.save(booking);
         treatmentRoomRepository.save(booking.getTreatmentRoom());
+
+        // Async Google Calendar sync update
+        CompletableFuture.runAsync(() -> {
+            try {
+                googleCalendarService.syncBookingToCalendar(savedBooking.getUser(), savedBooking);
+                googleCalendarService.syncBookingToCalendar(savedBooking.getTherapist(), savedBooking);
+            } catch (Exception ex) {
+                log.error("[Google Calendar Status Sync Error] {}", ex.getMessage());
+            }
+        });
 
         // Update invoice ledger if an extra service status was changed (e.g. cancelled/completed)
         if (!savedBooking.getIsPackageIncluded() && savedBooking.getRoomBooking() != null) {

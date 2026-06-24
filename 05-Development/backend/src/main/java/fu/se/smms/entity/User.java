@@ -38,6 +38,18 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "google_calendar_sync_enabled")
+    private Boolean googleCalendarSyncEnabled = false;
+
+    @Column(name = "google_calendar_id")
+    private String googleCalendarId;
+
+    @Column(name = "calendar_reminders_enabled")
+    private Boolean calendarRemindersEnabled = true;
+
+    @Column(name = "reminder_lead_time_mins")
+    private Integer reminderLeadTimeMins = 30;
+
     public User() {}
 
     public User(Integer userId, String email, String passwordHash, String fullName, String phone, String idPassportEncrypted, String role, String status, LocalDateTime createdAt) {
@@ -201,5 +213,37 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getGoogleCalendarSyncEnabled() {
+        return googleCalendarSyncEnabled;
+    }
+
+    public void setGoogleCalendarSyncEnabled(Boolean googleCalendarSyncEnabled) {
+        this.googleCalendarSyncEnabled = googleCalendarSyncEnabled;
+    }
+
+    public String getGoogleCalendarId() {
+        return googleCalendarId;
+    }
+
+    public void setGoogleCalendarId(String googleCalendarId) {
+        this.googleCalendarId = googleCalendarId;
+    }
+
+    public Boolean getCalendarRemindersEnabled() {
+        return calendarRemindersEnabled;
+    }
+
+    public void setCalendarRemindersEnabled(Boolean calendarRemindersEnabled) {
+        this.calendarRemindersEnabled = calendarRemindersEnabled;
+    }
+
+    public Integer getReminderLeadTimeMins() {
+        return reminderLeadTimeMins;
+    }
+
+    public void setReminderLeadTimeMins(Integer reminderLeadTimeMins) {
+        this.reminderLeadTimeMins = reminderLeadTimeMins;
     }
 }

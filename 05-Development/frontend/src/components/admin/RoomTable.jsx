@@ -125,7 +125,7 @@ export default function RoomTable({
                 Sửa
               </Button>
               <Button
-                onClick={() => handleDeleteRoom(room.id)}
+                onClick={() => handleDeleteRoom(room.roomId, room.id)}
                 variant="danger-light"
                 className="px-3.5 py-1.5 text-[10px] font-semibold rounded-md"
               >

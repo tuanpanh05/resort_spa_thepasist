@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,7 +56,7 @@ public class UserServiceImpl implements UserService {
             role = "MANAGER";
         }
 
-        java.util.Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
+        Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
         User user;
 
         if (existingUserOpt.isPresent()) {
@@ -159,6 +161,19 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setIdPassportEncrypted(request.getIdPassport()); // Automatically encrypted by AesEncryptor
 
+        if (request.getGoogleCalendarSyncEnabled() != null) {
+            user.setGoogleCalendarSyncEnabled(request.getGoogleCalendarSyncEnabled());
+        }
+        if (request.getGoogleCalendarId() != null) {
+            user.setGoogleCalendarId(request.getGoogleCalendarId());
+        }
+        if (request.getCalendarRemindersEnabled() != null) {
+            user.setCalendarRemindersEnabled(request.getCalendarRemindersEnabled());
+        }
+        if (request.getReminderLeadTimeMins() != null) {
+            user.setReminderLeadTimeMins(request.getReminderLeadTimeMins());
+        }
+
         User updatedUser = userRepository.save(user);
         return mapToProfileDTO(updatedUser);
     }
@@ -173,16 +188,20 @@ public class UserServiceImpl implements UserService {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
+                .googleCalendarSyncEnabled(user.getGoogleCalendarSyncEnabled())
+                .googleCalendarId(user.getGoogleCalendarId())
+                .calendarRemindersEnabled(user.getCalendarRemindersEnabled())
+                .reminderLeadTimeMins(user.getReminderLeadTimeMins())
                 .build();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<UserProfileDTO> getAllStaffUsers() {
+    public List<UserProfileDTO> getAllStaffUsers() {
         // Return all non-CUSTOMER users for Admin management
         return userRepository.findByRoleNot("CUSTOMER")
                 .stream()
-                .map(this::mapToProfileDTO)
+                .map(user -> mapToProfileDTO(user))
                 .collect(java.util.stream.Collectors.toList());
     }
 
@@ -230,24 +249,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<BookingHistoryDTO> getMyRoomBookings(String email) {
+    public List<BookingHistoryDTO> getMyRoomBookings(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return roomBookingRepository.findAllByUserIdWithDetails(user.getUserId())
                 .stream()
-                .map(this::mapToBookingHistoryDTO)
-                .collect(Collectors.toList());
+                .map(rb -> mapToBookingHistoryDTO(rb))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<SpaBookingHistoryDTO> getMySpaBookings(String email) {
+    public List<SpaBookingHistoryDTO> getMySpaBookings(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return spaBookingRepository.findAllByUserIdWithService(user.getUserId())
                 .stream()
-                .map(this::mapToSpaBookingHistoryDTO)
-                .collect(Collectors.toList());
+                .map(sb -> mapToSpaBookingHistoryDTO(sb))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -266,14 +285,20 @@ public class UserServiceImpl implements UserService {
     // ---------------------------------------------------------------
 
     private BookingHistoryDTO mapToBookingHistoryDTO(RoomBooking rb) {
-        java.util.List<BookingHistoryDTO.RoomDetailDTO> roomDetails = rb.getDetails() == null
-                ? java.util.Collections.emptyList()
-                : rb.getDetails().stream().map(d -> new BookingHistoryDTO.RoomDetailDTO(
-                        d.getRoom() != null ? d.getRoom().getRoomNumber() : "N/A",
-                        d.getRoom() != null && d.getRoom().getRoomType() != null
-                                ? d.getRoom().getRoomType().getTypeName()
-                                : "N/A",
-                        d.getPriceAtBooking())).collect(Collectors.toList());
+        List<BookingHistoryDTO.RoomDetailDTO> roomDetails = java.util.Collections.emptyList();
+        if (rb.getDetails() != null) {
+            roomDetails = rb.getDetails().stream().map(d -> {
+                String roomNum = "N/A";
+                String typeName = "N/A";
+                if (d.getRoom() != null) {
+                    roomNum = d.getRoom().getRoomNumber();
+                    if (d.getRoom().getRoomType() != null) {
+                        typeName = d.getRoom().getRoomType().getTypeName();
+                    }
+                }
+                return new BookingHistoryDTO.RoomDetailDTO(roomNum, typeName, d.getPriceAtBooking());
+            }).collect(java.util.stream.Collectors.toList());
+        }
 
         return BookingHistoryDTO.builder()
                 .bookingId(rb.getBookingId())

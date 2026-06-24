@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { User, Phone, CreditCard, Save, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle } from "lucide-react";
+import { User, Phone, CreditCard, Save, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle, Calendar, RefreshCw } from "lucide-react";
 import { userApi } from "../../api";
 
 const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", readOnly = false }) => (
@@ -49,6 +49,13 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
   const [saving, setSaving]     = useState(false);
   const [infoMsg, setInfoMsg]   = useState({ type: "", text: "" });
 
+  // Calendar states
+  const [googleCalendarSyncEnabled, setGoogleCalendarSyncEnabled] = useState(false);
+  const [googleCalendarId, setGoogleCalendarId] = useState("");
+  const [calendarRemindersEnabled, setCalendarRemindersEnabled] = useState(true);
+  const [reminderLeadTimeMins, setReminderLeadTimeMins] = useState(30);
+  const [syncing, setSyncing] = useState(false);
+
   // Change password sub-state
   const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd]         = useState("");
@@ -64,11 +71,15 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
       setFullName(profile.fullName || "");
       setPhone(profile.phone || "");
       setIdPassport(profile.idPassport || "");
+      setGoogleCalendarSyncEnabled(!!profile.googleCalendarSyncEnabled);
+      setGoogleCalendarId(profile.googleCalendarId || "");
+      setCalendarRemindersEnabled(profile.calendarRemindersEnabled !== false);
+      setReminderLeadTimeMins(profile.reminderLeadTimeMins || 30);
     }
   }, [profile]);
 
   const handleSaveInfo = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setInfoMsg({ type: "", text: "" });
     if (!fullName.trim()) {
       setInfoMsg({ type: "error", text: "Họ tên không được để trống." });
@@ -76,7 +87,15 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
     }
     setSaving(true);
     try {
-      const updated = await userApi.updateProfile({ fullName, phone, idPassport });
+      const updated = await userApi.updateProfile({ 
+        fullName, 
+        phone, 
+        idPassport,
+        googleCalendarSyncEnabled,
+        googleCalendarId,
+        calendarRemindersEnabled,
+        reminderLeadTimeMins: Number(reminderLeadTimeMins)
+      });
       onProfileUpdate(updated);
       localStorage.setItem("userFullName", updated.fullName || fullName);
       sessionStorage.setItem("userFullName", updated.fullName || fullName);
@@ -85,6 +104,23 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
       setInfoMsg({ type: "error", text: err.message || "Không thể lưu thông tin. Vui lòng thử lại." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleManualSync = async () => {
+    setInfoMsg({ type: "", text: "" });
+    if (!googleCalendarSyncEnabled) {
+      setInfoMsg({ type: "error", text: "Vui lòng kích hoạt và lưu cấu hình Đồng bộ Google Calendar trước khi đồng bộ." });
+      return;
+    }
+    setSyncing(true);
+    try {
+      const res = await userApi.syncCalendar();
+      setInfoMsg({ type: "success", text: res.message || "Đồng bộ hóa lịch trình lên Google Calendar thành công!" });
+    } catch (err) {
+      setInfoMsg({ type: "error", text: err.message || "Không thể đồng bộ lịch trình. Vui lòng thử lại." });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -114,7 +150,7 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
   return (
     <div className="space-y-8">
       {/* Personal info form */}
-      <div className="bg-white rounded-md p-2 pb-8 border-b border-primary-100">
+      <div className="bg-white rounded-md p-2 pb-8 border-b border-primary-100 text-left">
         <h3 className="text-sm font-bold text-sage-900 uppercase tracking-wider mb-5 flex items-center gap-2">
           <User className="h-4 w-4 text-primary-700" />
           Thông Tin Cá Nhân
@@ -144,8 +180,102 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
         </form>
       </div>
 
+      {/* Google Calendar Sync Settings */}
+      <div className="bg-white rounded-md p-2 pb-8 border-b border-primary-100 text-left">
+        <h3 className="text-sm font-bold text-sage-900 uppercase tracking-wider mb-5 flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-primary-700" />
+          Cấu Hình Google Calendar & Nhắc Lịch
+        </h3>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-3.5 bg-primary-50/50 border border-primary-100 rounded-md">
+            <div className="space-y-0.5">
+              <label className="text-xs font-bold text-sage-900 uppercase tracking-wider block">Kích hoạt đồng bộ hóa</label>
+              <span className="text-[11px] text-sage-500 font-light">Tự động đẩy phòng và lịch spa đã đặt lên Google Calendar của bạn.</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={googleCalendarSyncEnabled}
+                onChange={(e) => setGoogleCalendarSyncEnabled(e.target.checked)}
+                className="sr-only peer" 
+              />
+              <div className="w-9 h-5 bg-sage-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-sage-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-900"></div>
+            </label>
+          </div>
+
+          {googleCalendarSyncEnabled && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-sage-100 p-4 bg-white rounded-md shadow-xs animate-fade-in">
+              <InputField 
+                label="Địa chỉ Google Calendar ID" 
+                icon={Calendar} 
+                value={googleCalendarId} 
+                onChange={setGoogleCalendarId} 
+                placeholder="emailcuaban@gmail.com" 
+              />
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-sage-700 uppercase tracking-wider block">Thời gian nhắc nhở</label>
+                <div className="relative">
+                  <select
+                    value={reminderLeadTimeMins}
+                    onChange={(e) => setReminderLeadTimeMins(Number(e.target.value))}
+                    className="w-full py-2.5 border-b border-primary-200 bg-transparent focus:border-primary-800 text-sm text-sage-900 outline-none transition-all cursor-pointer"
+                  >
+                    <option value="15">15 phút trước khi bắt đầu</option>
+                    <option value="30">30 phút trước khi bắt đầu</option>
+                    <option value="60">1 tiếng trước khi bắt đầu</option>
+                    <option value="120">2 tiếng trước khi bắt đầu</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between col-span-1 sm:col-span-2 pt-2 border-t border-sage-50">
+                <div className="space-y-0.5">
+                  <label className="text-xs font-bold text-sage-900 uppercase tracking-wider block">Bật nhắc nhở thông báo</label>
+                  <span className="text-[11px] text-sage-500 font-light">Gửi cảnh báo và email nhắc lịch trước giờ bắt đầu.</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={calendarRemindersEnabled}
+                    onChange={(e) => setCalendarRemindersEnabled(e.target.checked)}
+                    className="sr-only peer" 
+                  />
+                  <div className="w-9 h-5 bg-sage-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-sage-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-900"></div>
+                </label>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button 
+              type="button"
+              onClick={handleSaveInfo}
+              disabled={saving}
+              className="px-6 py-2.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="h-4 w-4" />}
+              Lưu Cấu Hình Lịch
+            </button>
+
+            {googleCalendarSyncEnabled && (
+              <button 
+                type="button"
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="px-6 py-2.5 rounded-md text-sm font-semibold bg-sage-800 hover:bg-sage-700 text-white shadow transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer border border-sage-200"
+              >
+                {syncing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Đồng bộ ngay
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Change password form */}
-      <div className="bg-white rounded-md p-2 pt-6">
+      <div className="bg-white rounded-md p-2 pt-6 text-left">
         <h3 className="text-sm font-bold text-sage-900 uppercase tracking-wider mb-5 flex items-center gap-2">
           <Lock className="h-4 w-4 text-primary-700" />
           Đổi Mật Khẩu

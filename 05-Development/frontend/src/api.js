@@ -125,6 +125,12 @@ export const userApi = {
 
   /** GET /users/me/spa-bookings — Lịch hẹn Spa */
   getMySpaBookings: () => apiRequest("/users/me/spa-bookings"),
+
+  /** POST /users/me/sync-calendar — Kích hoạt đồng bộ hóa lịch thủ công */
+  syncCalendar: () =>
+    apiRequest("/users/me/sync-calendar", {
+      method: "POST",
+    }),
 };
 
 
@@ -263,6 +269,26 @@ export const staffApi = {
   /** UC09: GET /v1/villas — Lấy danh sách phòng/villa */
   getVillas: () => apiRequest("/v1/villas"),
 
+  /** POST /v1/villas — Tạo phòng mới */
+  createVilla: (dto) =>
+    apiRequest("/v1/villas", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+
+  /** PUT /v1/villas/:id — Cập nhật thông tin phòng */
+  updateVilla: (id, dto) =>
+    apiRequest(`/v1/villas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(dto),
+    }),
+
+  /** DELETE /v1/villas/:id — Xóa phòng */
+  deleteVilla: (id) =>
+    apiRequest(`/v1/villas/${id}`, {
+      method: "DELETE",
+    }),
+
   /** UC09: PATCH /v1/villas/:id/status — Cập nhật trạng thái phòng */
   updateVillaStatus: (id, status) =>
     apiRequest(`/v1/villas/${id}/status`, {
@@ -337,6 +363,15 @@ export const paymentApi = {
 
   getOccupancyReport: (year) => 
     apiRequest(`/revenue/occupancy-report?year=${year}`),
+
+  // Manager Feedback Moderation
+  getAllFeedbacks: (includeToxic = false) =>
+    apiRequest(`/feedback/all?includeToxic=${includeToxic}`),
+
+  markFeedbackToxic: (feedbackId, isToxic) =>
+    apiRequest(`/feedback/${feedbackId}/toxicity?isToxic=${isToxic}`, {
+      method: "PATCH",
+    }),
 };
 
 // ============================================================
@@ -364,6 +399,9 @@ export const spaApi = {
 export const specialistApi = {
   getTherapistSchedule: (date) =>
     apiRequest(`/v1/spa-bookings/therapist-schedule?date=${date}`),
+
+  getTherapistScheduleRange: (start, end) =>
+    apiRequest(`/v1/spa-bookings/therapist-schedule/range?start=${start}&end=${end}`),
 
   updateStatus: (bookingId, status) =>
     apiRequest(`/v1/spa-bookings/${bookingId}/status?status=${status}`, {
