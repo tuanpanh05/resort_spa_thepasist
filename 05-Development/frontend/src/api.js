@@ -431,3 +431,34 @@ export const complaintsApi = {
       body: JSON.stringify({ feedback }),
     }),
 };
+
+// ============================================================
+// SHIFTS & SWAP REQUESTS APIs
+// ============================================================
+export const shiftApi = {
+  getAllShifts: () => apiRequest("/shifts"),
+  getAllSwapRequests: () => apiRequest("/shifts/swap-requests"),
+  approveSwapRequest: (id) =>
+    apiRequest(`/shifts/swap-requests/${id}/approve`, { method: "POST" }),
+  rejectSwapRequest: (id) =>
+    apiRequest(`/shifts/swap-requests/${id}/reject`, { method: "POST" }),
+  updateShiftStatus: (id, status) =>
+    apiRequest(`/shifts/${id}/status?status=${status}`, { method: "PATCH" }),
+};
+
+// ============================================================
+// INVENTORY APIs
+// ============================================================
+export const inventoryApi = {
+  getAllInventory: () => apiRequest("/inventory"),
+  createInventoryItem: (dto) =>
+    apiRequest("/inventory", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+  updateStock: (id, delta) =>
+    apiRequest(`/inventory/${id}/stock?delta=${delta}`, {
+      method: "PATCH",
+    }),
+};
+

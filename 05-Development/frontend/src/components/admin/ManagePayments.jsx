@@ -4,6 +4,8 @@ import { CreditCard, Printer, X } from "lucide-react";
 export default function ManagePayments({ payments }) {
   const [showInvoicePrintModal, setShowInvoicePrintModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const triggerPrintModal = (p) => {
     setSelectedInvoice(p);
@@ -34,6 +36,22 @@ export default function ManagePayments({ payments }) {
     return `${d1} - ${d2}`;
   };
 
+  // Filter payments
+  const filteredPayments = (payments || []).filter((p) => {
+    const matchesSearch =
+      p.invoiceId?.toString().includes(searchTerm) ||
+      (p.customerName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.roomNumber || "").toLowerCase().includes(searchTerm.toLowerCase());
+
+    const isPaid = p.status?.toUpperCase() === "PAID";
+    const isPendingDeposit = p.bookingStatus === "PENDING_DEPOSIT";
+    const statusVal = isPaid ? "paid" : isPendingDeposit ? "pending_deposit" : "unpaid";
+
+    const matchesStatus = statusFilter === "all" || statusVal === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
       <div className="bg-white border border-primary-100 p-6">
@@ -44,6 +62,31 @@ export default function ManagePayments({ payments }) {
           <p className="text-xs text-sage-500 mt-1">
             Giám sát toàn bộ dòng tiền, hóa đơn đặt phòng, tiền cọc phòng và thanh toán các dịch vụ phát sinh của khách.
           </p>
+        </div>
+      </div>
+
+      {/* Search and Filters Controls */}
+      <div className="bg-primary-50/50 border border-primary-100 p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="w-full md:w-72">
+          <input
+            type="text"
+            placeholder="Tìm theo tên khách, số phòng, mã hóa đơn..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 text-xs border border-primary-200 bg-white focus:outline-primary-300"
+          />
+        </div>
+        <div className="w-full md:w-auto">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="p-2 text-xs border border-primary-200 bg-white focus:outline-primary-300 w-full md:w-48"
+          >
+            <option value="all">Tất cả hóa đơn</option>
+            <option value="paid">Đã thu (PAID)</option>
+            <option value="pending_deposit">Chờ đặt cọc</option>
+            <option value="unpaid">Chờ thanh toán (UNPAID)</option>
+          </select>
         </div>
       </div>
 
@@ -64,14 +107,14 @@ export default function ManagePayments({ payments }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-primary-50/50">
-              {payments.length === 0 ? (
+              {filteredPayments.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="p-8 text-center text-sage-400 italic">
-                    Không tìm thấy dữ liệu hóa đơn nào trong hệ thống.
+                    Không tìm thấy dữ liệu hóa đơn nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                payments.map((p) => {
+                filteredPayments.map((p) => {
                   const isPaid = p.status?.toUpperCase() === "PAID";
                   const methodText = p.vnpayTranId ? "VNPAY" : "Tiền mặt tại quầy";
                   const isPendingDeposit = p.bookingStatus === "PENDING_DEPOSIT";

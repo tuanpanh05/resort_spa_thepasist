@@ -27,10 +27,8 @@ export default function BookingPage() {
 
   const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
   const [createdBookingId, setCreatedBookingId] = useState(null);
-  // Retreat packages and spa services
-  const [retreatPackages, setRetreatPackages] = useState([]);
+  // Spa services
   const [spaServices, setSpaServices] = useState([]);
-  const [selectedPackageIds, setSelectedPackageIds] = useState([]);
 
   // Status Trackers
   const [bookingStatus, setBookingStatus] = useState("DRAFT"); // DRAFT -> PENDING_PAYMENT -> CONFIRMED
@@ -41,7 +39,6 @@ export default function BookingPage() {
     fullName: "",
     phone: "",
     email: "",
-    age: "",
     checkInDate: new Date(Date.now() + 86400000).toISOString().split("T")[0], // Tomorrow
     checkOutDate: new Date(Date.now() + 172800000).toISOString().split("T")[0], // Day after tomorrow
     guestsCount: 2,
@@ -254,40 +251,14 @@ export default function BookingPage() {
   useEffect(() => {
     const fetchPackagesAndServices = async () => {
       try {
-        const pkgs = await masterDataApi.getRetreatPackages();
-        setRetreatPackages(pkgs);
         const svcs = await masterDataApi.getSpaServices();
         setSpaServices(svcs);
       } catch (err) {
-        console.error("Failed to fetch retreat packages and spa services:", err);
+        console.error("Failed to fetch spa services:", err);
       }
     };
     fetchPackagesAndServices();
   }, []);
-
-  // Auto-select recommended package when Step 5 is reached
-  useEffect(() => {
-    if (step === 5 && selectedPackageIds.length === 0 && retreatPackages.length > 0) {
-      const guests = guestInfo.guestsCount || 1;
-      const age = guestInfo.age || 30;
-      let recId = 1;
-      if (age >= 50) {
-        recId = 5;
-      } else if (guests === 1) {
-        recId = 1;
-      } else if (guests === 2) {
-        recId = 2;
-      } else {
-        recId = 3;
-      }
-      
-      if (retreatPackages.some(p => p.packageId === recId)) {
-        setSelectedPackageIds([recId]);
-      } else {
-        setSelectedPackageIds([retreatPackages[0].packageId]);
-      }
-    }
-  }, [step, retreatPackages, guestInfo.guestsCount, guestInfo.age, selectedPackageIds]);
 
   const [nightsCount, setNightsCount] = useState(2);
 
@@ -407,9 +378,8 @@ export default function BookingPage() {
     });
   };
 
-  const selectedPackages = retreatPackages.filter(p => selectedPackageIds.includes(p.packageId));
-  const packageTotal = selectedPackages.reduce((sum, p) => sum + p.price, 0);
-  const totalAmount = villaTotal + packageTotal + servicesTotal + mealTotal;
+  const selectedPackages = [];
+  const totalAmount = villaTotal + servicesTotal + mealTotal;
   const depositAmount = totalAmount * 0.3;
   const remainingAmount = totalAmount * 0.7;
 
@@ -425,12 +395,6 @@ export default function BookingPage() {
       errors.email = "Vui lòng nhập địa chỉ email.";
     } else if (!/\S+@\S+\.\S+/.test(guestInfo.email)) {
       errors.email = "Địa chỉ email không hợp lệ.";
-    }
-
-    if (!guestInfo.age) {
-      errors.age = "Vui lòng nhập số tuổi.";
-    } else if (isNaN(guestInfo.age) || guestInfo.age < 1 || guestInfo.age > 120) {
-      errors.age = "Số tuổi không hợp lệ.";
     }
 
     const checkIn = new Date(guestInfo.checkInDate);
@@ -508,8 +472,8 @@ export default function BookingPage() {
         roomId: 1, // Default room ID to satisfy @NotNull validation if enabled
         roomQuantity: selectedVillaIdFirst ? selectedRooms[selectedVillaIdFirst] : 1,
         roomTypeQuantities: selectedRooms,
-        packageId: selectedPackageIds[0] || null,
-        packageIds: selectedPackageIds,
+        packageId: null,
+        packageIds: [],
         serviceIds: selectedServiceIds.map(id => {
           if (id === "srv-spa") return 2;
           if (id === "srv-yoga") return 1;

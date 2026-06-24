@@ -1,33 +1,41 @@
 import React from "react";
 import { Clock, ShieldCheck, X } from "lucide-react";
+import { shiftApi } from "../../api";
 
 export default function ManageShifts({
   shifts,
   swapRequests,
-  setSwapRequests,
+  loadShifts,
+  loadSwapRequests,
 }) {
-  const handleApproveSwap = (id) => {
-    setSwapRequests((prev) =>
-      prev.map((req) => {
-        if (req.id === id) {
-          alert(`Yêu cầu đổi ca của ${req.sender} đã được phê duyệt.`);
-          return { ...req, status: "Approved" };
-        }
-        return req;
-      }),
-    );
+  const toggleAttendance = async (id, currentStatus) => {
+    const newStatus = currentStatus === "Checked-in" ? "Absent" : "Checked-in";
+    try {
+      await shiftApi.updateShiftStatus(id, newStatus);
+      await loadShifts();
+    } catch (err) {
+      alert("Lỗi khi cập nhật điểm danh: " + err.message);
+    }
   };
 
-  const handleRejectSwap = (id) => {
-    setSwapRequests((prev) =>
-      prev.map((req) => {
-        if (req.id === id) {
-          alert(`Yêu cầu đổi ca của ${req.sender} đã bị bác bỏ.`);
-          return { ...req, status: "Rejected" };
-        }
-        return req;
-      }),
-    );
+  const handleApproveSwap = async (id) => {
+    try {
+      await shiftApi.approveSwapRequest(id);
+      await loadSwapRequests();
+      alert("Yêu cầu đổi ca trực đã được phê duyệt.");
+    } catch (err) {
+      alert("Lỗi khi phê duyệt đổi ca: " + err.message);
+    }
+  };
+
+  const handleRejectSwap = async (id) => {
+    try {
+      await shiftApi.rejectSwapRequest(id);
+      await loadSwapRequests();
+      alert("Yêu cầu đổi ca trực đã bị từ chối.");
+    } catch (err) {
+      alert("Lỗi khi từ chối đổi ca: " + err.message);
+    }
   };
 
   return (
@@ -168,7 +176,7 @@ export default function ManageShifts({
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex items-center justify-between">
                 <span
                   className={`px-2 py-0.5 rounded-none text-[10px] font-semibold uppercase tracking-wider ${
                     shift.status === "Checked-in"
@@ -180,6 +188,13 @@ export default function ManageShifts({
                     ? "Đã chấm công"
                     : "Chưa điểm danh"}
                 </span>
+
+                <button
+                  onClick={() => toggleAttendance(shift.id, shift.status)}
+                  className="px-2.5 py-1 bg-primary-100 hover:bg-primary-200 text-primary-950 font-semibold text-[9px] uppercase tracking-wider border border-primary-250 cursor-pointer"
+                >
+                  Chấm công nhanh
+                </button>
               </div>
             </div>
           ))}

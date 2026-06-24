@@ -97,7 +97,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.invoice i
             WHERE i.status = 'PAID'
               AND YEAR(i.payment_time) = :year
-              AND (:month IS NULL OR MONTH(i.payment_time) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(i.payment_time) = CAST(:month AS INT))
             """, nativeQuery = true)
     BigDecimal sumRoomRevenueByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
@@ -106,7 +106,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.invoice i
             WHERE i.status = 'PAID'
               AND YEAR(i.payment_time) = :year
-              AND (:month IS NULL OR MONTH(i.payment_time) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(i.payment_time) = CAST(:month AS INT))
             """, nativeQuery = true)
     BigDecimal sumSpaRevenueByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
@@ -115,7 +115,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.invoice i
             WHERE i.status = 'PAID'
               AND YEAR(i.payment_time) = :year
-              AND (:month IS NULL OR MONTH(i.payment_time) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(i.payment_time) = CAST(:month AS INT))
             """, nativeQuery = true)
     BigDecimal sumFoodRevenueByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
@@ -124,7 +124,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.invoice i
             WHERE i.status = 'PAID'
               AND YEAR(i.payment_time) = :year
-              AND (:month IS NULL OR MONTH(i.payment_time) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(i.payment_time) = CAST(:month AS INT))
             """, nativeQuery = true)
     BigDecimal sumTaxRevenueByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
@@ -134,7 +134,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.invoice i
             WHERE i.status = 'PAID'
               AND YEAR(i.payment_time) = :year
-              AND (:month IS NULL OR MONTH(i.payment_time) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(i.payment_time) = CAST(:month AS INT))
             """, nativeQuery = true)
     Long countPaidInvoicesByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
@@ -144,7 +144,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.room_booking rb
             WHERE rb.status = 'CHECKED_OUT'
               AND YEAR(rb.check_out_date) = :year
-              AND (:month IS NULL OR MONTH(rb.check_out_date) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(rb.check_out_date) = CAST(:month AS INT))
             """, nativeQuery = true)
     Long countCheckedOutBookingsByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
@@ -182,7 +182,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             INNER JOIN dbo.users u ON u.user_id = sb.therapist_id
             WHERE sb.status = 'COMPLETED'
               AND YEAR(sb.end_datetime) = :year
-              AND (:month IS NULL OR MONTH(sb.end_datetime) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(sb.end_datetime) = CAST(:month AS INT))
             GROUP BY u.user_id, u.full_name
             ORDER BY total_minutes DESC
             """, nativeQuery = true)
@@ -192,6 +192,14 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
      * Scheduled working minutes per therapist from work_schedule.
      * Returns [staff_id, scheduled_minutes].
      */
+    /**
+     * Returns 1 if the legacy dbo.work_schedule table exists, 0 otherwise.
+     * Used to avoid crashing the revenue dashboard on databases that never
+     * created this optional UC25 table.
+     */
+    @Query(value = "SELECT CASE WHEN OBJECT_ID('dbo.work_schedule', 'U') IS NOT NULL THEN 1 ELSE 0 END", nativeQuery = true)
+    Integer workScheduleTableExists();
+
     @Query(value = """
             SELECT
                 ws.staff_id,
@@ -202,7 +210,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             FROM dbo.work_schedule ws
             WHERE ws.status = 'ACTIVE'
               AND YEAR(ws.work_date) = :year
-              AND (:month IS NULL OR MONTH(ws.work_date) = :month)
+              AND (CAST(:month AS INT) IS NULL OR MONTH(ws.work_date) = CAST(:month AS INT))
             GROUP BY ws.staff_id
             """, nativeQuery = true)
     List<Object[]> findTherapistScheduledMinutes(@Param("year") Integer year, @Param("month") Integer month);

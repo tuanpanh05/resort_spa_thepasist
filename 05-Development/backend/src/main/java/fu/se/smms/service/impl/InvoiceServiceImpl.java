@@ -14,8 +14,10 @@ import fu.se.smms.repository.PaymentTransactionLogRepository;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
+import fu.se.smms.service.EmailService;
 import fu.se.smms.service.InvoiceService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final VNPayProperties vnPayProperties;
     private final SystemConfigurationRepository systemConfigurationRepository;
     private final FoodOrderRepository foodOrderRepository;
+    private final EmailService emailService;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -56,7 +59,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             PaymentTransactionLogRepository transactionLogRepository,
             VNPayProperties vnPayProperties,
             SystemConfigurationRepository systemConfigurationRepository,
-            FoodOrderRepository foodOrderRepository
+            FoodOrderRepository foodOrderRepository,
+            EmailService emailService
     ) {
         this.invoiceRepository = invoiceRepository;
         this.roomBookingRepository = roomBookingRepository;
@@ -65,6 +69,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.vnPayProperties = vnPayProperties;
         this.systemConfigurationRepository = systemConfigurationRepository;
         this.foodOrderRepository = foodOrderRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -106,7 +111,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public VNPayPaymentDTO createPaymentUrl(Integer invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
@@ -116,6 +121,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
         if ("CANCELLED".equals(invoice.getStatus())) {
             throw conflict("Cancelled invoice cannot be paid");
+        }
+
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null) {
+            recalculate(invoice, booking.getBookingId());
+            invoice = invoiceRepository.save(invoice);
         }
 
         BigDecimal payableAmount = payableAmount(invoice);
@@ -174,6 +185,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null) {
+            recalculate(invoice, booking.getBookingId());
+        }
         BigDecimal payableAmount = payableAmount(invoice);
 
         if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {
@@ -188,6 +202,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
             Invoice savedInvoice = invoiceRepository.save(invoice);
             writeTransactionLog(savedInvoice, "CASH", payableAmount, null, "00", "PAID");
+            triggerRoomBookingConfirmationEmail(savedInvoice, booking);
             return toDto(savedInvoice);
         } else {
             // Final check-out payment flow
@@ -321,6 +336,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         boolean success = "00".equals(paymentResult.getResponseCode())
                 && (paymentResult.getTransactionStatus() == null || "00".equals(paymentResult.getTransactionStatus()));
 
+        boolean triggerEmail = false;
         if (success) {
             if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {
                 booking.setStatus("CONFIRMED");
@@ -331,6 +347,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 invoice.setAmountDue(invoice.getFinalAmount().subtract(paymentAmount));
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
                 invoice.setPaymentTime(LocalDateTime.now());
+                triggerEmail = true;
             } else {
                 invoice.setStatus("PAID");
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
@@ -339,6 +356,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
+
+        if (triggerEmail && booking != null) {
+            triggerRoomBookingConfirmationEmail(savedInvoice, booking);
+        }
 
         // BR-26: Write audit trail for all VNPay callbacks (including failed ones)
         if (success) {
@@ -668,5 +689,64 @@ public class InvoiceServiceImpl implements InvoiceService {
             // Log to application log but do not fail the payment flow
             // per BR-26: audit is best-effort for individual log rows but payment state is authoritative
         }
+    }
+
+    private void triggerRoomBookingConfirmationEmail(Invoice invoice, RoomBooking booking) {
+        if (booking == null || booking.getUser() == null || booking.getUser().getEmail() == null) {
+            return;
+        }
+
+        String toEmail = booking.getUser().getEmail();
+        String guestName = booking.getUser().getFullName();
+        Integer bookingId = booking.getBookingId();
+        LocalDateTime checkIn = booking.getCheckInDate();
+        LocalDateTime checkOut = booking.getCheckOutDate();
+
+        // Construct room details string
+        String roomDetails = "N/A";
+        if (booking.getDetails() != null && !booking.getDetails().isEmpty()) {
+            roomDetails = booking.getDetails().stream()
+                .map(detail -> {
+                    String rNum = detail.getRoom() != null ? detail.getRoom().getRoomNumber() : "";
+                    String rType = (detail.getRoom() != null && detail.getRoom().getRoomType() != null)
+                        ? detail.getRoom().getRoomType().getTypeName() : "";
+                    if (!rNum.isEmpty() && !rType.isEmpty()) {
+                        return rType + " (Phòng " + rNum + ")";
+                    } else if (!rNum.isEmpty()) {
+                        return "Phòng " + rNum;
+                    } else {
+                        return rType;
+                    }
+                })
+                .filter(s -> s != null && !s.isEmpty())
+                .collect(java.util.stream.Collectors.joining(", "));
+        }
+        if (roomDetails.isEmpty()) {
+            roomDetails = "N/A";
+        }
+
+        BigDecimal totalAmount = invoice.getFinalAmount();
+        BigDecimal depositAmount = invoice.getDepositAmount();
+        BigDecimal amountDue = invoice.getAmountDue();
+
+        String finalRoomDetails = roomDetails;
+        CompletableFuture.runAsync(() -> {
+            try {
+                log.info("[EMAIL] Triggering room booking confirmation email to: {}", toEmail);
+                emailService.sendRoomBookingConfirmationEmail(
+                    toEmail,
+                    guestName,
+                    bookingId,
+                    checkIn,
+                    checkOut,
+                    finalRoomDetails,
+                    totalAmount,
+                    depositAmount,
+                    amountDue
+                );
+            } catch (Exception ex) {
+                log.error("[Email Room Booking Confirmation Error] {}", ex.getMessage());
+            }
+        });
     }
 }

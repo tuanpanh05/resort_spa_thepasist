@@ -367,4 +367,134 @@ public class EmailServiceImpl implements EmailService {
             log.error("Failed to send Spa booking confirmation email to {}: {}", toEmail, e.getMessage());
         }
     }
+
+    @Override
+    public void sendRoomBookingConfirmationEmail(
+            String toEmail,
+            String guestName,
+            Integer bookingId,
+            java.time.LocalDateTime checkInDate,
+            java.time.LocalDateTime checkOutDate,
+            String roomDetails,
+            java.math.BigDecimal totalAmount,
+            java.math.BigDecimal depositAmount,
+            java.math.BigDecimal amountDue) {
+        // Write booking confirmation to a local file for developer access
+        try {
+            String totalAmountStr = String.format("%,.0f VNĐ", totalAmount);
+            String depositAmountStr = String.format("%,.0f VNĐ", depositAmount);
+            String amountDueStr = String.format("%,.0f VNĐ", amountDue);
+            String content = "========================================\n" +
+                             "ROOM BOOKING CONFIVERMATION EMAIL\n" +
+                             "Email: " + toEmail + "\n" +
+                             "Guest Name: " + guestName + "\n" +
+                             "Booking ID: #NS-" + bookingId + "\n" +
+                             "Check-in: " + checkInDate + "\n" +
+                             "Check-out: " + checkOutDate + "\n" +
+                             "Rooms: " + roomDetails + "\n" +
+                             "Total Amount: " + totalAmountStr + "\n" +
+                             "Deposit Paid: " + depositAmountStr + "\n" +
+                             "Amount Due: " + amountDueStr + "\n" +
+                             "Time Sent: " + java.time.LocalDateTime.now() + "\n" +
+                             "========================================\n";
+            try {
+                java.nio.file.Files.writeString(
+                    java.nio.file.Path.of("d:/Semester5/P/Project/su26-swp391-se2023-g3/dev-otp.txt"), 
+                    content, 
+                    java.nio.file.StandardOpenOption.CREATE, 
+                    java.nio.file.StandardOpenOption.APPEND
+                );
+            } catch (Exception ignored) {}
+            try {
+                java.nio.file.Files.writeString(
+                    java.nio.file.Path.of("./dev-otp.txt"), 
+                    content, 
+                    java.nio.file.StandardOpenOption.CREATE, 
+                    java.nio.file.StandardOpenOption.APPEND
+                );
+            } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.error("Error writing dev-otp.txt file for room booking confirmation: {}", e.getMessage());
+        }
+
+        // Skip actual SMTP mail sending for mock/dev domains
+        if (toEmail != null && (toEmail.toLowerCase().endsWith("@nguson.com") || toEmail.toLowerCase().endsWith("@nguson.vn"))) {
+            log.info("[MOCK EMAIL] Room Booking Confirmation for {} is simulated. Skipping actual SMTP mail sending.", toEmail);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail, fromName);
+            helper.setTo(toEmail);
+            helper.setSubject("Xác nhận đặt phòng thành công - Ngũ Sơn Resort & Spa");
+
+            String checkInStr = checkInDate.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"));
+            String checkOutStr = checkOutDate.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"));
+            String totalAmountDisplay = String.format("%,.0f VNĐ", totalAmount);
+            String depositAmountDisplay = String.format("%,.0f VNĐ", depositAmount);
+            String amountDueDisplay = String.format("%,.0f VNĐ", amountDue);
+
+            String htmlText = """
+                <!DOCTYPE html>
+                <html lang="vi">
+                <head>
+                  <meta charset="UTF-8"/>
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                </head>
+                <body style="margin:0;padding:0;background-color:#f0f4f0;font-family:'Segoe UI',Arial,sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f0;padding:40px 20px;">
+                    <tr>
+                      <td align="center">
+                        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                          <tr>
+                            <td style="background:linear-gradient(135deg,#2d5a27,#4a7c3f);padding:40px 40px 30px;text-align:center;">
+                              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">🌿 Ngũ Sơn Resort & Spa</h1>
+                              <p style="margin:8px 0 0;color:#c8e6c9;font-size:14px;">Xác nhận đặt phòng nghỉ dưỡng</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding:40px;">
+                              <p style="margin:0 0 20px;color:#37474f;font-size:15px;line-height:1.6;">
+                                Xin chào <strong>%s</strong>,<br/><br/>
+                                Cảm ơn quý khách đã tin tưởng và lựa chọn dịch vụ của Ngũ Sơn Resort & Spa. Lịch đặt phòng của quý khách đã được xác nhận thành công sau khi thanh toán tiền đặt cọc. Dưới đây là thông tin chi tiết đặt phòng:
+                              </p>
+                              <div style="background-color:#f9f9f9; border-left:4px solid #2d5a27; padding:15px; margin:20px 0; font-size:14px;">
+                                <p style="margin: 5px 0;"><strong>Mã đặt phòng:</strong> #NS-%d</p>
+                                <p style="margin: 5px 0;"><strong>Ngày nhận phòng (Check-in):</strong> %s</p>
+                                <p style="margin: 5px 0;"><strong>Ngày trả phòng (Check-out):</strong> %s</p>
+                                <p style="margin: 5px 0;"><strong>Thông tin phòng:</strong> %s</p>
+                                <p style="margin: 5px 0;"><strong>Tổng chi phí:</strong> %s</p>
+                                <p style="margin: 5px 0;"><strong>Tiền cọc đã thanh toán (30%%):</strong> <span style="color:#2d5a27;font-weight:bold;">%s</span></p>
+                                <p style="margin: 5px 0;"><strong>Số dư cần thanh toán khi Check-out:</strong> %s</p>
+                              </div>
+                              <p style="margin:20px 0 0;color:#37474f;font-size:14px;line-height:1.6;">
+                                Quý khách vui lòng mang theo giấy tờ tùy thân (CMND/CCCD hoặc Hộ chiếu) để làm thủ tục nhận phòng. Thời gian nhận phòng tiêu chuẩn là 14:00 và trả phòng là 12:00.
+                              </p>
+                              <hr style="border:none;border-top:1px solid #e8f5e9;margin:24px 0;"/>
+                              <p style="margin:0;color:#90a4ae;font-size:12px;text-align:center;line-height:1.6;">
+                                Email này được gửi tự động, vui lòng không trả lời.<br/>
+                                &copy; 2025 Ngũ Sơn Resort & Spa. Bảo lưu mọi quyền.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(guestName, bookingId, checkInStr, checkOutStr, roomDetails, totalAmountDisplay, depositAmountDisplay, amountDueDisplay);
+
+            helper.setText(htmlText, true);
+            mailSender.send(message);
+            log.info("Room booking confirmation email sent successfully to: {}", toEmail);
+
+        } catch (Exception e) {
+            log.error("Failed to send room booking confirmation email to {}: {}", toEmail, e.getMessage());
+        }
+    }
 }
+

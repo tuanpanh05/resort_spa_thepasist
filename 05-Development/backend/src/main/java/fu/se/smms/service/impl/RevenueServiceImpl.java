@@ -36,6 +36,7 @@ public class RevenueServiceImpl implements RevenueService {
     @Override
     @Transactional(readOnly = true)
     public RevenueDashboardDTO getRevenueDashboard(Integer year, Integer month) {
+
         RevenueDashboardDTO dto = new RevenueDashboardDTO();
         dto.setYear(year);
         dto.setMonth(month);
@@ -142,8 +143,16 @@ public class RevenueServiceImpl implements RevenueService {
     }
 
     private List<TherapistUtilizationItem> buildTherapistUtilization(Integer year, Integer month) {
+        // UC25 therapist utilization. Wrapped defensively: legacy databases may not
+        // contain the work_schedule table, which must not break the revenue dashboard.
+        try {
         List<Object[]> sessionData = invoiceRepository.findTherapistSessionSummary(year, month);
-        List<Object[]> scheduleData = invoiceRepository.findTherapistScheduledMinutes(year, month);
+        // Only query the optional work_schedule table when it actually exists,
+        // so legacy databases do not break the revenue dashboard.
+        Integer wsExists = invoiceRepository.workScheduleTableExists();
+        List<Object[]> scheduleData = (wsExists != null && wsExists == 1)
+                ? invoiceRepository.findTherapistScheduledMinutes(year, month)
+                : new ArrayList<>();
 
         // Build schedule map keyed by therapist_id
         Map<Integer, Integer> scheduledMinutesMap = new HashMap<>();
@@ -172,6 +181,9 @@ public class RevenueServiceImpl implements RevenueService {
             result.add(item);
         }
         return result;
+            } catch (Exception ex) {
+            return new ArrayList<>();
+        }
     }
 
     private BigDecimal nullToZero(Object value) {

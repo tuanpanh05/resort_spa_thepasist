@@ -158,20 +158,6 @@ export default function ConfirmationStep({
               );
             })}
 
-            {/* Retreat Package details */}
-            {selectedPackages && selectedPackages.map((pkg) => (
-              <div key={pkg.packageId} className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10">
-                <div>
-                  <span className="font-serif text-sm font-bold text-[#1a2f23] block">
-                    🎁 Gói trị liệu: {pkg.name}
-                  </span>
-                  <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                    Mục tiêu: {pkg.goal} | Thời lượng: {pkg.durationText || `${pkg.durationDays} ngày`}
-                  </span>
-                </div>
-                <span className="font-semibold text-[#1a2f23]">{formatCurrency(pkg.price)}</span>
-              </div>
-            ))}
 
             {/* Service items */}
             {selectedServices.map((s) => {

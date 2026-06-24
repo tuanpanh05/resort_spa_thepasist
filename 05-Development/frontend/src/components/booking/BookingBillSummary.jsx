@@ -77,13 +77,6 @@ export default function BookingBillSummary({
           );
         })}
 
-        {/* Retreat package display */}
-        {selectedPackages && selectedPackages.map((pkg) => (
-          <div key={pkg.packageId} className="flex justify-between font-medium pt-2 border-t border-primary-50">
-            <span className="text-sage-800">Gói trị liệu ({pkg.name}):</span>
-            <span className="text-sage-950 font-mono">{formatCurrency(pkg.price)}</span>
-          </div>
-        ))}
 
         {/* Meal costs */}
         {mealTotal > 0 && (

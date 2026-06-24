@@ -1,6 +1,45 @@
 ========================================
-Email: hoangtuananhkun@gmail.com
+Email: domtest2026_06_23_4@gmail.com
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 929015
-Time: 2026-06-23T14:19:33.594170100
+OTP Code: 795528
+Time: 2026-06-23T15:23:16.629590700
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: tuananh1122hy@gmail.com
+Guest Name: Tuấn Anh Hoàng
+Booking ID: #NS-20
+Check-in: 2026-06-24T14:00
+Check-out: 2026-06-25T12:00
+Rooms: Bungalow Đá Cuội Bên Rừng (Phòng BD-101), Biệt Thự Đồi Trà Thiền Định (Phòng BT-101)
+Total Amount: 14,410,000 VNĐ
+Deposit Paid: 4,323,000 VNĐ
+Amount Due: 10,087,000 VNĐ
+Time Sent: 2026-06-23T15:43:12.864957700
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: tuananh1122hy@gmail.com
+Guest Name: Tuấn Anh Hoàng
+Booking ID: #NS-21
+Check-in: 2026-06-24T14:00
+Check-out: 2026-06-25T12:00
+Rooms: Bungalow Gỗ Hướng Suối (Phòng BG-104)
+Total Amount: 7,370,000 VNĐ
+Deposit Paid: 2,211,000 VNĐ
+Amount Due: 5,159,000 VNĐ
+Time Sent: 2026-06-23T16:01:54.806921600
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: tto@gmail.com
+Guest Name: tto
+Booking ID: #NS-60
+Check-in: 2026-06-25T14:00
+Check-out: 2026-06-26T12:00
+Rooms: Bungalow Đá Cuội Bên Rừng (Phòng BD-101), Bungalow Đá Cuội Bên Rừng (Phòng BD-102)
+Total Amount: 8,360,000 VNĐ
+Deposit Paid: 2,508,000 VNĐ
+Amount Due: 5,852,000 VNĐ
+Time Sent: 2026-06-24T11:48:39.552306600
 ========================================

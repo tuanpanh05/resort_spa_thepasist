@@ -15,7 +15,7 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { paymentApi, staffApi, complaintsApi } from "../api";
+import { paymentApi, staffApi, complaintsApi, shiftApi, inventoryApi } from "../api";
 
 import {
   adminInitialAccounts as initialAccounts,
@@ -54,32 +54,9 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [complaints, setComplaints] = useState([]);
-  const [inventory, setInventory] = useState(() => {
-    const local = localStorage.getItem("admin_inventory");
-    return local ? JSON.parse(local) : initialInventory;
-  });
-  const [shifts, setShifts] = useState(() => {
-    const local = localStorage.getItem("admin_shifts");
-    return local ? JSON.parse(local) : [
-      { id: 1, name: "Lê Thị Thu", role: "Lễ tân chính", time: "Ca Sáng (06:00 - 14:00)", department: "Lễ tân", status: "Checked-in" },
-      { id: 2, name: "Nguyễn Văn Huy", role: "Trưởng bộ phận Spa", time: "Ca Chiều (14:00 - 22:00)", department: "Bộ phận Spa", status: "Checked-in" },
-      { id: 3, name: "Phạm Văn Long", role: "Kỹ thuật viên", time: "Ca Đêm (22:00 - 06:00)", department: "Kỹ thuật", status: "Absent" }
-    ];
-  });
-  const [swapRequests, setSwapRequests] = useState(() => {
-    const local = localStorage.getItem("admin_swap_requests");
-    return local ? JSON.parse(local) : [
-      {
-        id: 201,
-        sender: "Lê Thị Thu",
-        shift: "Ca Sáng (06:00 - 14:00)",
-        date: "2026-05-26",
-        receiver: "Nguyễn Văn Huy",
-        reason: "Giải quyết việc gia đình đột xuất",
-        status: "Pending"
-      }
-    ];
-  });
+  const [inventory, setInventory] = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [swapRequests, setSwapRequests] = useState([]);
 
   const loadRooms = async () => {
     try {
@@ -169,29 +146,46 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadShifts = async () => {
+    try {
+      const data = await shiftApi.getAllShifts();
+      setShifts(data || []);
+    } catch (err) {
+      console.error("Error loading shifts:", err);
+    }
+  };
+
+  const loadSwapRequests = async () => {
+    try {
+      const data = await shiftApi.getAllSwapRequests();
+      setSwapRequests(data || []);
+    } catch (err) {
+      console.error("Error loading swap requests:", err);
+    }
+  };
+
+  const loadInventory = async () => {
+    try {
+      const data = await inventoryApi.getAllInventory();
+      setInventory(data || []);
+    } catch (err) {
+      console.error("Error loading inventory:", err);
+    }
+  };
+
   useEffect(() => {
     Promise.all([
       loadRooms(),
       loadComplaints(),
       loadFeedbacks(),
-      loadPayments()
+      loadPayments(),
+      loadShifts(),
+      loadSwapRequests(),
+      loadInventory()
     ]).catch((err) => {
       console.error("Error initializing dashboard data:", err);
     });
   }, []);
-
-  // Save local data to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem("admin_inventory", JSON.stringify(inventory));
-  }, [inventory]);
-
-  useEffect(() => {
-    localStorage.setItem("admin_shifts", JSON.stringify(shifts));
-  }, [shifts]);
-
-  useEffect(() => {
-    localStorage.setItem("admin_swap_requests", JSON.stringify(swapRequests));
-  }, [swapRequests]);
 
   // Room CRUD handlers
   const handleCreateRoom = async (roomData) => {
@@ -373,14 +367,15 @@ export default function AdminDashboard() {
             <ManageShifts
               shifts={shifts}
               swapRequests={swapRequests}
-              setSwapRequests={setSwapRequests}
+              loadShifts={loadShifts}
+              loadSwapRequests={loadSwapRequests}
             />
           )}
 
           {activeTab === "inventory" && (
             <ManageInventory
               inventory={inventory}
-              setInventory={setInventory}
+              loadInventory={loadInventory}
             />
           )}
         </div>

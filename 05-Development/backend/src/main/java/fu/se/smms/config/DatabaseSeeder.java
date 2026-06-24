@@ -166,7 +166,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Table might not exist yet
             }
 
-            if (existingRooms != null && existingRooms == 40) {
+            if (existingRooms != null && existingRooms == 45) {
                 System.out.println("[DB Seeder] Database is already seeded (found " + existingRooms + " rooms). Skipping database wipe to preserve your data.");
                 try {
                     jdbcTemplate.update("UPDATE dbo.room_booking SET check_in_date = CAST(GETDATE() AS DATE), check_out_date = DATEADD(day, 5, CAST(GETDATE() AS DATE)) WHERE booking_id = (SELECT MIN(booking_id) FROM dbo.room_booking)");
@@ -177,7 +177,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 return;
             }
 
-            System.out.println("[DB Seeder] Re-aligning Room Type Prices, cleaning and setting up exactly 40 Rooms...");
+            System.out.println("[DB Seeder] Re-aligning Room Type Prices, cleaning and setting up exactly 45 Rooms...");
 
             // 2. Clean child tables of Room/Booking to prevent constraint errors
             try { jdbcTemplate.update("DELETE FROM room_guest_declaration"); } catch (Exception e) {}
@@ -200,6 +200,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Đồi Trà Thiền Định', 5800000.00, 4, 120)");
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Gia Đình Sen Trắng', 7500000.00, 8, 180)");
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Sàn Cộng Đồng Đông Sơn', 9000000.00, 25, 250)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Chung 50 Thung Lũng Xanh', 12500000.00, 50, 450)");
 
             // Get Room Type IDs to ensure we insert with correct IDs
             Integer woodBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Gỗ Hướng Suối'", Integer.class);
@@ -207,6 +208,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             Integer teaVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Đồi Trà Thiền Định'", Integer.class);
             Integer lotusVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Gia Đình Sen Trắng'", Integer.class);
             Integer donSanId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Sàn Cộng Đồng Đông Sơn'", Integer.class);
+            Integer valley50Id = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Chung 50 Thung Lũng Xanh'", Integer.class);
 
             if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null) {
                 // 10 Bungalow Gỗ Hướng Suối (BG-101 to BG-110)
@@ -232,6 +234,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // 5 Nhà Sàn Cộng Đồng Đông Sơn (NS-101 to NS-105)
                 for (int i = 1; i <= 5; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", donSanId, String.format("NS-%03d", 100 + i));
+                }
+
+                // 5 Nhà Chung 50 Thung Lũng Xanh (NC-101 to NC-105)
+                for (int i = 1; i <= 5; i++) {
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", valley50Id, String.format("NC-%03d", 100 + i));
                 }
 
                 // Re-seed default bookings so the staff page isn't empty
@@ -315,7 +322,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 System.err.println("[DB Seeder] Warning: Could not run overlapping room booking patch: " + e.getMessage());
             }
 
-            System.out.println("[DB Seeder] Exactly 40 rooms configured successfully.");
+            System.out.println("[DB Seeder] Exactly 45 rooms configured successfully.");
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Room types / rooms seeding failed: " + e.getMessage());
         }
