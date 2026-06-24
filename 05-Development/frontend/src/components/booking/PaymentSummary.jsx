@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import DetailModal from "./DetailModal";
 
 /**
- * BookingBillSummary – Giao diện chi tiết thanh toán gốc.
- * Hiển thị đầy đủ bảng chi phí (tổng, cọc, trả tại quầy) và nút Xem chi tiết.
+ * PaymentSummary – Giao diện hiển thị Tổng tiền và Tiền cọc (30%)
+ * Giữ nguyên các props và chức năng hiện tại (mở modal để xem chi tiết).
  */
-export default function BookingBillSummary({
+export default function PaymentSummary({
   nightsCount,
   villaTotal,
   mealTotal,
@@ -24,7 +24,7 @@ export default function BookingBillSummary({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Placeholder khi chưa có villa được chọn
+  // Placeholder khi chưa chọn villa
   if (villaTotal === 0) {
     return (
       <div className="bg-[#fbfaf7]/95 border border-[#cda250]/20 p-6 shadow-[0_15px_40px_rgba(26,44,34,0.05)] text-left rounded-2xl backdrop-blur-md">
@@ -54,7 +54,7 @@ export default function BookingBillSummary({
         Chi Tiết Thanh Toán
       </h3>
 
-      {/* Tổng tiền, cọc và trả tại quầy */}
+      {/* Tổng tiền và tiền cọc */}
       <div className="space-y-4">
         <div className="flex justify-between items-center text-base text-[#1a2f23] font-serif">
           <span className="font-medium">Tổng chi phí:</span>
@@ -63,10 +63,6 @@ export default function BookingBillSummary({
         <div className="flex justify-between items-center text-sm text-[#1a2f23] bg-[#cda250]/10 p-2.5 rounded-lg border border-[#cda250]/20">
           <span>Cọc trước (30%):</span>
           <span className="font-mono">{formatCurrency(depositAmount)}</span>
-        </div>
-        <div className="flex justify-between items-center text-sm text-[#1a2f23] bg-[#cda250]/10 p-2.5 rounded-lg border border-[#cda250]/20">
-          <span>Trả tại quầy (70%):</span>
-          <span className="font-mono">{formatCurrency(remainingAmount)}</span>
         </div>
       </div>
 
@@ -78,7 +74,7 @@ export default function BookingBillSummary({
         Xem chi tiết
       </button>
 
-      {/* Modal chi tiết */}
+      {/* Modal chi tiết (giữ nguyên chức năng) */}
       <DetailModal
         isOpen={detailOpen}
         onClose={() => setDetailOpen(false)}

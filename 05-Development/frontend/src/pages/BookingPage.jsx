@@ -396,6 +396,9 @@ export default function BookingPage() {
     } else if (!/\S+@\S+\.\S+/.test(guestInfo.email)) {
       errors.email = "Địa chỉ email không hợp lệ.";
     }
+    if (!guestInfo.guestsCount || Number(guestInfo.guestsCount) <= 0) {
+      errors.guestsCount = "Số lượng khách hàng phải là số nguyên dương.";
+    }
 
     const checkIn = new Date(guestInfo.checkInDate);
     const checkOut = new Date(guestInfo.checkOutDate);
@@ -413,9 +416,44 @@ export default function BookingPage() {
     return true;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step === 1) {
-      if (validateStep1()) setStep(2);
+      if (validateStep1()) {
+        const count = Number(guestInfo.guestsCount);
+        if (count > 100) {
+          const confirmOk = window.confirm("Bạn có chắc là đặt phòng này không?");
+          if (confirmOk) {
+            let currentRoomTypes = roomTypes;
+            if (!currentRoomTypes || currentRoomTypes.length === 0) {
+              try {
+                const checkIn = guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : null;
+                const checkOut = guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : null;
+                currentRoomTypes = await masterDataApi.getRoomTypes(checkIn, checkOut);
+                setRoomTypes(currentRoomTypes);
+              } catch (e) {
+                console.error("Failed to load room types:", e);
+              }
+            }
+
+            const totalCapacity = currentRoomTypes.reduce((sum, rt) => {
+              const count = rt.availableRoomsCount !== undefined ? rt.availableRoomsCount : 0;
+              const cap = rt.maxOccupancy !== undefined ? rt.maxOccupancy : 0;
+              return sum + (count * cap);
+            }, 0);
+
+            if (totalCapacity < count) {
+              alert("Hiện tại khu nghỉ dưỡng không còn đủ phòng . Mong quý khách thông cảm");
+              navigate("/");
+              return;
+            }
+            setStep(2);
+          } else {
+            return;
+          }
+        } else {
+          setStep(2);
+        }
+      }
     } else if (step === 2) {
       if (validateStep2()) setStep(3);
     } else if (step === 3) {
