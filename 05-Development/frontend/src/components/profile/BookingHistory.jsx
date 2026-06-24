@@ -5,8 +5,10 @@ import { userApi } from "../../api";
 import { fmtDate, fmtDateTime, fmtCurrency } from "../../utils/formatters";
 import StatusBadge, { ROOM_STATUS_MAP, SPA_STATUS_MAP, FOOD_STATUS_MAP } from "./StatusBadge";
 import axiosClient from "../../api/axiosClient";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function BookingHistory() {
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState("rooms"); // "rooms", "all", "spa", "yoga", "food"
   const [roomBookings, setRoomBookings] = useState([]);
   const [spaBookings, setSpaBookings]   = useState([]);
@@ -29,11 +31,11 @@ export default function BookingHistory() {
         if (profileRes && profileRes.data && profileRes.data.booking && profileRes.data.booking.orders) {
           const rawOrders = profileRes.data.booking.orders;
           const mappedOrders = rawOrders.map(o => {
-            const dishNames = o.details.map(d => `${d.quantity}x ${d.dishName || "Món ăn"}`).join(", ");
+            const dishNames = o.details.map(d => `${d.quantity}x ${d.dishName || (language === "VIE" ? "Món ăn" : "Dish")}`).join(", ");
             return {
               spaBookingId: "food-" + o.orderId,
-              serviceName: dishNames || "Đơn hàng ẩm thực",
-              serviceCategory: "Ẩm thực dưỡng sinh",
+              serviceName: dishNames || (language === "VIE" ? "Đơn hàng ẩm thực" : "Food order"),
+              serviceCategory: language === "VIE" ? "Ẩm thực dưỡng sinh" : "Organic dining",
               startDatetime: o.orderTime,
               endDatetime: o.orderTime,
               status: o.status, // PENDING, PREPARING, READY, DELIVERED, CANCELLED
@@ -54,7 +56,7 @@ export default function BookingHistory() {
       }
     };
     fetchHistory();
-  }, []);
+  }, [language]);
 
   const mappedSpaBookings = spaBookings.map(s => {
     const cat = s.serviceCategory ? s.serviceCategory.toUpperCase() : "";
@@ -76,15 +78,16 @@ export default function BookingHistory() {
       </div>
       <p className="text-sage-500 text-sm">{message}</p>
       <Link to="/dat-lich" className="mt-4 px-5 py-2 rounded-md text-xs font-semibold bg-primary-900 text-white hover:bg-primary-800 transition">
-        Đặt lịch ngay
+        {t("profile.bookNowBtn")}
       </Link>
     </div>
   );
+
   const tabs = [
-    { key: "rooms", label: "Đặt Phòng", icon: BedDouble, count: roomBookings.length },
-    { key: "spa", label: "Spa & Vật lý trị liệu", icon: Dumbbell, count: mappedSpaBookings.filter(s => s.type === "spa").length },
-    { key: "yoga", label: "Yoga & Thiền", icon: Sparkles, count: mappedSpaBookings.filter(s => s.type === "yoga").length },
-    { key: "food", label: "Ẩm thực dưỡng sinh", icon: Leaf, count: foodOrders.length },
+    { key: "rooms", label: t("profile.tabRooms"), icon: BedDouble, count: roomBookings.length },
+    { key: "spa", label: t("profile.tabSpa"), icon: Dumbbell, count: mappedSpaBookings.filter(s => s.type === "spa").length },
+    { key: "yoga", label: t("profile.tabYoga"), icon: Sparkles, count: mappedSpaBookings.filter(s => s.type === "yoga").length },
+    { key: "food", label: t("profile.tabFood"), icon: Leaf, count: foodOrders.length },
   ];
 
   return (
@@ -122,20 +125,20 @@ export default function BookingHistory() {
         </div>
       ) : activeTab === "rooms" ? (
         roomBookings.length === 0 ? (
-          <EmptyState icon={BedDouble} message="Bạn chưa có lịch đặt phòng nào." />
+          <EmptyState icon={BedDouble} message={t("profile.emptyRooms")} />
         ) : (
           <div className="space-y-3">
             {roomBookings.map((b) => (
               <div key={b.bookingId} className="bg-white rounded-md border-b border-primary-100 p-5">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
-                    <p className="text-xs text-sage-500 mb-1">Booking #{b.bookingId}</p>
+                    <p className="text-xs text-sage-500 mb-1">{t("profile.bookingId")} #{b.bookingId}</p>
                     <p className="text-sm font-semibold text-sage-900">
                       {fmtDate(b.checkInDate)} → {fmtDate(b.checkOutDate)}
                     </p>
                     {b.packageName && (
                       <p className="text-xs text-primary-700 mt-0.5 flex items-center gap-1">
-                        <BadgeCheck className="h-3.5 w-3.5" /> Gói: {b.packageName}
+                        <BadgeCheck className="h-3.5 w-3.5" /> {t("profile.packageLabel")}: {b.packageName}
                       </p>
                     )}
                   </div>
@@ -147,7 +150,7 @@ export default function BookingHistory() {
                       <div key={i} className="flex items-center justify-between text-xs text-sage-600">
                         <span className="flex items-center gap-1.5">
                           <BedDouble className="h-3.5 w-3.5 text-primary-400" />
-                          Phòng {r.roomNumber} — {r.typeName}
+                          {t("profile.roomNo")} {r.roomNumber} — {r.typeName}
                         </span>
                         <span className="font-semibold text-sage-800">{fmtCurrency(r.priceAtBooking)}</span>
                       </div>
@@ -156,9 +159,9 @@ export default function BookingHistory() {
                 )}
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-primary-50">
                   <span className="text-xs text-sage-400 flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" /> Đặt ngày {fmtDate(b.createdAt)}
+                    <Clock className="h-3.5 w-3.5" /> {t("profile.bookedDate")} {fmtDate(b.createdAt)}
                   </span>
-                  <span className="text-xs font-bold text-sage-900">Cọc: {fmtCurrency(b.totalDeposit)}</span>
+                  <span className="text-xs font-bold text-sage-900">{t("profile.depositLabel")}: {fmtCurrency(b.totalDeposit)}</span>
                 </div>
               </div>
             ))}
@@ -167,7 +170,7 @@ export default function BookingHistory() {
       ) : (
         /* Other services */
         filteredOtherServices.length === 0 ? (
-          <EmptyState icon={Sparkles} message="Không có lịch sử sử dụng dịch vụ nào." />
+          <EmptyState icon={Sparkles} message={t("profile.emptyServices")} />
         ) : (
           <div className="space-y-3">
             {filteredOtherServices.map((s) => (
@@ -187,10 +190,10 @@ export default function BookingHistory() {
                       </p>
                     )}
                     {s.therapistName && (
-                      <p className="text-xs text-sage-500 mt-1">Hướng dẫn: {s.therapistName}</p>
+                      <p className="text-xs text-sage-500 mt-1">{t("profile.therapistLabel")}: {s.therapistName}</p>
                     )}
                     {s.specialNote && (
-                      <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">Ghi chú: {s.specialNote}</p>
+                      <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">{t("profile.noteLabel")}: {s.specialNote}</p>
                     )}
                   </div>
                   <StatusBadge status={s.status} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
@@ -204,7 +207,7 @@ export default function BookingHistory() {
                 </div>
                 {s.isPackageIncluded && (
                    <p className="mt-2 text-[11px] text-emerald-600 flex items-center gap-1">
-                    <BadgeCheck className="h-3.5 w-3.5" /> Thuộc gói nghỉ dưỡng
+                    <BadgeCheck className="h-3.5 w-3.5" /> {t("profile.packageIncluded")}
                   </p>
                 )}
               </div>

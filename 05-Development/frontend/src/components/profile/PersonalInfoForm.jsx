@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Phone, CreditCard, Save, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle, Calendar, RefreshCw } from "lucide-react";
 import { userApi } from "../../api";
+import { useLanguage } from "../../context/LanguageContext";
 
 const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", readOnly = false }) => (
   <div className="space-y-1.5">
@@ -43,6 +44,7 @@ const PwdInput = ({ label, value, onChange, show, onToggle }) => (
 );
 
 export default function PersonalInfoForm({ profile, onProfileUpdate }) {
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState(profile?.fullName || "");
   const [phone, setPhone]       = useState(profile?.phone || "");
   const [idPassport, setIdPassport] = useState(profile?.idPassport || "");
@@ -82,7 +84,7 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
     if (e) e.preventDefault();
     setInfoMsg({ type: "", text: "" });
     if (!fullName.trim()) {
-      setInfoMsg({ type: "error", text: "Họ tên không được để trống." });
+      setInfoMsg({ type: "error", text: t("profile.infoErrorEmptyName") });
       return;
     }
     setSaving(true);
@@ -99,9 +101,9 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
       onProfileUpdate(updated);
       localStorage.setItem("userFullName", updated.fullName || fullName);
       sessionStorage.setItem("userFullName", updated.fullName || fullName);
-      setInfoMsg({ type: "success", text: "Thông tin đã được cập nhật thành công!" });
+      setInfoMsg({ type: "success", text: t("profile.infoSuccess") });
     } catch (err) {
-      setInfoMsg({ type: "error", text: err.message || "Không thể lưu thông tin. Vui lòng thử lại." });
+      setInfoMsg({ type: "error", text: err.message || t("profile.infoErrorFallback") });
     } finally {
       setSaving(false);
     }
@@ -128,20 +130,20 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
     e.preventDefault();
     setPwdMsg({ type: "", text: "" });
     if (newPwd !== confirmPwd) {
-      setPwdMsg({ type: "error", text: "Mật khẩu mới và xác nhận không khớp." });
+      setPwdMsg({ type: "error", text: t("profile.pwdErrorMismatch") });
       return;
     }
     if (newPwd.length < 8) {
-      setPwdMsg({ type: "error", text: "Mật khẩu mới phải có ít nhất 8 ký tự." });
+      setPwdMsg({ type: "error", text: t("profile.pwdErrorLength") });
       return;
     }
     setPwdSaving(true);
     try {
       await userApi.changePassword(currentPwd, newPwd);
-      setPwdMsg({ type: "success", text: "Mật khẩu đã được thay đổi thành công!" });
+      setPwdMsg({ type: "success", text: t("profile.pwdSuccess") });
       setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
     } catch (err) {
-      setPwdMsg({ type: "error", text: err.message || "Không thể đổi mật khẩu. Vui lòng kiểm tra mật khẩu hiện tại." });
+      setPwdMsg({ type: "error", text: err.message || t("profile.pwdErrorFallback") });
     } finally {
       setPwdSaving(false);
     }
@@ -153,7 +155,7 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
       <div className="bg-white rounded-md p-2 pb-8 border-b border-primary-100 text-left">
         <h3 className="text-sm font-bold text-sage-900 uppercase tracking-wider mb-5 flex items-center gap-2">
           <User className="h-4 w-4 text-primary-700" />
-          Thông Tin Cá Nhân
+          {t("profile.personalInfoTitle")}
         </h3>
 
         {infoMsg.text && (
@@ -164,17 +166,17 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
         )}
 
         <form onSubmit={handleSaveInfo} className="space-y-4">
-          <InputField label="Email (không thể thay đổi)" icon={User} value={profile?.email || ""} readOnly />
-          <InputField label="Họ và Tên" icon={User} value={fullName} onChange={setFullName} placeholder="Nguyễn Văn A" />
+          <InputField label={t("profile.emailReadOnly")} icon={User} value={profile?.email || ""} readOnly />
+          <InputField label={t("profile.fullName")} icon={User} value={fullName} onChange={setFullName} placeholder="Nguyễn Văn A" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InputField label="Số Điện Thoại" icon={Phone} value={phone} onChange={setPhone} placeholder="0901234567" />
-            <InputField label="CCCD / Hộ chiếu" icon={CreditCard} value={idPassport} onChange={setIdPassport} placeholder="Nhập số CCCD..." />
+            <InputField label={t("profile.phoneLabel")} icon={Phone} value={phone} onChange={setPhone} placeholder="0901234567" />
+            <InputField label={t("profile.idPassport")} icon={CreditCard} value={idPassport} onChange={setIdPassport} placeholder={t("profile.idPassportPlaceholder")} />
           </div>
           <div className="pt-2">
             <button type="submit" disabled={saving}
               className="w-full sm:w-auto px-6 py-2.5 rounded-md text-sm font-semibold bg-primary-900 hover:bg-primary-800 text-white shadow transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
               {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? "Đang lưu..." : "Lưu Thay Đổi"}
+              {saving ? t("profile.saving") : t("profile.saveChanges")}
             </button>
           </div>
         </form>
@@ -278,7 +280,7 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
       <div className="bg-white rounded-md p-2 pt-6 text-left">
         <h3 className="text-sm font-bold text-sage-900 uppercase tracking-wider mb-5 flex items-center gap-2">
           <Lock className="h-4 w-4 text-primary-700" />
-          Đổi Mật Khẩu
+          {t("profile.changePasswordTitle")}
         </h3>
 
         {pwdMsg.text && (
@@ -289,16 +291,16 @@ export default function PersonalInfoForm({ profile, onProfileUpdate }) {
         )}
 
         <form onSubmit={handleChangePassword} className="space-y-4">
-          <PwdInput label="Mật Khẩu Hiện Tại" value={currentPwd} onChange={setCurrentPwd} show={showCurrent} onToggle={() => setShowCurrent(!showCurrent)} />
+          <PwdInput label={t("profile.currentPassword")} value={currentPwd} onChange={setCurrentPwd} show={showCurrent} onToggle={() => setShowCurrent(!showCurrent)} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <PwdInput label="Mật Khẩu Mới" value={newPwd} onChange={setNewPwd} show={showNew} onToggle={() => setShowNew(!showNew)} />
-            <PwdInput label="Xác Nhận Mật Khẩu Mới" value={confirmPwd} onChange={setConfirmPwd} show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
+            <PwdInput label={t("profile.newPassword")} value={newPwd} onChange={setNewPwd} show={showNew} onToggle={() => setShowNew(!showNew)} />
+            <PwdInput label={t("profile.confirmPassword")} value={confirmPwd} onChange={setConfirmPwd} show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />
           </div>
           <div className="pt-2">
             <button type="submit" disabled={pwdSaving}
               className="w-full sm:w-auto px-6 py-2.5 rounded-md text-sm font-semibold bg-sage-800 hover:bg-sage-700 text-white shadow transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
               {pwdSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Lock className="h-4 w-4" />}
-              {pwdSaving ? "Đang cập nhật..." : "Cập Nhật Mật Khẩu"}
+              {pwdSaving ? t("profile.updatingPassword") : t("profile.updatePassword")}
             </button>
           </div>
         </form>

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { MessageSquare, AlertTriangle, CheckCircle2, Clock, Send, Info } from "lucide-react";
 import { complaintsApi, userApi } from "../../api";
 import { fmtDate } from "../../utils/formatters";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function SupportRequests({ profile }) {
+  const { t } = useLanguage();
   const [complaints, setComplaints] = useState([]);
   const [myRooms, setMyRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState("");
@@ -56,29 +58,29 @@ export default function SupportRequests({ profile }) {
     setSuccess("");
 
     if (!selectedRoom.trim()) {
-      setError("Vui lòng chọn hoặc nhập số phòng.");
+      setError(t("profile.supportErrorRoom"));
       return;
     }
     if (!content.trim()) {
-      setError("Vui lòng nhập nội dung báo cáo / yêu cầu.");
+      setError(t("profile.supportErrorContent"));
       return;
     }
 
     setLoading(true);
     try {
       const response = await complaintsApi.submitComplaint(
-        profile.fullName || "Khách hàng",
+        profile.fullName || t("nav.guest"),
         selectedRoom,
         content,
         profile.userId
       );
-      setSuccess("Gửi yêu cầu hỗ trợ thành công! Nhân viên sẽ xử lý và phản hồi bạn sớm nhất.");
+      setSuccess(t("profile.supportSuccessSubmit"));
       setContent("");
       
       // Refresh list
       setComplaints((prev) => [response, ...prev]);
     } catch (err) {
-      setError(err.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
+      setError(err.message || t("profile.supportErrorSubmit"));
     } finally {
       setLoading(false);
     }
@@ -89,10 +91,10 @@ export default function SupportRequests({ profile }) {
       <div>
         <h3 className="font-serif text-lg font-normal text-sage-950 flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-primary-800" />
-          Liên Hệ Hỗ Trợ & Báo Cáo Sự Cố
+          {t("profile.supportTitle")}
         </h3>
         <p className="text-xs text-sage-500 mt-1">
-          Gửi yêu cầu hỗ trợ kỹ thuật, báo hỏng thiết bị phòng hoặc phản hồi trực tiếp đến bộ phận lễ tân.
+          {t("profile.supportDesc")}
         </p>
       </div>
 
@@ -112,13 +114,13 @@ export default function SupportRequests({ profile }) {
       {/* Submit Form */}
       <form onSubmit={handleSubmit} className="bg-primary-50/30 p-5 rounded-md border border-primary-100/50 space-y-4">
         <h4 className="text-xs font-bold text-sage-800 uppercase tracking-wider">
-          Gửi yêu cầu mới
+          {t("profile.supportFormTitle")}
         </h4>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-sage-500 mb-1">
-              Số phòng / Villa
+              {t("profile.supportRoomLabel")}
             </label>
             {myRooms.length > 0 ? (
               <div className="flex gap-2">
@@ -129,15 +131,15 @@ export default function SupportRequests({ profile }) {
                 >
                   {myRooms.map((room) => (
                     <option key={room} value={room}>
-                      Phòng {room}
+                      {t("profile.supportRoomOption").replace("{room}", room)}
                     </option>
                   ))}
-                  <option value="other">Số phòng khác...</option>
+                  <option value="other">{t("profile.supportRoomOther")}</option>
                 </select>
                 {selectedRoom === "other" || !myRooms.includes(selectedRoom) ? (
                   <input
                     type="text"
-                    placeholder="Nhập số phòng..."
+                    placeholder={t("profile.supportRoomPlaceholder")}
                     value={selectedRoom === "other" ? "" : selectedRoom}
                     onChange={(e) => setSelectedRoom(e.target.value)}
                     className="w-32 p-2.5 border border-primary-200 bg-white text-xs rounded-sm focus:outline-none focus:border-primary-800"
@@ -148,7 +150,7 @@ export default function SupportRequests({ profile }) {
             ) : (
               <input
                 type="text"
-                placeholder="VD: Room-101, Villa-102..."
+                placeholder={t("profile.supportRoomVaguePlaceholder")}
                 value={selectedRoom}
                 onChange={(e) => setSelectedRoom(e.target.value)}
                 className="w-full p-2.5 border border-primary-200 bg-white text-xs rounded-sm focus:outline-none focus:border-primary-800"
@@ -160,13 +162,13 @@ export default function SupportRequests({ profile }) {
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-sage-500 mb-1">
-            Chi tiết vấn đề gặp phải
+            {t("profile.supportIssueDetail")}
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={4}
-            placeholder="Mô tả sự cố của bạn (Ví dụ: vòi sen phòng tắm bị hỏng, điều hòa không lạnh, cần thêm nước uống...)"
+            placeholder={t("profile.supportIssuePlaceholder")}
             className="w-full p-3 border border-primary-200 bg-white text-xs rounded-sm focus:outline-none focus:border-primary-800 resize-none"
             required
           />
@@ -182,7 +184,7 @@ export default function SupportRequests({ profile }) {
           ) : (
             <>
               <Send className="h-3.5 w-3.5" />
-              Gửi yêu cầu hỗ trợ
+              {t("profile.supportSubmitBtn")}
             </>
           )}
         </button>
@@ -191,7 +193,7 @@ export default function SupportRequests({ profile }) {
       {/* Support History */}
       <div className="space-y-3">
         <h4 className="text-xs font-bold text-sage-800 uppercase tracking-wider">
-          Lịch sử hỗ trợ của bạn
+          {t("profile.supportHistoryTitle")}
         </h4>
 
         {loadingList ? (
@@ -201,7 +203,7 @@ export default function SupportRequests({ profile }) {
         ) : complaints.length === 0 ? (
           <div className="p-8 border border-dashed border-primary-200 text-center rounded-md">
             <Info className="h-6 w-6 text-sage-300 mx-auto mb-2" />
-            <p className="text-xs text-sage-500">Bạn chưa gửi yêu cầu hỗ trợ nào.</p>
+            <p className="text-xs text-sage-500">{t("profile.supportHistoryEmpty")}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -210,7 +212,7 @@ export default function SupportRequests({ profile }) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-sage-800 bg-primary-50 px-2 py-0.5 rounded-none">
-                      Phòng {c.roomNumber}
+                      {t("profile.supportRoomOption").replace("{room}", c.roomNumber)}
                     </span>
                     <span className="text-[10px] text-sage-400 font-mono flex items-center gap-1">
                       <Clock className="h-3 w-3" />
@@ -224,7 +226,7 @@ export default function SupportRequests({ profile }) {
                         : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {c.status === "Resolved" ? "Đã giải quyết" : "Chờ xử lý"}
+                    {c.status === "Resolved" ? t("profile.supportStatusResolved") : t("profile.supportStatusPending")}
                   </span>
                 </div>
 
@@ -233,7 +235,7 @@ export default function SupportRequests({ profile }) {
                 {c.status === "Resolved" && c.feedback && (
                   <div className="p-2.5 bg-emerald-50/50 border border-emerald-100 text-xs text-sage-800 rounded-sm">
                     <p className="font-bold text-emerald-800 text-[10px] uppercase tracking-wider mb-1">
-                      Phản hồi từ lễ tân:
+                      {t("profile.supportFeedbackLabel")}:
                     </p>
                     <p className="font-light italic">"{c.feedback}"</p>
                   </div>

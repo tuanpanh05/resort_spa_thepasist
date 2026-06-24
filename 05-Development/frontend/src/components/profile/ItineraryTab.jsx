@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { userApi, bookingLookupApi } from "../../api";
 import { fmtDate, fmtDateTime, fmtCurrency } from "../../utils/formatters";
+import { useLanguage } from "../../context/LanguageContext";
 
 const EVENT_CONFIG = {
   CHECKIN: { icon: MapPin, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", dotBg: "bg-emerald-600" },
@@ -35,17 +36,8 @@ const STATUS_BADGES = {
   CHECKED_OUT: "bg-sage-100 text-sage-700 border-sage-200",
 };
 
-const STATUS_LABELS = {
-  COMPLETED: "Hoàn thành",
-  CONFIRMED: "Đã xác nhận",
-  PENDING: "Đang chờ",
-  CANCELLED: "Đã hủy",
-  CHECKED_IN: "Đang lưu trú",
-  CHECKED_OUT: "Đã trả phòng",
-  PENDING_DEPOSIT: "Chờ đặt cọc",
-};
-
 export default function ItineraryTab() {
+  const { t } = useLanguage();
   const [bookings, setBookings] = useState([]);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [itinerary, setItinerary] = useState(null);
@@ -108,7 +100,17 @@ export default function ItineraryTab() {
   };
 
   const getStatusLabel = (status) => {
-    return STATUS_LABELS[status] || status;
+    const keys = {
+      COMPLETED: "profile.statusCompleted",
+      CONFIRMED: "profile.statusConfirmed",
+      PENDING: "profile.statusPendingShort",
+      CANCELLED: "profile.statusCancelled",
+      CHECKED_IN: "profile.statusInResidence",
+      CHECKED_OUT: "profile.statusCheckedOut",
+      PENDING_DEPOSIT: "profile.statusPendingDeposit",
+    };
+    const k = keys[status];
+    return k ? t(k) : status;
   };
 
   // Render Loading state
@@ -116,7 +118,7 @@ export default function ItineraryTab() {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-sage-500">
         <Loader2 className="h-8 w-8 animate-spin text-primary-800 mb-2" />
-        <span className="text-xs font-semibold">Đang tải lịch trình...</span>
+        <span className="text-xs font-semibold">{t("profile.itineraryLoading")}</span>
       </div>
     );
   }
@@ -138,15 +140,15 @@ export default function ItineraryTab() {
         <div className="inline-flex p-4 rounded-md bg-primary-50 text-primary-300 mb-4">
           <Calendar className="h-8 w-8" />
         </div>
-        <h4 className="font-serif text-base font-bold text-sage-900 mb-1">Chưa có lịch trình hoạt động nào</h4>
+        <h4 className="font-serif text-base font-bold text-sage-900 mb-1">{t("profile.itineraryEmptyTitle")}</h4>
         <p className="text-sage-500 text-xs max-w-sm leading-relaxed mb-5">
-          Bạn chưa có đơn đặt phòng nào hoạt động. Hãy đặt phòng nghỉ dưỡng để lên lịch trình các hoạt động chăm sóc sức khỏe.
+          {t("profile.itineraryEmptyDesc")}
         </p>
         <Link
           to="/dat-lich"
           className="px-6 py-2.5 bg-primary-900 text-white hover:bg-primary-800 text-xs font-bold uppercase tracking-wider transition duration-300"
         >
-          Đặt phòng ngay
+          {t("profile.itineraryBookNow")}
         </Link>
       </div>
     );
@@ -158,7 +160,7 @@ export default function ItineraryTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-primary-50/40 p-4 border border-primary-100 rounded-md">
         <div>
           <label className="block text-[9px] font-bold text-sage-400 uppercase tracking-widest mb-1.5">
-            Lựa chọn đợt lưu trú
+            {t("profile.itinerarySelectStay")}
           </label>
           <div className="relative inline-block w-full sm:w-72">
             <select
@@ -168,7 +170,7 @@ export default function ItineraryTab() {
             >
               {bookings.map((b) => (
                 <option key={b.bookingId} value={b.bookingId}>
-                  Mã #{b.bookingId} ({fmtDate(b.checkInDate)} - {fmtDate(b.checkOutDate)}) [{getStatusLabel(b.status)}]
+                  {t("profile.bookingId")} #{b.bookingId} ({fmtDate(b.checkInDate)} - {fmtDate(b.checkOutDate)}) [{getStatusLabel(b.status)}]
                 </option>
               ))}
             </select>
@@ -177,7 +179,7 @@ export default function ItineraryTab() {
         </div>
         <div className="flex items-center gap-2 self-start sm:self-end">
           <span className="text-[10px] bg-primary-900/10 text-primary-900 border border-primary-900/20 px-3 py-1.5 font-bold uppercase tracking-wider rounded">
-            Lịch trình cá nhân
+            {t("profile.itineraryPersonal")}
           </span>
         </div>
       </div>
@@ -185,7 +187,7 @@ export default function ItineraryTab() {
       {loadingItinerary ? (
         <div className="flex flex-col items-center justify-center py-20 text-sage-500">
           <Loader2 className="h-7 w-7 animate-spin text-primary-800 mb-2" />
-          <span className="text-xs">Đang tải lịch trình chi tiết...</span>
+          <span className="text-xs">{t("profile.itineraryLoadingDetail")}</span>
         </div>
       ) : itinerary ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -197,40 +199,40 @@ export default function ItineraryTab() {
             <div className="bg-white border border-primary-100 rounded-md p-5 shadow-sm text-left">
               <h4 className="text-xs font-bold uppercase tracking-wider text-sage-400 mb-4 flex items-center gap-2 pb-2 border-b border-primary-50">
                 <CalendarDays className="h-4 w-4 text-primary-700" />
-                Thông tin đợt lưu trú
+                {t("profile.itineraryStayInfo")}
               </h4>
               <div className="space-y-3 text-xs leading-relaxed">
                 <div className="flex justify-between">
-                  <span className="text-sage-500">Mã đơn đặt:</span>
+                  <span className="text-sage-500">{t("profile.itineraryId")}:</span>
                   <span className="font-bold text-primary-800">#{itinerary.bookingId}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sage-500">Nhận phòng:</span>
+                  <span className="text-sage-500">{t("profile.itineraryCheckIn")}:</span>
                   <span className="font-semibold text-sage-800">{fmtDate(itinerary.checkInDate)} (14:00)</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sage-500">Trả phòng:</span>
+                  <span className="text-sage-500">{t("profile.itineraryCheckOut")}:</span>
                   <span className="font-semibold text-sage-800">{fmtDate(itinerary.checkOutDate)} (12:00)</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sage-500">Số phòng nghỉ:</span>
-                  <span className="font-bold text-sage-950">{itinerary.roomNumber || "Chưa xếp phòng"}</span>
+                  <span className="text-sage-500">{t("profile.itineraryRoomNo")}:</span>
+                  <span className="font-bold text-sage-950">{itinerary.roomNumber || t("profile.itineraryNotAssigned")}</span>
                 </div>
                 {itinerary.roomTypeName && (
                   <div className="flex justify-between">
-                    <span className="text-sage-500">Hạng phòng:</span>
+                    <span className="text-sage-500">{t("profile.itineraryRoomType")}:</span>
                     <span className="font-semibold text-sage-800">{itinerary.roomTypeName}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <span className="text-sage-500">Trạng thái đơn:</span>
+                  <span className="text-sage-500">{t("profile.itineraryStatus")}:</span>
                   <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(itinerary.bookingStatus)}`}>
                     {getStatusLabel(itinerary.bookingStatus)}
                   </span>
                 </div>
                 {itinerary.totalDeposit > 0 && (
                   <div className="flex justify-between border-t border-primary-50 pt-3 mt-1.5">
-                    <span className="text-sage-500 font-medium">Đặt cọc đã trả:</span>
+                    <span className="text-sage-500 font-medium">{t("profile.itineraryDepositPaid")}:</span>
                     <span className="font-bold text-emerald-700">{fmtCurrency(itinerary.totalDeposit)}</span>
                   </div>
                 )}
@@ -241,11 +243,11 @@ export default function ItineraryTab() {
             <div className="bg-white border border-primary-100 rounded-md p-5 shadow-sm text-left">
               <h4 className="text-xs font-bold uppercase tracking-wider text-sage-400 mb-4 flex items-center gap-2 pb-2 border-b border-primary-50">
                 <User className="h-4 w-4 text-primary-700" />
-                Thông tin người đặt
+                {t("profile.itineraryGuestInfo")}
               </h4>
               <div className="space-y-3 text-xs leading-relaxed">
                 <div className="flex justify-between">
-                  <span className="text-sage-500">Họ và tên:</span>
+                  <span className="text-sage-500">{t("profile.itineraryGuestName")}:</span>
                   <span className="font-bold text-sage-950">{itinerary.guestName || "—"}</span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -253,7 +255,7 @@ export default function ItineraryTab() {
                   <span className="font-medium text-sage-700 truncate max-w-[180px]">{itinerary.guestEmail || "—"}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sage-500 flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-sage-400" /> Điện thoại:</span>
+                  <span className="text-sage-500 flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-sage-400" /> {t("profile.phone")}:</span>
                   <span className="font-medium text-sage-700">{itinerary.guestPhone || "—"}</span>
                 </div>
               </div>
@@ -265,7 +267,7 @@ export default function ItineraryTab() {
                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary-50 rounded-full -mr-10 -mt-10 opacity-50" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-sage-400 mb-3.5 flex items-center gap-2 pb-1.5 border-b border-primary-50 relative z-10">
                   <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
-                  Gói trị liệu chăm sóc
+                  {t("profile.itineraryTherapyPackage")}
                 </h4>
                 <div className="space-y-2.5 text-xs relative z-10">
                   <p className="font-bold text-sage-950">{itinerary.packageName}</p>
@@ -273,8 +275,8 @@ export default function ItineraryTab() {
                     <p className="text-sage-600 leading-relaxed font-light text-[11px]">{itinerary.packageDescription}</p>
                   )}
                   <div className="flex justify-between items-center text-[11px] pt-1.5">
-                    <span className="text-sage-500">Thời lượng liệu trình:</span>
-                    <span className="font-bold text-primary-900 bg-primary-50 px-2 py-0.5 rounded">{itinerary.packageDurationDays} ngày</span>
+                    <span className="text-sage-500">{t("profile.itineraryDuration")}:</span>
+                    <span className="font-bold text-primary-900 bg-primary-50 px-2 py-0.5 rounded">{t("profile.itineraryDurationDays").replace("{days}", itinerary.packageDurationDays)}</span>
                   </div>
                 </div>
               </div>
@@ -286,7 +288,7 @@ export default function ItineraryTab() {
             <div className="bg-white border border-primary-100 rounded-md p-6 shadow-sm text-left">
               <h4 className="text-xs font-bold uppercase tracking-wider text-sage-400 mb-6 flex items-center gap-2 pb-2.5 border-b border-primary-50">
                 <Clock className="h-4 w-4 text-primary-700" />
-                Sơ đồ hoạt động trong kỳ nghỉ dưỡng
+                {t("profile.itineraryTimelineTitle")}
               </h4>
 
               {itinerary.timeline && itinerary.timeline.length > 0 ? (
@@ -344,7 +346,7 @@ export default function ItineraryTab() {
               ) : (
                 <div className="text-center py-10 text-sage-400 italic text-xs">
                   <Calendar className="h-8 w-8 mx-auto mb-3 opacity-40 text-sage-500" />
-                  Chưa có hoạt động trị liệu hay ẩm thực nào được ghi nhận.
+                  {t("profile.itineraryTimelineEmpty")}
                 </div>
               )}
             </div>
@@ -354,7 +356,7 @@ export default function ItineraryTab() {
       ) : (
         <div className="text-center py-12 bg-white border border-primary-100 rounded-md">
           <AlertCircle className="h-8 w-8 mx-auto mb-2 text-sage-400" />
-          <p className="text-sage-500 text-xs">Không thể tìm thấy thông tin lịch trình cho đơn đặt phòng này.</p>
+          <p className="text-sage-500 text-xs">{t("profile.itineraryTimelineError")}</p>
         </div>
       )}
     </div>

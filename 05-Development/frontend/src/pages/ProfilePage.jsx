@@ -4,6 +4,7 @@ import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf, Mes
 import heroBg from "../assets/hero_bg.png";
 import { userApi } from "../api";
 import { fmtDate } from "../utils/formatters";
+import { useLanguage } from "../context/LanguageContext";
 
 // Import Extracted Components
 import PersonalInfoForm from "../components/profile/PersonalInfoForm";
@@ -15,18 +16,19 @@ import GuestCalendarView from "../components/profile/GuestCalendarView";
 import ItineraryTab from "../components/profile/ItineraryTab";
 
 const MENU_ITEMS = [
-  { path: "/tai-khoan", label: "Thông tin cá nhân", icon: User },
-  { path: "/tai-khoan/suc-khoe", label: "Hồ sơ sức khỏe", icon: Heart },
-  { path: "/tai-khoan/lich-hoat-dong", label: "Lịch hoạt động", icon: CalendarDays },
-  { path: "/tai-khoan/lich-su-dat-hang", label: "Lịch sử đặt hàng", icon: CalendarDays },
-  { path: "/tai-khoan/lich-trinh", label: "Lịch trình", icon: Clock },
-  { path: "/tai-khoan/lich-su-thanh-toan", label: "Lịch sử thanh toán", icon: CreditCard },
-  { path: "/tai-khoan/ho-tro", label: "Liên hệ hỗ trợ", icon: MessageSquare },
+  { path: "/tai-khoan", labelKey: "nav.personalInfo", icon: User },
+  { path: "/tai-khoan/suc-khoe", labelKey: "nav.healthProfile", icon: Heart },
+  { path: "/tai-khoan/lich-hoat-dong", labelKey: "nav.activitySchedule", icon: CalendarDays },
+  { path: "/tai-khoan/lich-su-dat-hang", labelKey: "nav.orderHistory", icon: CalendarDays },
+  { path: "/tai-khoan/lich-trinh", labelKey: "nav.itinerary", icon: Clock },
+  { path: "/tai-khoan/lich-su-thanh-toan", labelKey: "nav.paymentHistory", icon: CreditCard },
+  { path: "/tai-khoan/ho-tro", labelKey: "profile.supportTitle", icon: MessageSquare },
 ];
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const [profile, setProfile]     = useState(null);
   const [loading, setLoading]     = useState(true);
 
@@ -40,7 +42,7 @@ export default function ProfilePage() {
       .catch(() => {
         // Fallback: build from localStorage
         setProfile({
-          fullName: localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || "Khách hàng",
+          fullName: localStorage.getItem("userFullName") || sessionStorage.getItem("userFullName") || t("nav.guest"),
           email: "",
           phone: "",
           idPassport: "",
@@ -49,7 +51,7 @@ export default function ProfilePage() {
         });
       })
       .finally(() => setLoading(false));
-  }, [navigate]);
+  }, [navigate, t]);
 
   const isActive = (path) => {
     if (path === "/tai-khoan") {
@@ -63,13 +65,19 @@ export default function ProfilePage() {
     return name.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase() || "KH";
   };
 
-  const roleLabel = { GUEST: "Hội viên", ADMIN: "Quản trị viên", STAFF: "Nhân viên", THERAPIST: "Kỹ thuật viên" };
+  const getRoleLabel = (role) => {
+    if (role === "GUEST") return t("profile.roleMember");
+    if (role === "ADMIN") return t("profile.roleAdmin");
+    if (role === "STAFF") return t("profile.roleStaff");
+    if (role === "THERAPIST") return t("profile.roleTherapist");
+    return role || t("profile.roleMember");
+  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-primary-50">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-primary-800 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sage-600 text-sm">Đang tải thông tin tài khoản...</p>
+        <p className="text-sage-600 text-sm">{t("profile.loading")}</p>
       </div>
     </div>
   );
@@ -81,7 +89,7 @@ export default function ProfilePage() {
         {/* ─ Back link ─ */}
         <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-sage-600 hover:text-primary-900 transition mb-6 group">
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          Quay lại trang chủ
+          {t("profile.backToHome")}
         </Link>
 
         {/* ─ Profile header card ─ */}
@@ -89,7 +97,7 @@ export default function ProfilePage() {
           {/* Banner gradient */}
           <div className="h-24 bg-gradient-to-r from-primary-900 via-primary-700 to-sage-700 relative">
             <div className="absolute inset-0 opacity-20"
-              style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+               style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center" }} />
           </div>
           {/* Avatar + info */}
           <div className="px-6 pb-6">
@@ -99,13 +107,13 @@ export default function ProfilePage() {
                 {getInitials(profile?.fullName)}
               </div>
               <div className="sm:pb-1 flex-1 min-w-0">
-                <h1 className="font-serif text-xl font-bold text-sage-900 truncate">{profile?.fullName || "Khách hàng"}</h1>
+                <h1 className="font-serif text-xl font-bold text-sage-900 truncate">{profile?.fullName || t("nav.guest")}</h1>
                 <p className="text-sm text-sage-500">{profile?.email || "—"}</p>
               </div>
               <div className="flex items-center gap-2 sm:pb-1">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-primary-50 text-primary-800 border border-primary-200">
                   <Leaf className="h-3.5 w-3.5" />
-                  {roleLabel[profile?.role] || profile?.role || "Hội viên"}
+                  {getRoleLabel(profile?.role)}
                 </span>
               </div>
             </div>
@@ -113,18 +121,18 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="bg-primary-50 rounded-md p-3 text-center">
                 <p className="text-lg font-bold text-primary-900">{profile?.phone || "—"}</p>
-                <p className="text-[11px] text-sage-500 uppercase tracking-wider mt-0.5">Số điện thoại</p>
+                <p className="text-[11px] text-sage-500 uppercase tracking-wider mt-0.5">{t("profile.phone")}</p>
               </div>
               <div className="bg-primary-50 rounded-md p-3 text-center">
                 <p className="text-lg font-bold text-primary-900">{fmtDate(profile?.createdAt)}</p>
-                <p className="text-[11px] text-sage-500 uppercase tracking-wider mt-0.5">Ngày tham gia</p>
+                <p className="text-[11px] text-sage-500 uppercase tracking-wider mt-0.5">{t("profile.joinDate")}</p>
               </div>
               <div className="bg-primary-50 rounded-md p-3 text-center col-span-2 sm:col-span-1">
                 <p className="text-lg font-bold text-primary-900 flex items-center justify-center gap-1">
                   <BadgeCheck className="h-5 w-5 text-emerald-500" />
-                  {profile?.status === "ACTIVE" ? "Đang hoạt động" : profile?.status || "—"}
+                  {profile?.status === "ACTIVE" ? t("profile.statusActive") : profile?.status || "—"}
                 </p>
-                <p className="text-[11px] text-sage-500 uppercase tracking-wider mt-0.5">Trạng thái</p>
+                <p className="text-[11px] text-sage-500 uppercase tracking-wider mt-0.5">{t("profile.status")}</p>
               </div>
             </div>
           </div>
@@ -134,7 +142,7 @@ export default function ProfilePage() {
         <div className="flex flex-col md:flex-row gap-6">
           {/* Left Navigation Sidebar */}
           <div className="w-full md:w-64 flex-shrink-0 bg-white rounded-md shadow-sm p-4 h-fit border border-primary-100">
-            <h2 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest px-3 mb-3">Menu tài khoản</h2>
+            <h2 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest px-3 mb-3">{t("profile.menuTitle")}</h2>
             <nav className="space-y-1">
               {MENU_ITEMS.map((item) => {
                 const active = isActive(item.path);
@@ -149,7 +157,7 @@ export default function ProfilePage() {
                     }`}
                   >
                     <item.icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 );
               })}
