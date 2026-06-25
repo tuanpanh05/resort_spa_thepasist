@@ -364,6 +364,7 @@ export default function Register() {
                       onBlur={() => setEmailFocused(false)}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder=""
+                      autoComplete="off"
                       className="w-full pl-9 pr-4 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
                   </div>
@@ -427,6 +428,7 @@ export default function Register() {
                       onBlur={() => setPasswordFocused(false)}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder=""
+                      autoComplete="new-password"
                       className="w-full pl-9 pr-11 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
                     <button
@@ -464,6 +466,7 @@ export default function Register() {
                       onBlur={() => setConfirmFocused(false)}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder=""
+                      autoComplete="new-password"
                       className="w-full pl-9 pr-11 bg-transparent focus:outline-none text-sm text-[#1a2f23] transition-all duration-200"
                     />
                     <button
