@@ -3,6 +3,7 @@ package fu.se.smms.controller;
 import fu.se.smms.dto.MealPreselectionDTO;
 import fu.se.smms.entity.*;
 import fu.se.smms.repository.*;
+import fu.se.smms.service.TableAssignmentService;
 import fu.se.smms.util.AESUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class GuestMealController {
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
+    private final TableAssignmentService tableAssignmentService;
 
     @Value("${app.food-order.cutoff-hour:22}")
     private int cutoffHour;
@@ -36,7 +38,8 @@ public class GuestMealController {
             FoodMenuRepository foodMenuRepository,
             FoodOrderRepository foodOrderRepository,
             FoodOrderDetailRepository foodOrderDetailRepository,
-            PackageFoodLimitRepository packageFoodLimitRepository) {
+            PackageFoodLimitRepository packageFoodLimitRepository,
+            TableAssignmentService tableAssignmentService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.medicalProfileRepository = medicalProfileRepository;
@@ -44,6 +47,7 @@ public class GuestMealController {
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
+        this.tableAssignmentService = tableAssignmentService;
     }
 
     /**
@@ -95,8 +99,13 @@ public class GuestMealController {
 
             // Fetch existing food orders for this booking
             List<FoodOrder> orders = foodOrderRepository.findByRoomBooking_BookingId(activeBooking.getBookingId());
+            String tableNumber = "N/A";
             List<Map<String, Object>> ordersList = new ArrayList<>();
             for (FoodOrder order : orders) {
+                if (order.getTable() != null && "N/A".equals(tableNumber)) {
+                    tableNumber = order.getTable().getTableNumber();
+                }
+                
                 Map<String, Object> orderMap = new HashMap<>();
                 orderMap.put("orderId", order.getOrderId());
                 orderMap.put("orderTime", order.getOrderTime());
@@ -120,6 +129,7 @@ public class GuestMealController {
                 ordersList.add(orderMap);
             }
             bookingInfo.put("orders", ordersList);
+            bookingInfo.put("tableName", tableNumber);
 
             response.put("booking", bookingInfo);
         } else {
@@ -343,16 +353,19 @@ public class GuestMealController {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
-        // Group selections by date
-        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDate = new HashMap<>();
+        // Group selections by date and period
+        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDateAndPeriod = new HashMap<>();
         for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
-            itemsByDate.computeIfAbsent(item.getDate(), k -> new ArrayList<>()).add(item);
+            String period = item.getPeriod() != null ? item.getPeriod() : "Breakfast";
+            String key = item.getDate() + "_" + period;
+            itemsByDateAndPeriod.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
         }
 
         java.time.LocalDate today = java.time.LocalDate.now();
         int currentHour = java.time.LocalTime.now().getHour();
 
-        for (String dateKey : itemsByDate.keySet()) {
+        for (String key : itemsByDateAndPeriod.keySet()) {
+            String dateKey = key.split("_")[0];
             try {
                 java.time.LocalDate targetDate = java.time.LocalDate.parse(dateKey);
                 if (!targetDate.isAfter(today)) {
@@ -370,29 +383,55 @@ public class GuestMealController {
         BigDecimal grandTotalExtraCharges = BigDecimal.ZERO;
         int totalItemCount = 0;
 
-        for (Map.Entry<String, List<MealPreselectionDTO.MealSelectionItem>> entry : itemsByDate.entrySet()) {
-            String dateKey = entry.getKey();
+        for (Map.Entry<String, List<MealPreselectionDTO.MealSelectionItem>> entry : itemsByDateAndPeriod.entrySet()) {
+            String key = entry.getKey();
+            String[] parts = key.split("_");
+            String dateKey = parts[0];
+            String period = parts.length > 1 ? parts[1] : "Breakfast";
             List<MealPreselectionDTO.MealSelectionItem> items = entry.getValue();
 
-            // Parse dateKey (e.g. "2026-06-20") to LocalDateTime at 08:00 AM
             LocalDateTime mealTime;
             try {
-                mealTime = java.time.LocalDate.parse(dateKey).atTime(8, 0);
+                java.time.LocalDate d = java.time.LocalDate.parse(dateKey);
+                if (period.equalsIgnoreCase("Breakfast")) {
+                    mealTime = d.atTime(7, 0);
+                } else if (period.equalsIgnoreCase("Lunch")) {
+                    mealTime = d.atTime(11, 30);
+                } else if (period.equalsIgnoreCase("Dinner")) {
+                    mealTime = d.atTime(18, 0);
+                } else {
+                    mealTime = d.atTime(8, 0);
+                }
             } catch (Exception e) {
                 mealTime = LocalDateTime.now();
             }
 
-            // Find if an order already exists for this booking on this date
+            // Find if an order already exists for this booking on this date AND this period
             FoodOrder foodOrder = null;
             List<FoodOrder> existingOrders = foodOrderRepository.findByRoomBooking_BookingId(booking.getBookingId());
             for (FoodOrder eo : existingOrders) {
                 if (eo.getOrderTime() != null && eo.getOrderTime().toLocalDate().equals(mealTime.toLocalDate())) {
-                    foodOrder = eo;
-                    break;
+                    int eoHour = eo.getOrderTime().getHour();
+                    int mealHour = mealTime.getHour();
+                    
+                    String eoPeriod = "Breakfast";
+                    if (eoHour >= 10 && eoHour < 14) eoPeriod = "Lunch";
+                    else if (eoHour >= 14) eoPeriod = "Dinner";
+                    
+                    String mPeriod = "Breakfast";
+                    if (mealHour >= 10 && mealHour < 14) mPeriod = "Lunch";
+                    else if (mealHour >= 14) mPeriod = "Dinner";
+
+                    if (eoPeriod.equals(mPeriod)) {
+                        foodOrder = eo;
+                        break;
+                    }
                 }
             }
 
             if (foodOrder == null) {
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(2);
+
                 foodOrder = FoodOrder.builder()
                         .user(user)
                         .roomBooking(booking)
@@ -400,6 +439,7 @@ public class GuestMealController {
                         .status("PENDING")
                         .totalAmount(BigDecimal.ZERO)
                         .origin("PACKAGE MEAL")
+                        .table(assignedTable)
                         .build();
                 foodOrder = foodOrderRepository.save(foodOrder);
             } else {
@@ -628,6 +668,8 @@ public class GuestMealController {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
+        RestaurantTable assignedTable = tableAssignmentService.assignTable(2);
+
         FoodOrder foodOrder = FoodOrder.builder()
                 .user(user)
                 .roomBooking(booking)
@@ -635,6 +677,7 @@ public class GuestMealController {
                 .status("PENDING")
                 .totalAmount(BigDecimal.ZERO)
                 .origin("ROOM SERVICE")
+                .table(assignedTable)
                 .build();
 
         foodOrder = foodOrderRepository.save(foodOrder);

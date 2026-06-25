@@ -67,7 +67,6 @@ export default function DishFormModal({
               >
                 <option value="Khai vị">Khai vị</option>
                 <option value="Món chính">Món chính</option>
-                <option value="Tráng miệng">Tráng miệng</option>
                 <option value="Thức uống">Thức uống</option>
               </select>
             </div>
@@ -120,29 +119,7 @@ export default function DishFormModal({
                 <option value="false">{mode === "add" ? "Tắt (Lưu kho)" : "Tắt hôm nay"}</option>
               </select>
             </div>
-            <div className="space-y-1.5">
-              <label className="font-semibold text-sage-800">Lịch phục vụ</label>
-              <select
-                value={dishForm.availableDays}
-                onChange={(e) => setForm((prev) => ({ ...prev, availableDays: e.target.value }))}
-                className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
-              >
-                <option value="0,1,2,3,4,5,6">Tất cả các ngày</option>
-                <option value="1,3,5">Ngày chẵn (Thứ 2, 4, 6)</option>
-                <option value="0,2,4,6">Ngày lẻ (Thứ 3, 5, 7, CN)</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="font-semibold text-sage-800">Trạng thái món trong gói</label>
-              <select
-                value={dishForm.isPackageIncluded ? "true" : "false"}
-                onChange={(e) => setForm((prev) => ({ ...prev, isPackageIncluded: e.target.value === "true" }))}
-                className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
-              >
-                <option value="true">Trong gói (Miễn phí)</option>
-                <option value="false">Ngoài gói (Có phụ phí)</option>
-              </select>
-            </div>
+
           </div>
 
           <div className="space-y-1.5">

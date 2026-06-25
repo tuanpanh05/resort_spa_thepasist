@@ -1,12 +1,12 @@
 // Food allergy options matching SRS
 export const ALLERGY_OPTIONS = [
-  { key: "peanuts", label: "Đậu phộng (Peanuts)" },
+  { key: "peanuts", label: "Đậu phộng" },
   { key: "gluten", label: "Gluten / Lúa mì" },
-  { key: "shellfish", label: "Hải sản có vỏ (Shellfish)" },
+  { key: "shellfish", label: "Hải sản có vỏ" },
   { key: "dairy", label: "Sữa / Lactose" },
   { key: "eggs", label: "Trứng" },
-  { key: "soy", label: "Đậu nành (Soy)" },
-  { key: "treenuts", label: "Hạt cây (Tree nuts)" },
+  { key: "soy", label: "Đậu nành" },
+  { key: "treenuts", label: "Hạt cây" },
   { key: "fish", label: "Cá" },
 ];
 

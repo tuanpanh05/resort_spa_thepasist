@@ -38,4 +38,8 @@ public class FoodOrder {
 
     @Column(name = "origin")
     private String origin;
+
+    @ManyToOne
+    @JoinColumn(name = "table_id")
+    private RestaurantTable table;
 }

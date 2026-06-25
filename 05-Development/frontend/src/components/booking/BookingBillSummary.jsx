@@ -82,7 +82,7 @@ export default function BookingBillSummary({
         {mealTotal > 0 && (
           <div className="flex justify-between font-medium pt-2 border-t border-primary-50">
             <span className="text-sage-800 flex items-center gap-1">
-              <UtensilsCrossed className="h-3.5 w-3.5" /> Thực đơn ngoài gói:
+              <UtensilsCrossed className="h-3.5 w-3.5" /> Phụ phí ẩm thực / Combo:
             </span>
             <span className="text-sage-950 font-mono">{formatCurrency(mealTotal)}</span>
           </div>

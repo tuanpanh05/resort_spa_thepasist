@@ -30,6 +30,7 @@ public class RoomBookingService {
     private final PackageFoodLimitRepository packageFoodLimitRepository;
     private final SpaBookingRepository spaBookingRepository;
     private final InvoiceService invoiceService;
+    private final TableAssignmentService tableAssignmentService;
 
     public RoomBookingService(UserRepository userRepository,
                               RoomBookingRepository roomBookingRepository,
@@ -41,7 +42,8 @@ public class RoomBookingService {
                               FoodMenuRepository foodMenuRepository,
                               PackageFoodLimitRepository packageFoodLimitRepository,
                               SpaBookingRepository spaBookingRepository,
-                              InvoiceService invoiceService) {
+                              InvoiceService invoiceService,
+                              TableAssignmentService tableAssignmentService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.retreatPackageRepository = retreatPackageRepository;
@@ -53,6 +55,7 @@ public class RoomBookingService {
         this.packageFoodLimitRepository = packageFoodLimitRepository;
         this.spaBookingRepository = spaBookingRepository;
         this.invoiceService = invoiceService;
+        this.tableAssignmentService = tableAssignmentService;
     }
 
     @Transactional
@@ -219,12 +222,15 @@ public class RoomBookingService {
                     mealTime = LocalDateTime.now();
                 }
 
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(dto.getGuestsCount() != null ? dto.getGuestsCount() : 2);
+
                 FoodOrder foodOrder = FoodOrder.builder()
                         .user(user)
                         .roomBooking(savedBooking)
                         .orderTime(mealTime)
                         .status("PENDING")
                         .totalAmount(BigDecimal.ZERO)
+                        .table(assignedTable)
                         .build();
 
                 foodOrder = foodOrderRepository.save(foodOrder);

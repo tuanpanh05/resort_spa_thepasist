@@ -196,11 +196,10 @@ export default function ConfirmationStep({
               <div className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10">
                 <div>
                   <span className="font-serif text-sm font-bold text-[#1a2f23] flex items-center gap-1.5">
-                    <UtensilsCrossed className="h-4 w-4 text-[#cda250]" /> Phụ thu gọi món bổ
-                    sung
+                    <UtensilsCrossed className="h-4 w-4 text-[#cda250]" /> Phụ phí ẩm thực / Combo
                   </span>
                   <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                    Các món ăn gọi thêm nằm ngoài tiêu chuẩn gói
+                    Các món ăn hoặc Combo dinh dưỡng đã chọn
                   </span>
                 </div>
                 <span className="font-semibold text-[#1a2f23]">{formatCurrency(mealTotal)}</span>
