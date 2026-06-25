@@ -409,37 +409,7 @@ export const specialistApi = {
     }),
 };
 
-// ============================================================
-// SPA BOOKING & SCHEDULING APIs (Module 3)
-// ============================================================
-export const spaApi = {
-  autoMatch: (spaServiceId, startDatetime) =>
-    apiRequest("/v1/spa-bookings/auto-match", {
-      method: "POST",
-      body: JSON.stringify({ spaServiceId, startDatetime }),
-    }),
 
-  schedule: (dto, guestUserId = null) => {
-    let url = "/v1/spa-bookings/schedule";
-    if (guestUserId) {
-      url += `?guestUserId=${guestUserId}`;
-    }
-    return apiRequest(url, {
-      method: "POST",
-      body: JSON.stringify(dto),
-    });
-  },
-};
-
-export const specialistApi = {
-  getTherapistSchedule: (date) =>
-    apiRequest(`/v1/spa-bookings/therapist-schedule?date=${date}`),
-
-  updateStatus: (bookingId, status) =>
-    apiRequest(`/v1/spa-bookings/${bookingId}/status?status=${status}`, {
-      method: "PATCH",
-    }),
-};
 
 // ============================================================
 // COMPLAINTS / SUPPORT REQUESTS APIs
