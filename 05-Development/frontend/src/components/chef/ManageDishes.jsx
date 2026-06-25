@@ -255,7 +255,14 @@ export default function ManageDishes({ dishes, setDishes }) {
             {/* Image Area */}
             <div className="relative sm:w-48 h-48 sm:h-auto shrink-0 overflow-hidden bg-[#fbfaf7]">
               <img 
-                src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
+                src={(() => {
+                  if (!dish.image) return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
+                  if (dish.image.startsWith('/')) {
+                    const baseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api").replace('/api', '');
+                    return baseUrl + dish.image;
+                  }
+                  return dish.image;
+                })()} 
                 alt={dish.name} 
                 className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${!dish.enabled ? 'grayscale-[50%]' : ''}`} 
                 onError={(e) => {

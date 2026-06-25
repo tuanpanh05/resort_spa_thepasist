@@ -90,7 +90,7 @@ public class ChefMealController {
     @PostMapping("/menu/upload")
     public ResponseEntity<?> uploadImage(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
         try {
-            String frontendDir = "c:/su26-swp391-se2023-g3/05-Development/frontend/public/images/dishes/";
+            String frontendDir = "d:/su26-swp391-se2023-g3/05-Development/frontend/public/images/dishes/";
             java.io.File dir = new java.io.File(frontendDir);
             if (!dir.exists()) dir.mkdirs();
             String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9\\.\\-]", "_");

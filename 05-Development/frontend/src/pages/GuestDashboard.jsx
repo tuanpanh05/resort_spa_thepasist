@@ -473,16 +473,57 @@ export default function GuestDashboard() {
 
             {/* Right Column: Menu & Orders */}
             <div className="lg:col-span-8 flex flex-col h-full">
-              {/* Immediate Service Banner */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50/30 rounded-2xl border border-amber-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden shadow-sm">
-                  <div className="relative">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-                        <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Phục Vụ Tại Bàn Trong Ngày</span>
-                      </div>
-                      <span className="font-serif text-2xl font-bold text-amber-950 drop-shadow-sm">{todayStr.split("-").slice(1).reverse().join("/")}</span>
-                  </div>
-                  <span className="relative px-5 py-2 bg-amber-100/80 text-amber-800 text-[10px] font-bold uppercase tracking-widest rounded-full border border-amber-300 shadow-sm backdrop-blur-sm">Phục Vụ Ngay</span>
+              {/* Immediate Service Banner or Preselect Info */}
+              {orderMode === "extra" ? (
+                <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50/30 rounded-2xl border border-amber-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden shadow-sm">
+                    <div className="relative">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Phục Vụ Tại Bàn Trong Ngày</span>
+                        </div>
+                        <span className="font-serif text-2xl font-bold text-amber-950 drop-shadow-sm">{todayStr.split("-").slice(1).reverse().join("/")}</span>
+                    </div>
+                    <span className="relative px-5 py-2 bg-amber-100/80 text-amber-800 text-[10px] font-bold uppercase tracking-widest rounded-full border border-amber-300 shadow-sm backdrop-blur-sm">Phục Vụ Ngay</span>
+                </div>
+              ) : (
+                <div className="mb-6 p-4 bg-gradient-to-r from-sage-50 to-emerald-50/30 rounded-2xl border border-sage-200/50 flex flex-col justify-between items-start gap-4 relative overflow-hidden shadow-sm">
+                    <div className="relative w-full">
+                        <div className="flex items-center justify-between w-full mb-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-sage-600" />
+                            <span className="text-[10px] font-bold text-sage-700 uppercase tracking-widest">Lên Kế Hoạch Ẩm Thực</span>
+                          </div>
+                          <span className="relative px-3 py-1 bg-sage-100/80 text-sage-800 text-[10px] font-bold uppercase tracking-widest rounded-full border border-sage-300 shadow-sm backdrop-blur-sm">Đặt Trước Hạn Chót 22:00</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {bookingDays.map(day => (
+                            <button 
+                              key={day}
+                              onClick={() => setSelectedDate(day)}
+                              className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all ${selectedDate === day ? "bg-sage-600 text-white border-sage-600 shadow-md" : "bg-white text-sage-600 border-sage-200 hover:border-sage-400"}`}
+                            >
+                              {day.split("-").slice(1).reverse().join("/")}
+                            </button>
+                          ))}
+                        </div>
+                    </div>
+                </div>
+              )}
+
+              {/* MODE SWITCHER */}
+              <div className="flex bg-sage-100/50 rounded-xl p-1 mb-4 border border-sage-200">
+                <button 
+                  onClick={() => handleModeSwitch("extra")}
+                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${orderMode === "extra" ? "bg-white text-primary-800 shadow-sm border border-sage-200" : "text-sage-500 hover:text-sage-700"}`}
+                >
+                  Gọi Thêm Tại Bàn
+                </button>
+                <button 
+                  onClick={() => handleModeSwitch("preselect")}
+                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${orderMode === "preselect" ? "bg-white text-primary-800 shadow-sm border border-sage-200" : "text-sage-500 hover:text-sage-700"}`}
+                >
+                  Đặt Trước Bữa Ăn (Kế Hoạch)
+                </button>
               </div>
 
               {/* TABS HEADER */}

@@ -363,6 +363,8 @@ public class GuestMealController {
 
         java.time.LocalDate today = java.time.LocalDate.now();
         int currentHour = java.time.LocalTime.now().getHour();
+        java.time.LocalDate checkInDate = booking.getCheckInDate().toLocalDate();
+        java.time.LocalDate checkOutDate = booking.getCheckOutDate().toLocalDate();
 
         for (String key : itemsByDateAndPeriod.keySet()) {
             String dateKey = key.split("_")[0];
@@ -370,6 +372,9 @@ public class GuestMealController {
                 java.time.LocalDate targetDate = java.time.LocalDate.parse(dateKey);
                 if (!targetDate.isAfter(today)) {
                     return ResponseEntity.badRequest().body("Cannot order meals for today or past dates.");
+                }
+                if (targetDate.isBefore(checkInDate) || targetDate.isAfter(checkOutDate)) {
+                    return ResponseEntity.badRequest().body("Ngày đặt món (" + targetDate + ") không hợp lệ. Vui lòng đặt món trong khoảng thời gian lưu trú (" + checkInDate + " đến " + checkOutDate + ").");
                 }
                 if (targetDate.equals(today.plusDays(1)) && currentHour >= cutoffHour) {
                     return ResponseEntity.badRequest().body("Đã qua thời gian hạn chót (Cut-off Time " + cutoffHour + ":00). Không thể đặt trước món ăn cho ngày mai.");

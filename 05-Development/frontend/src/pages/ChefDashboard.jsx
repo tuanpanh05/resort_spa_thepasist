@@ -13,15 +13,6 @@ import {
 } from "lucide-react";
 
 import axiosClient from "../api/axiosClient";
-import {
-  chefInitialAllergies as initialAllergies,
-  chefInitialFeedbacks as initialFeedbacks,
-  chefInitialDishes as initialDishes,
-  chefInitialOrders as initialOrders,
-  chefInitialIngredients as initialIngredients,
-  chefInitialRequests as initialRequests,
-  staffInitialTables as initialTables,
-} from "../mockData";
 
 // Import sub-components
 import ChefOverview from "../components/chef/ChefOverview";
@@ -46,13 +37,13 @@ export default function ChefDashboard() {
 
   // Master System States
   const [allergies, setAllergies] = useState([]);
-  const [feedbacks] = useState(initialFeedbacks);
+  const [feedbacks] = useState([]);
   const [dishes, setDishes] = useState([]);
   const [orders, setOrders] = useState([]);
   const [upcomingOrders, setUpcomingOrders] = useState([]);
-  const [ingredients, setIngredients] = useState(initialIngredients);
-  const [procurements, setProcurements] = useState(initialRequests);
-  const [tables, setTables] = useState(initialTables);
+  const [ingredients, setIngredients] = useState([]);
+  const [procurements, setProcurements] = useState([]);
+  const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
 
@@ -230,10 +221,8 @@ export default function ChefDashboard() {
       }));
       setTables(computeDynamicTables(mappedOrders, realTables));
     } catch (err) {
-      console.warn("Could not fetch chef data from live server. Falling back to mock.", err);
-      setDishes(initialDishes);
-      setOrders(initialOrders);
-      setAllergies(initialAllergies);
+      console.warn("Could not fetch chef data from live server.", err);
+      // Leave state as empty arrays — do not fallback to mock data
     } finally {
       setLoading(false);
     }
@@ -352,7 +341,7 @@ export default function ChefDashboard() {
     try {
       await axiosClient.delete(`/chef/orders/${numericId}/item/${foodId}`);
       // Refresh orders
-      fetchDashboardData();
+      fetchChefData();
       alert(`Đã hủy món "${dishName}" thành công.`);
     } catch (err) {
       console.warn("Failed to cancel item", err);

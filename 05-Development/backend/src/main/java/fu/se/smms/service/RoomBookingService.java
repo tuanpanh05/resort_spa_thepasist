@@ -230,6 +230,7 @@ public class RoomBookingService {
                         .orderTime(mealTime)
                         .status("PENDING")
                         .totalAmount(BigDecimal.ZERO)
+                        .origin("PACKAGE MEAL")
                         .table(assignedTable)
                         .build();
 
@@ -279,7 +280,7 @@ public class RoomBookingService {
                                 .foodMenu(dish)
                                 .quantity(qty)
                                 .priceAtOrder(dish.getPrice())
-                                .specialNote("[Bá»¯a: " + period + ", NgÃ y: " + dateStr + "]")
+                                .specialNote("[Bữa: " + period + ", Ngày: " + dateStr + "]")
                                 .isPackageIncluded(isPackageIncluded)
                                 .build();
 

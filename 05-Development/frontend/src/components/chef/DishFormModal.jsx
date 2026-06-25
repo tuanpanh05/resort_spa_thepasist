@@ -176,6 +176,12 @@ export default function DishFormModal({
               onChange={async (e) => {
                 if (e.target.files && e.target.files[0]) {
                   const file = e.target.files[0];
+                  
+                  // 1. Show instant local preview to bypass Vite public folder delay
+                  const localPreviewUrl = URL.createObjectURL(file);
+                  setForm((prev) => ({ ...prev, localPreview: localPreviewUrl }));
+
+                  // 2. Upload to backend
                   const formData = new FormData();
                   formData.append('file', file);
                   try {
@@ -198,9 +204,24 @@ export default function DishFormModal({
               }}
               className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-sage-100 file:text-sage-800 hover:file:bg-sage-200"
             />
-            {dishForm.image && (
+            {(dishForm.localPreview || dishForm.image) && (
               <div className="mt-2">
-                <img src={dishForm.image} alt="Preview" className="h-20 w-32 object-cover rounded border border-sage-200" />
+                <img 
+                  src={dishForm.localPreview || (() => {
+                    if (!dishForm.image) return "";
+                    if (dishForm.image.startsWith('/')) {
+                      const baseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api").replace('/api', '');
+                      return `${baseUrl}${dishForm.image}?t=${Date.now()}`;
+                    }
+                    return `${dishForm.image}?t=${Date.now()}`;
+                  })()} 
+                  alt="Preview" 
+                  className="h-20 w-32 object-cover rounded border border-sage-200" 
+                  onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.src = "/images/dishes/dish_chao_yen_mach.png"; // fallback image
+                  }}
+                />
               </div>
             )}
           </div>

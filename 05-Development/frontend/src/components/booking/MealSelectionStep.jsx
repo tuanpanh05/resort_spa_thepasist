@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Info, AlertTriangle, ArrowLeft, ChevronRight, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Info, AlertTriangle, ArrowLeft, ChevronRight, Check, Clock } from "lucide-react";
 import { detectAllergens } from "../../utils/health";
 
 const COMBOS = [
@@ -36,16 +36,79 @@ export default function MealSelectionStep({
   otherAllergy = "",
   selectedComboId,
   handleSelectCombo,
+  onComboMealsChange,  // NEW: callback(mealSelections) called when combo chosen
   dietaryPreferences = ["omnivore"],
   formatCurrency,
   mealTotal,
   handlePrevStep,
   handleNextStep,
 }) {
+  // ── BR-10: Real-time cut-off detection ──────────────────────────────────
+  const [currentHour, setCurrentHour] = useState(new Date().getHours());
+  const CUTOFF_HOUR = 22;
+  const todayStr = new Date().toISOString().split("T")[0];
+  const tomorrowStr = (() => { const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().split("T")[0]; })();
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentHour(new Date().getHours()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Check if a specific date is blocked by cut-off rule
+  const isCutoffBlocked = (dateStr) => {
+    if (!dateStr) return false;
+    if (dateStr <= todayStr) return true;  // past / today → always blocked
+    if (dateStr === tomorrowStr && currentHour >= CUTOFF_HOUR) return true;
+    return false;
+  };
+
+  // BR-30: Check if all booking days can still accept selections
+  const allDaysBlocked = mealBookingDays.length > 0 &&
+    mealBookingDays.every(d => isCutoffBlocked(d));
+  // Days that are still open
+  const openDays = mealBookingDays.filter(d => !isCutoffBlocked(d));
+  // Show cut-off warning when tomorrow is next and it's past 22:00
+  const showCutoffWarning = currentHour >= CUTOFF_HOUR && tomorrowStr && mealBookingDays.includes(tomorrowStr);
   const nightsCount = Math.max(1, mealBookingDays.length - 1);
   const guestsCount = guestInfo.guestsCount || 1;
   const [viewMenuCombo, setViewMenuCombo] = React.useState(null);
   const [selectedDishDetail, setSelectedDishDetail] = React.useState(null);
+
+  // ── Compute mealSelections from combo & notify parent ───────────────────
+  // Convert internal dailyMenus structure → { "yyyy-MM-dd": { period: { foodId: qty } } }
+  const buildMealSelectionsFromCombo = (safeCombo, openBookingDays) => {
+    const result = {};
+    openBookingDays.forEach((dateStr, dayIndex) => {
+      const menuDayIndex = dayIndex % Math.max(1, safeCombo.dailyMenus.length);
+      const menu = safeCombo.dailyMenus[menuDayIndex] || [];
+      const dateObj = {};
+      menu.forEach(item => {
+        // Use substituted foodId if present, else original
+        const effectiveFoodId = item.isSubstituted && item.allergicSubId ? item.allergicSubId : item.foodId;
+        if (!effectiveFoodId) return;
+        const period = item.period || "Breakfast";
+        if (!dateObj[period]) dateObj[period] = {};
+        const qty = item.qty || 1;
+        dateObj[period][effectiveFoodId] = (dateObj[period][effectiveFoodId] || 0) + qty;
+      });
+      if (Object.keys(dateObj).length > 0) result[dateStr] = dateObj;
+    });
+    return result;
+  };
+
+  // Whenever selectedComboId or safeCombos change, notify parent
+  useEffect(() => {
+    if (!onComboMealsChange) return;
+    if (!selectedComboId) {
+      onComboMealsChange({});
+      return;
+    }
+    const chosen = safeCombos.find(c => c.id === selectedComboId);
+    if (!chosen) { onComboMealsChange({}); return; }
+    const computed = buildMealSelectionsFromCombo(chosen, openDays);
+    onComboMealsChange(computed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedComboId, packageMenuItems, consentDataProcessing, consentSharing, selectedAllergies, otherAllergy]);
 
   const calculateTotalComboPrice = (combo) => {
     try {
@@ -207,13 +270,16 @@ export default function MealSelectionStep({
                   } else if (comboId === 'vip') {
                       pool = pool.filter(i => {
                           const tags = (i.dietaryTags || "").toLowerCase();
-                          return tags.includes("omnivore") || tags.includes("pescatarian");
+                          // VIP includes omnivore, pescatarian, PLUS any diets the user explicitly chose
+                          const isVipDefault = tags.includes("omnivore") || tags.includes("pescatarian");
+                          const isUserSelected = activePrefs.some(p => tags.includes(p.toLowerCase()));
+                          return isVipDefault || isUserSelected;
                       });
                   }
                   
-                  // 2. Filter by user diet (only if combo isn't strict detox)
-                  if (comboId !== 'detox') {
-                      pool = pool.filter(i => {
+                  // 2. Filter by user diet (only VIP respects individual dietary preferences within the group)
+                  if (comboId === 'vip') {
+                      const userDietFiltered = pool.filter(i => {
                           const tags = (i.dietaryTags || "").toLowerCase();
                           const lowerDiet = diet.toLowerCase();
                           if (lowerDiet === 'vegan') return tags.includes("vegan");
@@ -221,9 +287,12 @@ export default function MealSelectionStep({
                           if (lowerDiet === 'pescatarian') return tags.includes("pescatarian") || tags.includes("vegetarian") || tags.includes("vegan");
                           return true; // omnivore, etc
                       });
+                      if (userDietFiltered.length > 0) {
+                          pool = userDietFiltered;
+                      }
                   }
                   
-                  if (pool.length === 0) pool = items; // fallback
+                  if (pool.length === 0) pool = items; // fallback if chef hasn't defined any matching items
                   
                   const periodPool = pool.filter(i => {
                       if (Array.isArray(i.periods)) return i.periods.some(per => typeof per === 'string' && per.toLowerCase().includes(period.toLowerCase()));
@@ -231,9 +300,12 @@ export default function MealSelectionStep({
                   });
                   const finalPool = periodPool.length > 0 ? periodPool : pool;
                   
-                  const nuoc = finalPool.filter(i => /nước|drink|thức uống/i.test(i.category || ""));
-                  const khai = finalPool.filter(i => /khai vị|appetizer|salad/i.test(i.category || ""));
-                  const chinh = finalPool.filter(i => /chính|main/i.test(i.category || ""));
+                  const isDrink = i => /nước|drink|thức uống/i.test(i.category || "") || /nước|trà|sinh tố|sữa|ép/i.test(i.dishName || "");
+                  const isAppetizer = i => /khai vị|appetizer|salad/i.test(i.category || "") || /gỏi|salad|soup/i.test(i.dishName || "");
+                  
+                  const nuoc = finalPool.filter(i => isDrink(i));
+                  const khai = finalPool.filter(i => isAppetizer(i));
+                  const chinh = finalPool.filter(i => !isDrink(i) && !isAppetizer(i));
                   
                   const getId = (subPool, offset) => {
                       if (subPool.length > 0) return subPool[offset % subPool.length].foodId;
@@ -281,6 +353,12 @@ export default function MealSelectionStep({
     }
   }, [packageMenuItems, consentDataProcessing, consentSharing, guestsCount, selectedAllergies, otherAllergy, guestInfo?.healthNote]);
 
+  // Handle combo selection: propagate to parent
+  const handleComboClick = (comboId) => {
+    if (allDaysBlocked) return;  // BR-10: all days blocked
+    handleSelectCombo(comboId);
+  };
+
   return (
     <div className="space-y-6 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
@@ -291,6 +369,38 @@ export default function MealSelectionStep({
           Chọn một gói ẩm thực áp dụng cho tất cả các khách trong suốt {nightsCount} ngày lưu trú. Thực đơn sẽ được Bếp trưởng luân phiên xoay vòng mỗi ngày để đem lại sự đa dạng!
         </p>
       </div>
+
+      {/* ── BR-10: Cut-off Time Warning ─────────────────────────────────── */}
+      {showCutoffWarning && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-300 rounded-xl flex items-start gap-3">
+          <Clock className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-red-700">Đã qua giờ đặt trước cho ngày mai!</p>
+            <p className="text-xs text-red-600 mt-0.5">
+              Thời gian hạn chót (Cut-off) là <strong>{CUTOFF_HOUR}:00</strong>. Bạn không thể đặt trước bữa ăn cho ngày mai nữa. Các ngày còn lại trong lịch vẫn có thể đặt bình thường.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* BR-30: All days blocked */}
+      {allDaysBlocked && mealBookingDays.length > 0 && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-amber-800">Không còn ngày nào có thể đặt trước</p>
+            <p className="text-xs text-amber-700 mt-0.5">Tất cả các ngày trong lịch lưu trú đã qua hoặc đã qua cut-off 22:00. Bạn vẫn có thể bỏ qua bước này và tiếp tục xác nhận đặt phòng.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Remaining open days info */}
+      {!allDaysBlocked && openDays.length < mealBookingDays.length && openDays.length > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3 text-xs text-blue-700">
+          <Info className="h-4 w-4 flex-shrink-0" />
+          <span>Gói combo sẽ áp dụng cho <strong>{openDays.length}</strong> ngày còn có thể đặt trước (từ {openDays[0]} đến {openDays[openDays.length-1]}).</span>
+        </div>
+      )}
 
       {/* Auto Filter Banner */}
       {consentDataProcessing && consentSharing ? (
@@ -321,18 +431,20 @@ export default function MealSelectionStep({
         {safeCombos.map((combo) => {
           const isSelected = selectedComboId === combo.id;
           const totalComboPrice = calculateTotalComboPrice(combo);
-          const avgPricePerDay = totalComboPrice / (guestsCount * nightsCount);
+          const avgPricePerDay = totalComboPrice / (guestsCount * Math.max(1, openDays.length || nightsCount));
           const hasSubstitutions = combo.allergenWarnings.length > 0;
+          const blocked = allDaysBlocked;
 
           return (
             <div
               key={combo.id}
-              className={`group relative border transition-all duration-500 overflow-hidden rounded-2xl cursor-pointer flex flex-col h-full ${
+              className={`group relative border transition-all duration-500 overflow-hidden rounded-2xl flex flex-col h-full ${
+                blocked ? "opacity-50 cursor-not-allowed" :
                 isSelected
-                  ? "border-[#cda250] shadow-[0_8px_30px_rgba(205,162,80,0.15)] bg-gradient-to-b from-white to-[#cda250]/5 -translate-y-1"
-                  : "border-[#cda250]/15 bg-white shadow-sm hover:shadow-[0_8px_25px_rgba(26,47,35,0.06)] hover:border-[#cda250]/40 hover:-translate-y-1"
+                  ? "cursor-pointer border-[#cda250] shadow-[0_8px_30px_rgba(205,162,80,0.15)] bg-gradient-to-b from-white to-[#cda250]/5 -translate-y-1"
+                  : "cursor-pointer border-[#cda250]/15 bg-white shadow-sm hover:shadow-[0_8px_25px_rgba(26,47,35,0.06)] hover:border-[#cda250]/40 hover:-translate-y-1"
               }`}
-              onClick={() => handleSelectCombo(combo.id, combo)}
+              onClick={() => !blocked && handleComboClick(combo.id)}
             >
               <div className="relative h-56 overflow-hidden flex-shrink-0">
                 <img
@@ -406,13 +518,15 @@ export default function MealSelectionStep({
 
                 <button
                   type="button"
+                  disabled={blocked}
                   className={`mt-6 w-full py-3 rounded-xl font-bold uppercase tracking-wider text-[12px] transition-all duration-300 shadow-sm hover:shadow-md ${
+                    blocked ? "bg-gray-100 border-2 border-gray-300 text-gray-400 cursor-not-allowed" :
                     isSelected
                       ? "bg-gradient-to-r from-[#cda250] to-[#b38836] text-white border-none ring-2 ring-[#cda250]/30 ring-offset-2"
                       : "bg-white border-2 border-[#1a2f23] text-[#1a2f23] hover:bg-[#1a2f23] hover:text-white"
                   }`}
                 >
-                  {isSelected ? "Đã Chọn" : "Chọn Gói Này"}
+                  {blocked ? "Không Còn Đặt Được" : isSelected ? "Đã Chọn" : "Chọn Gói Này"}
                 </button>
               </div>
             </div>

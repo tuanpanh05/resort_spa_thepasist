@@ -96,13 +96,15 @@ export default function BookingBillSummary({
             </span>
             {selectedServices.map((s) => {
               let itemCost = 0;
-              if (s.type === "per-guest") itemCost = s.price * guestInfo.guestsCount;
-              else if (s.type === "per-guest-per-night")
+              const pricingType = s.pricingType || s.type || "per-guest";
+              const serviceTitle = s.name || s.title || "Dịch vụ";
+              if (pricingType === "per-guest") itemCost = s.price * guestInfo.guestsCount;
+              else if (pricingType === "per-guest-per-night")
                 itemCost = s.price * guestInfo.guestsCount * nightsCount;
               else itemCost = s.price;
               return (
-                <div key={s.id} className="flex justify-between text-sage-600 text-xs">
-                  <span className="truncate pr-4">• {s.title.split("&")[0].trim()}</span>
+                <div key={s.serviceId || s.id} className="flex justify-between text-sage-600 text-xs">
+                  <span className="truncate pr-4">• {serviceTitle.split("&")[0].trim()}</span>
                   <span className="font-mono">{formatCurrency(itemCost)}</span>
                 </div>
               );

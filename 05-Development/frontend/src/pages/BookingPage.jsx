@@ -5,7 +5,7 @@ import { colors, radius, shadows } from "../styles/designSystem";
 import axiosClient from "../api/axiosClient";
 import { medicalApi, userApi, masterDataApi, bookingLookupApi } from "../api";
 
-import { villasList, servicesList } from "../constants/booking";
+// servicesList and villasList removed — now using live API data (spaServices, roomTypes)
 import { detectAllergens } from "../utils/health";
 
 import BookingWizardHeader from "../components/booking/BookingWizardHeader";
@@ -51,13 +51,19 @@ export default function BookingPage() {
   // Step 2: Health Profile
   const [selectedAllergies, setSelectedAllergies] = useState([]);
   const [otherAllergy, setOtherAllergy] = useState("");
-  const [dietaryPreference, setDietaryPreference] = useState("omnivore");
+  const [dietaryPreferences, setDietaryPreferences] = useState(["omnivore"]);
   const [physicalCondition, setPhysicalCondition] = useState("");
   const [consentDataProcessing, setConsentDataProcessing] = useState(false);
   const [consentSharing, setConsentSharing] = useState(false);
 
   const toggleAllergy = (key) => {
     setSelectedAllergies((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  const toggleDietaryPreference = (key) => {
+    setDietaryPreferences((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     );
   };
@@ -72,6 +78,18 @@ export default function BookingPage() {
   const [selectedMealDate, setSelectedMealDate] = useState("");
   const [mealBookingDays, setMealBookingDays] = useState([]);
   const [packageMenuItems, setPackageMenuItems] = useState([]);
+  const [selectedComboId, setSelectedComboId] = useState("");
+
+  const handleSelectCombo = (comboId) => {
+    setSelectedComboId(comboId);
+    // If deselected, clear meal selections
+    if (!comboId) setMealSelections({});
+  };
+
+  // Called by MealSelectionStep whenever the combo-derived meals are computed
+  const handleComboMealsChange = (computedMeals) => {
+    setMealSelections(computedMeals);
+  };
 
   // Copy helper
   const [copiedField, setCopiedField] = useState(null);
@@ -140,8 +158,7 @@ export default function BookingPage() {
         const res = await axiosClient.get("/chef/menu");
         const validDishes = res.data.filter(item =>
           item.enabled !== false &&
-          item.isTodayMenu !== false &&
-          item.isPackageIncluded !== false
+          item.isTodayMenu !== false
         );
 
         const mappedDishes = validDishes.map(item => ({
@@ -149,6 +166,7 @@ export default function BookingPage() {
           dishName: item.name,
           description: item.description,
           price: item.price,
+          category: item.category || "",
           dietaryTags: item.dietaryTags || "",
           allergens: item.allergens || [],
           image: item.image,
@@ -197,7 +215,7 @@ export default function BookingPage() {
               const parsed = JSON.parse(p.foodAllergies);
               setSelectedAllergies(parsed.selected || []);
               setOtherAllergy(parsed.other || "");
-              setDietaryPreference(parsed.diet || "omnivore");
+              setDietaryPreferences(parsed.diet ? [parsed.diet] : ["omnivore"]);
             } catch {
               setOtherAllergy(p.foodAllergies);
             }
@@ -325,11 +343,13 @@ export default function BookingPage() {
   const villaTotal = calculateVillaTotal();
 
   let servicesTotal = 0;
-  const selectedServices = servicesList.filter((s) => selectedServiceIds.includes(s.id));
+  // Use spaServices fetched from API instead of mock servicesList
+  const selectedServices = spaServices.filter((s) => selectedServiceIds.includes(s.id || s.serviceId));
   selectedServices.forEach((s) => {
-    if (s.type === "per-guest") {
+    const pricingType = s.pricingType || s.type || "per-guest";
+    if (pricingType === "per-guest") {
       servicesTotal += s.price * guestInfo.guestsCount;
-    } else if (s.type === "per-guest-per-night") {
+    } else if (pricingType === "per-guest-per-night") {
       servicesTotal += s.price * guestInfo.guestsCount * nightsCount;
     } else {
       servicesTotal += s.price;
@@ -450,16 +470,13 @@ export default function BookingPage() {
   const handleVerifyPayment = async () => {
     setIsVerifyingPayment(true);
     try {
-
-
-      const serviceIdMap = {
-        "srv-spa": 1,
-        "srv-yoga": 2,
-        "srv-physio": 3,
-        "srv-meals": 4,
-        "srv-pickup": 5
-      };
-      const numericServiceIds = selectedServiceIds.map(id => serviceIdMap[id] || 1);
+      // Resolve numeric service IDs from spaServices API data
+      const numericServiceIds = selectedServiceIds
+        .map(id => {
+          const svc = spaServices.find(s => (s.id || s.serviceId) === id);
+          return svc ? (svc.serviceId || svc.id) : null;
+        })
+        .filter(id => id !== null && typeof id === "number");
 
       const payload = {
         fullName: guestInfo.fullName,
@@ -469,17 +486,12 @@ export default function BookingPage() {
         checkOutDate: (guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : "") + "T12:00:00",
         guestsCount: guestInfo.guestsCount,
         villaId: selectedVillaIdFirst ? Number(selectedVillaIdFirst) : null,
-        roomId: 1, // Default room ID to satisfy @NotNull validation if enabled
+        roomId: 1,
         roomQuantity: selectedVillaIdFirst ? selectedRooms[selectedVillaIdFirst] : 1,
         roomTypeQuantities: selectedRooms,
         packageId: null,
         packageIds: [],
-        serviceIds: selectedServiceIds.map(id => {
-          if (id === "srv-spa") return 2;
-          if (id === "srv-yoga") return 1;
-          if (id === "srv-physio") return 3;
-          return null;
-        }).filter(id => id !== null),
+        serviceIds: numericServiceIds,
         allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
         explicitConsentSigned: consentDataProcessing && consentSharing,
         mealSelections: mealSelections
@@ -589,8 +601,8 @@ export default function BookingPage() {
               {step === 2 && (
                 <HealthProfileStep
                   formErrors={formErrors}
-                  dietaryPreference={dietaryPreference}
-                  setDietaryPreference={setDietaryPreference}
+                  dietaryPreferences={dietaryPreferences}
+                  toggleDietaryPreference={toggleDietaryPreference}
                   selectedAllergies={selectedAllergies}
                   toggleAllergy={toggleAllergy}
                   otherAllergy={otherAllergy}
@@ -625,11 +637,14 @@ export default function BookingPage() {
                   consentDataProcessing={consentDataProcessing}
                   consentSharing={consentSharing}
                   packageMenuItems={packageMenuItems}
-                  dietaryPreference={dietaryPreference}
+                  dietaryPreferences={dietaryPreferences}
                   guestInfo={guestInfo}
                   selectedAllergies={selectedAllergies}
                   otherAllergy={otherAllergy}
                   mealSelections={mealSelections}
+                  selectedComboId={selectedComboId}
+                  handleSelectCombo={handleSelectCombo}
+                  onComboMealsChange={handleComboMealsChange}
                   updateMealQty={updateMealQty}
                   formatCurrency={formatCurrency}
                   getMealSelectedCount={getMealSelectedCount}
@@ -642,7 +657,7 @@ export default function BookingPage() {
                 <ConfirmationStep
                   guestInfo={guestInfo}
                   nightsCount={nightsCount}
-                  dietaryPreference={dietaryPreference}
+                  dietaryPreferences={dietaryPreferences}
                   selectedAllergies={selectedAllergies}
                   otherAllergy={otherAllergy}
                   physicalCondition={physicalCondition}
