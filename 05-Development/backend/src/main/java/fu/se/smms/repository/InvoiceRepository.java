@@ -39,6 +39,13 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
                    AND status IN ('CONFIRMED', 'COMPLETED')),
                 0
             ) + COALESCE(
+                (SELECT SUM(price_at_booking - refund_amount)
+                 FROM dbo.spa_booking
+                 WHERE room_booking_id = :bookingId
+                   AND status = 'CANCELLED'
+                   AND refund_amount IS NOT NULL),
+                0
+            ) + COALESCE(
                 (SELECT SUM(p.price)
                  FROM dbo.booking_packages bp
                  INNER JOIN dbo.retreat_packages p ON p.package_id = bp.package_id
@@ -52,12 +59,22 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     BigDecimal sumSpaSubtotal(@Param("bookingId") Integer bookingId);
 
     @Query(value = """
-            SELECT COALESCE(SUM(d.quantity * d.price_at_order), 0)
-            FROM dbo.food_order_detail d
-            INNER JOIN dbo.food_order o ON o.order_id = d.order_id
-            WHERE o.room_booking_id = :bookingId
-              AND d.is_package_included = 0
-              AND o.status IN ('READY', 'DELIVERED')
+            SELECT COALESCE(
+                (SELECT SUM(d.quantity * d.price_at_order)
+                 FROM dbo.food_order_detail d
+                 INNER JOIN dbo.food_order o ON o.order_id = d.order_id
+                 WHERE o.room_booking_id = :bookingId
+                   AND d.is_package_included = 0
+                   AND o.status IN ('READY', 'DELIVERED')),
+                0
+            ) + COALESCE(
+                (SELECT SUM(o.total_amount - o.refund_amount)
+                 FROM dbo.food_order o
+                 WHERE o.room_booking_id = :bookingId
+                   AND o.status = 'CANCELLED'
+                   AND o.refund_amount IS NOT NULL),
+                0
+            )
             """, nativeQuery = true)
     BigDecimal sumFoodSubtotal(@Param("bookingId") Integer bookingId);
 

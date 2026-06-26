@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { colors, radius, shadows } from "../styles/designSystem";
 import axiosClient from "../api/axiosClient";
 import { medicalApi, userApi, masterDataApi, bookingLookupApi } from "../api";
 
 // servicesList and villasList removed — now using live API data (spaServices, roomTypes)
-import { detectAllergens } from "../utils/health";
 
 import BookingWizardHeader from "../components/booking/BookingWizardHeader";
 import GuestInfoStep from "../components/booking/GuestInfoStep";
 import HealthProfileStep from "../components/booking/HealthProfileStep";
 import VillaSelectionStep from "../components/booking/VillaSelectionStep";
-import PackageSelectionStep from "../components/booking/PackageSelectionStep";
 import MealSelectionStep from "../components/booking/MealSelectionStep";
 import ConfirmationStep from "../components/booking/ConfirmationStep";
 import BookingBillSummary from "../components/booking/BookingBillSummary";
 import BookingSuccess from "../components/booking/BookingSuccess";
-import PaymentStep from "../components/booking/PaymentStep";
 
 export default function BookingPage() {
   const navigate = useNavigate();
@@ -25,17 +21,15 @@ export default function BookingPage() {
   // Wizard Step State: 1 = Guest Info, 2 = Select Villa & Services, 3 = Review, 4 = Payment QR
   const [step, setStep] = useState(1);
 
-  const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
-  const [createdBookingId, setCreatedBookingId] = useState(null);
   // Spa services
   const [spaServices, setSpaServices] = useState([]);
 
   // Status Trackers
-  const [bookingStatus, setBookingStatus] = useState("DRAFT"); // DRAFT -> PENDING_PAYMENT -> CONFIRMED
-  const [paymentStatus, setPaymentStatus] = useState("UNPAID"); // UNPAID -> PENDING -> PAID
+  const bookingStatus = "DRAFT"; // DRAFT -> PENDING_PAYMENT -> CONFIRMED
+  const paymentStatus = "UNPAID"; // UNPAID -> PENDING -> PAID
 
   // Step 1: Guest Information
-  const [guestInfo, setGuestInfo] = useState({
+  const [guestInfo, setGuestInfo] = useState(() => ({
     fullName: "",
     phone: "",
     email: "",
@@ -44,7 +38,7 @@ export default function BookingPage() {
     guestsCount: 2,
     healthNote: "",
     specialRequest: "",
-  });
+  }));
 
   const [formErrors, setFormErrors] = useState({});
 
@@ -95,7 +89,6 @@ export default function BookingPage() {
   const [copiedField, setCopiedField] = useState(null);
 
   // Loading States
-  const [isConfirming, setIsConfirming] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [lookupStatus, setLookupStatus] = useState("idle"); // idle, searching, found, not_found
@@ -114,7 +107,7 @@ export default function BookingPage() {
           fullName: profile.fullName || prev.fullName,
           phone: profile.phone || prev.phone,
         }));
-        
+
         // Auto-fill health profile if exists
         if (profile.medicalProfile) {
           const mp = profile.medicalProfile;
@@ -126,8 +119,9 @@ export default function BookingPage() {
                 const parsed = JSON.parse(mp.foodAllergies);
                 setSelectedAllergies(parsed.selected || []);
                 setOtherAllergy(parsed.other || "");
-                setDietaryPreference(parsed.diet || "omnivore");
-              } catch {
+                setDietaryPreferences([parsed.diet || "omnivore"]);
+              } catch (e) {
+                console.error("Failed to parse foodAllergies:", e);
                 setOtherAllergy(mp.foodAllergies);
               }
             }
@@ -216,7 +210,8 @@ export default function BookingPage() {
               setSelectedAllergies(parsed.selected || []);
               setOtherAllergy(parsed.other || "");
               setDietaryPreferences(parsed.diet ? [parsed.diet] : ["omnivore"]);
-            } catch {
+            } catch (e) {
+              console.error("Failed to parse foodAllergies:", e);
               setOtherAllergy(p.foodAllergies);
             }
           }
@@ -306,7 +301,7 @@ export default function BookingPage() {
         setGuestInfo((prev) => ({ ...prev, checkOutDate: nextDay.toISOString().split("T")[0] }));
       }
     }
-  }, [guestInfo.checkInDate]);
+  }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
 
   useEffect(() => {
     const checkIn = new Date(guestInfo.checkInDate);
@@ -325,7 +320,7 @@ export default function BookingPage() {
     } else {
       setMealBookingDays([]);
     }
-  }, [guestInfo.checkInDate, guestInfo.checkOutDate]);
+  }, [guestInfo.checkInDate, guestInfo.checkOutDate, selectedMealDate]);
 
   const selectedVillaIdFirst = Object.keys(selectedRooms).find(id => selectedRooms[id] > 0);
   const selectedVilla = selectedVillaIdFirst ? roomTypes.find((v) => v.roomTypeId === Number(selectedVillaIdFirst)) : null;
@@ -358,8 +353,8 @@ export default function BookingPage() {
 
   const calculateMealTotal = () => {
     let extra = 0;
-    Object.entries(mealSelections).forEach(([date, dateObj]) => {
-      Object.entries(dateObj).forEach(([period, periodObj]) => {
+    Object.values(mealSelections).forEach((dateObj) => {
+      Object.values(dateObj).forEach((periodObj) => {
         Object.entries(periodObj).forEach(([foodId, qty]) => {
           const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
           if (item) {
@@ -416,6 +411,9 @@ export default function BookingPage() {
     } else if (!/\S+@\S+\.\S+/.test(guestInfo.email)) {
       errors.email = "Địa chỉ email không hợp lệ.";
     }
+    if (!guestInfo.guestsCount || Number(guestInfo.guestsCount) <= 0) {
+      errors.guestsCount = "Số lượng khách hàng phải là số nguyên dương.";
+    }
 
     const checkIn = new Date(guestInfo.checkInDate);
     const checkOut = new Date(guestInfo.checkOutDate);
@@ -433,9 +431,44 @@ export default function BookingPage() {
     return true;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step === 1) {
-      if (validateStep1()) setStep(2);
+      if (validateStep1()) {
+        const count = Number(guestInfo.guestsCount);
+        if (count > 100) {
+          const confirmOk = window.confirm("Bạn có chắc là đặt phòng này không?");
+          if (confirmOk) {
+            let currentRoomTypes = roomTypes;
+            if (!currentRoomTypes || currentRoomTypes.length === 0) {
+              try {
+                const checkIn = guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : null;
+                const checkOut = guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : null;
+                currentRoomTypes = await masterDataApi.getRoomTypes(checkIn, checkOut);
+                setRoomTypes(currentRoomTypes);
+              } catch (e) {
+                console.error("Failed to load room types:", e);
+              }
+            }
+
+            const totalCapacity = currentRoomTypes.reduce((sum, rt) => {
+              const count = rt.availableRoomsCount !== undefined ? rt.availableRoomsCount : 0;
+              const cap = rt.maxOccupancy !== undefined ? rt.maxOccupancy : 0;
+              return sum + (count * cap);
+            }, 0);
+
+            if (totalCapacity < count) {
+              alert("Hiện tại khu nghỉ dưỡng không còn đủ phòng . Mong quý khách thông cảm");
+              navigate("/");
+              return;
+            }
+            setStep(2);
+          } else {
+            return;
+          }
+        } else {
+          setStep(2);
+        }
+      }
     } else if (step === 2) {
       if (validateStep2()) setStep(3);
     } else if (step === 3) {

@@ -351,6 +351,63 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         return toResponseDTO(savedBooking);
     }
 
+    @Override
+    @Transactional
+    public SpaBookingResponseDTO cancelSpaBooking(Integer spaBookingId, String reason) {
+        SpaBooking booking = spaBookingRepository.findById(spaBookingId)
+                .orElseThrow(() -> new BusinessException("SPA-007", HttpStatus.NOT_FOUND, "Không tìm thấy lịch spa yêu cầu."));
+
+        if (!"PENDING".equalsIgnoreCase(booking.getStatus()) && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            throw new BusinessException("SPA-400", HttpStatus.CONFLICT, "Không thể hủy lịch spa ở trạng thái hiện tại: " + booking.getStatus());
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = booking.getStartDatetime();
+        long diffHours = java.time.Duration.between(now, start).toHours();
+        
+        BigDecimal refundAmt = BigDecimal.ZERO;
+        BigDecimal originalPrice = booking.getPriceAtBooking() != null ? booking.getPriceAtBooking() : BigDecimal.ZERO;
+
+        if (diffHours >= 2) {
+            refundAmt = originalPrice; // 100% refund
+        } else {
+            refundAmt = originalPrice.multiply(new BigDecimal("0.50")).setScale(2, java.math.RoundingMode.HALF_UP); // 50% refund
+        }
+
+        booking.setStatus("CANCELLED");
+        booking.setCancellationReason(reason);
+        booking.setCancellationTime(now);
+        booking.setRefundAmount(refundAmt);
+
+        if (booking.getTreatmentRoom() != null) {
+            booking.getTreatmentRoom().setStatus("AVAILABLE");
+            treatmentRoomRepository.save(booking.getTreatmentRoom());
+        }
+
+        SpaBooking savedBooking = spaBookingRepository.save(booking);
+
+        // Async Google Calendar sync update
+        CompletableFuture.runAsync(() -> {
+            try {
+                googleCalendarService.syncBookingToCalendar(savedBooking.getUser(), savedBooking);
+                googleCalendarService.syncBookingToCalendar(savedBooking.getTherapist(), savedBooking);
+            } catch (Exception ex) {
+                log.error("[Google Calendar Status Sync Error on Cancel] {}", ex.getMessage());
+            }
+        });
+
+        // Update invoice ledger if an extra service status was changed (e.g. cancelled/completed)
+        if (!savedBooking.getIsPackageIncluded() && savedBooking.getRoomBooking() != null) {
+            try {
+                invoiceService.createInvoice(savedBooking.getRoomBooking().getBookingId());
+            } catch (Exception e) {
+                log.error("Failed to automatically update invoice subtotal on cancel: {}", e.getMessage());
+            }
+        }
+
+        return toResponseDTO(savedBooking);
+    }
+
     private int getSpaSessionLimit(Integer packageId) {
         if (packageId == null) return 0;
         switch (packageId) {

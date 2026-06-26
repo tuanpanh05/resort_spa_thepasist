@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import fu.se.smms.service.InvoiceService;
+
 @RestController
 @RequestMapping("/guest")
 public class GuestMealController {
@@ -27,6 +29,7 @@ public class GuestMealController {
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
+    private final InvoiceService invoiceService;
     private final TableAssignmentService tableAssignmentService;
 
     @Value("${app.food-order.cutoff-hour:22}")
@@ -39,6 +42,7 @@ public class GuestMealController {
             FoodOrderRepository foodOrderRepository,
             FoodOrderDetailRepository foodOrderDetailRepository,
             PackageFoodLimitRepository packageFoodLimitRepository,
+            InvoiceService invoiceService,
             TableAssignmentService tableAssignmentService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
@@ -47,6 +51,7 @@ public class GuestMealController {
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
+        this.invoiceService = invoiceService;
         this.tableAssignmentService = tableAssignmentService;
     }
 
@@ -711,5 +716,61 @@ public class GuestMealController {
         result.put("itemCount", detailsToSave.size());
 
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/orders/{orderId}/cancel")
+    public ResponseEntity<?> cancelFoodOrder(@PathVariable Integer orderId,
+                                              @RequestBody Map<String, String> request) {
+        try {
+            FoodOrder order = foodOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ăn uống."));
+
+            if (!"PENDING".equalsIgnoreCase(order.getStatus()) && !"PREPARING".equalsIgnoreCase(order.getStatus())) {
+                throw new RuntimeException("Không thể hủy đơn hàng ở trạng thái hiện tại: " + order.getStatus());
+            }
+
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime serveTime = order.getOrderTime();
+            long diffMinutes = java.time.Duration.between(now, serveTime).toMinutes();
+
+            if (diffMinutes < 120) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Đối với đồ ăn, không thể hủy đơn hàng trước giờ phục vụ dưới 2 tiếng."));
+            }
+
+            BigDecimal refundAmt = BigDecimal.ZERO;
+            BigDecimal totalAmount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
+
+            if (diffMinutes >= 240) {
+                refundAmt = totalAmount; // Hoàn 100%
+            } else {
+                refundAmt = totalAmount.multiply(new BigDecimal("0.50")).setScale(2, java.math.RoundingMode.HALF_UP); // Hoàn 50%
+            }
+
+            String reason = request.get("reason");
+            order.setStatus("CANCELLED");
+            order.setCancellationReason(reason);
+            order.setCancellationTime(now);
+            order.setRefundAmount(refundAmt);
+
+            FoodOrder savedOrder = foodOrderRepository.save(order);
+
+            // Recalculate invoice if associated with a booking
+            if (order.getRoomBooking() != null) {
+                try {
+                    invoiceService.createInvoice(order.getRoomBooking().getBookingId());
+                } catch (Exception ignored) {}
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("orderId", savedOrder.getOrderId());
+            response.put("status", savedOrder.getStatus());
+            response.put("totalAmount", savedOrder.getTotalAmount());
+            response.put("refundAmount", savedOrder.getRefundAmount());
+            response.put("penaltyAmount", totalAmount.subtract(refundAmt));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }

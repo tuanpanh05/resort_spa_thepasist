@@ -30,6 +30,9 @@ public class RoomBookingService {
     private final PackageFoodLimitRepository packageFoodLimitRepository;
     private final SpaBookingRepository spaBookingRepository;
     private final InvoiceService invoiceService;
+    private final InvoiceRepository invoiceRepository;
+    private final RoomBookingDetailRepository roomBookingDetailRepository;
+    private final SystemConfigurationRepository systemConfigurationRepository;
     private final TableAssignmentService tableAssignmentService;
 
     public RoomBookingService(UserRepository userRepository,
@@ -43,6 +46,9 @@ public class RoomBookingService {
                               PackageFoodLimitRepository packageFoodLimitRepository,
                               SpaBookingRepository spaBookingRepository,
                               InvoiceService invoiceService,
+                              InvoiceRepository invoiceRepository,
+                              RoomBookingDetailRepository roomBookingDetailRepository,
+                              SystemConfigurationRepository systemConfigurationRepository,
                               TableAssignmentService tableAssignmentService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
@@ -55,6 +61,9 @@ public class RoomBookingService {
         this.packageFoodLimitRepository = packageFoodLimitRepository;
         this.spaBookingRepository = spaBookingRepository;
         this.invoiceService = invoiceService;
+        this.invoiceRepository = invoiceRepository;
+        this.roomBookingDetailRepository = roomBookingDetailRepository;
+        this.systemConfigurationRepository = systemConfigurationRepository;
         this.tableAssignmentService = tableAssignmentService;
     }
 
@@ -447,6 +456,146 @@ public class RoomBookingService {
             } catch (Exception ignored) {
                 // Invoice recalculation failure is non-fatal
             }
+        }
+
+        return saved;
+    }
+
+    @Transactional
+    public RoomBooking cancelBooking(Integer bookingId, String reason) {
+        RoomBooking booking = roomBookingRepository.findById(bookingId)
+                .orElseThrow(() -> new fu.se.smms.exception.BusinessException("BOOKING-001", org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đặt phòng."));
+
+        if (!"PENDING_DEPOSIT".equalsIgnoreCase(booking.getStatus()) && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            throw new fu.se.smms.exception.BusinessException("BOOKING-002", org.springframework.http.HttpStatus.CONFLICT, "Không thể hủy đặt phòng ở trạng thái hiện tại: " + booking.getStatus());
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        BigDecimal refundAmt = BigDecimal.ZERO;
+
+        if ("CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            LocalDateTime checkIn = booking.getCheckInDate();
+            long diffHours = java.time.Duration.between(now, checkIn).toHours();
+            BigDecimal deposit = booking.getTotalDeposit() != null ? booking.getTotalDeposit() : BigDecimal.ZERO;
+
+            if (diffHours >= 24) {
+                refundAmt = deposit; // 100%
+            } else if (diffHours >= 12) {
+                refundAmt = deposit.multiply(new BigDecimal("0.50")).setScale(2, java.math.RoundingMode.HALF_UP); // 50%
+            } else {
+                refundAmt = BigDecimal.ZERO; // 0%
+            }
+        }
+
+        booking.setStatus("CANCELLED");
+        booking.setCancellationReason(reason);
+        booking.setCancellationTime(now);
+        booking.setRefundAmount(refundAmt);
+
+        RoomBooking saved = roomBookingRepository.save(booking);
+
+        // Update the invoice to CANCELLED as the whole booking is cancelled
+        try {
+            List<Invoice> invoices = invoiceRepository.findByRoomBooking_BookingId(bookingId);
+            for (Invoice invoice : invoices) {
+                invoice.setStatus("CANCELLED");
+                invoiceRepository.save(invoice);
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
+        return saved;
+    }
+
+    @Transactional
+    public RoomBooking cancelRoomBookingDetail(Integer detailId, String reason) {
+        RoomBookingDetail detail = roomBookingDetailRepository.findById(detailId)
+                .orElseThrow(() -> new fu.se.smms.exception.BusinessException("BOOKING-001", org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy chi tiết đặt phòng."));
+
+        RoomBooking booking = detail.getRoomBooking();
+        if (booking == null) {
+            throw new fu.se.smms.exception.BusinessException("BOOKING-002", org.springframework.http.HttpStatus.CONFLICT, "Chi tiết phòng này không thuộc về đặt phòng nào.");
+        }
+
+        if (!"PENDING_DEPOSIT".equalsIgnoreCase(booking.getStatus()) && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            throw new fu.se.smms.exception.BusinessException("BOOKING-002", org.springframework.http.HttpStatus.CONFLICT, "Không thể hủy phòng ở trạng thái hiện tại: " + booking.getStatus());
+        }
+
+        // If this is the last room, cancel the entire booking
+        if (booking.getDetails() == null || booking.getDetails().size() <= 1) {
+            return cancelBooking(booking.getBookingId(), reason);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        BigDecimal refundAmt = BigDecimal.ZERO;
+        BigDecimal roomPrice = detail.getPriceAtBooking() != null ? detail.getPriceAtBooking() : BigDecimal.ZERO;
+        long nights = java.time.Duration.between(booking.getCheckInDate(), booking.getCheckOutDate()).toDays();
+        if (nights <= 0) nights = 1;
+        BigDecimal roomTotalAmount = roomPrice.multiply(BigDecimal.valueOf(nights));
+
+        // Get deposit ratio from config, default to 30%
+        BigDecimal depositRatio = systemConfigurationRepository.findByConfigKey("deposit_ratio")
+                .map(c -> {
+                    try {
+                        return new BigDecimal(c.getConfigValue());
+                    } catch (Exception e) {
+                        return new BigDecimal("0.30");
+                    }
+                })
+                .orElse(new BigDecimal("0.30"));
+
+        // deposit for this room = roomTotalAmount * 1.10 (tax) * depositRatio
+        BigDecimal roomDeposit = roomTotalAmount.multiply(new BigDecimal("1.10")).multiply(depositRatio).setScale(2, java.math.RoundingMode.HALF_UP);
+
+        if ("CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            LocalDateTime checkIn = booking.getCheckInDate();
+            long diffHours = java.time.Duration.between(now, checkIn).toHours();
+
+            if (diffHours >= 24) {
+                refundAmt = roomDeposit; // 100% of this room's deposit
+            } else if (diffHours >= 12) {
+                refundAmt = roomDeposit.multiply(new BigDecimal("0.50")).setScale(2, java.math.RoundingMode.HALF_UP); // 50%
+            } else {
+                refundAmt = BigDecimal.ZERO; // 0%
+            }
+        }
+
+        // Update room status to AVAILABLE
+        Room room = detail.getRoom();
+        if (room != null) {
+            room.setStatus("AVAILABLE");
+            roomRepository.save(room);
+        }
+
+        // Remove the detail from the booking's list and delete it
+        booking.getDetails().remove(detail);
+        roomBookingDetailRepository.delete(detail);
+
+        // Update booking fields
+        BigDecimal currentDeposit = booking.getTotalDeposit() != null ? booking.getTotalDeposit() : BigDecimal.ZERO;
+        BigDecimal newDeposit = currentDeposit.subtract(roomDeposit);
+        if (newDeposit.compareTo(BigDecimal.ZERO) < 0) {
+            newDeposit = BigDecimal.ZERO;
+        }
+        booking.setTotalDeposit(newDeposit);
+
+        BigDecimal currentRefund = booking.getRefundAmount() == null ? BigDecimal.ZERO : booking.getRefundAmount();
+        booking.setRefundAmount(currentRefund.add(refundAmt));
+
+        String roomNum = room != null ? room.getRoomNumber() : "N/A";
+        String roomCancelInfo = String.format("Hủy phòng %s (Hoàn trả: %s, Lý do: %s)", roomNum, refundAmt.toString(), reason);
+        booking.setCancellationReason(booking.getCancellationReason() == null || booking.getCancellationReason().isBlank()
+                ? roomCancelInfo
+                : booking.getCancellationReason() + "; " + roomCancelInfo);
+        booking.setCancellationTime(now);
+
+        RoomBooking saved = roomBookingRepository.save(booking);
+
+        // Recalculate invoice
+        try {
+            invoiceService.createInvoice(booking.getBookingId());
+        } catch (Exception ignored) {
         }
 
         return saved;
