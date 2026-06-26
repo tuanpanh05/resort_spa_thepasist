@@ -24,7 +24,7 @@ import GuestDashboard from "./pages/GuestDashboard";
 import Payment from "./pages/Payment";
 import PaymentResult from "./pages/PaymentResult";
 import ProfilePage from "./pages/ProfilePage";
-import BookingLookup from "./pages/BookingLookup";
+
 
 import CustomerLayout from "./layouts/CustomerLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -67,7 +67,7 @@ function App() {
                 <ProfilePage />
               </ProtectedRoute>
             } />
-            <Route path="/tra-cuu" element={<BookingLookup />} />
+
           </Route>
 
           {/* Operations / Dashboard Routes */}

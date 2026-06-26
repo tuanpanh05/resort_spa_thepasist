@@ -8,7 +8,7 @@ import { auth, googleProvider } from "../firebase";
 
 export default function Login() {
   const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(() => localStorage.getItem("rememberedPassword") || "");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("rememberedEmail"));
   const [error, setError] = useState("");
@@ -76,8 +76,10 @@ export default function Login() {
 
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", user.email);
+          localStorage.removeItem("rememberedPassword");
         } else {
           localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
         }
 
         alert(`Đăng nhập Google thành công! Chào mừng ${data.fullName}`);
@@ -159,8 +161,10 @@ export default function Login() {
 
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", email);
+          localStorage.setItem("rememberedPassword", password);
         } else {
           localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
         }
 
         alert(`Đăng nhập hệ thống thành công! Chào mừng ${data.fullName}`);

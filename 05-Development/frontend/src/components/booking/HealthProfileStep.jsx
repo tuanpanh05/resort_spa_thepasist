@@ -49,19 +49,18 @@ export default function HealthProfileStep({
             {DIET_OPTIONS.map((opt) => (
               <label
                 key={opt.key}
-                className={`flex items-center justify-center p-3 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
                   dietaryPreference === opt.key
-                    ? "border-[#cda250] bg-[#cda250]/10 text-[#1a2f23]"
+                    ? "border-[#cda250] bg-[#cda250]/10 text-[#1a2f23] shadow-sm"
                     : "border-[#cda250]/15 bg-white text-sage-600 hover:border-[#cda250]/40"
                 }`}
               >
                 <input
                   type="radio"
                   name="dietaryPreference"
-                  value={opt.key}
                   checked={dietaryPreference === opt.key}
                   onChange={() => setDietaryPreference(opt.key)}
-                  className="sr-only"
+                  className="w-4 h-4 accent-[#cda250] cursor-pointer"
                 />
                 {opt.label}
               </label>

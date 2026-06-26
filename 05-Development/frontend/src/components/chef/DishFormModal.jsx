@@ -1,5 +1,6 @@
 import React from "react";
 import { PlusCircle, AlertTriangle } from "lucide-react";
+import axiosClient from "../../api/axiosClient";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 
@@ -66,7 +67,6 @@ export default function DishFormModal({
               >
                 <option value="Khai vị">Khai vị</option>
                 <option value="Món chính">Món chính</option>
-                <option value="Tráng miệng">Tráng miệng</option>
                 <option value="Thức uống">Thức uống</option>
               </select>
             </div>
@@ -119,29 +119,7 @@ export default function DishFormModal({
                 <option value="false">{mode === "add" ? "Tắt (Lưu kho)" : "Tắt hôm nay"}</option>
               </select>
             </div>
-            <div className="space-y-1.5">
-              <label className="font-semibold text-sage-800">Lịch phục vụ</label>
-              <select
-                value={dishForm.availableDays}
-                onChange={(e) => setForm((prev) => ({ ...prev, availableDays: e.target.value }))}
-                className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
-              >
-                <option value="0,1,2,3,4,5,6">Tất cả các ngày</option>
-                <option value="1,3,5">Ngày chẵn (Thứ 2, 4, 6)</option>
-                <option value="0,2,4,6">Ngày lẻ (Thứ 3, 5, 7, CN)</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="font-semibold text-sage-800">Trạng thái món trong gói</label>
-              <select
-                value={dishForm.isPackageIncluded ? "true" : "false"}
-                onChange={(e) => setForm((prev) => ({ ...prev, isPackageIncluded: e.target.value === "true" }))}
-                className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
-              >
-                <option value="true">Trong gói (Miễn phí)</option>
-                <option value="false">Ngoài gói (Có phụ phí)</option>
-              </select>
-            </div>
+
           </div>
 
           <div className="space-y-1.5">
@@ -191,14 +169,58 @@ export default function DishFormModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-semibold text-sage-800">Đường dẫn hình ảnh (URL)</label>
+            <label className="font-semibold text-sage-800">Hình ảnh món ăn</label>
             <input
-              type="text"
-              value={dishForm.image}
-              onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))}
-              placeholder="Ví dụ: /images/dishes/ten_anh.png hoặc https://..."
-              className="w-full p-2.5 border border-sage-200 bg-white text-sage-900"
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const file = e.target.files[0];
+                  
+                  // 1. Show instant local preview to bypass Vite public folder delay
+                  const localPreviewUrl = URL.createObjectURL(file);
+                  setForm((prev) => ({ ...prev, localPreview: localPreviewUrl }));
+
+                  // 2. Upload to backend
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  try {
+                    const apiUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api") + "/chef/menu/upload";
+                    const res = await fetch(apiUrl, {
+                      method: "POST",
+                      body: formData,
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                      setForm((prev) => ({ ...prev, image: data.imageUrl }));
+                    } else {
+                      throw new Error(data.message || "Failed to upload");
+                    }
+                  } catch (err) {
+                    console.error("Upload failed", err);
+                    alert("Lỗi khi tải ảnh lên: " + err.message);
+                  }
+                }
+              }}
+              className="w-full p-2.5 border border-sage-200 bg-white text-sage-900 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-sage-100 file:text-sage-800 hover:file:bg-sage-200"
             />
+            {(dishForm.localPreview || dishForm.image) && (
+              <div className="mt-2">
+                <img 
+                  src={dishForm.localPreview || (() => {
+                    if (!dishForm.image) return "";
+                    // Ảnh trong public/ → Vite phục vụ trực tiếp qua đường dẫn tương đối
+                    return `${dishForm.image}?t=${Date.now()}`;
+                  })()} 
+                  alt="Preview" 
+                  className="h-20 w-32 object-cover rounded border border-sage-200" 
+                  onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.src = "/images/dishes/dish_chao_yen_mach.png"; // fallback image
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">

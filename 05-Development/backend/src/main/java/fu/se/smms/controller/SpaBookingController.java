@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/spa-bookings")
@@ -154,6 +155,7 @@ public class SpaBookingController {
         );
         return ResponseEntity.ok(response);
     }
+<<<<<<< HEAD
     
 
     /**
@@ -173,5 +175,24 @@ public class SpaBookingController {
         String r = role.toUpperCase();
         return r.equals("THERAPIST") || r.equals("SPA") || r.equals("YOGA")
                 || r.equals("PHYSIO") || r.equals("ADMIN") || r.equals("MANAGER");
+=======
+
+    /**
+     * Cancel a spa session.
+     */
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<SpaBookingResponseDTO> cancelSpaBooking(
+            Principal principal,
+            @PathVariable("id") Integer spaBookingId,
+            @RequestBody Map<String, String> request) {
+
+        if (principal == null) {
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+        }
+
+        String reason = request.get("reason");
+        SpaBookingResponseDTO response = spaBookingService.cancelSpaBooking(spaBookingId, reason);
+        return ResponseEntity.ok(response);
+>>>>>>> 4205dfc98a1725c5256ce2bca41bbb23039913e5
     }
 }

@@ -49,6 +49,15 @@ public class RoomBooking {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
+
+    @Column(name = "cancellation_time")
+    private LocalDateTime cancellationTime;
+
+    @Column(name = "refund_amount", precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
     @OneToMany(mappedBy = "roomBooking", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<RoomBookingDetail> details;
 
@@ -109,4 +118,13 @@ public class RoomBooking {
     public Integer getPackageId() {
         return retreatPackage != null ? retreatPackage.getPackageId() : null;
     }
+
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+
+    public LocalDateTime getCancellationTime() { return cancellationTime; }
+    public void setCancellationTime(LocalDateTime cancellationTime) { this.cancellationTime = cancellationTime; }
+
+    public BigDecimal getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
 }

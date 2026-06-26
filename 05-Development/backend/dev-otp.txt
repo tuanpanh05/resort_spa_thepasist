@@ -1,17 +1,6 @@
 ========================================
-Email: hoaianh12@imail.edu.vn
+Email: cpz85609@laoia.com
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 523700
-Time: 2026-06-27T00:43:52.216325800
-========================================
-========================================
-SPA BOOKING CONFIRMATION EMAIL
-Email: hoaianh12@imail.edu.vn
-Guest Name: Hoai Hoai Anh
-Service Name: Massage đá muối nóng Himalaya (90 phút)
-Start Time: 2026-06-27T08:00
-Therapist: Therapist Specialist
-Room: Red Dao Bath Room 1
-Price: 1,200,000 VNĐ
-Time Sent: 2026-06-27T00:44:33.430356200
+OTP Code: 346059
+Time: 2026-06-25T10:11:15.866601900
 ========================================
