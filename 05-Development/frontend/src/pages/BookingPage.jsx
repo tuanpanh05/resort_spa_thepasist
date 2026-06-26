@@ -663,7 +663,7 @@ export default function BookingPage() {
                   consentDataProcessing={consentDataProcessing}
                   consentSharing={consentSharing}
                   packageMenuItems={packageMenuItems}
-                  dietaryPreference={dietaryPreference}
+                  dietaryPreferences={[dietaryPreference]}
                   guestInfo={guestInfo}
                   selectedAllergies={selectedAllergies}
                   otherAllergy={otherAllergy}

@@ -4,8 +4,8 @@ import { DIET_OPTIONS, ALLERGY_OPTIONS } from "../../constants/booking";
 
 export default function HealthProfileStep({
   formErrors,
-  dietaryPreferences,
-  toggleDietaryPreference,
+  dietaryPreference,
+  setDietaryPreference,
   selectedAllergies,
   toggleAllergy,
   otherAllergy,
@@ -50,16 +50,17 @@ export default function HealthProfileStep({
               <label
                 key={opt.key}
                 className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
-                  dietaryPreferences.includes(opt.key)
+                  dietaryPreference === opt.key
                     ? "border-[#cda250] bg-[#cda250]/10 text-[#1a2f23] shadow-sm"
                     : "border-[#cda250]/15 bg-white text-sage-600 hover:border-[#cda250]/40"
                 }`}
               >
                 <input
-                  type="checkbox"
-                  checked={dietaryPreferences.includes(opt.key)}
-                  onChange={() => toggleDietaryPreference(opt.key)}
-                  className="w-4 h-4 accent-[#cda250] rounded cursor-pointer"
+                  type="radio"
+                  name="dietaryPreference"
+                  checked={dietaryPreference === opt.key}
+                  onChange={() => setDietaryPreference(opt.key)}
+                  className="w-4 h-4 accent-[#cda250] cursor-pointer"
                 />
                 {opt.label}
               </label>
