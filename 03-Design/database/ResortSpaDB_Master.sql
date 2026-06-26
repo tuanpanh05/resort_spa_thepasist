@@ -839,3 +839,80 @@ INSERT INTO dbo.package_features (package_id, feature) VALUES
 (5, N'Nước uống kiềm giải độc'),
 (5, N'Súp sâm yến mạch thực dưỡng mỗi tối');
 GO
+
+
+-- =========================================================================
+-- 7. NEW COMBO MENU BUSINESS LOGIC TABLES
+-- =========================================================================
+
+-- 1. Lưu trữ Chế độ ăn cho mỗi Booking (Booking Diets)
+-- Giải quyết bài toán: 1 Booking có nhiều khách, mỗi khách có thể có chế độ ăn khác nhau.
+CREATE TABLE booking_diet (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    booking_id INT NOT NULL,
+    dietary_tag NVARCHAR(50) NOT NULL, -- Ví dụ: 'Omnivore', 'Vegan', 'Keto'
+    guest_count INT NOT NULL DEFAULT 1, -- Số lượng khách chọn chế độ này
+    FOREIGN KEY (booking_id) REFERENCES room_booking(booking_id)
+);
+
+-- 2. Cấu trúc lại bảng FoodMenu (nếu chưa có đủ fields)
+-- Bảng hiện tại đã có category, dietary_tags, periods, available_days.
+-- Ta đảm bảo các giá trị Enum/Chuẩn hóa như sau:
+-- category: 'Appetizer' (Khai vị), 'Main' (Món chính), 'Dessert' (Tráng miệng), 'Drink' (Nước uống)
+-- periods: 'Breakfast' (Sáng), 'Lunch' (Trưa), 'Dinner' (Tối), 'AllDay' (Cả ngày)
+-- dietary_tags: 'Omnivore', 'Vegan', 'Vegetarian', 'Keto', 'Halal', 'Pescatarian' (Có thể là JSON array hoặc chuỗi cách phẩy)
+
+-- 3. Template Thực đơn cho Combo (Combo Menu Template)
+-- Giải quyết bài toán: Combo A có 7 ngày ăn, mỗi ngày ăn có những món gì.
+CREATE TABLE combo_menu_template (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    package_id INT NOT NULL, -- Tham chiếu tới retreat_packages (Gói Detox, Phục hồi...)
+    day_number INT NOT NULL, -- Từ 1 đến 7 (Chu kỳ luân phiên 7 ngày)
+    meal_type NVARCHAR(20) NOT NULL, -- 'Breakfast', 'Lunch', 'Dinner'
+    food_id INT NOT NULL, -- Tham chiếu tới food_menu
+    FOREIGN KEY (package_id) REFERENCES retreat_packages(package_id),
+    FOREIGN KEY (food_id) REFERENCES food_menu(food_id)
+);
+
+-- 4. Bảng Ghi Nhận Suất Ăn Hàng Ngày (Daily Meal Order) - Tùy chọn để Bếp dễ nấu
+-- Khi khách Check-in, hệ thống generate ra các suất ăn cho từng ngày dựa trên booking_diet và combo_menu_template.
+CREATE TABLE daily_meal_order (
+    order_id INT IDENTITY(1,1) PRIMARY KEY,
+    booking_id INT NOT NULL,
+    serve_date DATE NOT NULL, -- Ngày phục vụ ăn uống
+    meal_type NVARCHAR(20) NOT NULL, -- 'Breakfast', 'Lunch', 'Dinner'
+    dietary_tag NVARCHAR(50) NOT NULL, -- Phục vụ cho chế độ nào ('Vegan', 'Omnivore'...)
+    food_id INT NOT NULL, -- Món ăn cụ thể
+    quantity INT NOT NULL, -- Số lượng phần (dựa vào guest_count trong booking_diet)
+    status NVARCHAR(20) DEFAULT 'PENDING', -- 'PENDING', 'PREPARING', 'SERVED'
+    FOREIGN KEY (booking_id) REFERENCES room_booking(booking_id),
+    FOREIGN KEY (food_id) REFERENCES food_menu(food_id)
+);
+
+-- =========================================================================================
+-- VÍ DỤ DATA MẪU ĐỂ MINH HOẠ NGHIỆP VỤ:
+-- =========================================================================================
+
+-- KHÁCH ĐẶT PHÒNG: 3 người, ở 2 ngày (2 đêm), mua gói Detox (package_id = 1).
+-- Chế độ ăn: 2 người Omnivore, 1 người Vegan.
+-- INSERT INTO room_booking (...) VALUES (...); -> booking_id = 100
+
+-- BƯỚC 2: HỒ SƠ SỨC KHOẺ -> Lưu Chế độ ăn
+-- INSERT INTO booking_diet (booking_id, dietary_tag, guest_count) VALUES (100, 'Omnivore', 2);
+-- INSERT INTO booking_diet (booking_id, dietary_tag, guest_count) VALUES (100, 'Vegan', 1);
+
+-- BƯỚC 4: THỰC ĐƠN LUÂN PHIÊN CỦA COMBO DETOX (package_id = 1)
+-- Ngày 1 - Sáng
+-- INSERT INTO combo_menu_template (package_id, day_number, meal_type, food_id) VALUES (1, 1, 'Breakfast', 10); -- Phở (Omnivore)
+-- INSERT INTO combo_menu_template (package_id, day_number, meal_type, food_id) VALUES (1, 1, 'Breakfast', 11); -- Bún Nấm (Vegan)
+-- INSERT INTO combo_menu_template (package_id, day_number, meal_type, food_id) VALUES (1, 1, 'Breakfast', 12); -- Nước ép Detox (Drink)
+
+-- HỆ THỐNG TỰ ĐỘNG TẠO ORDER CHO BẾP KHI CHECK-IN:
+-- Ngày phục vụ: 2026-06-25, Bữa Sáng
+-- Bếp cần nấu: 2 Phở, 1 Bún Nấm, 3 Nước ép
+-- INSERT INTO daily_meal_order (booking_id, serve_date, meal_type, dietary_tag, food_id, quantity) 
+-- VALUES (100, '2026-06-25', 'Breakfast', 'Omnivore', 10, 2);
+-- INSERT INTO daily_meal_order (booking_id, serve_date, meal_type, dietary_tag, food_id, quantity) 
+-- VALUES (100, '2026-06-25', 'Breakfast', 'Vegan', 11, 1);
+-- INSERT INTO daily_meal_order (booking_id, serve_date, meal_type, dietary_tag, food_id, quantity) 
+-- VALUES (100, '2026-06-25', 'Breakfast', 'All', 12, 3); -- Đồ uống chung cho 3 người

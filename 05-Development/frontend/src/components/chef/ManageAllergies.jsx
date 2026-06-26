@@ -31,7 +31,7 @@ export default function ManageAllergies({ allergies }) {
             type="text"
             value={allergySearch}
             onChange={(e) => setAllergySearch(e.target.value)}
-            placeholder="Tìm khách hàng hoặc số phòng..."
+            placeholder="Tìm khách hàng hoặc số bàn..."
             className="w-full pl-9 pr-4 py-2.5 rounded-none border border-primary-200 text-xs focus:outline-none focus:ring-1 focus:ring-primary-800 bg-white placeholder-sage-400"
           />
         </div>
@@ -42,8 +42,8 @@ export default function ManageAllergies({ allergies }) {
         headers={[
           "Mã KH",
           "Họ và Tên",
-          "Số Phòng",
-          "Ngày nhận phòng",
+          "Số Bàn",
+          "Ngày sử dụng",
           "Dị ứng ghi chú (Allergies)",
           "Chế độ ăn (Dietary Profile)",
           "Trạng thái an toàn"
@@ -56,7 +56,7 @@ export default function ManageAllergies({ allergies }) {
             </td>
             <td className="p-4 font-bold text-primary-950">{item.guest}</td>
             <td className="p-4 font-bold text-primary-900 font-mono">
-              PHÒNG {item.room}
+              BÀN {item.room}
             </td>
             <td className="p-4 text-sage-600">{item.checkIn}</td>
             <td className="p-4">

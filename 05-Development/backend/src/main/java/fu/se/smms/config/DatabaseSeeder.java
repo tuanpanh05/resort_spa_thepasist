@@ -184,7 +184,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Table might not exist yet
             }
 
-            if (existingRooms != null && existingRooms == 45) {
+            if (existingRooms != null && existingRooms > 0) {
                 System.out.println("[DB Seeder] Database is already seeded (found " + existingRooms + " rooms). Skipping database wipe to preserve your data.");
                 try {
                     jdbcTemplate.update("UPDATE dbo.room_booking SET check_in_date = CAST(GETDATE() AS DATE), check_out_date = DATEADD(day, 5, CAST(GETDATE() AS DATE)) WHERE booking_id = (SELECT MIN(booking_id) FROM dbo.room_booking)");

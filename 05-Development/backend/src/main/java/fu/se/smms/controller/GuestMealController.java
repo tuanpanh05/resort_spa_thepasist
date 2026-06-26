@@ -3,6 +3,7 @@ package fu.se.smms.controller;
 import fu.se.smms.dto.MealPreselectionDTO;
 import fu.se.smms.entity.*;
 import fu.se.smms.repository.*;
+import fu.se.smms.service.TableAssignmentService;
 import fu.se.smms.util.AESUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,7 @@ public class GuestMealController {
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
     private final InvoiceService invoiceService;
+    private final TableAssignmentService tableAssignmentService;
 
     @Value("${app.food-order.cutoff-hour:22}")
     private int cutoffHour;
@@ -40,7 +42,8 @@ public class GuestMealController {
             FoodOrderRepository foodOrderRepository,
             FoodOrderDetailRepository foodOrderDetailRepository,
             PackageFoodLimitRepository packageFoodLimitRepository,
-            InvoiceService invoiceService) {
+            InvoiceService invoiceService,
+            TableAssignmentService tableAssignmentService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.medicalProfileRepository = medicalProfileRepository;
@@ -49,6 +52,7 @@ public class GuestMealController {
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
         this.invoiceService = invoiceService;
+        this.tableAssignmentService = tableAssignmentService;
     }
 
     /**
@@ -100,8 +104,13 @@ public class GuestMealController {
 
             // Fetch existing food orders for this booking
             List<FoodOrder> orders = foodOrderRepository.findByRoomBooking_BookingId(activeBooking.getBookingId());
+            String tableNumber = "N/A";
             List<Map<String, Object>> ordersList = new ArrayList<>();
             for (FoodOrder order : orders) {
+                if (order.getTable() != null && "N/A".equals(tableNumber)) {
+                    tableNumber = order.getTable().getTableNumber();
+                }
+                
                 Map<String, Object> orderMap = new HashMap<>();
                 orderMap.put("orderId", order.getOrderId());
                 orderMap.put("orderTime", order.getOrderTime());
@@ -125,6 +134,7 @@ public class GuestMealController {
                 ordersList.add(orderMap);
             }
             bookingInfo.put("orders", ordersList);
+            bookingInfo.put("tableName", tableNumber);
 
             response.put("booking", bookingInfo);
         } else {
@@ -241,7 +251,9 @@ public class GuestMealController {
             String warningMsg = "";
 
             if (consentSigned && !allergiesRaw.isEmpty()) {
-                String contentToTest = (item.getDishName() + " " + item.getDescription() + " " + item.getDietaryTags() + " " + (item.getIngredients() != null ? item.getIngredients() : "")).toLowerCase();
+                // Use the explicit allergen column from the Chef's database to prevent false positives
+                // (e.g., description containing "dễ tiêu hóa" falsely triggering "tiêu" allergy)
+                String chefAllergens = item.getAllergens() != null ? item.getAllergens().toLowerCase() : "";
 
                 // Segment keywords by comma or semicolon (e.g. "đậu phộng, hải sản") to
                 // preserve multi-word allergies
@@ -253,49 +265,49 @@ public class GuestMealController {
 
                     if (trimmed.contains("đậu phộng") || trimmed.contains("peanut") || trimmed.contains("lạc")) {
                         vnName = "Đậu phộng";
-                        if (checkAllergyKeyword(contentToTest, "đậu phộng", "peanut", "lạc")) {
+                        if (checkAllergyKeyword(chefAllergens, "đậu phộng", "peanut", "lạc")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("hải sản") || trimmed.contains("seafood") || trimmed.contains("tôm")
                             || trimmed.contains("shrimp") || trimmed.contains("cua") || trimmed.contains("fish")
                             || trimmed.contains("cá") || trimmed.contains("shellfish")) {
                         vnName = "Hải sản";
-                        if (checkAllergyKeyword(contentToTest, "hải sản", "seafood", "tôm", "shrimp", "cua", "fish", "cá", "shellfish")) {
+                        if (checkAllergyKeyword(chefAllergens, "hải sản", "seafood", "tôm", "shrimp", "cua", "fish", "cá", "shellfish")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("ớt") || trimmed.contains("cay") || trimmed.contains("chili") || trimmed.contains("spicy")) {
                         vnName = "Đồ Cay / Ớt";
-                        if (checkAllergyKeyword(contentToTest, "ớt", "cay", "chili", "spicy")) {
+                        if (checkAllergyKeyword(chefAllergens, "ớt", "cay", "chili", "spicy")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("gluten") || trimmed.contains("lúa mì") || trimmed.contains("wheat")) {
                         vnName = "Gluten / Lúa mì";
-                        if (checkAllergyKeyword(contentToTest, "gluten", "lúa mì", "wheat")) {
+                        if (checkAllergyKeyword(chefAllergens, "gluten", "lúa mì", "wheat")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("dairy") || trimmed.contains("sữa") || trimmed.contains("lactose") || trimmed.contains("milk")) {
                         vnName = "Sữa / Lactose";
-                        if (checkAllergyKeyword(contentToTest, "dairy", "sữa", "lactose", "milk")) {
+                        if (checkAllergyKeyword(chefAllergens, "dairy", "sữa", "lactose", "milk")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("soy") || trimmed.contains("đậu nành")) {
                         vnName = "Đậu nành";
-                        if (checkAllergyKeyword(contentToTest, "soy", "đậu nành")) {
+                        if (checkAllergyKeyword(chefAllergens, "soy", "đậu nành")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("trứng") || trimmed.contains("egg")) {
                         vnName = "Trứng";
-                        if (checkAllergyKeyword(contentToTest, "trứng", "egg")) {
+                        if (checkAllergyKeyword(chefAllergens, "trứng", "egg")) {
                             matches = true;
                         }
                     } else if (trimmed.contains("tree nuts") || trimmed.contains("hạt cây") || trimmed.contains("hạt điều") 
                             || trimmed.contains("óc chó") || trimmed.contains("walnut") || trimmed.contains("cashew") || trimmed.contains("nut")) {
                         vnName = "Các loại hạt (Tree nuts)";
-                        if (checkAllergyKeyword(contentToTest, "tree nuts", "hạt cây", "hạt điều", "óc chó", "walnut", "cashew", "nut")) {
+                        if (checkAllergyKeyword(chefAllergens, "tree nuts", "hạt cây", "hạt điều", "óc chó", "walnut", "cashew", "nut")) {
                             matches = true;
                         }
                     } else {
-                        if (trimmed.length() >= 2 && checkAllergyKeyword(contentToTest, trimmed)) {
+                        if (trimmed.length() >= 2 && checkAllergyKeyword(chefAllergens, trimmed)) {
                             matches = true;
                         }
                     }
@@ -346,16 +358,19 @@ public class GuestMealController {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
-        // Group selections by date
-        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDate = new HashMap<>();
+        // Group selections by date and period
+        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDateAndPeriod = new HashMap<>();
         for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
-            itemsByDate.computeIfAbsent(item.getDate(), k -> new ArrayList<>()).add(item);
+            String period = item.getPeriod() != null ? item.getPeriod() : "Breakfast";
+            String key = item.getDate() + "_" + period;
+            itemsByDateAndPeriod.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
         }
 
         java.time.LocalDate today = java.time.LocalDate.now();
         int currentHour = java.time.LocalTime.now().getHour();
 
-        for (String dateKey : itemsByDate.keySet()) {
+        for (String key : itemsByDateAndPeriod.keySet()) {
+            String dateKey = key.split("_")[0];
             try {
                 java.time.LocalDate targetDate = java.time.LocalDate.parse(dateKey);
                 if (!targetDate.isAfter(today)) {
@@ -373,29 +388,55 @@ public class GuestMealController {
         BigDecimal grandTotalExtraCharges = BigDecimal.ZERO;
         int totalItemCount = 0;
 
-        for (Map.Entry<String, List<MealPreselectionDTO.MealSelectionItem>> entry : itemsByDate.entrySet()) {
-            String dateKey = entry.getKey();
+        for (Map.Entry<String, List<MealPreselectionDTO.MealSelectionItem>> entry : itemsByDateAndPeriod.entrySet()) {
+            String key = entry.getKey();
+            String[] parts = key.split("_");
+            String dateKey = parts[0];
+            String period = parts.length > 1 ? parts[1] : "Breakfast";
             List<MealPreselectionDTO.MealSelectionItem> items = entry.getValue();
 
-            // Parse dateKey (e.g. "2026-06-20") to LocalDateTime at 08:00 AM
             LocalDateTime mealTime;
             try {
-                mealTime = java.time.LocalDate.parse(dateKey).atTime(8, 0);
+                java.time.LocalDate d = java.time.LocalDate.parse(dateKey);
+                if (period.equalsIgnoreCase("Breakfast")) {
+                    mealTime = d.atTime(7, 0);
+                } else if (period.equalsIgnoreCase("Lunch")) {
+                    mealTime = d.atTime(11, 30);
+                } else if (period.equalsIgnoreCase("Dinner")) {
+                    mealTime = d.atTime(18, 0);
+                } else {
+                    mealTime = d.atTime(8, 0);
+                }
             } catch (Exception e) {
                 mealTime = LocalDateTime.now();
             }
 
-            // Find if an order already exists for this booking on this date
+            // Find if an order already exists for this booking on this date AND this period
             FoodOrder foodOrder = null;
             List<FoodOrder> existingOrders = foodOrderRepository.findByRoomBooking_BookingId(booking.getBookingId());
             for (FoodOrder eo : existingOrders) {
                 if (eo.getOrderTime() != null && eo.getOrderTime().toLocalDate().equals(mealTime.toLocalDate())) {
-                    foodOrder = eo;
-                    break;
+                    int eoHour = eo.getOrderTime().getHour();
+                    int mealHour = mealTime.getHour();
+                    
+                    String eoPeriod = "Breakfast";
+                    if (eoHour >= 10 && eoHour < 14) eoPeriod = "Lunch";
+                    else if (eoHour >= 14) eoPeriod = "Dinner";
+                    
+                    String mPeriod = "Breakfast";
+                    if (mealHour >= 10 && mealHour < 14) mPeriod = "Lunch";
+                    else if (mealHour >= 14) mPeriod = "Dinner";
+
+                    if (eoPeriod.equals(mPeriod)) {
+                        foodOrder = eo;
+                        break;
+                    }
                 }
             }
 
             if (foodOrder == null) {
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(2);
+
                 foodOrder = FoodOrder.builder()
                         .user(user)
                         .roomBooking(booking)
@@ -403,6 +444,7 @@ public class GuestMealController {
                         .status("PENDING")
                         .totalAmount(BigDecimal.ZERO)
                         .origin("PACKAGE MEAL")
+                        .table(assignedTable)
                         .build();
                 foodOrder = foodOrderRepository.save(foodOrder);
             } else {
@@ -508,7 +550,7 @@ public class GuestMealController {
                     for (RoomBooking b : activeBookings) {
                         java.time.LocalDate checkIn = b.getCheckInDate().toLocalDate();
                         java.time.LocalDate checkOut = b.getCheckOutDate().toLocalDate();
-                        if (!checkIn.isAfter(today) && !checkOut.isBefore(today)) {
+                        if (!checkOut.isBefore(today) && checkIn.isBefore(today.plusDays(3))) {
                             isStayingToday = true;
                             break;
                         }
@@ -631,6 +673,8 @@ public class GuestMealController {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
+        RestaurantTable assignedTable = tableAssignmentService.assignTable(2);
+
         FoodOrder foodOrder = FoodOrder.builder()
                 .user(user)
                 .roomBooking(booking)
@@ -638,6 +682,7 @@ public class GuestMealController {
                 .status("PENDING")
                 .totalAmount(BigDecimal.ZERO)
                 .origin("ROOM SERVICE")
+                .table(assignedTable)
                 .build();
 
         foodOrder = foodOrderRepository.save(foodOrder);

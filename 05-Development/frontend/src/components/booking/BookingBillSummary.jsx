@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import DetailModal from "./DetailModal";
+import { UtensilsCrossed } from "lucide-react";
 
 /**
  * BookingBillSummary – Giao diện chi tiết thanh toán gốc.
@@ -54,19 +55,72 @@ export default function BookingBillSummary({
         Chi Tiết Thanh Toán
       </h3>
 
-      {/* Tổng tiền, cọc và trả tại quầy */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center text-base text-[#1a2f23] font-serif">
-          <span className="font-medium">Tổng chi phí:</span>
-          <span className="font-bold text-xl">{formatCurrency(totalAmount)}</span>
-        </div>
-        <div className="flex justify-between items-center text-sm text-[#1a2f23] bg-[#cda250]/10 p-2.5 rounded-lg border border-[#cda250]/20">
-          <span>Cọc trước (30%):</span>
-          <span className="font-mono">{formatCurrency(depositAmount)}</span>
-        </div>
-        <div className="flex justify-between items-center text-sm text-[#1a2f23] bg-[#cda250]/10 p-2.5 rounded-lg border border-[#cda250]/20">
-          <span>Trả tại quầy (70%):</span>
-          <span className="font-mono">{formatCurrency(remainingAmount)}</span>
+      {/* Villa total display */}
+      <div className="space-y-3.5 text-xs sm:text-sm">
+        {selectedRooms && Object.entries(selectedRooms).map(([roomTypeId, qty]) => {
+          const roomType = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+          if (!roomType || qty <= 0) return null;
+          return (
+            <div key={roomTypeId} className="flex justify-between font-medium">
+              <span className="text-sage-800">
+                🏡 {roomType.typeName} ({qty} phòng × {nightsCount} đêm):
+              </span>
+              <span className="text-sage-950 font-mono">
+                {formatCurrency(roomType.basePricePerNight * nightsCount * qty)}
+              </span>
+            </div>
+          );
+        })}
+
+
+        {/* Meal costs */}
+        {mealTotal > 0 && (
+          <div className="flex justify-between font-medium pt-2 border-t border-primary-50">
+            <span className="text-sage-800 flex items-center gap-1">
+              <UtensilsCrossed className="h-3.5 w-3.5" /> Phụ phí ẩm thực / Combo:
+            </span>
+            <span className="text-sage-950 font-mono">{formatCurrency(mealTotal)}</span>
+          </div>
+        )}
+
+        {/* Addon list */}
+        {selectedServices.length > 0 && (
+          <div className="pt-2 border-t border-primary-50 space-y-2">
+            <span className="text-[10px] text-sage-400 uppercase tracking-wider block font-bold">
+              Dịch vụ đi kèm
+            </span>
+            {selectedServices.map((s) => {
+              let itemCost = 0;
+              if (s.type === "per-guest") itemCost = s.price * guestInfo.guestsCount;
+              else if (s.type === "per-guest-per-night")
+                itemCost = s.price * guestInfo.guestsCount * nightsCount;
+              else itemCost = s.price;
+              return (
+                <div key={s.id} className="flex justify-between text-sage-600 text-xs">
+                  <span className="truncate pr-4">• {s.title.split("&")[0].trim()}</span>
+                  <span className="font-mono">{formatCurrency(itemCost)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Billing status flags */}
+        <div className="pt-4 border-t border-[#cda250]/15 space-y-2.5">
+          <div className="flex justify-between font-serif text-base text-[#1a2f23]">
+            <span>Tổng chi phí:</span>
+            <span className="font-bold">{formatCurrency(totalAmount)}</span>
+          </div>
+
+          <div className="flex justify-between text-xs font-semibold text-[#1a2f23] bg-[#cda250]/10 p-2.5 rounded-lg border border-[#cda250]/20">
+            <span>Cọc trước (30%):</span>
+            <span className="font-mono">{formatCurrency(depositAmount)}</span>
+          </div>
+
+          <div className="flex justify-between text-xs text-sage-600 p-2.5 border border-dashed border-[#cda250]/30 rounded-lg bg-white/50">
+            <span>Trả tại quầy (70%):</span>
+            <span className="font-mono">{formatCurrency(remainingAmount)}</span>
+          </div>
         </div>
       </div>
 

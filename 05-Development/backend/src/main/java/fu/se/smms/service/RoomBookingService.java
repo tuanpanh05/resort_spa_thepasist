@@ -33,6 +33,7 @@ public class RoomBookingService {
     private final InvoiceRepository invoiceRepository;
     private final RoomBookingDetailRepository roomBookingDetailRepository;
     private final SystemConfigurationRepository systemConfigurationRepository;
+    private final TableAssignmentService tableAssignmentService;
 
     public RoomBookingService(UserRepository userRepository,
                               RoomBookingRepository roomBookingRepository,
@@ -47,7 +48,8 @@ public class RoomBookingService {
                               InvoiceService invoiceService,
                               InvoiceRepository invoiceRepository,
                               RoomBookingDetailRepository roomBookingDetailRepository,
-                              SystemConfigurationRepository systemConfigurationRepository) {
+                              SystemConfigurationRepository systemConfigurationRepository,
+                              TableAssignmentService tableAssignmentService) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.retreatPackageRepository = retreatPackageRepository;
@@ -62,6 +64,7 @@ public class RoomBookingService {
         this.invoiceRepository = invoiceRepository;
         this.roomBookingDetailRepository = roomBookingDetailRepository;
         this.systemConfigurationRepository = systemConfigurationRepository;
+        this.tableAssignmentService = tableAssignmentService;
     }
 
     @Transactional
@@ -228,12 +231,15 @@ public class RoomBookingService {
                     mealTime = LocalDateTime.now();
                 }
 
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(dto.getGuestsCount() != null ? dto.getGuestsCount() : 2);
+
                 FoodOrder foodOrder = FoodOrder.builder()
                         .user(user)
                         .roomBooking(savedBooking)
                         .orderTime(mealTime)
                         .status("PENDING")
                         .totalAmount(BigDecimal.ZERO)
+                        .table(assignedTable)
                         .build();
 
                 foodOrder = foodOrderRepository.save(foodOrder);

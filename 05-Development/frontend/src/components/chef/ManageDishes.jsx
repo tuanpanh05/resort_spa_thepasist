@@ -4,8 +4,6 @@ import axiosClient from "../../api/axiosClient";
 import DishFormModal from "./DishFormModal";
 import Button from "../ui/Button";
 import Card from "../ui/Card";
-import { Table } from "../ui/Table";
-
 export default function ManageDishes({ dishes, setDishes }) {
   const [showAddDishModal, setShowAddDishModal] = useState(false);
   const [showEditDishModal, setShowEditDishModal] = useState(false);
@@ -245,142 +243,121 @@ export default function ManageDishes({ dishes, setDishes }) {
         </Button>
       </Card>
 
-      {/* Dishes Table */}
-      <Table
-        headers={[
-          "Mã Món",
-          "Hình ảnh",
-          "Tên Món Ăn",
-          "Phân loại",
-          "Chế độ ăn",
-          "Giá tiền",
-          "Lịch phục vụ",
-          "Bữa ăn",
-          "Thành phần nguyên liệu",
-          "Chứa chất dị ứng",
-          "Trạng thái",
-          "Tác vụ bếp"
-        ]}
-      >
-              {dishes.map((dish) => (
-                <tr key={dish.id} className="hover:bg-sage-50/30">
-                  <td className="p-4 font-mono font-bold text-sage-500">
-                    {dish.id}
-                  </td>
-                  <td className="p-4">
-                    <img 
-                      src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
-                      alt={dish.name} 
-                      className="w-12 h-12 rounded object-cover border border-sage-200" 
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
-                      }}
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div>
-                      <span className="font-bold text-sage-950 block">
-                        {dish.name}
-                      </span>
-                      <span className="text-[10px] text-sage-400 font-light block line-clamp-1 mt-0.5">
-                        {dish.description}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 font-semibold text-sage-700">
-                    {dish.category}
-                  </td>
-                  <td className="p-4 text-[10px] font-medium text-sage-600">
-                    {dish.dietaryTags}
-                  </td>
-                  <td className="p-4 font-bold text-sage-900 font-mono">
-                    {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
-                  </td>
-                  <td className="p-4 text-[10px] text-sage-700 font-bold tracking-wide uppercase">
-                    {dish.availableDays === "1,3,5" 
-                      ? "Chẵn (2,4,6)" 
-                      : dish.availableDays === "0,2,4,6" 
-                      ? "Lẻ (3,5,7,CN)" 
-                      : dish.availableDays === "0,1,2,3,4,5,6" 
-                      ? "Mỗi ngày" 
-                      : "Tùy chỉnh"}
-                  </td>
-                  <td className="p-4 text-[10px] font-bold">
-                    <div className="flex flex-wrap gap-1">
-                      {dish.periods && dish.periods.map(p => (
-                        <span key={p} className={`px-1.5 py-0.5 text-[9px] uppercase tracking-wider ${
-                          p === "Breakfast" ? "bg-amber-100 text-amber-800" :
-                          p === "Lunch" ? "bg-blue-100 text-blue-800" :
-                          "bg-purple-100 text-purple-800"
-                        }`}>
-                          {p === "Breakfast" ? "Sáng" : p === "Lunch" ? "Trưa" : "Tối"}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td
-                    className="p-4 text-sage-600 font-light max-w-xs truncate"
-                    title={dish.ingredients}
-                  >
-                    {dish.ingredients}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-wrap gap-1">
-                      {dish.allergens.length > 0 ? (
-                        dish.allergens.map((alg, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-100/55 text-[9px] font-bold"
-                          >
-                            {alg}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sage-400 italic text-[10px]">
-                          Không có
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex items-center justify-center whitespace-nowrap px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${dish.enabled
-                          ? "bg-green-50 text-green-700 border border-green-200"
-                          : "bg-sage-100 text-sage-500 border border-sage-200"
-                        }`}
-                    >
-                      {dish.enabled ? "Phục vụ" : "Tạm khóa"}
+      {/* Dishes Grid View */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-8">
+        {dishes.map((dish) => (
+          <div 
+            key={dish.id} 
+            className={`group flex flex-col sm:flex-row bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_8px_30px_rgba(26,47,35,0.08)] transition-all duration-300 border ${
+              dish.enabled ? 'border-[#cda250]/20 hover:border-[#cda250]/50' : 'border-sage-200/50 opacity-80'
+            }`}
+          >
+            {/* Image Area */}
+            <div className="relative sm:w-48 h-48 sm:h-auto shrink-0 overflow-hidden bg-[#fbfaf7]">
+              <img 
+                src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
+                alt={dish.name} 
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${!dish.enabled ? 'grayscale-[50%]' : ''}`} 
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-90"></div>
+              
+              <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5 pr-20">
+                {dish.dietaryTags && dish.dietaryTags.split(',').map((tag, idx) => {
+                  const t = tag.trim();
+                  if (!t) return null;
+                  return (
+                    <span key={idx} className="bg-white/95 backdrop-blur text-[9px] font-bold px-2 py-0.5 rounded-full text-[#1a2f23] shadow-sm uppercase tracking-wider">
+                      {t}
                     </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex items-center justify-center space-x-1.5">
-                      <Button
-                        onClick={() => triggerEditModal(dish)}
-                        variant="outline"
-                        className="px-2.5 py-1.5 text-[10px]"
-                      >
-                        Sửa
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteDish(dish.id)}
-                        variant="danger-light"
-                        className="px-2.5 py-1.5 text-[10px]"
-                      >
-                        Xóa
-                      </Button>
-                      <Button
-                        onClick={() => handleToggleEnabled(dish.id)}
-                        variant={dish.enabled ? "warning" : "secondary"}
-                        className="px-2.5 py-1.5 text-[10px]"
-                      >
-                        {dish.enabled ? "Tắt" : "Bật"}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </Table>
+                  );
+                })}
+              </div>
+              
+              <div className="absolute top-3 right-3">
+                <span className={`flex items-center px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider text-white shadow-sm ${
+                  dish.enabled ? 'bg-green-600/90' : 'bg-sage-600/90'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${dish.enabled ? 'bg-white' : 'bg-sage-200'}`}></span>
+                  {dish.enabled ? "Phục Vụ" : "Tạm Khóa"}
+                </span>
+              </div>
+
+              <div className="absolute bottom-3 left-3">
+                <div className="text-[10px] text-white/90 font-mono font-bold uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+                  {dish.id} • {dish.category}
+                </div>
+              </div>
+            </div>
+            
+            {/* Details Area */}
+            <div className="p-4 sm:p-5 flex-1 flex flex-col relative bg-white min-w-0">
+              <div className="flex justify-between items-start mb-2 gap-3">
+                <h4 className="flex-1 min-w-0 text-lg font-serif font-bold text-[#1a2f23] leading-tight group-hover:text-[#cda250] transition-colors line-clamp-2">
+                  {dish.name}
+                </h4>
+                <div className="shrink-0 text-sm sm:text-[15px] font-bold text-[#cda250] font-mono bg-[#cda250]/10 px-2.5 py-1 rounded-lg">
+                  {new Intl.NumberFormat("vi-VN").format(dish.price)}đ
+                </div>
+              </div>
+              
+              <p className="text-xs text-sage-600 line-clamp-2 mb-4 leading-relaxed font-light">
+                {dish.description || "Chưa có mô tả chi tiết cho món ăn này."}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                <div>
+                  <div className="text-[9px] text-sage-400 font-bold uppercase tracking-widest mb-1.5 border-b border-sage-100 pb-1">Bữa ăn</div>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {dish.periods && dish.periods.map(p => (
+                      <span key={p} className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                        p === "Breakfast" ? "bg-amber-50 text-amber-700 border border-amber-200/50" :
+                        p === "Lunch" ? "bg-blue-50 text-blue-700 border border-blue-200/50" :
+                        "bg-indigo-50 text-indigo-700 border border-indigo-200/50"
+                      }`}>
+                        {p === "Breakfast" ? "Sáng" : p === "Lunch" ? "Trưa" : "Tối"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] text-sage-400 font-bold uppercase tracking-widest mb-1.5 border-b border-sage-100 pb-1">Dị ứng</div>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {dish.allergens && dish.allergens.length > 0 ? (
+                      dish.allergens.map((alg, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-100 text-[9px] font-bold flex items-center tracking-wide">
+                          <AlertTriangle className="w-2.5 h-2.5 mr-1" /> {alg}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sage-400 italic text-[10px] mt-0.5 font-medium flex items-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 mr-1.5"></span> An toàn
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Actions & Footer */}
+              <div className="pt-4 border-t border-sage-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-auto">
+                <div className="flex-1 min-w-0 text-[10px] text-sage-500 font-light truncate w-full" title={dish.ingredients}>
+                   <span className="font-semibold text-sage-600">Nguyên liệu:</span> {dish.ingredients || "Tự nhiên"}
+                </div>
+                <div className="flex items-center space-x-1.5 shrink-0 w-full sm:w-auto justify-end">
+                  <Button onClick={() => triggerEditModal(dish)} variant="outline" className="px-2.5 sm:px-3 py-1.5 text-[10px] rounded-lg border-sage-300 hover:bg-sage-50">Sửa</Button>
+                  <Button onClick={() => handleDeleteDish(dish.id)} variant="danger-light" className="px-2.5 sm:px-3 py-1.5 text-[10px] rounded-lg">Xóa</Button>
+                  <Button onClick={() => handleToggleEnabled(dish.id)} variant={dish.enabled ? "warning" : "secondary"} className={`px-2.5 sm:px-3 py-1.5 text-[10px] rounded-lg ${dish.enabled ? '' : 'bg-sage-800 text-white hover:bg-sage-900'}`}>
+                    {dish.enabled ? "Tắt" : "Bật"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
       <DishFormModal
         isOpen={showAddDishModal}
         mode="add"

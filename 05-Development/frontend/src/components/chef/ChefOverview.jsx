@@ -19,7 +19,7 @@ export default function ChefOverview({
   setActiveTab,
   checkOrderAllergies,
 }) {
-  const pendingOrCookingOrders = orders.filter((o) => o.status !== "Completed");
+  const pendingOrCookingOrders = orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled");
   const criticalAllergies = allergies.filter((a) => a.allergies.length > 0);
   const lowStockIngredients = ingredients.filter((i) => i.status !== "Đầy đủ");
   const todayMenuCount = dishes.filter((d) => d.isTodayMenu).length;
@@ -88,7 +88,7 @@ export default function ChefOverview({
                   <div>
                     <div className="flex justify-between items-center text-[10px]">
                       <span className="text-sage-500 font-mono font-bold">
-                        PHÒNG {item.room}
+                        BÀN {item.tableNumber}
                       </span>
                       <span className="text-red-700 font-bold uppercase text-[9px] tracking-wider">
                         {item.dietary}
@@ -102,7 +102,7 @@ export default function ChefOverview({
                     {item.allergies.map((alg, i) => (
                       <span
                         key={i}
-                        className="px-2 py-0.5 bg-red-750 text-white text-[9px] font-semibold tracking-wider"
+                        className="px-2 py-0.5 bg-red-600 rounded-md text-white text-[10px] font-bold tracking-wider shadow-sm"
                       >
                         {alg}
                       </span>
@@ -137,7 +137,7 @@ export default function ChefOverview({
                   <div className="flex justify-between items-start">
                     <div>
                       <span className="font-bold text-sage-900">
-                        {fb.guest} (Phòng {fb.room})
+                        {fb.guest} (Bàn {fb.tableNumber})
                       </span>
                       <span className="text-sage-400 block text-[10px] mt-1 font-light">
                         Gọi món:{" "}
@@ -199,7 +199,7 @@ export default function ChefOverview({
                         </span>
                         <span className="text-sage-300">|</span>
                         <span className="font-medium text-sage-600">
-                          Phòng {ord.room} ({ord.origin})
+                          Bàn {ord.tableNumber} ({ord.origin})
                         </span>
                       </div>
                       <div className="text-sage-800 pt-1">

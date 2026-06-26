@@ -20,6 +20,7 @@ import {
   chefInitialOrders as initialOrders,
   chefInitialIngredients as initialIngredients,
   chefInitialRequests as initialRequests,
+  staffInitialTables as initialTables,
 } from "../mockData";
 
 // Import sub-components
@@ -27,9 +28,17 @@ import ChefOverview from "../components/chef/ChefOverview";
 import ManageAllergies from "../components/chef/ManageAllergies";
 import ManageMenu from "../components/chef/ManageMenu";
 import ManageOrders from "../components/chef/ManageOrders";
+import UpcomingPrep from "../components/chef/UpcomingPrep";
 import ManageDishes from "../components/chef/ManageDishes";
 import ManageInventory from "../components/chef/ManageInventory";
 import OperationSidebar from "../components/OperationSidebar";
+import ManageTables from "../components/staff/ManageTables";
+
+const extractFirstTable = (roomStr) => {
+  if (!roomStr) return "N/A";
+  let first = roomStr.split(',')[0].trim();
+  return first.replace(/Room-/gi, "").replace(/Room/gi, "").replace(/Phòng /gi, "");
+};
 
 export default function ChefDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -40,17 +49,84 @@ export default function ChefDashboard() {
   const [feedbacks] = useState(initialFeedbacks);
   const [dishes, setDishes] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [upcomingOrders, setUpcomingOrders] = useState([]);
   const [ingredients, setIngredients] = useState(initialIngredients);
   const [procurements, setProcurements] = useState(initialRequests);
+  const [tables, setTables] = useState(initialTables);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState("");
+
+  const computeDynamicTables = (mappedOrders, baseTables) => {
+    let currentTables = JSON.parse(JSON.stringify(baseTables));
+    const activeRooms = {};
+
+    mappedOrders.forEach(o => {
+      if (o.status !== "Completed" && o.status !== "Cancelled" && o.room && o.room !== "N/A") {
+        activeRooms[o.room] = o.guestName || "Khách Hàng";
+      }
+    });
+
+    Object.keys(activeRooms).forEach(roomStr => {
+      const existingTableIdx = currentTables.findIndex(t => t.id === roomStr);
+      if (existingTableIdx >= 0) {
+        currentTables[existingTableIdx].status = "Occupied";
+        currentTables[existingTableIdx].currentGuest = activeRooms[roomStr];
+      } else {
+        currentTables.push({
+          id: roomStr,
+          status: "Occupied",
+          capacity: 4, 
+          currentGuest: activeRooms[roomStr]
+        });
+      }
+    });
+
+    return currentTables;
+  };
+
+  const fetchOrdersOnly = async (targetDate) => {
+    try {
+      const dateParam = targetDate ? `?date=${targetDate}` : "";
+      const ordersRes = await axiosClient.get(`/chef/orders${dateParam}`);
+      const mappedOrders = ordersRes.data.map(item => {
+        return {
+          id: item.id || `ORD-${item.orderId}`,
+          orderId: item.orderId,
+          guestName: item.guestName,
+          room: extractFirstTable(item.room),
+          origin: item.origin === "Room Service" ? "Tại Quán" : (item.origin || "Tại Quán"),
+          items: item.items.map(it => ({
+            name: it.name,
+            qty: it.qty
+          })),
+          note: item.note,
+          status: item.status,
+          time: item.time,
+          mealCode: item.mealCode
+        };
+      });
+      setOrders(mappedOrders);
+      setTables(computeDynamicTables(mappedOrders, tables));
+    } catch (err) {
+      console.warn("Could not fetch orders for date", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      fetchOrdersOnly(selectedDate);
+    }
+  }, [selectedDate]);
 
   const fetchChefData = async () => {
     setLoading(true);
     try {
-      const [menuRes, ordersRes, allergiesRes] = await Promise.all([
+      const [menuRes, ordersRes, upcomingOrdersRes, allergiesRes, tablesRes] = await Promise.all([
         axiosClient.get("/chef/menu"),
         axiosClient.get("/chef/orders"),
-        axiosClient.get("/guest/chef/allergies")
+        axiosClient.get("/chef/orders/upcoming"),
+        axiosClient.get("/guest/chef/allergies"),
+        axiosClient.get("/chef/tables")
       ]);
 
       const mappedAllergies = allergiesRes.data.map(item => {
@@ -61,7 +137,7 @@ export default function ChefDashboard() {
         return {
           id: "ALG-" + item.userId,
           guest: item.fullName || "Khách Hàng",
-          room: item.room || "N/A",
+          room: extractFirstTable(item.room),
           allergies: algs,
           dietary: item.dietary || "Healthy",
           checkIn: item.checkIn || "N/A"
@@ -77,12 +153,16 @@ export default function ChefDashboard() {
         }
         const isToday = allowedDays.includes(currentDay);
 
+        let cat = item.category || "Món chính";
+        if (cat.trim().toLowerCase() === "food") cat = "Món chính";
+        if (cat.trim().toLowerCase() === "drink") cat = "Thức uống";
+
         return {
           id: item.id || `DSH-${item.foodId}`,
           foodId: item.foodId,
           name: item.name,
           price: item.price,
-          category: item.category || "Món chính",
+          category: cat,
           description: item.description,
           ingredients: item.ingredients || "Thành phần tự nhiên",
           allergens: item.allergens || [],
@@ -103,8 +183,8 @@ export default function ChefDashboard() {
           id: item.id || `ORD-${item.orderId}`,
           orderId: item.orderId,
           guestName: item.guestName,
-          room: item.room,
-          origin: item.origin || "Room Service",
+          room: extractFirstTable(item.room),
+          origin: item.origin === "Room Service" ? "Tại Quán" : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -116,9 +196,39 @@ export default function ChefDashboard() {
         };
       });
 
+      const mappedUpcomingOrders = upcomingOrdersRes.data.map(item => {
+        return {
+          id: item.id || `ORD-${item.orderId}`,
+          orderId: item.orderId,
+          guestName: item.guestName,
+          room: extractFirstTable(item.room),
+          origin: item.origin === "Room Service" ? "Tại Quán" : item.origin,
+          items: item.items.map(it => ({
+            name: it.name,
+            qty: it.qty,
+            periods: it.periods
+          })),
+          note: item.note,
+          status: item.status,
+          date: item.date,
+          time: item.time,
+          period: item.period,
+          mealCode: item.mealCode
+        };
+      });
+
       setAllergies(mappedAllergies);
       setDishes(mappedDishes);
       setOrders(mappedOrders);
+      setUpcomingOrders(mappedUpcomingOrders);
+      
+      const realTables = tablesRes.data.map(t => ({
+        id: t.id,
+        status: t.status === "AVAILABLE" ? "Available" : "Occupied",
+        capacity: t.capacity,
+        currentGuest: null
+      }));
+      setTables(computeDynamicTables(mappedOrders, realTables));
     } catch (err) {
       console.warn("Could not fetch chef data from live server. Falling back to mock.", err);
       setDishes(initialDishes);
@@ -226,7 +336,10 @@ export default function ChefDashboard() {
     }
     const order = orders.find((ord) => ord.id === orderId);
     const nextStatusText =
-      newStatus === "Cooking" ? "bắt đầu chuẩn bị" : newStatus === "Delivering" ? "xong món, đang giao" : "hoàn thành giao hàng";
+      newStatus === "Cooking" ? "bắt đầu chuẩn bị" 
+      : newStatus === "Delivering" ? "xong món, đang giao" 
+      : newStatus === "Cancelled" ? "bị hủy" 
+      : "hoàn thành giao hàng";
     const msg = `Đơn hàng ${orderId} của phòng ${order?.room || ""} đã ${nextStatusText}`;
     playVoiceAlert(msg);
   };
@@ -352,14 +465,25 @@ export default function ChefDashboard() {
               id: "orders",
               label: "4. Đơn đặt món",
               icon: Clock,
-              badge: `${orders.filter((o) => o.status !== "Completed").length}`,
+              badge: `${orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled").length}`,
             },
-            { id: "dishes", label: "5. Danh mục món ăn", icon: FileText },
+            {
+              id: "upcoming",
+              label: "5. Đơn Combo Đặt Trước",
+              icon: Package,
+              badge: `${upcomingOrders.length}`,
+            },
+            { id: "dishes", label: "6. Danh mục món ăn", icon: FileText },
             {
               id: "inventory",
-              label: "6. Kho & Gọi hàng",
+              label: "7. Kho & Gọi hàng",
               icon: Package,
               badge: `${ingredients.filter((i) => i.status !== "Đầy đủ").length}`,
+            },
+            {
+              id: "tables",
+              label: "8. Quản Lý Bàn",
+              icon: LayoutDashboard,
             },
           ]}
       />
@@ -377,9 +501,12 @@ export default function ChefDashboard() {
               {activeTab === "menu" &&
                 "3. Quản Lý Thực Đơn Hàng Ngày (Menu Today)"}
               {activeTab === "orders" && "4. Danh Sách Gọi Món & Tiến Độ Nấu"}
-              {activeTab === "dishes" && "5. Cơ Sở Dữ Liệu Danh Mục Món Ăn"}
+              {activeTab === "upcoming" && "5. Quản Lý Đơn Combo Đặt Trước (Upcoming Combos)"}
+              {activeTab === "dishes" && "6. Cơ Sở Dữ Liệu Danh Mục Món Ăn"}
               {activeTab === "inventory" &&
-                "6. Kho Nguyên Liệu & Yêu Cầu Thu Mua"}
+                "7. Kho Nguyên Liệu & Yêu Cầu Thu Mua"}
+              {activeTab === "tables" &&
+                "8. Sơ Đồ Bàn & Đặt Bàn Nhanh"}
             </h2>
             <p className="text-[11px] text-sage-500 font-medium mt-0.5">
               Tiêu chuẩn vận hành: Tuyệt đối an toàn sức khỏe & Vệ sinh an toàn thực phẩm
@@ -421,6 +548,7 @@ export default function ChefDashboard() {
             {activeTab === "menu" && (
               <ManageMenu
                 dishes={dishes}
+                orders={orders}
                 handleToggleSoldOut={handleToggleSoldOut}
                 handleToggleTodayMenu={handleToggleTodayMenu}
               />
@@ -433,6 +561,15 @@ export default function ChefDashboard() {
                 handleUpdateOrderStatus={handleUpdateOrderStatus}
                 checkOrderAllergies={checkOrderAllergies}
                 handleCancelItem={handleCancelItem}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+              />
+            )}
+
+            {activeTab === "upcoming" && (
+              <UpcomingPrep
+                upcomingOrders={upcomingOrders}
+                handleUpdateOrderStatus={handleUpdateOrderStatus}
               />
             )}
 
@@ -446,6 +583,13 @@ export default function ChefDashboard() {
                 setIngredients={setIngredients}
                 procurements={procurements}
                 setProcurements={setProcurements}
+              />
+            )}
+
+            {activeTab === "tables" && (
+              <ManageTables
+                tables={tables}
+                setTables={setTables}
               />
             )}
           </>

@@ -20,19 +20,35 @@ public class ChefMealController {
     private final RoomBookingRepository roomBookingRepository;
     private final PackageFoodLimitRepository packageFoodLimitRepository;
     private final InvoiceRepository invoiceRepository;
+    private final RestaurantTableRepository restaurantTableRepository;
 
     public ChefMealController(FoodMenuRepository foodMenuRepository,
             FoodOrderRepository foodOrderRepository,
             FoodOrderDetailRepository foodOrderDetailRepository,
             RoomBookingRepository roomBookingRepository,
             PackageFoodLimitRepository packageFoodLimitRepository,
-            InvoiceRepository invoiceRepository) {
+            InvoiceRepository invoiceRepository,
+            RestaurantTableRepository restaurantTableRepository) {
         this.foodMenuRepository = foodMenuRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderDetailRepository = foodOrderDetailRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.packageFoodLimitRepository = packageFoodLimitRepository;
         this.invoiceRepository = invoiceRepository;
+        this.restaurantTableRepository = restaurantTableRepository;
+    }
+
+    @GetMapping("/tables")
+    public ResponseEntity<?> getTables() {
+        List<RestaurantTable> tablesData = restaurantTableRepository.findAll();
+        List<Map<String, Object>> tables = tablesData.stream().map(t -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", t.getTableNumber());
+            map.put("status", t.getStatus()); 
+            map.put("capacity", t.getCapacity());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(tables);
     }
 
     @GetMapping("/menu")
@@ -69,6 +85,21 @@ public class ChefMealController {
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/menu/upload")
+    public ResponseEntity<?> uploadImage(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String frontendDir = "c:/su26-swp391-se2023-g3/05-Development/frontend/public/images/dishes/";
+            java.io.File dir = new java.io.File(frontendDir);
+            if (!dir.exists()) dir.mkdirs();
+            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+            java.io.File dest = new java.io.File(dir, filename);
+            file.transferTo(dest);
+            return ResponseEntity.ok(Map.of("success", true, "imageUrl", "/images/dishes/" + filename));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to upload image: " + e.getMessage());
+        }
     }
 
     @PutMapping("/menu/{id}/toggle-sold-out")
@@ -260,10 +291,20 @@ public class ChefMealController {
     }
 
     @GetMapping("/orders")
-    public ResponseEntity<?> getOrders() {
-        java.time.LocalDate today = java.time.LocalDate.now();
+    public ResponseEntity<?> getOrders(@RequestParam(required = false) String date) {
+        java.time.LocalDate targetDate = java.time.LocalDate.now();
+        if (date != null && !date.trim().isEmpty()) {
+            try {
+                targetDate = java.time.LocalDate.parse(date);
+            } catch (Exception e) {
+                // Ignore and use today
+            }
+        }
+        final java.time.LocalDate finalDate = targetDate;
+        
         List<FoodOrder> orders = foodOrderRepository.findAll().stream()
-                .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(today))
+                .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(finalDate))
+                .filter(o -> !"PACKAGE MEAL".equals(o.getOrigin()))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
             Map<String, Object> map = new HashMap<>();
@@ -271,19 +312,18 @@ public class ChefMealController {
             map.put("orderId", order.getOrderId());
             map.put("guestName", order.getUser() != null ? order.getUser().getFullName() : "Khách Vãng Lai");
 
-            // Resolve Room Number
-            String roomNumber = "N/A";
-            if (order.getRoomBooking() != null) {
-                List<String> rooms = roomBookingRepository
-                        .findRoomNumbersByBookingId(order.getRoomBooking().getBookingId());
-                if (rooms != null && !rooms.isEmpty()) {
-                    roomNumber = String.join(", ", rooms);
-                }
+            // Resolve Table Number
+            String tableNumber = "N/A";
+            if (order.getTable() != null) {
+                tableNumber = order.getTable().getTableNumber();
+                map.put("mealCode", "TABLE-" + order.getTable().getTableId());
+            } else if (order.getRoomBooking() != null) {
                 map.put("mealCode", "MEAL-" + order.getRoomBooking().getBookingId());
             } else {
                 map.put("mealCode", "GUEST");
             }
-            map.put("room", roomNumber);
+            map.put("room", tableNumber); // Keep "room" key for frontend compatibility if needed
+            map.put("tableNumber", tableNumber);
             map.put("origin", order.getOrigin() != null ? order.getOrigin() : (order.getRoomBooking() != null ? "ROOM SERVICE" : "RESTAURANT"));
 
             // Fetch order items details
@@ -321,6 +361,79 @@ public class ChefMealController {
             String formattedTime = order.getOrderTime().format(DateTimeFormatter.ofPattern("HH:mm - dd/MM"));
             map.put("time", formattedTime);
 
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/orders/upcoming")
+    public ResponseEntity<?> getUpcomingOrders() {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        List<FoodOrder> orders = foodOrderRepository.findAll().stream()
+                .filter(o -> o.getOrderTime() != null && !o.getOrderTime().toLocalDate().isBefore(today))
+                .filter(o -> o.getOrigin() == null || "PACKAGE MEAL".equals(o.getOrigin()))
+                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
+                .collect(Collectors.toList());
+        List<Map<String, Object>> response = orders.stream().map(order -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", "ORD-" + order.getOrderId());
+            map.put("orderId", order.getOrderId());
+            map.put("guestName", order.getUser() != null ? order.getUser().getFullName() : "Khách Vãng Lai");
+
+            String tableNumber = "N/A";
+            if (order.getTable() != null) {
+                tableNumber = order.getTable().getTableNumber();
+                map.put("mealCode", "TABLE-" + order.getTable().getTableId());
+            } else if (order.getRoomBooking() != null) {
+                map.put("mealCode", "MEAL-" + order.getRoomBooking().getBookingId());
+            } else {
+                map.put("mealCode", "GUEST");
+            }
+            map.put("room", tableNumber); // Keep "room" key for frontend compatibility
+            map.put("tableNumber", tableNumber);
+            map.put("origin", order.getOrigin() != null ? order.getOrigin() : "PACKAGE MEAL");
+            
+            List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
+            List<Map<String, Object>> items = details.stream().map(d -> {
+                Map<String, Object> itemMap = new HashMap<>();
+                itemMap.put("foodId", d.getFoodMenu().getFoodId());
+                itemMap.put("name", d.getFoodMenu().getDishName());
+                itemMap.put("qty", d.getQuantity());
+                itemMap.put("periods", d.getFoodMenu().getPeriods());
+                return itemMap;
+            }).collect(Collectors.toList());
+            map.put("items", items);
+
+            String note = details.stream()
+                    .map(FoodOrderDetail::getSpecialNote)
+                    .filter(n -> n != null && !n.trim().isEmpty())
+                    .collect(Collectors.joining("; "));
+            map.put("note", note);
+
+            String mappedStatus = "Pending";
+            if ("PREPARING".equalsIgnoreCase(order.getStatus())) {
+                mappedStatus = "Cooking";
+            } else if ("READY".equalsIgnoreCase(order.getStatus())) {
+                mappedStatus = "Delivering";
+            } else if ("DELIVERED".equalsIgnoreCase(order.getStatus())) {
+                mappedStatus = "Completed";
+            } else if ("CANCELLED".equalsIgnoreCase(order.getStatus())) {
+                mappedStatus = "Cancelled";
+            }
+            map.put("status", mappedStatus);
+
+            map.put("date", order.getOrderTime().toLocalDate().toString());
+            map.put("time", order.getOrderTime().format(DateTimeFormatter.ofPattern("HH:mm - dd/MM")));
+            
+            int hour = order.getOrderTime().getHour();
+            String period = "Sáng";
+            if (hour >= 10 && hour < 14) {
+                period = "Trưa";
+            } else if (hour >= 14) {
+                period = "Tối";
+            }
+            map.put("period", period);
+            
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(response);

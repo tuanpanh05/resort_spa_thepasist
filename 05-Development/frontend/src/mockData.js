@@ -682,6 +682,19 @@ export const staffInitialChatMessages = [
   { sender: "Guest (Phòng 101)", text: "Cảm ơn bạn rất nhiều!", time: "10:18" },
 ];
 
+export const staffInitialTables = [
+  { id: "T01", capacity: 2, status: "Available", guestName: "" },
+  { id: "T02", capacity: 2, status: "Occupied", guestName: "Nguyễn Văn A" },
+  { id: "T03", capacity: 4, status: "Available", guestName: "" },
+  { id: "T04", capacity: 4, status: "Occupied", guestName: "Trần Thị B" },
+  { id: "T05", capacity: 6, status: "Available", guestName: "" },
+  { id: "T06", capacity: 8, status: "Available", guestName: "" },
+  { id: "T07", capacity: 2, status: "Available", guestName: "" },
+  { id: "T08", capacity: 4, status: "Available", guestName: "" },
+  { id: "VIP-1", capacity: 6, status: "Available", guestName: "" },
+  { id: "VIP-2", capacity: 10, status: "Available", guestName: "" },
+];
+
 // ------------------------------------------
 // 3. CHEF DASHBOARD MOCK DATA
 // ------------------------------------------
@@ -952,7 +965,7 @@ export const chefInitialOrders = [
     id: "ORD-5501",
     guestName: "Trần Thị Mai",
     room: "101",
-    origin: "Room Service",
+    origin: "Tại Quán",
     items: [
       { name: "Tôm rim tỏi ớt (Món mặn)", qty: 1 },
       { name: "Súp sâm yến mạch thực dưỡng", qty: 1 },
@@ -978,7 +991,7 @@ export const chefInitialOrders = [
     id: "ORD-5503",
     guestName: "Lê Hoàng Nam",
     room: "201",
-    origin: "Room Service",
+    origin: "Tại Quán",
     items: [{ name: "Nấm nướng lá lốt cốt dừa", qty: 1 }],
     note: "Mang kèm muỗng nĩa",
     status: "Delivering",
@@ -988,7 +1001,7 @@ export const chefInitialOrders = [
     id: "ORD-5504",
     guestName: "Phan Thanh Thủy",
     room: "104",
-    origin: "Room Service",
+    origin: "Tại Quán",
     items: [
       { name: "Súp sâm yến mạch thực dưỡng", qty: 1 },
       { name: "Salad bơ hạt diêm mạch", qty: 1 },

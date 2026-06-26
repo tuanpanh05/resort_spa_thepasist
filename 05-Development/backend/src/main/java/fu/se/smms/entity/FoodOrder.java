@@ -47,4 +47,8 @@ public class FoodOrder {
 
     @Column(name = "refund_amount", precision = 12, scale = 2)
     private BigDecimal refundAmount;
+
+    @ManyToOne
+    @JoinColumn(name = "table_id")
+    private RestaurantTable table;
 }
