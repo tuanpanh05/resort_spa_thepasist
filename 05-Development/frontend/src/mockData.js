@@ -101,16 +101,16 @@ export const adminInitialRooms = [
   { id: "BG-110", type: "Bungalow Gỗ Hướng Suối", status: "vacant", floor: 1, price: "3,200,000đ", maxGuests: 2, photo: "room_luxury.png" },
 
   // Bungalow Đá Cuội Bên Rừng (10 rooms)
-  { id: "BD-101", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-102", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-103", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-104", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-105", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-106", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-107", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-108", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-109", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
-  { id: "BD-110", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 2, photo: "room_luxury.png" },
+  { id: "BD-101", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-102", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-103", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-104", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-105", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-106", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-107", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-108", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-109", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
+  { id: "BD-110", type: "Bungalow Đá Cuội Bên Rừng", status: "vacant", floor: 1, price: "3,800,000đ", maxGuests: 3, photo: "room_luxury.png" },
 
   // Biệt Thự Đồi Trà Thiền Định (10 rooms)
   { id: "BT-101", type: "Biệt Thự Đồi Trà Thiền Định", status: "vacant", floor: 2, price: "5,800,000đ", maxGuests: 4, photo: "hero_bg.png" },
@@ -1430,7 +1430,7 @@ export const roomsPageAllRooms = [
     description:
       "Thiết kế vách đá cuội tự nhiên mộc mạc và sang trọng, nép mình bên sườn đồi thông thơ mộng. Sở hữu bồn tắm đá lộ thiên riêng tư và mái kính ngắm sao đêm tuyệt đẹp.",
     size: "75 m²",
-    capacity: "2 Người lớn",
+    capacity: "3 Người lớn",
     amenity: "Mái kính ngắm sao",
     image: "/room_pebble.jpg",
   },

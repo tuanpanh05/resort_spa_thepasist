@@ -16,7 +16,7 @@ export const villasList = [
     description: "Vách đá cuội tự nhiên mộc mạc và sang trọng sườn đồi thông. Sở hữu bồn tắm lộ thiên và mái kính ngắm sao đêm tuyệt đẹp.",
     price: 3800000,
     size: "75 m²",
-    capacity: "2 Người lớn",
+    capacity: "3 Người lớn",
     view: "Rừng Thông",
     image: "/room_pebble.jpg",
   },

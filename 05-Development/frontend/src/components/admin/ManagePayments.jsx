@@ -45,7 +45,9 @@ export default function ManagePayments({ payments }) {
 
     const isPaid = p.status?.toUpperCase() === "PAID";
     const isPendingDeposit = p.bookingStatus === "PENDING_DEPOSIT";
-    const statusVal = isPaid ? "paid" : isPendingDeposit ? "pending_deposit" : "unpaid";
+    const isCancelled = p.status?.toUpperCase() === "CANCELLED" || p.bookingStatus?.toUpperCase() === "CANCELLED" || (p.refundAmount && p.refundAmount > 0);
+    
+    const statusVal = isCancelled ? "cancelled" : isPaid ? "paid" : isPendingDeposit ? "pending_deposit" : "unpaid";
 
     const matchesStatus = statusFilter === "all" || statusVal === statusFilter;
 
@@ -86,6 +88,7 @@ export default function ManagePayments({ payments }) {
             <option value="paid">Đã thu (PAID)</option>
             <option value="pending_deposit">Chờ đặt cọc</option>
             <option value="unpaid">Chờ thanh toán (UNPAID)</option>
+            <option value="cancelled">Đơn đã hủy & Hoàn tiền (CANCELLED)</option>
           </select>
         </div>
       </div>
@@ -115,6 +118,7 @@ export default function ManagePayments({ payments }) {
                 </tr>
               ) : (
                 filteredPayments.map((p) => {
+                  const isCancelled = p.status?.toUpperCase() === "CANCELLED" || p.bookingStatus?.toUpperCase() === "CANCELLED" || (p.refundAmount && p.refundAmount > 0);
                   const isPaid = p.status?.toUpperCase() === "PAID";
                   const methodText = p.vnpayTranId ? "VNPAY" : "Tiền mặt tại quầy";
                   const isPendingDeposit = p.bookingStatus === "PENDING_DEPOSIT";
@@ -139,26 +143,30 @@ export default function ManagePayments({ payments }) {
                       <td className="p-4 text-right text-sage-600">
                         {formatCurrency(p.depositAmount)}
                       </td>
-                      <td className={`p-4 text-right font-bold ${isPaid ? "text-green-700" : "text-red-700"}`}>
-                        {isPaid
-                          ? "0 ₫"
-                          : isPendingDeposit
-                            ? `${formatCurrency(p.finalAmount * 0.3)} (Cọc)`
-                            : formatCurrency(p.amountDue)}
+                      <td className={`p-4 text-right font-bold ${isCancelled ? "text-sage-400" : isPaid ? "text-green-700" : "text-red-700"}`}>
+                        {isCancelled
+                          ? "—"
+                          : isPaid
+                            ? "0 ₫"
+                            : isPendingDeposit
+                              ? `${formatCurrency(p.finalAmount * 0.3)} (Cọc)`
+                              : formatCurrency(p.amountDue)}
                       </td>
                       <td className="p-4 text-center">
                         <span
                           className={`px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider ${
-                            isPaid
-                              ? "bg-green-100 text-green-700"
-                              : isPendingDeposit
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-red-50 text-red-700"
+                            isCancelled
+                              ? "bg-red-100 text-red-800 border border-red-200"
+                              : isPaid
+                                ? "bg-green-100 text-green-700"
+                                : isPendingDeposit
+                                  ? "bg-amber-100 text-amber-800"
+                                  : "bg-red-50 text-red-700"
                           }`}
                         >
-                          {isPaid ? "Đã thu" : isPendingDeposit ? "Chờ cọc" : "Chờ thu"}
+                          {isCancelled ? "Đã Hủy" : isPaid ? "Đã thu" : isPendingDeposit ? "Chờ cọc" : "Chờ thu"}
                         </span>
-                        {isPaid && (
+                        {isPaid && !isCancelled && (
                           <span className="block text-[9px] text-sage-400 mt-0.5 italic">
                             ({methodText})
                           </span>
@@ -168,7 +176,7 @@ export default function ManagePayments({ payments }) {
                         <div className="flex items-center justify-center">
                           <button
                             onClick={() => triggerPrintModal(p)}
-                            className="p-1.5 bg-primary-100 hover:bg-primary-200 text-primary-950 rounded-none cursor-pointer flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                            className="p-1.5 bg-primary-100 hover:bg-primary-200 text-primary-955 rounded-none cursor-pointer flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"
                             title="In hóa đơn chi tiết"
                           >
                             <Printer className="h-3.5 w-3.5" />
@@ -266,6 +274,59 @@ export default function ManagePayments({ payments }) {
                 </div>
               </div>
 
+              {/* Section: Thông tin hủy dịch vụ & Hoàn tiền */}
+              {(selectedInvoice.status?.toUpperCase() === "CANCELLED" || 
+                selectedInvoice.bookingStatus?.toUpperCase() === "CANCELLED" || 
+                (selectedInvoice.refundAmount && selectedInvoice.refundAmount > 0)) && (
+                <div className="bg-red-50/50 border border-red-200 p-4 space-y-3 rounded-none mb-6">
+                  <h4 className="font-semibold text-xs text-red-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                    Thông Tin Hủy Dịch Vụ & Yêu Cầu Hoàn Tiền
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-[10px] text-sage-400 block font-semibold uppercase tracking-wider">SỐ ĐIỆN THOẠI LIÊN HỆ</span>
+                      <span className="font-bold text-sage-900">{selectedInvoice.customerPhone || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-sage-400 block font-semibold uppercase tracking-wider">EMAIL KHÁCH HÀNG</span>
+                      <span className="font-bold text-sage-900">{selectedInvoice.customerEmail || "N/A"}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs border-t border-red-100 pt-2">
+                    <span className="text-[10px] text-sage-400 block font-semibold uppercase tracking-wider mb-1">CHI TIẾT HỦY DỊCH VỤ / PHÒNG</span>
+                    <div className="whitespace-pre-line text-sage-800 bg-white p-2.5 border border-red-100 font-mono text-[11px]">
+                      {selectedInvoice.cancellationDetails || "Không có chi tiết hủy cụ thể."}
+                    </div>
+                  </div>
+
+                  {selectedInvoice.cancellationReason && (
+                    <div className="text-xs border-t border-red-100 pt-2">
+                      <span className="text-[10px] text-sage-400 block font-semibold uppercase tracking-wider">LÝ DO HỦY</span>
+                      <span className="italic text-sage-700">"{selectedInvoice.cancellationReason}"</span>
+                    </div>
+                  )}
+
+                  {selectedInvoice.cancellationTime && (
+                    <div className="text-xs">
+                      <span className="text-[10px] text-sage-400 block font-semibold uppercase tracking-wider">THỜI GIAN HỦY</span>
+                      <span>{new Date(selectedInvoice.cancellationTime).toLocaleString("vi-VN")}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-red-100 pt-2 flex justify-between items-center bg-red-100/30 p-2">
+                    <span className="font-bold text-xs text-red-900">SỐ TIỀN CẦN HOÀN TRẢ KHÁCH:</span>
+                    <span className="font-bold text-sm text-red-700">
+                      {formatCurrency(selectedInvoice.refundAmount)}
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-sage-500 italic">
+                    * Ghi chú: Tiền hoàn sẽ được nhân viên resort liên hệ và trả lại sau tối đa 2 ngày tới.
+                  </p>
+                </div>
+              )}
+
               <div className="border-t border-primary-100 pt-4">
                 <table className="w-full text-xs">
                   <thead>
@@ -307,6 +368,26 @@ export default function ManagePayments({ payments }) {
                         {formatCurrency(selectedInvoice.taxAndFees)}
                       </td>
                     </tr>
+                    {selectedInvoice.discountAmount > 0 && (
+                      <tr>
+                        <td className="py-3 px-2 text-sage-500 italic">
+                          Tổng tiền tạm tính (trước giảm)
+                        </td>
+                        <td className="py-3 px-2 text-right text-sage-600">
+                          {formatCurrency((selectedInvoice.roomSubtotal || 0) + (selectedInvoice.spaSubtotal || 0) + (selectedInvoice.foodSubtotal || 0) + (selectedInvoice.taxAndFees || 0))}
+                        </td>
+                      </tr>
+                    )}
+                    {selectedInvoice.discountAmount > 0 && (
+                      <tr className="text-primary-850 font-semibold bg-primary-50/10">
+                        <td className="py-3 px-2">
+                          Mã giảm giá đã áp dụng ({selectedInvoice.voucherCode})
+                        </td>
+                        <td className="py-3 px-2 text-right text-primary-900">
+                          - {formatCurrency(selectedInvoice.discountAmount)}
+                        </td>
+                      </tr>
+                    )}
                     <tr className="bg-primary-50/20 font-bold text-primary-950 border-t border-primary-200">
                       <td className="py-3 px-2 text-primary-900">
                         TỔNG HÓA ĐƠN TỔNG CỘNG (100%)
@@ -323,14 +404,18 @@ export default function ManagePayments({ payments }) {
                         - {formatCurrency(selectedInvoice.depositAmount)}
                       </td>
                     </tr>
-                    <tr className="bg-red-50/20 font-bold text-red-950 border-t-2 border-red-100">
+                    <tr className="bg-red-50/20 font-bold text-red-955 border-t-2 border-red-100">
                       <td className="py-3 px-2 text-red-900">
-                        SỐ TIỀN CÒN NỢ CẦN THU (70% + DV)
+                        {selectedInvoice.status?.toUpperCase() === "CANCELLED" || selectedInvoice.bookingStatus?.toUpperCase() === "CANCELLED"
+                          ? "SỐ TIỀN HOÀN TRẢ KHÁCH (REFUND)"
+                          : "SỐ TIỀN CÒN NỢ CẦN THU (70% + DV)"}
                       </td>
                       <td className="py-3 px-2 text-right text-red-700 text-base">
-                        {selectedInvoice.status?.toUpperCase() === "PAID"
-                          ? "0 ₫ (Đã thanh toán)"
-                          : formatCurrency(selectedInvoice.amountDue)}
+                        {selectedInvoice.status?.toUpperCase() === "CANCELLED" || selectedInvoice.bookingStatus?.toUpperCase() === "CANCELLED"
+                          ? formatCurrency(selectedInvoice.refundAmount)
+                          : selectedInvoice.status?.toUpperCase() === "PAID"
+                            ? "0 ₫ (Đã thanh toán)"
+                            : formatCurrency(selectedInvoice.amountDue)}
                       </td>
                     </tr>
                   </tbody>
@@ -354,14 +439,18 @@ export default function ManagePayments({ payments }) {
                   </span>
                   <span
                     className={`font-bold text-sm mt-0.5 block uppercase ${
-                      selectedInvoice.status?.toUpperCase() === "PAID"
-                        ? "text-green-700"
-                        : "text-red-700"
+                      selectedInvoice.status?.toUpperCase() === "CANCELLED" || selectedInvoice.bookingStatus?.toUpperCase() === "CANCELLED"
+                        ? "text-red-600"
+                        : selectedInvoice.status?.toUpperCase() === "PAID"
+                          ? "text-green-700"
+                          : "text-red-700"
                     }`}
                   >
-                    {selectedInvoice.status?.toUpperCase() === "PAID"
-                      ? "ĐÃ HOÀN TẤT THU"
-                      : "CHƯA THANH TOÁN (CÒN NỢ)"}
+                    {selectedInvoice.status?.toUpperCase() === "CANCELLED" || selectedInvoice.bookingStatus?.toUpperCase() === "CANCELLED"
+                      ? "ĐÃ HỦY & CHỜ HOÀN TIỀN"
+                      : selectedInvoice.status?.toUpperCase() === "PAID"
+                        ? "ĐÃ HOÀN TẤT THU"
+                        : "CHƯA THANH TOÁN (CÒN NỢ)"}
                   </span>
                 </div>
               </div>

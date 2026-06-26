@@ -100,6 +100,11 @@ public class RoomBookingService {
         // 3. Create RoomBooking
         RoomBooking booking = new RoomBooking();
         booking.setUser(user);
+        booking.setSpecialRequests(dto.getSpecialRequests());
+        booking.setGuestsCount(dto.getGuestsCount() != null ? dto.getGuestsCount() : 1);
+        booking.setChildrenUnder5(dto.getChildrenUnder5() != null ? dto.getChildrenUnder5() : 0);
+        booking.setChildren5to12(dto.getChildren5to12() != null ? dto.getChildren5to12() : 0);
+        booking.setChildrenCount(dto.getChildrenCount() != null ? dto.getChildrenCount() : 0);
         if (dto.getPackageIds() != null && !dto.getPackageIds().isEmpty()) {
             List<RetreatPackage> packages = new ArrayList<>();
             for (Integer pkgId : dto.getPackageIds()) {
@@ -364,6 +369,10 @@ public class RoomBookingService {
             user.setPhone(dto.getPhone());
         }
         userRepository.save(user);
+
+        if (dto.getSpecialRequests() != null) {
+            booking.setSpecialRequests(dto.getSpecialRequests());
+        }
 
         // 3. Update dates if provided
         if (dto.getCheckInDate() != null && dto.getCheckOutDate() != null) {

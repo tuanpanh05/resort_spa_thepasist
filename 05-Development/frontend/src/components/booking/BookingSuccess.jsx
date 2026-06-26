@@ -59,7 +59,19 @@ export default function BookingSuccess({
           </span>
 
           <span className="text-sage-500 font-light">Số khách đi cùng:</span>
-          <span className="font-semibold text-right">{guestInfo.guestsCount} Khách</span>
+          <span className="font-semibold text-right">
+            {guestInfo.guestsCount} Người lớn
+            {guestInfo.childrenCount > 0 ? (
+              `, ${guestInfo.childrenCount} Trẻ em` + (
+                (guestInfo.childrenUnder5 > 0 || guestInfo.children5to12 > 0)
+                  ? ` (${[
+                      guestInfo.childrenUnder5 > 0 ? `${guestInfo.childrenUnder5} dưới 5t` : "",
+                      guestInfo.children5to12 > 0 ? `${guestInfo.children5to12} 5-12t` : ""
+                    ].filter(Boolean).join(", ")})`
+                  : ""
+              )
+            ) : ""}
+          </span>
 
           <span className="text-sage-500 font-light">Căn biệt thự đã chọn:</span>
           <span className="font-semibold text-right text-primary-800">

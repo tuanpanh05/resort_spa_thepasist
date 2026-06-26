@@ -29,7 +29,8 @@ export default function PackageSelectionStep({
     { key: "DETOX", label: "Thải độc & Detox" },
     { key: "STRESS_RELIEF", label: "Giảm căng thẳng" },
     { key: "WEIGHT_LOSS", label: "Giảm cân & Giữ dáng" },
-    { key: "GENERAL", label: "Trị liệu chuyên sâu" }
+    { key: "GENERAL", label: "Trị liệu chuyên sâu" },
+    { key: "KID", label: "Dịch vụ trẻ em" }
   ];
 
   // Helper to determine recommendation

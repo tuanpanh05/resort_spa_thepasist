@@ -1,6 +1,6 @@
 ========================================
-Email: cpz85609@laoia.com
+Email: testspec@gmail.com
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 346059
-Time: 2026-06-25T10:11:15.866601900
+OTP Code: 886848
+Time: 2026-06-26T23:12:32.191444700
 ========================================

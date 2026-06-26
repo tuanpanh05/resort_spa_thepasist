@@ -231,6 +231,27 @@ export const paymentApi = {
   performCheckout: (invoiceId) => 
     apiRequest(`/invoices/${invoiceId}/perform-checkout`, { method: "POST" }),
 
+  earlyCheckout: (invoiceId) =>
+    apiRequest(`/invoices/${invoiceId}/early-checkout`, { method: "POST" }),
+
+  applyVoucher: (invoiceId, code) =>
+    apiRequest(`/invoices/${invoiceId}/apply-voucher?code=${encodeURIComponent(code)}`, { method: "POST" }),
+
+  removeVoucher: (invoiceId) =>
+    apiRequest(`/invoices/${invoiceId}/remove-voucher`, { method: "POST" }),
+
+  getVouchers: () =>
+    apiRequest("/vouchers"),
+
+  createVoucher: (dto) =>
+    apiRequest("/vouchers", { method: "POST", body: JSON.stringify(dto) }),
+
+  updateVoucher: (id, dto) =>
+    apiRequest(`/vouchers/${id}`, { method: "PUT", body: JSON.stringify(dto) }),
+
+  deleteVoucher: (id) =>
+    apiRequest(`/vouchers/${id}`, { method: "DELETE" }),
+
   // Feedback Submission (UC23)
   submitFeedback: (bookingId, userId, rating, comment) => 
     apiRequest("/feedback/submit", {

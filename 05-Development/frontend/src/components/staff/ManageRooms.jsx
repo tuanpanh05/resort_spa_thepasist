@@ -188,6 +188,7 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
   const CAPACITY_FILTERS = [
     { id: "all", label: "Mọi sức chứa" },
     { id: "2",   label: "👥 2 người" },
+    { id: "3",   label: "👥 3 người" },
     { id: "4",   label: "👨‍👩‍👧‍👦 4 người" },
     { id: "8",   label: "👥 8 người" },
     { id: "25",  label: "👥 25 người" },

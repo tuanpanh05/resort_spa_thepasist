@@ -420,7 +420,6 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         return toResponseDTO(savedBooking);
     }
 
-<<<<<<< HEAD
     /**
      * Maps a spa-service category to a specialist discipline / room category.
      * Categories used in seed data: SPA, YOGA, THERAPY (physiotherapy), PHYSIO.
@@ -442,7 +441,8 @@ public class SpaBookingServiceImpl implements SpaBookingService {
             default:
                 return c;
         }
-=======
+    }
+
     @Override
     @Transactional
     public SpaBookingResponseDTO cancelSpaBooking(Integer spaBookingId, String reason) {
@@ -498,7 +498,6 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         }
 
         return toResponseDTO(savedBooking);
->>>>>>> 4205dfc98a1725c5256ce2bca41bbb23039913e5
     }
 
     private int getSpaSessionLimit(Integer packageId) {

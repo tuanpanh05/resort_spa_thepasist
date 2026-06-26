@@ -96,4 +96,14 @@ public class InvoiceController {
     public ResponseEntity<InvoiceDTO> earlyCheckout(@PathVariable Integer id) {
         return ResponseEntity.ok(invoiceService.earlyCheckout(id));
     }
+
+    @PostMapping("/{id}/apply-voucher")
+    public ResponseEntity<InvoiceDTO> applyVoucher(@PathVariable Integer id, @RequestParam String code) {
+        return ResponseEntity.ok(invoiceService.applyVoucher(id, code));
+    }
+
+    @PostMapping("/{id}/remove-voucher")
+    public ResponseEntity<InvoiceDTO> removeVoucher(@PathVariable Integer id) {
+        return ResponseEntity.ok(invoiceService.removeVoucher(id));
+    }
 }

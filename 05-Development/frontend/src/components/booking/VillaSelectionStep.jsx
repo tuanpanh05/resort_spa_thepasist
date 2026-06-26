@@ -1,6 +1,6 @@
 import React from "react";
-import { ArrowLeft, ChevronRight } from "lucide-react";
-
+import { ArrowLeft, ChevronRight, Check } from "lucide-react";
+import { servicesList } from "../../constants/booking";
 
 export default function VillaSelectionStep({
   roomTypes,
@@ -39,10 +39,10 @@ export default function VillaSelectionStep({
     <div className="space-y-8 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
         <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">
-          Bước 3: Chọn Không Gian & Trải Nghiệm
+          Bước 3: Chọn Không Gian Nghỉ Dưỡng
         </h2>
         <p className="text-resort-desc mt-1 text-sage-600 font-light">
-          Lựa chọn 1 hoặc nhiều biệt thự nghỉ dưỡng và tích hợp thêm các dịch vụ trị liệu cao cấp đi kèm.
+          Lựa chọn 1 hoặc nhiều biệt thự nghỉ dưỡng cho kỳ nghỉ của bạn.
         </p>
       </div>
 

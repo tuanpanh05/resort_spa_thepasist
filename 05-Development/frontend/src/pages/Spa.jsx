@@ -16,6 +16,7 @@ const categoryFilters = [
   { label: "Gói Spa đặc trưng",  value: "SPA",         icon: Flame    },
   { label: "Gói Yoga phục hồi", value: "YOGA",      icon: Heart     },
   { label: "Gói Trị liệu chuyên sâu",  value: "THERAPY",   icon: Activity },
+  { label: "Dịch vụ trẻ em",  value: "KID",   icon: Smile },
 ];
 
 // ─── Nhãn tiếng Việt cho healthGoal ─────────────────────────────────────────
@@ -23,6 +24,7 @@ const healthGoalLabel = {
   SPA:         "Gói Spa & Thư giãn",
   YOGA:        "Gói Yoga phục hồi",
   THERAPY:     "Gói Trị liệu chuyên môn",
+  KID:         "Dịch vụ trẻ em",
 };
 
 // ─── Wellness Combos cấu hình sẵn ───────────────────────────────────────────
@@ -686,17 +688,14 @@ export default function Spa() {
       });
     };
 
-    // Gọi API lấy các gói từ Database
-    masterDataApi.getRetreatPackages()
+    // Gọi API lọc các gói từ Backend
+    masterDataApi.filterRetreatPackages(filters)
       .then((data) => {
-        setAllPackages(data || []);
-        const filtered = filterList(data);
-        setPackages(filtered);
+        setPackages(data || []);
         setError(null);
       })
       .catch((err) => {
-        console.warn("Không thể tải các gói trị liệu từ database, chuyển sang dùng dữ liệu tĩnh:", err);
-        setAllPackages(STATIC_PACKAGES);
+        console.warn("Không thể lọc từ backend, chuyển sang lọc dữ liệu tĩnh trên client:", err);
         const filtered = filterList(STATIC_PACKAGES);
         setPackages(filtered);
         setError(null);
@@ -722,8 +721,9 @@ export default function Spa() {
         userApi.getMyBookings().catch(() => []),
         masterDataApi.getSpaServices().catch(() => []),
         medicalApi.getMyProfile().catch(() => null),
+        masterDataApi.getRetreatPackages().catch(() => []),
       ])
-        .then(([profile, bookings, services, medProfile]) => {
+        .then(([profile, bookings, services, medProfile, packagesData]) => {
           setCurrentUser(profile);
           // Only show confirmed room bookings
           const confirmedBookings = (bookings || []).filter(
@@ -733,6 +733,7 @@ export default function Spa() {
           setSpaServices(services || []);
           setMedicalProfile(medProfile);
           setHealthConsentCheck(medProfile?.explicitConsentSigned || false);
+          setAllPackages(packagesData || []);
           setLoadingScheduler(false);
         })
         .catch((err) => {
@@ -1390,7 +1391,8 @@ export default function Spa() {
                     const spaPackages = packages.filter(p => p.healthGoal === "SPA");
                     const yogaPackages = packages.filter(p => p.healthGoal === "YOGA");
                     const therapyPackages = packages.filter(p => p.healthGoal === "THERAPY");
-                    const otherPackages = packages.filter(p => p.healthGoal !== "SPA" && p.healthGoal !== "YOGA" && p.healthGoal !== "THERAPY");
+                    const kidPackages = packages.filter(p => p.healthGoal === "KID");
+                    const otherPackages = packages.filter(p => p.healthGoal !== "SPA" && p.healthGoal !== "YOGA" && p.healthGoal !== "THERAPY" && p.healthGoal !== "KID");
 
                     return (
                       <>
@@ -1413,6 +1415,13 @@ export default function Spa() {
                           "Liệu pháp điều trị cột sống, đau vai gáy và phục hồi chấn thương được tư vấn trực tiếp bởi bác sĩ chuyên khoa. Kết hợp nắn chỉnh Chiropractic và công nghệ xung điện phục hồi.",
                           therapyPackages,
                           Activity
+                        )}
+
+                        {renderPackageSection(
+                          "Dịch Vụ & Trị Liệu Trẻ Em",
+                          "Bao gồm khu vui chơi giải trí, công viên nước và các liệu trình ngâm tắm thảo dược Dao Đỏ, massage tinh dầu tràm kháng khuẩn giúp trẻ thư giãn, nâng cao thể trạng.",
+                          kidPackages,
+                          Smile
                         )}
 
                         {otherPackages.length > 0 && renderPackageSection(

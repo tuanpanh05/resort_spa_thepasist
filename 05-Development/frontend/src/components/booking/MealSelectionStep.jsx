@@ -42,6 +42,7 @@ export default function MealSelectionStep({
   mealTotal,
   handlePrevStep,
   handleNextStep,
+  setMealSelections,
 }) {
   // ── BR-10: Real-time cut-off detection ──────────────────────────────────
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
@@ -70,7 +71,7 @@ export default function MealSelectionStep({
   // Show cut-off warning when tomorrow is next and it's past 22:00
   const showCutoffWarning = currentHour >= CUTOFF_HOUR && tomorrowStr && mealBookingDays.includes(tomorrowStr);
   const nightsCount = Math.max(1, mealBookingDays.length - 1);
-  const guestsCount = guestInfo.guestsCount || 1;
+  const guestsCount = Math.max(1, Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0));
   const [viewMenuCombo, setViewMenuCombo] = React.useState(null);
   const [selectedDishDetail, setSelectedDishDetail] = React.useState(null);
 
@@ -358,6 +359,48 @@ export default function MealSelectionStep({
     if (allDaysBlocked) return;  // BR-10: all days blocked
     handleSelectCombo(comboId);
   };
+
+  const selectedCombo = safeCombos.find(c => c.id === selectedComboId);
+
+  React.useEffect(() => {
+    if (selectedCombo) {
+      const newSelections = {};
+      mealBookingDays.forEach((date, index) => {
+        const menuDayIndex = index % selectedCombo.dailyMenus.length;
+        const dailyMenu = selectedCombo.dailyMenus[menuDayIndex] || [];
+        
+        const dateSel = {};
+        dailyMenu.forEach(item => {
+          const period = item.period;
+          if (!dateSel[period]) {
+            dateSel[period] = {};
+          }
+          const count = item.qty || 1;
+          
+          if (item.allergicSubId) {
+            if (count > 1) {
+              dateSel[period][item.allergicSubId] = (dateSel[period][item.allergicSubId] || 0) + 1;
+              dateSel[period][item.foodId] = (dateSel[period][item.foodId] || 0) + (count - 1);
+            } else {
+              dateSel[period][item.allergicSubId] = (dateSel[period][item.allergicSubId] || 0) + 1;
+            }
+          } else if (item.noSubstituteFound) {
+            if (count > 1) {
+              dateSel[period][item.foodId] = (dateSel[period][item.foodId] || 0) + (count - 1);
+            }
+          } else {
+            dateSel[period][item.foodId] = (dateSel[period][item.foodId] || 0) + count;
+          }
+        });
+        
+        newSelections[date] = dateSel;
+      });
+      
+      setMealSelections(newSelections);
+    }
+  }, [selectedCombo, mealBookingDays, setMealSelections]);
+
+
 
   return (
     <div className="space-y-6 text-left animate-fade-in">

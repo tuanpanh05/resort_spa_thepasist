@@ -47,5 +47,8 @@ public interface InvoiceService {
      * @return Updated InvoiceDTO after checkout
      */
     InvoiceDTO earlyCheckout(Integer invoiceId);
+
+    InvoiceDTO applyVoucher(Integer invoiceId, String code);
+    InvoiceDTO removeVoucher(Integer invoiceId);
 }
 

@@ -404,6 +404,11 @@ export default function ManageBookings({
                         <div className="text-[10px] text-sage-400 font-mono mt-0.5">
                           {b.guestPhone || b.guestEmail || ""}
                         </div>
+                        {b.specialRequests && (
+                          <div className="mt-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded font-normal inline-block max-w-[200px] break-words" title={b.specialRequests}>
+                            <strong>YC đặc biệt:</strong> {b.specialRequests}
+                          </div>
+                        )}
                       </td>
                       <td className="p-4 text-sage-700">
                         <div>

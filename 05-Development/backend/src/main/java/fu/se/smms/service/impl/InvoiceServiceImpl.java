@@ -11,11 +11,18 @@ import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.InvoiceRepository;
 import fu.se.smms.repository.FoodOrderRepository;
 import fu.se.smms.repository.PaymentTransactionLogRepository;
+import fu.se.smms.repository.SpaBookingRepository;
+import fu.se.smms.entity.SpaBooking;
+import fu.se.smms.entity.FoodOrder;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
 import fu.se.smms.service.EmailService;
 import fu.se.smms.service.InvoiceService;
+import fu.se.smms.entity.Voucher;
+import fu.se.smms.repository.VoucherRepository;
+import fu.se.smms.service.VoucherService;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.http.HttpStatus;
@@ -51,6 +58,12 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final SystemConfigurationRepository systemConfigurationRepository;
     private final FoodOrderRepository foodOrderRepository;
     private final EmailService emailService;
+    private final SpaBookingRepository spaBookingRepository;
+
+    @Autowired
+    private VoucherRepository voucherRepository;
+    @Autowired
+    private VoucherService voucherService;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -60,7 +73,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             VNPayProperties vnPayProperties,
             SystemConfigurationRepository systemConfigurationRepository,
             FoodOrderRepository foodOrderRepository,
-            EmailService emailService
+            EmailService emailService,
+            SpaBookingRepository spaBookingRepository
     ) {
         this.invoiceRepository = invoiceRepository;
         this.roomBookingRepository = roomBookingRepository;
@@ -70,6 +84,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.systemConfigurationRepository = systemConfigurationRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.emailService = emailService;
+        this.spaBookingRepository = spaBookingRepository;
     }
 
     @Override
@@ -199,6 +214,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             invoice.setDepositAmount(payableAmount);
             invoice.setAmountDue(invoice.getFinalAmount().subtract(payableAmount));
             invoice.setPaymentTime(LocalDateTime.now());
+            
+            incrementVoucherUsage(invoice);
 
             Invoice savedInvoice = invoiceRepository.save(invoice);
             writeTransactionLog(savedInvoice, "CASH", payableAmount, null, "00", "PAID");
@@ -210,6 +227,10 @@ public class InvoiceServiceImpl implements InvoiceService {
             invoice.setAmountDue(BigDecimal.ZERO);
             invoice.setPaymentTime(LocalDateTime.now());
             invoice.setVnpayTranId(null);
+
+            if (invoice.getDepositAmount() == null || invoice.getDepositAmount().compareTo(BigDecimal.ZERO) == 0) {
+                incrementVoucherUsage(invoice);
+            }
 
             Invoice savedInvoice = invoiceRepository.save(invoice);
 
@@ -352,11 +373,17 @@ public class InvoiceServiceImpl implements InvoiceService {
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
                 invoice.setPaymentTime(LocalDateTime.now());
                 triggerEmail = true;
+
+                incrementVoucherUsage(invoice);
             } else {
                 invoice.setStatus("PAID");
                 invoice.setAmountDue(BigDecimal.ZERO);
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
                 invoice.setPaymentTime(LocalDateTime.now());
+
+                if (invoice.getDepositAmount() == null || invoice.getDepositAmount().compareTo(BigDecimal.ZERO) == 0) {
+                    incrementVoucherUsage(invoice);
+                }
             }
         }
 
@@ -469,11 +496,44 @@ public class InvoiceServiceImpl implements InvoiceService {
         BigDecimal roomSubtotal = defaultZero(invoiceRepository.sumRoomSubtotal(bookingId));
         BigDecimal spaSubtotal = defaultZero(invoiceRepository.sumSpaSubtotal(bookingId));
         BigDecimal foodSubtotal = defaultZero(invoiceRepository.sumFoodSubtotal(bookingId));
+
+        RoomBooking booking = invoice.getRoomBooking();
+        BigDecimal childDiscount = BigDecimal.ZERO;
+        if (booking != null) {
+            childDiscount = calculateSpaChildDiscount(booking);
+            spaSubtotal = spaSubtotal.subtract(childDiscount);
+            if (spaSubtotal.signum() < 0) {
+                spaSubtotal = BigDecimal.ZERO;
+            }
+        }
+
         BigDecimal taxableBase = roomSubtotal.add(spaSubtotal).add(foodSubtotal);
         BigDecimal taxAndFees = taxableBase.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal finalAmount = taxableBase.add(taxAndFees);
+        BigDecimal grandTotal = taxableBase.add(taxAndFees);
+
+        // Apply voucher discount
+        BigDecimal discount = BigDecimal.ZERO;
+        if (invoice.getVoucher() != null) {
+            Voucher voucher = invoice.getVoucher();
+            if ("PERCENTAGE".equalsIgnoreCase(voucher.getDiscountType())) {
+                discount = grandTotal.multiply(voucher.getDiscountValue().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP));
+                if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                    discount = voucher.getMaxDiscountAmount();
+                }
+            } else if ("FIXED_AMOUNT".equalsIgnoreCase(voucher.getDiscountType())) {
+                discount = voucher.getDiscountValue();
+            }
+            if (discount.compareTo(grandTotal) > 0) {
+                discount = grandTotal;
+            }
+        }
+        discount = discount.setScale(0, RoundingMode.HALF_UP);
+        invoice.setDiscountAmount(discount);
+
+        BigDecimal finalAmount = grandTotal.subtract(discount);
         BigDecimal depositAmount = defaultZero(invoice.getRoomBooking().getTotalDeposit());
         BigDecimal amountDue = finalAmount.subtract(depositAmount);
+        
         if (amountDue.signum() < 0) {
             throw conflict("Booking deposit cannot exceed invoice final amount");
         }
@@ -488,6 +548,51 @@ public class InvoiceServiceImpl implements InvoiceService {
         if (invoice.getStatus() == null) {
             invoice.setStatus("UNPAID");
         }
+    }
+
+    private BigDecimal calculateSpaChildDiscount(RoomBooking booking) {
+        if (booking == null) return BigDecimal.ZERO;
+
+        int adults = booking.getGuestsCount() != null ? booking.getGuestsCount() : 1;
+        int under5 = booking.getChildrenUnder5() != null ? booking.getChildrenUnder5() : 0;
+        int between5And12 = booking.getChildren5to12() != null ? booking.getChildren5to12() : 0;
+
+        int totalGuests = adults + under5 + between5And12;
+        if (totalGuests <= 0) return BigDecimal.ZERO;
+
+        BigDecimal activeSpaBookingsSum = BigDecimal.ZERO;
+        try {
+            List<SpaBooking> spaBookings = spaBookingRepository.findByRoomBookingId(booking.getBookingId());
+            if (spaBookings != null) {
+                for (SpaBooking sb : spaBookings) {
+                    if (sb.getIsPackageIncluded() != null && !sb.getIsPackageIncluded()) {
+                        BigDecimal price = sb.getPriceAtBooking() != null ? sb.getPriceAtBooking() : BigDecimal.ZERO;
+                        if ("CONFIRMED".equalsIgnoreCase(sb.getStatus()) || "COMPLETED".equalsIgnoreCase(sb.getStatus())) {
+                            activeSpaBookingsSum = activeSpaBookingsSum.add(price);
+                        } else if ("CANCELLED".equalsIgnoreCase(sb.getStatus()) && sb.getRefundAmount() != null) {
+                            activeSpaBookingsSum = activeSpaBookingsSum.add(price.subtract(sb.getRefundAmount()));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error calculating spa child discount: " + e.getMessage());
+        }
+
+        if (activeSpaBookingsSum.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal discountUnder5 = activeSpaBookingsSum
+                .multiply(BigDecimal.valueOf(under5))
+                .divide(BigDecimal.valueOf(totalGuests), 4, RoundingMode.HALF_UP);
+
+        BigDecimal discount5to12 = activeSpaBookingsSum
+                .multiply(BigDecimal.valueOf(between5And12))
+                .multiply(new BigDecimal("0.30"))
+                .divide(BigDecimal.valueOf(totalGuests), 4, RoundingMode.HALF_UP);
+
+        return discountUnder5.add(discount5to12).setScale(0, RoundingMode.HALF_UP);
     }
 
     private InvoiceDTO toDto(Invoice invoice) {
@@ -505,18 +610,95 @@ public class InvoiceServiceImpl implements InvoiceService {
         dto.setStatus(invoice.getStatus());
         dto.setVnpayTranId(invoice.getVnpayTranId());
         dto.setPaymentTime(invoice.getPaymentTime());
+        dto.setDiscountAmount(invoice.getDiscountAmount());
+        if (invoice.getVoucher() != null) {
+            dto.setVoucherCode(invoice.getVoucher().getCode());
+        }
+        BigDecimal childDiscount = calculateSpaChildDiscount(invoice.getRoomBooking());
+        dto.setSpaChildDiscount(childDiscount);
         if (invoice.getUser() != null) {
             dto.setCustomerName(invoice.getUser().getFullName());
         } else {
             dto.setCustomerName("N/A");
         }
         if (invoice.getRoomBooking() != null) {
-            dto.setBookingStatus(invoice.getRoomBooking().getStatus());
-            dto.setCheckInDate(invoice.getRoomBooking().getCheckInDate());
-            dto.setCheckOutDate(invoice.getRoomBooking().getCheckOutDate());
-            dto.setCreatedAt(invoice.getRoomBooking().getCreatedAt());
-            if (invoice.getRoomBooking().getDetails() != null) {
-                String roomNumbers = invoice.getRoomBooking().getDetails().stream()
+            RoomBooking rb = invoice.getRoomBooking();
+            dto.setBookingStatus(rb.getStatus());
+            dto.setCheckInDate(rb.getCheckInDate());
+            dto.setCheckOutDate(rb.getCheckOutDate());
+            dto.setCreatedAt(rb.getCreatedAt());
+            dto.setCancellationReason(rb.getCancellationReason());
+            dto.setCancellationTime(rb.getCancellationTime());
+            if (rb.getUser() != null) {
+                dto.setCustomerPhone(rb.getUser().getPhone());
+                dto.setCustomerEmail(rb.getUser().getEmail());
+            }
+
+            // Gather all cancellations and calculate total refund
+            StringBuilder sb = new StringBuilder();
+            BigDecimal totalRefund = BigDecimal.ZERO;
+
+            if ("CANCELLED".equalsIgnoreCase(rb.getStatus())) {
+                sb.append("- Hủy toàn bộ đơn đặt phòng");
+                if (rb.getRefundAmount() != null) {
+                    totalRefund = totalRefund.add(rb.getRefundAmount());
+                    sb.append(" (Hoàn tiền cọc: ").append(String.format("%,.0f ₫", rb.getRefundAmount())).append(")");
+                }
+                sb.append("\n");
+            } else if (rb.getCancellationReason() != null && !rb.getCancellationReason().isBlank()) {
+                sb.append("- ").append(rb.getCancellationReason()).append("\n");
+                if (rb.getRefundAmount() != null) {
+                    totalRefund = totalRefund.add(rb.getRefundAmount());
+                }
+            }
+
+            try {
+                List<SpaBooking> cancelledSpas = spaBookingRepository.findByRoomBookingId(rb.getBookingId());
+                if (cancelledSpas != null) {
+                    for (SpaBooking spa : cancelledSpas) {
+                        if ("CANCELLED".equalsIgnoreCase(spa.getStatus())) {
+                            sb.append("- Hủy lịch Spa: ").append(spa.getSpaService() != null ? spa.getSpaService().getName() : "Dịch vụ Spa");
+                            if (spa.getRefundAmount() != null) {
+                                totalRefund = totalRefund.add(spa.getRefundAmount());
+                                sb.append(" (Hoàn trả: ").append(String.format("%,.0f ₫", spa.getRefundAmount())).append(")");
+                            }
+                            if (spa.getCancellationReason() != null && !spa.getCancellationReason().isBlank()) {
+                                sb.append(" - Lý do: ").append(spa.getCancellationReason());
+                            }
+                            sb.append("\n");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to query cancelled spa bookings: " + e.getMessage());
+            }
+
+            try {
+                List<FoodOrder> foodOrders = foodOrderRepository.findByRoomBooking_BookingId(rb.getBookingId());
+                if (foodOrders != null) {
+                    for (FoodOrder fo : foodOrders) {
+                        if ("CANCELLED".equalsIgnoreCase(fo.getStatus())) {
+                            sb.append("- Hủy đơn gọi món (Đơn gọi món #").append(fo.getOrderId()).append(")");
+                            if (fo.getRefundAmount() != null) {
+                                totalRefund = totalRefund.add(fo.getRefundAmount());
+                                sb.append(" (Hoàn trả: ").append(String.format("%,.0f ₫", fo.getRefundAmount())).append(")");
+                            }
+                            if (fo.getCancellationReason() != null && !fo.getCancellationReason().isBlank()) {
+                                sb.append(" - Lý do: ").append(fo.getCancellationReason());
+                            }
+                            sb.append("\n");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to query cancelled food orders: " + e.getMessage());
+            }
+
+            dto.setCancellationDetails(sb.toString().trim());
+            dto.setRefundAmount(totalRefund);
+
+            if (rb.getDetails() != null) {
+                String roomNumbers = rb.getDetails().stream()
                     .map(detail -> detail.getRoom() != null ? detail.getRoom().getRoomNumber() : "")
                     .filter(num -> !num.isBlank())
                     .collect(java.util.stream.Collectors.joining(", "));
@@ -775,4 +957,54 @@ public class InvoiceServiceImpl implements InvoiceService {
             }
         });
     }
+
+    @Override
+    @Transactional
+    public InvoiceDTO applyVoucher(Integer invoiceId, String code) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
+        if ("PAID".equals(invoice.getStatus())) {
+            throw conflict("Cannot apply voucher to a paid invoice");
+        }
+        
+        BigDecimal roomSubtotal = defaultZero(invoiceRepository.sumRoomSubtotal(invoice.getRoomBooking().getBookingId()));
+        BigDecimal spaSubtotal = defaultZero(invoiceRepository.sumSpaSubtotal(invoice.getRoomBooking().getBookingId()));
+        BigDecimal foodSubtotal = defaultZero(invoiceRepository.sumFoodSubtotal(invoice.getRoomBooking().getBookingId()));
+        BigDecimal taxableBase = roomSubtotal.add(spaSubtotal).add(foodSubtotal);
+        BigDecimal taxAndFees = taxableBase.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal grandTotal = taxableBase.add(taxAndFees);
+
+        Voucher voucher = voucherService.validateAndGetVoucher(code, grandTotal);
+        invoice.setVoucher(voucher);
+        
+        recalculate(invoice, invoice.getRoomBooking().getBookingId());
+        Invoice saved = invoiceRepository.save(invoice);
+        return toDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public InvoiceDTO removeVoucher(Integer invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
+        if ("PAID".equals(invoice.getStatus())) {
+            throw conflict("Cannot remove voucher from a paid invoice");
+        }
+
+        invoice.setVoucher(null);
+        invoice.setDiscountAmount(BigDecimal.ZERO);
+        
+        recalculate(invoice, invoice.getRoomBooking().getBookingId());
+        Invoice saved = invoiceRepository.save(invoice);
+        return toDto(saved);
+    }
+
+    private void incrementVoucherUsage(Invoice invoice) {
+        if (invoice.getVoucher() != null) {
+            Voucher v = invoice.getVoucher();
+            v.setUsedCount(v.getUsedCount() + 1);
+            voucherRepository.save(v);
+        }
+    }
 }
+

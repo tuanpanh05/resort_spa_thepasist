@@ -22,8 +22,13 @@ export default function BookingBillSummary({
   formatCurrency,
   selectedVilla,
   selectedPackages = [],
+  servicesTotalBeforeDiscount,
+  childDiscountUnder5,
+  childDiscount5to12,
+  chargedGuestsCount: passedChargedGuestsCount,
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const chargedGuestsCount = passedChargedGuestsCount || (Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0));
 
   // Placeholder khi chưa có villa được chọn
   if (villaTotal === 0) {
@@ -90,12 +95,14 @@ export default function BookingBillSummary({
               Dịch vụ đi kèm
             </span>
             {selectedServices.map((s) => {
+              const isKidService = ["srv-playground", "srv-dao-red-kid", "srv-massage-kid", "srv-posture-kid"].includes(s.id);
+              const multiplier = isKidService ? Number(guestInfo.children5to12 || 0) : chargedGuestsCount;
               let itemCost = 0;
               const pricingType = s.pricingType || s.type || "per-guest";
               const serviceTitle = s.name || s.title || "Dịch vụ";
-              if (pricingType === "per-guest") itemCost = s.price * guestInfo.guestsCount;
+              if (pricingType === "per-guest") itemCost = s.price * multiplier;
               else if (pricingType === "per-guest-per-night")
-                itemCost = s.price * guestInfo.guestsCount * nightsCount;
+                itemCost = s.price * multiplier * nightsCount;
               else itemCost = s.price;
               return (
                 <div key={s.serviceId || s.id} className="flex justify-between text-sage-600 text-xs">
@@ -104,6 +111,20 @@ export default function BookingBillSummary({
                 </div>
               );
             })}
+
+            {/* Child Discounts */}
+            {childDiscountUnder5 > 0 && (
+              <div className="flex justify-between text-emerald-700 font-semibold text-xs pt-1">
+                <span>👶 Giảm giá trẻ dưới 5t (100%):</span>
+                <span className="font-mono">-{formatCurrency(childDiscountUnder5)}</span>
+              </div>
+            )}
+            {childDiscount5to12 > 0 && (
+              <div className="flex justify-between text-emerald-700 font-semibold text-xs pt-1">
+                <span>🧒 Giảm giá trẻ 5-12t (30%):</span>
+                <span className="font-mono">-{formatCurrency(childDiscount5to12)}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -152,6 +173,10 @@ export default function BookingBillSummary({
         remainingAmount={remainingAmount}
         bookingStatus={bookingStatus}
         paymentStatus={paymentStatus}
+        servicesTotalBeforeDiscount={servicesTotalBeforeDiscount}
+        childDiscountUnder5={childDiscountUnder5}
+        childDiscount5to12={childDiscount5to12}
+        chargedGuestsCount={chargedGuestsCount}
       />
     </div>
   );

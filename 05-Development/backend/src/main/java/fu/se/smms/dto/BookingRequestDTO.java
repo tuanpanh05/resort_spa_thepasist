@@ -11,6 +11,9 @@ public class BookingRequestDTO {
     private String email;
     private String phone;
     private Integer guestsCount;
+    private Integer childrenCount;
+    private Integer childrenUnder5;
+    private Integer children5to12;
 
     @NotNull(message = "Vui lòng chọn biệt thự/phòng trống.")
     private Integer roomId;
@@ -31,6 +34,7 @@ public class BookingRequestDTO {
     // Medical profile fields
     private String allergies;
     private Boolean explicitConsentSigned;
+    private String specialRequests;
 
     // Meal selections
     // Structure: Date (YYYY-MM-DD) -> Period (Breakfast, Lunch, Dinner) -> FoodId -> Quantity
@@ -128,4 +132,16 @@ public class BookingRequestDTO {
 
     public Map<String, Map<String, Map<Integer, Integer>>> getMealSelections() { return mealSelections; }
     public void setMealSelections(Map<String, Map<String, Map<Integer, Integer>>> mealSelections) { this.mealSelections = mealSelections; }
+
+    public String getSpecialRequests() { return specialRequests; }
+    public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
+
+    public Integer getChildrenCount() { return childrenCount; }
+    public void setChildrenCount(Integer childrenCount) { this.childrenCount = childrenCount; }
+
+    public Integer getChildrenUnder5() { return childrenUnder5; }
+    public void setChildrenUnder5(Integer childrenUnder5) { this.childrenUnder5 = childrenUnder5; }
+
+    public Integer getChildren5to12() { return children5to12; }
+    public void setChildren5to12(Integer children5to12) { this.children5to12 = children5to12; }
 }

@@ -227,7 +227,9 @@ export default function CancelServicesTab() {
         await axiosClient.post(`/v1/spa-bookings/${selectedItem.spaBookingId}/cancel`, { reason: combinedReason });
       }
 
-      alert(language === "VIE" ? "Đã thực hiện hủy thành công dịch vụ!" : "Service cancelled successfully!");
+      alert(language === "VIE" 
+        ? "Hủy thành công! Tiền hoàn sẽ được nhân viên resort liên hệ và trả lại sau 2 ngày tới." 
+        : "Cancelled successfully! Refund will be contacted and returned by resort staff within the next 2 days.");
       setShowModal(false);
       fetchServicesData();
     } catch (err) {
