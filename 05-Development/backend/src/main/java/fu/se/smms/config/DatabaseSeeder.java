@@ -118,6 +118,24 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
+            System.out.println("[DB Seeder] Adding cancellation columns to bookings tables...");
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
+
+            try { jdbcTemplate.execute("ALTER TABLE food_order ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE food_order ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE food_order ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
+
+            try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
+            System.out.println("[DB Seeder] Successfully added/verified cancellation columns.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not add cancellation columns: " + e.getMessage());
+        }
+
+        try {
             System.out.println("[DB Seeder] Skipping hardcoded Food Menu updates to preserve user edits.");
             /* 
             jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Cháo Yến Mạch Hạt Chia', description=N'Cháo yến mạch nguyên cám nấu cùng hạt chia, hạt óc chó và dâu tây tươi.', dietary_tags='Vegan, Healthy', price=120000, available_days='1,3,5', image_url='/images/dishes/dish_chao_yen_mach.png', is_package_included=1, periods='Breakfast' WHERE food_id=1");

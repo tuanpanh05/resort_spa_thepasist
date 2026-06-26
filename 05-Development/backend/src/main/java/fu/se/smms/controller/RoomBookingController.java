@@ -98,6 +98,30 @@ public class RoomBookingController {
         }
     }
 
+    @PostMapping("/{bookingId}/cancel")
+    public ResponseEntity<?> cancelBooking(@PathVariable Integer bookingId,
+                                            @RequestBody Map<String, String> request) {
+        try {
+            String reason = request.get("reason");
+            RoomBooking cancelled = roomBookingService.cancelBooking(bookingId, reason);
+            return ResponseEntity.ok(toBookingMap(cancelled));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/detail/{detailId}/cancel")
+    public ResponseEntity<?> cancelRoomBookingDetail(@PathVariable Integer detailId,
+                                                    @RequestBody Map<String, String> request) {
+        try {
+            String reason = request.get("reason");
+            RoomBooking booking = roomBookingService.cancelRoomBookingDetail(detailId, reason);
+            return ResponseEntity.ok(toBookingMap(booking));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // ── Helper: Convert RoomBooking entity to safe serializable Map ──
     private Map<String, Object> toBookingMap(RoomBooking b) {
         Map<String, Object> map = new LinkedHashMap<>();

@@ -296,7 +296,7 @@ public class UserServiceImpl implements UserService {
                         typeName = d.getRoom().getRoomType().getTypeName();
                     }
                 }
-                return new BookingHistoryDTO.RoomDetailDTO(roomNum, typeName, d.getPriceAtBooking());
+                return new BookingHistoryDTO.RoomDetailDTO(d.getDetailId(), roomNum, typeName, d.getPriceAtBooking());
             }).collect(java.util.stream.Collectors.toList());
         }
 

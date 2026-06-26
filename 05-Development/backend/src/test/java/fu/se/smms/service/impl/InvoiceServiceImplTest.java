@@ -78,6 +78,12 @@ class InvoiceServiceImplTest {
                 vnPayProperties, systemConfigurationRepository,
                 foodOrderRepository, emailService
         );
+
+        // Default stubbing to prevent recalculate() from throwing exceptions or returning null
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(invoiceRepository.sumRoomSubtotal(anyInt())).thenReturn(new BigDecimal("12500000.00"));
+        when(invoiceRepository.sumSpaSubtotal(anyInt())).thenReturn(new BigDecimal("0.00"));
+        when(invoiceRepository.sumFoodSubtotal(anyInt())).thenReturn(new BigDecimal("320000.00"));
     }
 
     // ─── UC21: Consolidated Invoice Creation ─────────────────────────────────
