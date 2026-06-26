@@ -1,6 +1,6 @@
 ========================================
-Email: domtest2026_06_23_4@gmail.com
-Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 795528
-Time: 2026-06-23T15:23:16.629590700
+Email: tuananh1122hy@gmail.com
+Purpose: FORGOT PASSWORD
+OTP Code: 413551
+Time: 2026-06-25T12:51:57.140206
 ========================================
