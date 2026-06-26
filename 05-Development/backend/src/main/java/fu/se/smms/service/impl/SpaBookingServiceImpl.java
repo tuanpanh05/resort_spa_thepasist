@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -60,18 +61,29 @@ public class SpaBookingServiceImpl implements SpaBookingService {
     @Transactional(readOnly = true)
     public AutoMatchResponseDTO autoMatch(Integer spaServiceId, LocalDateTime startDatetime) {
         SpaService service = spaServiceRepository.findById(spaServiceId)
-                .orElseThrow(() -> new BusinessException("SPA-001", HttpStatus.NOT_FOUND, "Không tìm thấy dịch vụ Spa."));
+                .orElseThrow(() -> new BusinessException("SPA-001", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y dá»‹ch vá»¥ Spa."));
 
         LocalDateTime endDatetime = startDatetime.plusMinutes(service.getDurationMinutes());
 
-        List<User> availableTherapists = spaBookingRepository.findAvailableTherapists(startDatetime, endDatetime);
-        List<TreatmentRoom> availableRooms = spaBookingRepository.findAvailableRooms(startDatetime, endDatetime);
+        String specialty = normalizeSpecialty(service.getCategory());
 
+        // Specialty-aware matching first
+        List<User> availableTherapists = spaBookingRepository.findAvailableTherapistsBySpecialty(specialty, startDatetime, endDatetime);
+        List<TreatmentRoom> availableRooms = spaBookingRepository.findAvailableRoomsByCategory(specialty, startDatetime, endDatetime);
+
+        // Graceful fallback to any available if discipline-tagged lists are empty
         if (availableTherapists.isEmpty()) {
-            throw new BusinessException("SPA-409", HttpStatus.CONFLICT, "Không có chuyên gia trị liệu nào trống trong khung giờ này.");
+            availableTherapists = spaBookingRepository.findAvailableTherapists(startDatetime, endDatetime);
         }
         if (availableRooms.isEmpty()) {
-            throw new BusinessException("SPA-409", HttpStatus.CONFLICT, "Không có phòng trị liệu nào trống trong khung giờ này.");
+            availableRooms = spaBookingRepository.findAvailableRooms(startDatetime, endDatetime);
+        }
+
+        if (availableTherapists.isEmpty()) {
+            throw new BusinessException("SPA-409", HttpStatus.CONFLICT, "KhÃ´ng cÃ³ chuyÃªn gia trá»‹ liá»‡u nÃ o trá»‘ng trong khung giá» nÃ y.");
+        }
+        if (availableRooms.isEmpty()) {
+            throw new BusinessException("SPA-409", HttpStatus.CONFLICT, "KhÃ´ng cÃ³ phÃ²ng trá»‹ liá»‡u nÃ o trá»‘ng trong khung giá» nÃ y.");
         }
 
         User therapist = availableTherapists.get(0);
@@ -88,21 +100,71 @@ public class SpaBookingServiceImpl implements SpaBookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<TimeSlotDTO> getAvailableSlots(Integer spaServiceId, LocalDate date) {
+        SpaService service = spaServiceRepository.findById(spaServiceId)
+                .orElseThrow(() -> new BusinessException("SPA-001", HttpStatus.NOT_FOUND, "Khong tim thay dich vu Spa."));
+
+        int duration = service.getDurationMinutes();
+        String specialty = normalizeSpecialty(service.getCategory());
+
+        List<TimeSlotDTO> slots = new ArrayList<>();
+        LocalDateTime dayStart = date.atTime(8, 0);
+        LocalDateTime dayLimit = date.atTime(20, 0);
+        LocalDateTime earliest = LocalDateTime.now().plusMinutes(30);
+
+        for (LocalDateTime slotStart = dayStart;
+             !slotStart.plusMinutes(duration).isAfter(dayLimit);
+             slotStart = slotStart.plusMinutes(30)) {
+
+            if (slotStart.isBefore(earliest)) {
+                continue;
+            }
+            LocalDateTime slotEnd = slotStart.plusMinutes(duration);
+
+            List<User> therapists = spaBookingRepository.findAvailableTherapistsBySpecialty(specialty, slotStart, slotEnd);
+            if (therapists.isEmpty()) {
+                therapists = spaBookingRepository.findAvailableTherapists(slotStart, slotEnd);
+            }
+            if (therapists.isEmpty()) {
+                continue;
+            }
+
+            List<TreatmentRoom> rooms = spaBookingRepository.findAvailableRoomsByCategory(specialty, slotStart, slotEnd);
+            if (rooms.isEmpty()) {
+                rooms = spaBookingRepository.findAvailableRooms(slotStart, slotEnd);
+            }
+            if (rooms.isEmpty()) {
+                continue;
+            }
+
+            User therapist = therapists.get(0);
+            TreatmentRoom room = rooms.get(0);
+            String label = String.format("%02d:%02d", slotStart.getHour(), slotStart.getMinute());
+            slots.add(new TimeSlotDTO(slotStart, slotEnd, label,
+                    therapist.getUserId(), therapist.getFullName(),
+                    room.getTreatmentRoomId(), room.getRoomName()));
+        }
+
+        return slots;
+    }
+
+    @Override
     @Transactional
     public SpaBookingResponseDTO scheduleSpaBooking(Integer userId, SpaBookingRequestDTO request, String currentUserRole) {
         User guest = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException("SPA-002", HttpStatus.NOT_FOUND, "Không tìm thấy khách hàng."));
+                .orElseThrow(() -> new BusinessException("SPA-002", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y khÃ¡ch hÃ ng."));
 
         SpaService service = spaServiceRepository.findById(request.getSpaServiceId())
-                .orElseThrow(() -> new BusinessException("SPA-003", HttpStatus.NOT_FOUND, "Không tìm thấy dịch vụ Spa."));
+                .orElseThrow(() -> new BusinessException("SPA-003", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y dá»‹ch vá»¥ Spa."));
 
         // BR-07 (Health Profile Requirement): Guest must sign the medical consent first
         MedicalProfile profile = medicalProfileRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, 
-                        "Khách hàng bắt buộc phải hoàn thành hồ sơ sức khỏe và cam kết điều khoản trước khi đặt lịch trị liệu."));
+                        "KhÃ¡ch hÃ ng báº¯t buá»™c pháº£i hoÃ n thÃ nh há»“ sÆ¡ sá»©c khá»e vÃ  cam káº¿t Ä‘iá»u khoáº£n trÆ°á»›c khi Ä‘áº·t lá»‹ch trá»‹ liá»‡u."));
         if (profile.getExplicitConsentSigned() == null || !profile.getExplicitConsentSigned()) {
             throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, 
-                    "Khách hàng bắt buộc phải đồng ý ký cam kết hồ sơ sức khỏe trước khi đặt lịch trị liệu.");
+                    "KhÃ¡ch hÃ ng báº¯t buá»™c pháº£i Ä‘á»“ng Ã½ kÃ½ cam káº¿t há»“ sÆ¡ sá»©c khá»e trÆ°á»›c khi Ä‘áº·t lá»‹ch trá»‹ liá»‡u.");
         }
 
         LocalDateTime start = request.getStartDatetime();
@@ -119,22 +181,22 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         }
 
         User therapist = userRepository.findByIdForUpdate(therapistId)
-                .orElseThrow(() -> new BusinessException("SPA-004", HttpStatus.NOT_FOUND, "Không tìm thấy chuyên gia trị liệu chỉ định."));
+                .orElseThrow(() -> new BusinessException("SPA-004", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y chuyÃªn gia trá»‹ liá»‡u chá»‰ Ä‘á»‹nh."));
         
         TreatmentRoom room = treatmentRoomRepository.findByIdForUpdate(roomId)
-                .orElseThrow(() -> new BusinessException("SPA-005", HttpStatus.NOT_FOUND, "Không tìm thấy phòng trị liệu chỉ định."));
+                .orElseThrow(() -> new BusinessException("SPA-005", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y phÃ²ng trá»‹ liá»‡u chá»‰ Ä‘á»‹nh."));
 
         // BR-08 & BR-09 Availability verification
         long therapistOverlaps = spaBookingRepository.countOverlappingTherapistBookings(therapist.getUserId(), start, end);
         if (therapistOverlaps > 0) {
             throw new BusinessException("SPA-409", HttpStatus.CONFLICT, 
-                    String.format("Chuyên gia %s đã có lịch hẹn khác trùng vào khung giờ này.", therapist.getFullName()));
+                    String.format("ChuyÃªn gia %s Ä‘Ã£ cÃ³ lá»‹ch háº¹n khÃ¡c trÃ¹ng vÃ o khung giá» nÃ y.", therapist.getFullName()));
         }
 
         long roomOverlaps = spaBookingRepository.countOverlappingRoomBookings(room.getTreatmentRoomId(), start, end);
         if (roomOverlaps > 0) {
             throw new BusinessException("SPA-409", HttpStatus.CONFLICT, 
-                    String.format("Phòng %s đã có lịch hẹn khác trùng vào khung giờ này.", room.getRoomName()));
+                    String.format("PhÃ²ng %s Ä‘Ã£ cÃ³ lá»‹ch háº¹n khÃ¡c trÃ¹ng vÃ o khung giá» nÃ y.", room.getRoomName()));
         }
 
         SpaBooking booking = new SpaBooking();
@@ -149,25 +211,25 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         // Package vs Extra charge rules (UC11 vs UC15)
         if (request.getIsPackageIncluded() != null && request.getIsPackageIncluded()) {
             if (request.getRoomBookingId() == null) {
-                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Đặt lịch theo gói yêu cầu phải cung cấp mã đặt phòng lưu trú.");
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Äáº·t lá»‹ch theo gÃ³i yÃªu cáº§u pháº£i cung cáº¥p mÃ£ Ä‘áº·t phÃ²ng lÆ°u trÃº.");
             }
             RoomBooking roomBooking = roomBookingRepository.findById(request.getRoomBookingId())
-                    .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin phòng đã đặt."));
+                    .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin phÃ²ng Ä‘Ã£ Ä‘áº·t."));
 
             if (!roomBooking.getUser().getUserId().equals(userId)) {
-                throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "Mã đặt phòng không thuộc về khách hàng này.");
+                throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "MÃ£ Ä‘áº·t phÃ²ng khÃ´ng thuá»™c vá» khÃ¡ch hÃ ng nÃ y.");
             }
 
             // BR-30: Session time must fall within the stay check-in/check-out dates
             if (start.isBefore(roomBooking.getCheckInDate()) || end.isAfter(roomBooking.getCheckOutDate())) {
                 throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, 
-                        String.format("Thời gian trị liệu phải nằm trong khoảng lưu trú (%s - %s).", 
+                        String.format("Thá»i gian trá»‹ liá»‡u pháº£i náº±m trong khoáº£ng lÆ°u trÃº (%s - %s).", 
                                 roomBooking.getCheckInDate(), roomBooking.getCheckOutDate()));
             }
 
             RetreatPackage retreatPackage = roomBooking.getRetreatPackage();
             if (retreatPackage == null) {
-                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Đặt phòng này không đi kèm gói trị liệu. Vui lòng đặt ngoài gói.");
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Äáº·t phÃ²ng nÃ y khÃ´ng Ä‘i kÃ¨m gÃ³i trá»‹ liá»‡u. Vui lÃ²ng Ä‘áº·t ngoÃ i gÃ³i.");
             }
 
             // Enforce package sessions limit
@@ -175,7 +237,7 @@ public class SpaBookingServiceImpl implements SpaBookingService {
             long booked = spaBookingRepository.countPackageSessionsBooked(roomBooking.getBookingId());
             if (booked >= limit) {
                 throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, 
-                        String.format("Gói '%s' của bạn chỉ bao gồm tối đa %d buổi Spa miễn phí. Bạn đã sử dụng hết số lượng quy định.", 
+                        String.format("GÃ³i '%s' cá»§a báº¡n chá»‰ bao gá»“m tá»‘i Ä‘a %d buá»•i Spa miá»…n phÃ­. Báº¡n Ä‘Ã£ sá»­ dá»¥ng háº¿t sá»‘ lÆ°á»£ng quy Ä‘á»‹nh.", 
                                 retreatPackage.getName(), limit));
             }
 
@@ -189,14 +251,14 @@ public class SpaBookingServiceImpl implements SpaBookingService {
 
             if (request.getRoomBookingId() != null) {
                 RoomBooking roomBooking = roomBookingRepository.findById(request.getRoomBookingId())
-                        .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin phòng đã đặt."));
+                        .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin phÃ²ng Ä‘Ã£ Ä‘áº·t."));
                 booking.setRoomBooking(roomBooking);
             }
         }
 
         SpaBooking savedBooking = spaBookingRepository.save(booking);
 
-        // Recalculate invoice ledger automatically for à la carte extra charges
+        // Recalculate invoice ledger automatically for Ã  la carte extra charges
         if (!savedBooking.getIsPackageIncluded() && savedBooking.getRoomBooking() != null) {
             try {
                 invoiceService.createInvoice(savedBooking.getRoomBooking().getBookingId());
@@ -208,8 +270,11 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         // Asynchronous Integrations: Google Calendar and SendGrid reminder email triggers
         CompletableFuture.runAsync(() -> {
             try {
-                googleCalendarService.syncBookingToCalendar(guest, savedBooking);
-                googleCalendarService.syncBookingToCalendar(therapist, savedBooking);
+                // Approach A: create ONE event on the shared resort calendar with guest + therapist as attendees
+                String gcalEventId = googleCalendarService.createCalendarEvent(savedBooking);
+                if (gcalEventId != null) {
+                    spaBookingRepository.updateGoogleEventId(savedBooking.getSpaBookingId(), gcalEventId);
+                }
             } catch (Exception ex) {
                 log.error("[Google Calendar Integration Error] {}", ex.getMessage());
             }
@@ -300,10 +365,10 @@ public class SpaBookingServiceImpl implements SpaBookingService {
     @Transactional
     public SpaBookingResponseDTO updateSessionStatus(Integer spaBookingId, String status, Integer therapistId) {
         SpaBooking booking = spaBookingRepository.findById(spaBookingId)
-                .orElseThrow(() -> new BusinessException("SPA-007", HttpStatus.NOT_FOUND, "Không tìm thấy buổi trị liệu chỉ định."));
+                .orElseThrow(() -> new BusinessException("SPA-007", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y buá»•i trá»‹ liá»‡u chá»‰ Ä‘á»‹nh."));
 
         if (!booking.getTherapist().getUserId().equals(therapistId)) {
-            throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "Bạn không có quyền cập nhật trạng thái lịch hẹn của kỹ thuật viên khác.");
+            throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "Báº¡n khÃ´ng cÃ³ quyá»n cáº­p nháº­t tráº¡ng thÃ¡i lá»‹ch háº¹n cá»§a ká»¹ thuáº­t viÃªn khÃ¡c.");
         }
 
         String normalizedStatus = status != null ? status.toUpperCase() : "";
@@ -323,7 +388,7 @@ public class SpaBookingServiceImpl implements SpaBookingService {
             booking.setStatus("CONFIRMED");
             booking.getTreatmentRoom().setStatus("AVAILABLE");
         } else {
-            throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Trạng thái buổi trị liệu không hợp lệ: " + status);
+            throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Tráº¡ng thÃ¡i buá»•i trá»‹ liá»‡u khÃ´ng há»£p lá»‡: " + status);
         }
 
         SpaBooking savedBooking = spaBookingRepository.save(booking);
@@ -332,8 +397,12 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         // Async Google Calendar sync update
         CompletableFuture.runAsync(() -> {
             try {
-                googleCalendarService.syncBookingToCalendar(savedBooking.getUser(), savedBooking);
-                googleCalendarService.syncBookingToCalendar(savedBooking.getTherapist(), savedBooking);
+                String st = savedBooking.getStatus();
+                if ("CANCELLED".equalsIgnoreCase(st) || "NO_SHOW".equalsIgnoreCase(st)) {
+                    googleCalendarService.deleteCalendarEvent(savedBooking);
+                } else {
+                    googleCalendarService.updateCalendarEvent(savedBooking);
+                }
             } catch (Exception ex) {
                 log.error("[Google Calendar Status Sync Error] {}", ex.getMessage());
             }
@@ -349,6 +418,29 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         }
 
         return toResponseDTO(savedBooking);
+    }
+
+    /**
+     * Maps a spa-service category to a specialist discipline / room category.
+     * Categories used in seed data: SPA, YOGA, THERAPY (physiotherapy), PHYSIO.
+     */
+    private String normalizeSpecialty(String category) {
+        if (category == null) return null;
+        String c = category.trim().toUpperCase();
+        switch (c) {
+            case "YOGA":
+                return "YOGA";
+            case "PHYSIO":
+            case "THERAPY":
+            case "PHYSIOTHERAPY":
+                return "PHYSIO";
+            case "SPA":
+            case "BODY":
+            case "FACE":
+                return "SPA";
+            default:
+                return c;
+        }
     }
 
     private int getSpaSessionLimit(Integer packageId) {

@@ -24,9 +24,9 @@ set "VITE_FIREBASE_STORAGE_BUCKET=ngusonresort.firebasestorage.app"
 set "VITE_FIREBASE_MESSAGING_SENDER_ID=82237656884"
 set "VITE_FIREBASE_APP_ID=1:82237656884:web:fd37de867fc02ae0e4df61"
 
-set "MAIL_USERNAME=tuananh1122hy@gmail.com"
-set "MAIL_PASSWORD=elfptjtgfmuqluoi"
-set "MAIL_FROM=tuananh1122hy@gmail.com"
+set "MAIL_USERNAME=nguson.resort@gmail.com"
+set "MAIL_PASSWORD=ziexmegoqpdwjbkw"
+set "MAIL_FROM=nguson.resort@gmail.com"
 
 set "VNP_TMN_CODE=12YK9LVK"
 set "VNP_HASH_SECRET=3ZAHQSNZONCKAGFBCH7B1UX1LAVIWXH9"

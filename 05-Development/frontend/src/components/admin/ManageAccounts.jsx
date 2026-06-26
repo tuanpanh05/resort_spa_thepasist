@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusCircle, RefreshCw, ShieldCheck, Ban, Trash2, Edit2, AlertTriangle } from "lucide-react";
+import { PlusCircle, RefreshCw, ShieldCheck, Ban, Trash2, Edit2, AlertTriangle, Search, Users } from "lucide-react";
 import SectionHeader from "../ui/SectionHeader";
 import Button from "../ui/Button";
 import { adminApi } from "../../api";
@@ -33,6 +33,19 @@ export default function ManageAccounts() {
     fullName: "", email: "", phone: "", password: "", role: "STAFF", status: "ACTIVE",
   });
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState("ALL");
+  const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      (user.fullName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.phone && user.phone.includes(searchQuery));
+    const matchesRole = selectedRole === "ALL" || user.role === selectedRole;
+    const matchesStatus = selectedStatus === "ALL" || user.status === selectedStatus;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -134,6 +147,82 @@ export default function ManageAccounts() {
         </div>
       </SectionHeader>
 
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-primary-50 text-primary-900 rounded-xl">
+            <Users className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Tổng nhân viên</p>
+            <p className="text-2xl font-bold text-sage-900">{users.length}</p>
+          </div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Đang hoạt động</p>
+            <p className="text-2xl font-bold text-green-600">
+              {users.filter(u => u.status === "ACTIVE").length}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+            <Ban className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Đã khóa</p>
+            <p className="text-2xl font-bold text-red-600">
+              {users.filter(u => u.status === "BANNED").length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Filter Row */}
+      <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full md:w-96">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-sage-400">
+            <Search className="h-5 w-5" />
+          </span>
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo họ tên, email, sđt..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800 bg-primary-50/20"
+          />
+        </div>
+        <div className="flex gap-2 w-full md:w-auto">
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="w-full md:w-40 px-3 py-2 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800 bg-white"
+          >
+            <option value="ALL">Tất cả vai trò</option>
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="w-full md:w-40 px-3 py-2 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800 bg-white"
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -160,14 +249,14 @@ export default function ManageAccounts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-primary-50">
-                {users.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="text-center py-12 text-sage-400 text-sm">
-                      Chưa có tài khoản nhân sự nào.
+                      {users.length === 0 ? "Chưa có tài khoản nhân sự nào." : "Không tìm thấy nhân viên phù hợp."}
                     </td>
                   </tr>
                 ) : (
-                  users.map((user) => (
+                  filteredUsers.map((user) => (
                     <tr key={user.userId} className="hover:bg-primary-50/30 transition-colors">
                       <td className="py-3 px-4 text-sage-500 text-xs font-mono">#{user.userId}</td>
                       <td className="py-3 px-4">

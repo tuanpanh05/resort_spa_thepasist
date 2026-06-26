@@ -17,6 +17,13 @@ public class TreatmentRoom {
     @Column(name = "status", nullable = false, length = 50)
     private String status = "AVAILABLE"; // AVAILABLE, OCCUPIED, MAINTENANCE, CLEANING
 
+    /**
+     * Discipline this room is equipped for: SPA, YOGA, PHYSIO.
+     * Used by the specialty-aware auto-match engine to pick a fitting room.
+     */
+    @Column(name = "category", length = 20)
+    private String category;
+
     public TreatmentRoom() {}
 
     public TreatmentRoom(Integer treatmentRoomId, String roomName, String status) {
@@ -47,5 +54,13 @@ public class TreatmentRoom {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

@@ -88,6 +88,11 @@ CREATE TABLE dbo.users (
     entry_date            DATETIME2     NULL,
     role                  VARCHAR(50)   NOT NULL DEFAULT 'GUEST',
     status                VARCHAR(50)   NOT NULL DEFAULT 'ACTIVE',
+    specialty             VARCHAR(20)   NULL,
+    google_calendar_sync_enabled BIT           NOT NULL DEFAULT 0,
+    google_calendar_id           VARCHAR(255)  NULL,
+    calendar_reminders_enabled   BIT           NOT NULL DEFAULT 1,
+    reminder_lead_time_mins      INT           NOT NULL DEFAULT 30,
     created_at            DATETIME2     NOT NULL DEFAULT GETDATE(),
 
     CONSTRAINT CK_users_role   CHECK (role   IN ('ADMIN','STAFF','THERAPIST','GUEST','MANAGER','RECEPTIONIST','CHEF','CUSTOMER')),
@@ -200,6 +205,7 @@ CREATE TABLE dbo.treatment_room (
     treatment_room_id INT           IDENTITY(1,1) PRIMARY KEY,
     room_name         NVARCHAR(255) NOT NULL UNIQUE,
     status            VARCHAR(50)   NOT NULL DEFAULT 'AVAILABLE',
+    category          VARCHAR(20)   NULL,
 
     CONSTRAINT CK_treatment_room_status CHECK (status IN ('AVAILABLE','OCCUPIED','MAINTENANCE','CLEANING'))
 );
@@ -218,6 +224,7 @@ CREATE TABLE dbo.spa_booking (
     status            VARCHAR(50)   NOT NULL DEFAULT 'PENDING',
     price_at_booking  DECIMAL(15,2) NOT NULL,
     is_package_included BIT         NOT NULL DEFAULT 0,
+    google_calendar_event_id VARCHAR(255) NULL,
 
     CONSTRAINT CK_spa_booking_dates   CHECK (end_datetime > start_datetime),
     CONSTRAINT CK_spa_booking_status  CHECK (status IN ('PENDING','CONFIRMED','COMPLETED','CANCELLED','NOSHOW','NO_SHOW')),
@@ -443,6 +450,38 @@ VALUES
     ('staff@nguson.com',       '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Staff Ngu Son',        '0988888888', NULL,                               N'Vietnam', NULL, NULL, 'STAFF',       'ACTIVE');
 GO
 
+-- 4.1b Module 3: Assign discipline specialty + add Yoga & Physio specialists (BCrypt of '123456')
+UPDATE dbo.users SET specialty = 'SPA' WHERE email = 'therapist1@nguson.vn';
+INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+VALUES
+    ('yoga1@nguson.vn',   '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Cô Lan - HLV Yoga & Thiền',   '0912345111', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'YOGA'),
+    ('physio1@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'KTV Minh - Vật Lý Trị Liệu',  '0912345222', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'PHYSIO');
+GO
+
+-- 4.1c Mo rong nhan su Resort (large-scale wellness resort)
+INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+VALUES
+    ('spa2@nguson.vn',        '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Thị Hoa - Massage Thư Giãn',        '0912347001', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'SPA'),
+    ('spa3@nguson.vn',        '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Văn Dũng - Massage Đá Nóng',          '0912347002', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'SPA'),
+    ('spa4@nguson.vn',        '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Thị Mai - Chăm Sóc Da Mặt',             '0912347003', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'SPA'),
+    ('spa5@nguson.vn',        '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thị Trang - Liệu Pháp Hương Thảo', '0912347004', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'SPA'),
+    ('yoga2@nguson.vn',       '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Quang Minh - HLV Yoga Vinyasa',       '0912347005', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'YOGA'),
+    ('yoga3@nguson.vn',       '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Đặng Thị Thu - Yoga Nidra & Thiền Định',   '0912347006', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'YOGA'),
+    ('physio2@nguson.vn',     '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'BS Vũ Thị Lan - VLTL Cột Sống',            '0912347007', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'PHYSIO'),
+    ('physio3@nguson.vn',     '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'KTV Bùi Mạnh Hùng - Phục Hồi Chức Năng',  '0912347008', NULL, N'Vietnam', NULL, NULL, 'THERAPIST',    'ACTIVE', 'PHYSIO'),
+    ('reception2@nguson.vn',  '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Anh Khoa - Lễ Tân Ca Sáng',             '0912347009', NULL, N'Vietnam', NULL, NULL, 'RECEPTIONIST', 'ACTIVE', NULL),
+    ('reception3@nguson.vn',  '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thùy Linh - Lễ Tân Ca Chiều',      '0912347010', NULL, N'Vietnam', NULL, NULL, 'RECEPTIONIST', 'ACTIVE', NULL),
+    ('reception4@nguson.vn',  '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Minh Tuấn - Lễ Tân Ca Tối',          '0912347011', NULL, N'Vietnam', NULL, NULL, 'RECEPTIONIST', 'ACTIVE', NULL),
+    ('chef2@nguson.vn',       '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Bếp Phó Đỗ Thành - Ẩm Thực Dưỡng Sinh',   '0912347012', NULL, N'Vietnam', NULL, NULL, 'CHEF',         'ACTIVE', NULL),
+    ('chef3@nguson.vn',       '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Đầu Bếp Ngô Thị Hương - Healthy Cuisine',  '0912347013', NULL, N'Vietnam', NULL, NULL, 'CHEF',         'ACTIVE', NULL),
+    ('staff2@nguson.vn',      '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Hoài Nam - Phục Vụ Villa',          '0912347014', NULL, N'Vietnam', NULL, NULL, 'STAFF',        'ACTIVE', NULL),
+    ('staff3@nguson.vn',      '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Thị Thái - Buồng Phòng & Vệ Sinh',   '0912347015', NULL, N'Vietnam', NULL, NULL, 'STAFF',        'ACTIVE', NULL),
+    ('staff4@nguson.vn',      '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Văn Quân - Bảo Vệ & An Ninh',          '0912347016', NULL, N'Vietnam', NULL, NULL, 'STAFF',        'ACTIVE', NULL),
+    ('staff5@nguson.vn',      '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Văn Đức - Kỹ Thuật & Bảo Trì',      '0912347017', NULL, N'Vietnam', NULL, NULL, 'STAFF',        'ACTIVE', NULL),
+    ('staff6@nguson.vn',      '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Thị Yến - Phục Vụ Khu Spa',          '0912347018', NULL, N'Vietnam', NULL, NULL, 'STAFF',        'ACTIVE', NULL),
+    ('manager2@nguson.vn',    '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Thị Vân - Phó Giám Đốc Vận Hành',    '0912347019', NULL, N'Vietnam', NULL, NULL, 'MANAGER',      'ACTIVE', NULL);
+GO
+
 -- 4.2 Retreat Packages
 INSERT INTO dbo.retreat_packages (name, description, duration_days, price, includes, status)
 VALUES
@@ -532,19 +571,25 @@ VALUES
 GO
 
 -- 4.7 Spa Services
-INSERT INTO dbo.spa_services (name, description, price, duration_minutes, status)
+INSERT INTO dbo.spa_services (name, description, category, price, duration_minutes, status)
 VALUES
-    (N'Hot Volcanic Stone Massage', N'Massage trị liệu toàn thân bằng đá núi lửa nóng giúp giảm đau mỏi cơ xương khớp.', 1200000.00, 90, 'ACTIVE'),
-    (N'Dao Red Leaf Herbal Bath',   N'Tắm lá thuốc người Dao Đỏ hỗ trợ lưu thông khí huyết và thư giãn ngủ ngon.',       600000.00,  45, 'ACTIVE'),
-    (N'Spinal Adjustment Therapy',  N'Liệu trình nắn chỉnh và kéo giãn cột sống thắt lưng chống đau mỏi thoái hóa.',    1500000.00, 60, 'ACTIVE');
+    (N'Hot Volcanic Stone Massage', N'Massage trị liệu toàn thân bằng đá núi lửa nóng giúp giảm đau mỏi cơ xương khớp.', 'SPA',     1200000.00, 90, 'ACTIVE'),
+    (N'Dao Red Leaf Herbal Bath',   N'Tắm lá thuốc người Dao Đỏ hỗ trợ lưu thông khí huyết và thư giãn ngủ ngon.',       'SPA',      600000.00,  45, 'ACTIVE'),
+    (N'Spinal Adjustment Therapy',  N'Liệu trình nắn chỉnh và kéo giãn cột sống thắt lưng chống đau mỏi thoái hóa.',    'THERAPY', 1500000.00, 60, 'ACTIVE');
 GO
 
 -- 4.8 Treatment Rooms
-INSERT INTO dbo.treatment_room (room_name, status)
+INSERT INTO dbo.treatment_room (room_name, status, category)
 VALUES
-    (N'Therapy Room A',    'AVAILABLE'),
-    (N'Therapy Room B',    'AVAILABLE'),
-    (N'Red Dao Bath Room 1','AVAILABLE');
+    (N'Therapy Room A',     'AVAILABLE', 'SPA'),
+    (N'Therapy Room B',     'AVAILABLE', 'PHYSIO'),
+    (N'Red Dao Bath Room 1','AVAILABLE', 'SPA'),
+    (N'Yoga Studio 1',      'AVAILABLE', 'YOGA'),
+    (N'Physio Rehab Room 1','AVAILABLE', 'PHYSIO'),
+    (N'Spa Deluxe Room 1',  'AVAILABLE', 'SPA'),
+    (N'Spa Deluxe Room 2',  'AVAILABLE', 'SPA'),
+    (N'Physio Rehab Room 2','AVAILABLE', 'PHYSIO'),
+    (N'Yoga Studio 2',      'AVAILABLE', 'YOGA');
 GO
 
 -- 4.9 Spa Bookings

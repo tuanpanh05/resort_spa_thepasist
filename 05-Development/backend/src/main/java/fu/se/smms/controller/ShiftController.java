@@ -60,4 +60,29 @@ public class ShiftController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PostMapping("/clock-in-by-name")
+    public ResponseEntity<Shift> clockInByName(
+            @RequestParam String name,
+            @RequestParam String status,
+            @RequestParam(required = false, defaultValue = "Nhân viên") String role,
+            @RequestParam(required = false, defaultValue = "Lễ tân") String department) {
+        
+        List<Shift> existing = shiftRepository.findAll();
+        Shift userShift = existing.stream()
+                .filter(s -> s.getName() != null && s.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+                
+        if (userShift == null) {
+            userShift = new Shift();
+            userShift.setName(name);
+            userShift.setRole(role);
+            userShift.setTime("Ca Sáng (06:00 - 14:00)");
+            userShift.setDepartment(department);
+        }
+        
+        userShift.setStatus(status);
+        return ResponseEntity.ok(shiftRepository.save(userShift));
+    }
 }

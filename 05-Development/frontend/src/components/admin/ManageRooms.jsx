@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Bed, CheckCircle, Users, Wrench } from "lucide-react";
 import SectionHeader from "../ui/SectionHeader";
 import Button from "../ui/Button";
 import RoomTable from "./RoomTable";
@@ -79,6 +79,55 @@ export default function ManageRooms({ rooms, handleCreateRoom, handleUpdateRoom,
           <span>Thêm Phòng Mới</span>
         </Button>
       </SectionHeader>
+
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-primary-50 text-primary-900 rounded-xl">
+            <Bed className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Tổng số phòng</p>
+            <p className="text-2xl font-bold text-sage-900">{rooms.length}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+            <CheckCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Phòng trống</p>
+            <p className="text-2xl font-bold text-green-600">
+              {rooms.filter((r) => r.status === "vacant").length}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <Users className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Có khách</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {rooms.filter((r) => r.status === "occupied").length}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+            <Wrench className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Bảo trì / Dọn dẹp</p>
+            <p className="text-2xl font-bold text-amber-600">
+              {rooms.filter((r) => r.status === "cleaning" || r.status === "maintenance").length}
+            </p>
+          </div>
+        </div>
+      </div>
 
       <RoomTable
         rooms={rooms}

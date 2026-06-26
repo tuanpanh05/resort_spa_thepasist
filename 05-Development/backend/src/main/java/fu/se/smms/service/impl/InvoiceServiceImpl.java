@@ -207,6 +207,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         } else {
             // Final check-out payment flow
             invoice.setStatus("PAID");
+            invoice.setAmountDue(BigDecimal.ZERO);
             invoice.setPaymentTime(LocalDateTime.now());
             invoice.setVnpayTranId(null);
 
@@ -214,6 +215,9 @@ public class InvoiceServiceImpl implements InvoiceService {
 
             // BR-26: Write immutable audit trail log for cash payment
             writeTransactionLog(savedInvoice, "CASH", payableAmount, null, "00", "PAID");
+
+            // Auto-send invoice (receipt) email after successful full payment
+            triggerInvoiceEmail(savedInvoice);
 
             return toDto(savedInvoice);
         }
@@ -350,6 +354,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 triggerEmail = true;
             } else {
                 invoice.setStatus("PAID");
+                invoice.setAmountDue(BigDecimal.ZERO);
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
                 invoice.setPaymentTime(LocalDateTime.now());
             }
@@ -359,6 +364,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         if (triggerEmail && booking != null) {
             triggerRoomBookingConfirmationEmail(savedInvoice, booking);
+        }
+
+        // Auto-send invoice (receipt) email when invoice is fully PAID
+        if (success && "PAID".equals(savedInvoice.getStatus())) {
+            triggerInvoiceEmail(savedInvoice);
         }
 
         // BR-26: Write audit trail for all VNPay callbacks (including failed ones)
@@ -746,6 +756,22 @@ public class InvoiceServiceImpl implements InvoiceService {
                 );
             } catch (Exception ex) {
                 log.error("[Email Room Booking Confirmation Error] {}", ex.getMessage());
+            }
+        });
+    }
+
+    private void triggerInvoiceEmail(Invoice invoice) {
+        if (invoice == null || invoice.getUser() == null || invoice.getUser().getEmail() == null) {
+            return;
+        }
+        String toEmail = invoice.getUser().getEmail();
+        InvoiceDTO dto = toDto(invoice);
+        CompletableFuture.runAsync(() -> {
+            try {
+                log.info("[EMAIL] Triggering invoice email to: {}", toEmail);
+                emailService.sendInvoiceEmail(toEmail, dto);
+            } catch (Exception ex) {
+                log.error("[Email Invoice Error] {}", ex.getMessage());
             }
         });
     }

@@ -71,6 +71,7 @@ export default function Login() {
         storage.setItem("token", data.token);
         storage.setItem("userEmail", data.email);
         storage.setItem("userRole", data.role);
+        if (data.specialty) storage.setItem("userSpecialty", data.specialty);
         storage.setItem("userFullName", data.fullName);
 
         if (rememberMe) {
@@ -91,14 +92,11 @@ export default function Login() {
           navigate("/staff");
         } else if (role === "CHEF") {
           navigate("/chef");
-        } else if (role === "SPA") {
-          storage.setItem("specialistRole", "spa");
-          navigate("/specialist");
-        } else if (role === "YOGA") {
-          storage.setItem("specialistRole", "yoga");
-          navigate("/specialist");
-        } else if (role === "PHYSIO" || role === "THERAPIST") {
-          storage.setItem("specialistRole", "physio");
+        } else if (role === "SPA" || role === "YOGA" || role === "PHYSIO" || role === "THERAPIST") {
+          // All specialists authenticate as THERAPIST and are routed by `specialty`.
+          const sp = (data.specialty || role || "SPA").toUpperCase();
+          const hint = sp === "YOGA" ? "yoga" : (sp === "PHYSIO" || sp === "THERAPY") ? "physio" : "spa";
+          storage.setItem("specialistRole", hint);
           navigate("/specialist");
         } else {
           navigate("/");
@@ -156,6 +154,7 @@ export default function Login() {
         storage.setItem("token", data.token);
         storage.setItem("userEmail", data.email);
         storage.setItem("userRole", data.role);
+        if (data.specialty) storage.setItem("userSpecialty", data.specialty);
         storage.setItem("userFullName", data.fullName);
 
         if (rememberMe) {
@@ -176,14 +175,11 @@ export default function Login() {
           navigate("/staff");
         } else if (role === "CHEF") {
           navigate("/chef");
-        } else if (role === "SPA") {
-          storage.setItem("specialistRole", "spa");
-          navigate("/specialist");
-        } else if (role === "YOGA") {
-          storage.setItem("specialistRole", "yoga");
-          navigate("/specialist");
-        } else if (role === "PHYSIO" || role === "THERAPIST") {
-          storage.setItem("specialistRole", "physio");
+        } else if (role === "SPA" || role === "YOGA" || role === "PHYSIO" || role === "THERAPIST") {
+          // All specialists authenticate as THERAPIST and are routed by `specialty`.
+          const sp = (data.specialty || role || "SPA").toUpperCase();
+          const hint = sp === "YOGA" ? "yoga" : (sp === "PHYSIO" || sp === "THERAPY") ? "physio" : "spa";
+          storage.setItem("specialistRole", hint);
           navigate("/specialist");
         } else {
           navigate("/");

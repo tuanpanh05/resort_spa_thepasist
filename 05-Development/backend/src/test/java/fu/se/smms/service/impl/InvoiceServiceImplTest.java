@@ -199,6 +199,7 @@ class InvoiceServiceImplTest {
         InvoiceDTO dto = service.processVNPayCallback(params);
 
         assertEquals("PAID", dto.getStatus());
+        assertEquals(BigDecimal.ZERO, dto.getAmountDue());
         assertEquals("VNP123456", dto.getVnpayTranId());
         assertNotNull(dto.getPaymentTime());
 
@@ -302,6 +303,7 @@ class InvoiceServiceImplTest {
         InvoiceDTO dto = service.markCashPayment(1);
 
         assertEquals("PAID", dto.getStatus());
+        assertEquals(BigDecimal.ZERO, dto.getAmountDue());
         assertNull(dto.getVnpayTranId());
         assertNotNull(dto.getPaymentTime());
         // BR-26: Audit trail should be written

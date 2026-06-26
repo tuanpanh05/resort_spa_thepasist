@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API utility for making authenticated requests to the backend.
  * Base URL: http://localhost:8080/api
  */
@@ -31,7 +31,7 @@ export async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || `Lỗi ${response.status}: ${response.statusText}`);
+    throw new Error(data.message || `Lá»—i ${response.status}: ${response.statusText}`);
   }
 
   return data;
@@ -103,30 +103,30 @@ export const medicalApi = {
 // USER PROFILE APIs (Customer Profile Dashboard)
 // ============================================================
 export const userApi = {
-  /** GET /users/me — Lấy thông tin tài khoản */
+  /** GET /users/me â€” Láº¥y thÃ´ng tin tÃ i khoáº£n */
   getProfile: () => apiRequest("/users/me"),
 
-  /** PUT /users/me — Cập nhật tên, SĐT, CCCD */
+  /** PUT /users/me â€” Cáº­p nháº­t tÃªn, SÄT, CCCD */
   updateProfile: (dto) =>
     apiRequest("/users/me", {
       method: "PUT",
       body: JSON.stringify(dto),
     }),
 
-  /** POST /users/me/change-password — Đổi mật khẩu */
+  /** POST /users/me/change-password â€” Äá»•i máº­t kháº©u */
   changePassword: (currentPassword, newPassword) =>
     apiRequest("/users/me/change-password", {
       method: "POST",
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
 
-  /** GET /users/me/bookings — Lịch sử đặt phòng */
+  /** GET /users/me/bookings â€” Lá»‹ch sá»­ Ä‘áº·t phÃ²ng */
   getMyBookings: () => apiRequest("/users/me/bookings"),
 
-  /** GET /users/me/spa-bookings — Lịch hẹn Spa */
+  /** GET /users/me/spa-bookings â€” Lá»‹ch háº¹n Spa */
   getMySpaBookings: () => apiRequest("/users/me/spa-bookings"),
 
-  /** POST /users/me/sync-calendar — Kích hoạt đồng bộ hóa lịch thủ công */
+  /** POST /users/me/sync-calendar â€” KÃ­ch hoáº¡t Ä‘á»“ng bá»™ hÃ³a lá»‹ch thá»§ cÃ´ng */
   syncCalendar: () =>
     apiRequest("/users/me/sync-calendar", {
       method: "POST",
@@ -225,78 +225,78 @@ export const bookingApi = {
 };
 
 // ============================================================
-// GUEST BOOKING LOOKUP APIs (Public — no auth)
+// GUEST BOOKING LOOKUP APIs (Public â€” no auth)
 // ============================================================
 export const bookingLookupApi = {
-  /** POST /bookings/lookup — Tra cứu đặt phòng bằng Email + SĐT */
+  /** POST /bookings/lookup â€” Tra cá»©u Ä‘áº·t phÃ²ng báº±ng Email + SÄT */
   lookup: (email, phone) =>
     apiRequest("/bookings/lookup", {
       method: "POST",
       body: JSON.stringify({ email, phone }),
     }),
 
-  /** PUT /bookings/:id/update — Cập nhật thông tin đặt phòng */
+  /** PUT /bookings/:id/update â€” Cáº­p nháº­t thÃ´ng tin Ä‘áº·t phÃ²ng */
   update: (bookingId, dto) =>
     apiRequest(`/bookings/${bookingId}/update`, {
       method: "PUT",
       body: JSON.stringify(dto),
     }),
 
-  /** GET /guest/profile — Lấy thông tin hồ sơ của khách (public) */
+  /** GET /guest/profile â€” Láº¥y thÃ´ng tin há»“ sÆ¡ cá»§a khÃ¡ch (public) */
   getGuestProfile: (email) =>
     apiRequest(`/guest/profile?email=${encodeURIComponent(email)}`),
 
-  /** GET /bookings/:id/itinerary — Lịch trình khách hàng */
+  /** GET /bookings/:id/itinerary â€” Lá»‹ch trÃ¬nh khÃ¡ch hÃ ng */
   getItinerary: (bookingId) =>
     apiRequest(`/bookings/${bookingId}/itinerary`),
 };
 
 
 // ============================================================
-// STAFF / RECEPTIONIST APIs (UC08, UC09, UC10 — Module 2)
+// STAFF / RECEPTIONIST APIs (UC08, UC09, UC10 â€” Module 2)
 // ============================================================
 export const staffApi = {
-  /** UC08: GET /v1/check-in/arrivals — Danh sách khách sắp đến */
+  /** UC08: GET /v1/check-in/arrivals â€” Danh sÃ¡ch khÃ¡ch sáº¯p Ä‘áº¿n */
   getArrivals: () => apiRequest("/v1/check-in/arrivals"),
 
-  /** UC08: POST /v1/check-in — Thực hiện check-in */
+  /** UC08: POST /v1/check-in â€” Thá»±c hiá»‡n check-in */
   performCheckIn: (dto) =>
     apiRequest("/v1/check-in", {
       method: "POST",
       body: JSON.stringify(dto),
     }),
 
-  /** UC09: GET /v1/villas — Lấy danh sách phòng/villa */
+  /** UC09: GET /v1/villas â€” Láº¥y danh sÃ¡ch phÃ²ng/villa */
   getVillas: () => apiRequest("/v1/villas"),
 
-  /** POST /v1/villas — Tạo phòng mới */
+  /** POST /v1/villas â€” Táº¡o phÃ²ng má»›i */
   createVilla: (dto) =>
     apiRequest("/v1/villas", {
       method: "POST",
       body: JSON.stringify(dto),
     }),
 
-  /** PUT /v1/villas/:id — Cập nhật thông tin phòng */
+  /** PUT /v1/villas/:id â€” Cáº­p nháº­t thÃ´ng tin phÃ²ng */
   updateVilla: (id, dto) =>
     apiRequest(`/v1/villas/${id}`, {
       method: "PUT",
       body: JSON.stringify(dto),
     }),
 
-  /** DELETE /v1/villas/:id — Xóa phòng */
+  /** DELETE /v1/villas/:id â€” XÃ³a phÃ²ng */
   deleteVilla: (id) =>
     apiRequest(`/v1/villas/${id}`, {
       method: "DELETE",
     }),
 
-  /** UC09: PATCH /v1/villas/:id/status — Cập nhật trạng thái phòng */
+  /** UC09: PATCH /v1/villas/:id/status â€” Cáº­p nháº­t tráº¡ng thÃ¡i phÃ²ng */
   updateVillaStatus: (id, status) =>
     apiRequest(`/v1/villas/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
 
-  /** UC10: GET /v1/itineraries/:bookingId — Xem lịch trình khách */
+  /** UC10: GET /v1/itineraries/:bookingId â€” Xem lá»‹ch trÃ¬nh khÃ¡ch */
   getItinerary: (bookingId) => apiRequest(`/v1/itineraries/${bookingId}`),
 
   getItineraryByEmail: (email) => apiRequest(`/v1/itineraries/by-email?email=${encodeURIComponent(email)}`),
@@ -394,6 +394,10 @@ export const spaApi = {
       body: JSON.stringify(dto),
     });
   },
+
+  /** GET /v1/spa-bookings/available-slots - khung gio trong (KTV + phong da san sang) */
+  getAvailableSlots: (spaServiceId, date) =>
+    apiRequest(`/v1/spa-bookings/available-slots?spaServiceId=${spaServiceId}&date=${date}`),
 };
 
 export const specialistApi = {
@@ -407,6 +411,15 @@ export const specialistApi = {
     apiRequest(`/v1/spa-bookings/${bookingId}/status?status=${status}`, {
       method: "PATCH",
     }),
+
+  getTreatmentRooms: () =>
+    apiRequest("/v1/specialist/rooms"),
+
+  getServicesByCategory: (category) =>
+    apiRequest(`/v1/specialist/services?category=${encodeURIComponent(category)}`),
+
+  getMyProfile: () =>
+    apiRequest("/v1/specialist/me"),
 };
 
 // ============================================================
@@ -444,6 +457,8 @@ export const shiftApi = {
     apiRequest(`/shifts/swap-requests/${id}/reject`, { method: "POST" }),
   updateShiftStatus: (id, status) =>
     apiRequest(`/shifts/${id}/status?status=${status}`, { method: "PATCH" }),
+  clockInByName: (name, status, role = "NhÃ¢n viÃªn", department = "Lá»… tÃ¢n") =>
+    apiRequest(`/shifts/clock-in-by-name?name=${encodeURIComponent(name)}&status=${encodeURIComponent(status)}&role=${encodeURIComponent(role)}&department=${encodeURIComponent(department)}`, { method: "POST" }),
 };
 
 // ============================================================

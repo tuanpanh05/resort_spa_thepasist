@@ -1,3 +1,135 @@
+-- ============================================================
+-- Module 3: Spa & Therapy Scheduling - schema + seed alignment
+-- (idempotent; safe to re-run on an already-created database)
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users') AND name = 'specialty')
+    ALTER TABLE dbo.users ADD specialty VARCHAR(20) NULL;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.treatment_room') AND name = 'category')
+    ALTER TABLE dbo.treatment_room ADD category VARCHAR(20) NULL;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users') AND name = 'google_calendar_sync_enabled')
+    ALTER TABLE dbo.users ADD google_calendar_sync_enabled BIT NOT NULL DEFAULT 0;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users') AND name = 'google_calendar_id')
+    ALTER TABLE dbo.users ADD google_calendar_id VARCHAR(255) NULL;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users') AND name = 'calendar_reminders_enabled')
+    ALTER TABLE dbo.users ADD calendar_reminders_enabled BIT NOT NULL DEFAULT 1;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.users') AND name = 'reminder_lead_time_mins')
+    ALTER TABLE dbo.users ADD reminder_lead_time_mins INT NOT NULL DEFAULT 30;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.spa_booking') AND name = 'google_calendar_event_id')
+    ALTER TABLE dbo.spa_booking ADD google_calendar_event_id VARCHAR(255) NULL;
+GO
+
+-- Assign discipline to existing therapist + add Yoga / Physio specialists (BCrypt of '123456')
+UPDATE dbo.users SET specialty = 'SPA' WHERE email = 'therapist1@nguson.vn' AND (specialty IS NULL OR specialty = '');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'yoga1@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('yoga1@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Cô Lan - HLV Yoga & Thiền', '0912345111', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'YOGA');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'physio1@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('physio1@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'KTV Minh - Vật Lý Trị Liệu', '0912345222', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'PHYSIO');
+GO
+
+-- ============================================================
+-- Mo rong nhan su Resort (large-scale wellness resort)
+-- Tat ca mat khau: 123456 (BCrypt). Idempotent, an toan chay lai.
+-- ============================================================
+
+-- SPA Therapists: +4 (tong 5 chuyen gia Spa)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'spa2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('spa2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Thị Hoa - Massage Thư Giãn', '0912347001', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'SPA');
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'spa3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('spa3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Văn Dũng - Massage Đá Nóng', '0912347002', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'SPA');
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'spa4@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('spa4@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Thị Mai - Chăm Sóc Da Mặt', '0912347003', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'SPA');
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'spa5@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('spa5@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thị Trang - Liệu Pháp Hương Thảo', '0912347004', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'SPA');
+
+-- YOGA Instructors: +2 (tong 3 HLV Yoga)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'yoga2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('yoga2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Quang Minh - HLV Yoga Vinyasa', '0912347005', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'YOGA');
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'yoga3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('yoga3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Đặng Thị Thu - Yoga Nidra & Thiền Định', '0912347006', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'YOGA');
+
+-- PHYSIO Therapists: +2 (tong 3 KTV Vat Ly Tri Lieu)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'physio2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('physio2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'BS Vũ Thị Lan - VLTL Cột Sống', '0912347007', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'PHYSIO');
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'physio3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('physio3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'KTV Bùi Mạnh Hùng - Phục Hồi Chức Năng', '0912347008', NULL, N'Vietnam', NULL, NULL, 'THERAPIST', 'ACTIVE', 'PHYSIO');
+
+-- Receptionists: +3 (tong 4 le tan)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'reception2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('reception2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Anh Khoa - Lễ Tân Ca Sáng', '0912347009', NULL, N'Vietnam', NULL, NULL, 'RECEPTIONIST', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'reception3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('reception3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thùy Linh - Lễ Tân Ca Chiều', '0912347010', NULL, N'Vietnam', NULL, NULL, 'RECEPTIONIST', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'reception4@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('reception4@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Minh Tuấn - Lễ Tân Ca Tối', '0912347011', NULL, N'Vietnam', NULL, NULL, 'RECEPTIONIST', 'ACTIVE', NULL);
+
+-- Chefs: +2 (tong 3 dau bep)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'chef2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('chef2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Bếp Phó Đỗ Thành - Ẩm Thực Dưỡng Sinh', '0912347012', NULL, N'Vietnam', NULL, NULL, 'CHEF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'chef3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('chef3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Đầu Bếp Ngô Thị Hương - Healthy Cuisine', '0912347013', NULL, N'Vietnam', NULL, NULL, 'CHEF', 'ACTIVE', NULL);
+
+-- General Staff: +5 (tong 6 nhan vien van hanh)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Hoài Nam - Phục Vụ Villa', '0912347014', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Thị Thái - Buồng Phòng & Vệ Sinh', '0912347015', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff4@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff4@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Văn Quân - Bảo Vệ & An Ninh', '0912347016', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff5@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff5@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Văn Đức - Kỹ Thuật & Bảo Trì', '0912347017', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff6@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff6@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Thị Yến - Phục Vụ Khu Spa', '0912347018', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+
+-- Manager: +1 (tong 2 quan ly)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'manager2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('manager2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Thị Vân - Phó Giám Đốc Vận Hành', '0912347019', NULL, N'Vietnam', NULL, NULL, 'MANAGER', 'ACTIVE', NULL);
+GO
+
+-- Mo rong phong tri lieu de du suc chua so nhan su tang them
+IF NOT EXISTS (SELECT 1 FROM dbo.treatment_room WHERE room_name = N'Spa Deluxe Room 1')
+    INSERT INTO dbo.treatment_room (room_name, status, category) VALUES (N'Spa Deluxe Room 1', 'AVAILABLE', 'SPA');
+IF NOT EXISTS (SELECT 1 FROM dbo.treatment_room WHERE room_name = N'Spa Deluxe Room 2')
+    INSERT INTO dbo.treatment_room (room_name, status, category) VALUES (N'Spa Deluxe Room 2', 'AVAILABLE', 'SPA');
+IF NOT EXISTS (SELECT 1 FROM dbo.treatment_room WHERE room_name = N'Physio Rehab Room 2')
+    INSERT INTO dbo.treatment_room (room_name, status, category) VALUES (N'Physio Rehab Room 2', 'AVAILABLE', 'PHYSIO');
+IF NOT EXISTS (SELECT 1 FROM dbo.treatment_room WHERE room_name = N'Yoga Studio 2')
+    INSERT INTO dbo.treatment_room (room_name, status, category) VALUES (N'Yoga Studio 2', 'AVAILABLE', 'YOGA');
+GO
+
 -- Fix Users
 UPDATE dbo.users SET full_name = N'Nguyễn Quản Lý' WHERE email = 'manager@nguson.vn';
 UPDATE dbo.users SET full_name = N'Lê Lễ Tân' WHERE email = 'reception@nguson.vn';
@@ -227,10 +359,15 @@ UPDATE dbo.room_types SET type_name = N'Standard Room 1 King Bed' WHERE room_typ
 UPDATE dbo.room_types SET type_name = N'Vip Villa 1-Bedroom Pool' WHERE room_type_id = 2;
 UPDATE dbo.room_types SET type_name = N'Presidential Suite 2-Bedroom' WHERE room_type_id = 3;
 
--- Fix Treatment Rooms
-UPDATE dbo.treatment_room SET room_name = N'Therapy Room A' WHERE treatment_room_id = 1;
-UPDATE dbo.treatment_room SET room_name = N'Therapy Room B' WHERE treatment_room_id = 2;
-UPDATE dbo.treatment_room SET room_name = N'Red Dao Bath Room 1' WHERE treatment_room_id = 3;
+-- Fix Treatment Rooms (+ assign discipline category for Module 3 auto-match)
+UPDATE dbo.treatment_room SET room_name = N'Therapy Room A', category = 'SPA' WHERE treatment_room_id = 1;
+UPDATE dbo.treatment_room SET room_name = N'Therapy Room B', category = 'PHYSIO' WHERE treatment_room_id = 2;
+UPDATE dbo.treatment_room SET room_name = N'Red Dao Bath Room 1', category = 'SPA' WHERE treatment_room_id = 3;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.treatment_room WHERE room_name = N'Yoga Studio 1')
+    INSERT INTO dbo.treatment_room (room_name, status, category) VALUES (N'Yoga Studio 1', 'AVAILABLE', 'YOGA');
+IF NOT EXISTS (SELECT 1 FROM dbo.treatment_room WHERE room_name = N'Physio Rehab Room 1')
+    INSERT INTO dbo.treatment_room (room_name, status, category) VALUES (N'Physio Rehab Room 1', 'AVAILABLE', 'PHYSIO');
 
 -- Fix Spa Services
 UPDATE dbo.spa_services SET name = N'Massage đá muối nóng Himalaya (90 phút)', description = N'Massage trị liệu toàn thân bằng đá muối nóng Himalaya giúp giải tỏa hoàn toàn mọi căng thẳng và phục hồi sinh khí.', category = 'SPA', price = 1200000.00, duration_minutes = 90 WHERE service_id = 1;
@@ -305,3 +442,6 @@ UPDATE dbo.food_menu SET dish_name = N'Green Detox Juice', description = N'Nư�
 
 -- Fix Feedback
 UPDATE dbo.feedback SET comment = N'Dịch vụ nghỉ dưỡng trị liệu tuyệt vời! Đội ngũ nhân viên y tế chu đáo, thực đơn sạch sẽ và chuyên sâu.' WHERE feedback_id = 1;
+
+-- Fix legacy paid invoices' amount_due (CK_invoice_due_calc: amount_due = final_amount - deposit_amount)
+UPDATE dbo.invoice SET deposit_amount = final_amount, amount_due = 0 WHERE status = 'PAID';

@@ -129,6 +129,48 @@ export default function ManageServices() {
         </div>
       </div>
 
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-primary-50 text-primary-900 rounded-xl">
+            <Flower className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Dịch Vụ Spa</p>
+            <p className="text-2xl font-bold text-sage-900">{spaServices.length}</p>
+            <p className="text-[10px] text-green-600 font-medium">
+              {spaServices.filter(s => s.status === "ACTIVE").length} Đang hoạt động
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+            <Package className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Gói Retreat</p>
+            <p className="text-2xl font-bold text-sage-900">{retreatPackages.length}</p>
+            <p className="text-[10px] text-green-600 font-medium">
+              {retreatPackages.filter(p => p.status === "ACTIVE").length} Đang hoạt động
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <Bed className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Loại Phòng</p>
+            <p className="text-2xl font-bold text-sage-900">{roomTypes.length}</p>
+            <p className="text-[10px] text-sage-500 font-medium">
+              Danh mục cấu hình hạng phòng
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Tab selector */}
       <div className="flex gap-1 bg-primary-50 p-1 rounded-xl w-fit">
         {TABS.map((tab) => (
