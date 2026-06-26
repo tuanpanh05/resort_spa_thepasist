@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/spa-bookings")
@@ -102,6 +103,31 @@ public class SpaBookingController {
     }
 
     /**
+     * Get therapist schedule over a date range.
+     * Accessible by THERAPIST role.
+     */
+    @GetMapping("/therapist-schedule/range")
+    public ResponseEntity<List<SpecialistSpaAppointmentDTO>> getTherapistScheduleRange(
+            Principal principal,
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+
+        if (principal == null) {
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+        }
+
+        User therapist = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin tài khoản kỹ thuật viên."));
+
+        if (!"THERAPIST".equalsIgnoreCase(therapist.getRole())) {
+            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "Chỉ kỹ thuật viên trị liệu mới có quyền xem lịch làm việc này.");
+        }
+
+        List<SpecialistSpaAppointmentDTO> schedule = spaBookingService.getTherapistScheduleRange(therapist.getUserId(), start, end);
+        return ResponseEntity.ok(schedule);
+    }
+
+    /**
      * UC14: Update session status (Scheduled -> In Progress -> Completed/No Show).
      * Accessible by THERAPIST role.
      */
@@ -127,6 +153,24 @@ public class SpaBookingController {
                 status,
                 therapist.getUserId()
         );
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Cancel a spa session.
+     */
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<SpaBookingResponseDTO> cancelSpaBooking(
+            Principal principal,
+            @PathVariable("id") Integer spaBookingId,
+            @RequestBody Map<String, String> request) {
+
+        if (principal == null) {
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+        }
+
+        String reason = request.get("reason");
+        SpaBookingResponseDTO response = spaBookingService.cancelSpaBooking(spaBookingId, reason);
         return ResponseEntity.ok(response);
     }
 }

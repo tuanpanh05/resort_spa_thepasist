@@ -5,7 +5,7 @@ import { DIET_OPTIONS, ALLERGY_OPTIONS } from "../../constants/booking";
 export default function ConfirmationStep({
   guestInfo,
   nightsCount,
-  dietaryPreference,
+  dietaryPreferences,
   selectedAllergies,
   otherAllergy,
   physicalCondition,
@@ -101,7 +101,9 @@ export default function ConfirmationStep({
                 Chế độ ăn uống
               </span>
               <span className="font-semibold text-[#1a2f23]">
-                {DIET_OPTIONS.find((d) => d.key === dietaryPreference)?.label || dietaryPreference}
+                {Array.isArray(dietaryPreferences)
+                  ? dietaryPreferences.map(k => DIET_OPTIONS.find(d => d.key === k)?.label || k).join(", ")
+                  : (DIET_OPTIONS.find(d => d.key === dietaryPreferences)?.label || dietaryPreferences || "Không xác định")}
               </span>
             </div>
             <div>
@@ -163,10 +165,12 @@ export default function ConfirmationStep({
             {selectedServices.map((s) => {
               let itemTotal = 0;
               let descriptionText = "";
-              if (s.type === "per-guest") {
+              const pricingType = s.pricingType || s.type || "per-guest";
+              const serviceTitle = s.name || s.title || "Dịch vụ";
+              if (pricingType === "per-guest") {
                 itemTotal = s.price * guestInfo.guestsCount;
                 descriptionText = `${formatCurrency(s.price)}/khách × ${guestInfo.guestsCount} Khách`;
-              } else if (s.type === "per-guest-per-night") {
+              } else if (pricingType === "per-guest-per-night") {
                 itemTotal = s.price * guestInfo.guestsCount * nightsCount;
                 descriptionText = `${formatCurrency(s.price)}/khách/đêm × ${guestInfo.guestsCount} Khách × ${nightsCount} Đêm`;
               } else {
@@ -175,12 +179,12 @@ export default function ConfirmationStep({
               }
               return (
                 <div
-                  key={s.id}
+                  key={s.serviceId || s.id}
                   className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10"
                 >
                   <div>
                     <span className="font-serif text-sm font-bold text-[#1a2f23] block">
-                      🌿 {s.title}
+                      🌿 {serviceTitle}
                     </span>
                     <span className="text-[10px] text-sage-400 font-light block mt-0.5">
                       {descriptionText}
@@ -196,11 +200,10 @@ export default function ConfirmationStep({
               <div className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10">
                 <div>
                   <span className="font-serif text-sm font-bold text-[#1a2f23] flex items-center gap-1.5">
-                    <UtensilsCrossed className="h-4 w-4 text-[#cda250]" /> Phụ thu gọi món bổ
-                    sung
+                    <UtensilsCrossed className="h-4 w-4 text-[#cda250]" /> Phụ phí ẩm thực / Combo
                   </span>
                   <span className="text-[10px] text-sage-400 font-light block mt-0.5">
-                    Các món ăn gọi thêm nằm ngoài tiêu chuẩn gói
+                    Các món ăn hoặc Combo dinh dưỡng đã chọn
                   </span>
                 </div>
                 <span className="font-semibold text-[#1a2f23]">{formatCurrency(mealTotal)}</span>

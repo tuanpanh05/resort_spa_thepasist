@@ -11,6 +11,11 @@ public class UserProfileRequest {
 
     private String idPassport;
 
+    private Boolean googleCalendarSyncEnabled;
+    private String googleCalendarId;
+    private Boolean calendarRemindersEnabled;
+    private Integer reminderLeadTimeMins;
+
     public String getFullName() {
         return fullName;
     }
@@ -33,5 +38,37 @@ public class UserProfileRequest {
 
     public void setIdPassport(String idPassport) {
         this.idPassport = idPassport;
+    }
+
+    public Boolean getGoogleCalendarSyncEnabled() {
+        return googleCalendarSyncEnabled;
+    }
+
+    public void setGoogleCalendarSyncEnabled(Boolean googleCalendarSyncEnabled) {
+        this.googleCalendarSyncEnabled = googleCalendarSyncEnabled;
+    }
+
+    public String getGoogleCalendarId() {
+        return googleCalendarId;
+    }
+
+    public void setGoogleCalendarId(String googleCalendarId) {
+        this.googleCalendarId = googleCalendarId;
+    }
+
+    public Boolean getCalendarRemindersEnabled() {
+        return calendarRemindersEnabled;
+    }
+
+    public void setCalendarRemindersEnabled(Boolean calendarRemindersEnabled) {
+        this.calendarRemindersEnabled = calendarRemindersEnabled;
+    }
+
+    public Integer getReminderLeadTimeMins() {
+        return reminderLeadTimeMins;
+    }
+
+    public void setReminderLeadTimeMins(Integer reminderLeadTimeMins) {
+        this.reminderLeadTimeMins = reminderLeadTimeMins;
     }
 }

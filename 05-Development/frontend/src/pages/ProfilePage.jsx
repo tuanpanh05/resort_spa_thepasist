@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, Routes, Route, useLocation } from "react-router-dom";
-import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf, MessageSquare, Clock } from "lucide-react";
+import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf, MessageSquare, Clock, XCircle } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
 import { userApi } from "../api";
 import { fmtDate } from "../utils/formatters";
@@ -12,14 +12,18 @@ import BookingHistory from "../components/profile/BookingHistory";
 import HealthRecords from "../components/profile/HealthRecords";
 import PaymentHistory from "../components/profile/PaymentHistory";
 import SupportRequests from "../components/profile/SupportRequests";
+import GuestCalendarView from "../components/profile/GuestCalendarView";
 import ItineraryTab from "../components/profile/ItineraryTab";
+import CancelServicesTab from "../components/profile/CancelServicesTab";
 
 const MENU_ITEMS = [
   { path: "/tai-khoan", labelKey: "nav.personalInfo", icon: User },
   { path: "/tai-khoan/suc-khoe", labelKey: "nav.healthProfile", icon: Heart },
+  { path: "/tai-khoan/lich-hoat-dong", labelKey: "nav.activitySchedule", icon: CalendarDays },
   { path: "/tai-khoan/lich-su-dat-hang", labelKey: "nav.orderHistory", icon: CalendarDays },
   { path: "/tai-khoan/lich-trinh", labelKey: "nav.itinerary", icon: Clock },
   { path: "/tai-khoan/lich-su-thanh-toan", labelKey: "nav.paymentHistory", icon: CreditCard },
+  { path: "/tai-khoan/huy-dich-vu", labelKey: "nav.cancelServices", icon: XCircle },
   { path: "/tai-khoan/ho-tro", labelKey: "profile.supportTitle", icon: MessageSquare },
 ];
 
@@ -167,9 +171,11 @@ export default function ProfilePage() {
             <Routes>
               <Route index element={<PersonalInfoForm profile={profile} onProfileUpdate={setProfile} />} />
               <Route path="suc-khoe" element={<HealthRecords />} />
+              <Route path="lich-hoat-dong" element={<GuestCalendarView />} />
               <Route path="lich-su-dat-hang" element={<BookingHistory />} />
               <Route path="lich-trinh" element={<ItineraryTab />} />
               <Route path="lich-su-thanh-toan" element={<PaymentHistory profile={profile} />} />
+              <Route path="huy-dich-vu" element={<CancelServicesTab />} />
               <Route path="ho-tro" element={<SupportRequests profile={profile} />} />
             </Routes>
           </div>

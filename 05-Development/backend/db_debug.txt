@@ -1,0 +1,10 @@
+Debugging Invoices from Database:
+---------------------------------
+Total invoices found: 2
+ID: 3 | Status: UNPAID | PaymentTime: null | RoomSub: 16000000.00 | SpaSub: 0.00 | FoodSub: 0.00 | FinalAmt: 17600000.00 | BookingStatus: CONFIRMED
+ID: 4 | Status: PAID | PaymentTime: 2026-06-24T16:11:17.085298500 | RoomSub: 6400000.00 | SpaSub: 0.00 | FoodSub: 0.00 | FinalAmt: 7040000.00 | BookingStatus: CHECKED_OUT
+Dashboard inputs - Year: 2026 | Month: null
+Dashboard raw sums:
+roomRevRaw: 6400000.00
+spaRevRaw: 0.00
+foodRevRaw: 0.00

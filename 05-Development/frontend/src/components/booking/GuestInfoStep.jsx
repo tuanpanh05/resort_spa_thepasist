@@ -121,23 +121,31 @@ export default function GuestInfoStep({
 
         <div>
           <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
-            {"Số lượng khách hàng"}
+            {"Số lượng khách hàng"} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <select
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="VD: 2"
               value={guestInfo.guestsCount}
-              onChange={(e) => setGuestInfo({ ...guestInfo, guestsCount: Number(e.target.value) })}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-[#cda250]/20 text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all appearance-none"
-            >
-              <option value="1">{"1 Khách nghỉ"}</option>
-              <option value="2">{"2 Khách nghỉ"}</option>
-              <option value="3">{"3 Khách nghỉ"}</option>
-              <option value="4">{"4 Khách nghỉ"}</option>
-              <option value="5">{"5 Khách nghỉ"}</option>
-              <option value="6">{"Đoàn nghỉ đông (6+)"}</option>
-            </select>
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                const cleanVal = val.replace(/^0+/, "");
+                setGuestInfo({ ...guestInfo, guestsCount: cleanVal ? Number(cleanVal) : "" });
+                setFormErrors({ ...formErrors, guestsCount: "" });
+              }}
+              className={`w-full pl-10 pr-4 py-3 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                formErrors.guestsCount ? "border-red-400" : "border-[#cda250]/20"
+              }`}
+            />
             <Users className="h-4.5 w-4.5 text-sage-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
+          {formErrors.guestsCount && (
+            <span className="text-[10px] text-red-500 font-normal mt-1 block">
+              {formErrors.guestsCount}
+            </span>
+          )}
         </div>
 
 

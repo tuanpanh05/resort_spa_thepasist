@@ -18,7 +18,9 @@ export const translations = {
       personalInfo: "Thông tin cá nhân",
       orderHistory: "Lịch sử đặt hàng",
       healthProfile: "Hồ sơ sức khỏe",
+      activitySchedule: "Lịch hoạt động",
       paymentHistory: "Lịch sử thanh toán",
+      cancelServices: "Hủy dịch vụ",
       itinerary: "Lịch trình",
       checkIn: "Nhận phòng",
       packageName: "Gói nghỉ dưỡng",
@@ -212,9 +214,9 @@ export const translations = {
 
       // Status badges
       statusPending: "Chờ xác nhận",
-      statusConfirmed: "Đã xác nhận",
+      statusConfirmed: "Đang chờ nhận phòng",
       statusCheckedIn: "Đã nhận phòng",
-      statusCheckedOut: "Đã trả phòng",
+      statusCheckedOut: "Trả phòng",
       statusCancelled: "Đã huỷ",
       statusCompleted: "Hoàn thành",
       statusNoShow: "Không đến",
@@ -316,7 +318,9 @@ export const translations = {
       personalInfo: "Personal Info",
       orderHistory: "Order History",
       healthProfile: "Health Profile",
+      activitySchedule: "Activity Schedule",
       paymentHistory: "Payment History",
+      cancelServices: "Cancel Services",
       itinerary: "Itinerary",
       checkIn: "Check-in",
       packageName: "Retreat Package",
@@ -510,9 +514,9 @@ export const translations = {
 
       // Status badges
       statusPending: "Pending confirmation",
-      statusConfirmed: "Confirmed",
+      statusConfirmed: "Waiting for Check-in",
       statusCheckedIn: "Checked in",
-      statusCheckedOut: "Checked out",
+      statusCheckedOut: "Checked Out",
       statusCancelled: "Cancelled",
       statusCompleted: "Completed",
       statusNoShow: "No show",

@@ -182,7 +182,7 @@ export default function BookingItinerary({ bookingId, onClose }) {
           type="submit"
           className="px-6 py-2 bg-primary-800 hover:bg-primary-900 text-white rounded-none text-xs font-semibold uppercase tracking-wider cursor-pointer"
         >
-          Tra cứu
+
         </button>
       </form>
 

@@ -36,6 +36,7 @@ import ManageInventory from "../components/specialist/ManageInventory";
 import ManageAttendance from "../components/specialist/ManageAttendance";
 import ManageEquipment from "../components/specialist/ManageEquipment";
 import ManageRecords from "../components/specialist/ManageRecords";
+import SpecialistCalendarTab from "../components/specialist/SpecialistCalendarTab";
 
 export default function SpecialistDashboard() {
   // Active Role switcher: 'spa' | 'yoga' | 'physio'
@@ -233,6 +234,11 @@ export default function SpecialistDashboard() {
                 label: "3. Kho dầu & Thảo dược",
                 icon: Package,
               },
+              {
+                id: "calendar",
+                label: "4. Lịch làm việc (Calendar)",
+                icon: Calendar,
+              },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -274,6 +280,11 @@ export default function SpecialistDashboard() {
                 label: "3. Quản lý thảm & dụng cụ",
                 icon: Package,
               },
+              {
+                id: "calendar",
+                label: "4. Lịch giảng dạy (Calendar)",
+                icon: Calendar,
+              },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -312,6 +323,11 @@ export default function SpecialistDashboard() {
                 id: "equipment",
                 label: "3. Giám sát thiết bị máy",
                 icon: Sliders,
+              },
+              {
+                id: "calendar",
+                label: "4. Lịch ca máy (Calendar)",
+                icon: Calendar,
               },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -394,6 +410,8 @@ export default function SpecialistDashboard() {
               {activeRole === "physio" &&
                 activeTab === "equipment" &&
                 "Vật lý trị liệu: Giám sát thiết bị máy móc"}
+              {activeTab === "calendar" &&
+                "Wellness Center: Lịch làm việc tổng quan (Calendar)"}
             </h2>
             <p className="text-xs text-sage-500 font-medium mt-0.5">
               Bộ phận chuyên trách:{" "}
@@ -466,6 +484,10 @@ export default function SpecialistDashboard() {
             selectedPatientName={selectedPatientName}
             setSelectedPatientName={setSelectedPatientName}
           />
+        )}
+
+        {activeTab === "calendar" && (
+          <SpecialistCalendarTab activeRole={activeRole} />
         )}
       </main>
     </div>

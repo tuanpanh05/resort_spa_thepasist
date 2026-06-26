@@ -2,13 +2,16 @@ package fu.se.smms.controller;
 
 import fu.se.smms.dto.VillaStatusDTO;
 import fu.se.smms.entity.Room;
+import fu.se.smms.entity.RoomType;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.RoomRepository;
+import fu.se.smms.repository.RoomTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,9 @@ public class VillaController {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private RoomTypeRepository roomTypeRepository;
 
     @Autowired
     private fu.se.smms.repository.RoomBookingRepository roomBookingRepository;
@@ -120,5 +126,116 @@ public class VillaController {
         }
 
         return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Create a new room/villa.
+     */
+    @PostMapping
+    public ResponseEntity<VillaStatusDTO> createVilla(@RequestBody Map<String, Object> body) {
+        String roomNumber = (String) body.get("roomNumber");
+        String roomTypeName = (String) body.get("roomTypeName");
+        String status = (String) body.get("status");
+        if (status == null) {
+            status = "AVAILABLE";
+        }
+
+        if (roomNumber == null || roomNumber.isBlank()) {
+            throw new BusinessException("VILLA-004", HttpStatus.BAD_REQUEST, "Số phòng không được để trống.");
+        }
+
+        RoomType roomType = roomTypeRepository.findAll().stream()
+                .filter(rt -> rt.getTypeName().equalsIgnoreCase(roomTypeName))
+                .findFirst()
+                .orElseGet(() -> {
+                    RoomType rt = new RoomType();
+                    rt.setTypeName(roomTypeName != null ? roomTypeName : "Standard");
+                    rt.setBasePricePerNight(new BigDecimal("1800000.00"));
+                    rt.setMaxOccupancy(2);
+                    rt.setAreaSqm(50);
+                    return roomTypeRepository.save(rt);
+                });
+
+        Room room = new Room();
+        room.setRoomNumber(roomNumber);
+        room.setStatus(status.toUpperCase());
+        room.setRoomType(roomType);
+        room = roomRepository.save(room);
+
+        VillaStatusDTO dto = new VillaStatusDTO();
+        dto.setRoomId(room.getRoomId());
+        dto.setRoomNumber(room.getRoomNumber());
+        dto.setStatus(room.getStatus());
+        dto.setRoomTypeName(roomType.getTypeName());
+        dto.setCapacity(roomType.getMaxOccupancy());
+        dto.setBasePrice(roomType.getBasePricePerNight());
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Update an existing room/villa.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<VillaStatusDTO> updateVilla(
+            @PathVariable("id") Integer id,
+            @RequestBody Map<String, Object> body) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(
+                        "VILLA-003", HttpStatus.NOT_FOUND,
+                        "Không tìm thấy phòng với ID: " + id));
+
+        String roomNumber = (String) body.get("roomNumber");
+        String roomTypeName = (String) body.get("roomTypeName");
+        String status = (String) body.get("status");
+
+        if (roomNumber != null) {
+            room.setRoomNumber(roomNumber);
+        }
+        if (status != null) {
+            room.setStatus(status.toUpperCase());
+        }
+
+        if (roomTypeName != null) {
+            RoomType roomType = roomTypeRepository.findAll().stream()
+                    .filter(rt -> rt.getTypeName().equalsIgnoreCase(roomTypeName))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        RoomType rt = new RoomType();
+                        rt.setTypeName(roomTypeName);
+                        rt.setBasePricePerNight(new BigDecimal("1800000.00"));
+                        rt.setMaxOccupancy(2);
+                        rt.setAreaSqm(50);
+                        return roomTypeRepository.save(rt);
+                    });
+            room.setRoomType(roomType);
+        }
+
+        room = roomRepository.save(room);
+
+        VillaStatusDTO dto = new VillaStatusDTO();
+        dto.setRoomId(room.getRoomId());
+        dto.setRoomNumber(room.getRoomNumber());
+        dto.setStatus(room.getStatus());
+        if (room.getRoomType() != null) {
+            dto.setRoomTypeName(room.getRoomType().getTypeName());
+            dto.setCapacity(room.getRoomType().getMaxOccupancy());
+            dto.setBasePrice(room.getRoomType().getBasePricePerNight());
+        }
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Delete a room/villa.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteVilla(@PathVariable("id") Integer id) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(
+                        "VILLA-003", HttpStatus.NOT_FOUND,
+                        "Không tìm thấy phòng với ID: " + id));
+        roomRepository.delete(room);
+        return ResponseEntity.ok(Map.of("message", "Phòng đã được xóa thành công."));
     }
 }

@@ -38,4 +38,17 @@ public class FoodOrder {
 
     @Column(name = "origin")
     private String origin;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
+
+    @Column(name = "cancellation_time")
+    private LocalDateTime cancellationTime;
+
+    @Column(name = "refund_amount", precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
+    @ManyToOne
+    @JoinColumn(name = "table_id")
+    private RestaurantTable table;
 }

@@ -51,6 +51,15 @@ public class SpaBooking {
     @Column(name = "is_package_included", nullable = false)
     private Boolean isPackageIncluded = false;
 
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
+
+    @Column(name = "cancellation_time")
+    private LocalDateTime cancellationTime;
+
+    @Column(name = "refund_amount", precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
     @PrePersist
     protected void onCreate() {
         if (status == null) status = "PENDING";
@@ -92,4 +101,13 @@ public class SpaBooking {
 
     public Boolean getIsPackageIncluded() { return isPackageIncluded; }
     public void setIsPackageIncluded(Boolean isPackageIncluded) { this.isPackageIncluded = isPackageIncluded; }
+
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+
+    public LocalDateTime getCancellationTime() { return cancellationTime; }
+    public void setCancellationTime(LocalDateTime cancellationTime) { this.cancellationTime = cancellationTime; }
+
+    public BigDecimal getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
 }

@@ -24,18 +24,22 @@ public class BookingHistoryDTO {
     // Nested DTO for individual room lines within a booking
     // ---------------------------------------------------------------
     public static class RoomDetailDTO {
+        private Integer detailId;
         private String roomNumber;
         private String typeName;
         private BigDecimal priceAtBooking;
 
         public RoomDetailDTO() {}
 
-        public RoomDetailDTO(String roomNumber, String typeName, BigDecimal priceAtBooking) {
+        public RoomDetailDTO(Integer detailId, String roomNumber, String typeName, BigDecimal priceAtBooking) {
+            this.detailId = detailId;
             this.roomNumber = roomNumber;
             this.typeName = typeName;
             this.priceAtBooking = priceAtBooking;
         }
 
+        public Integer getDetailId() { return detailId; }
+        public void setDetailId(Integer detailId) { this.detailId = detailId; }
         public String getRoomNumber() { return roomNumber; }
         public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
         public String getTypeName() { return typeName; }

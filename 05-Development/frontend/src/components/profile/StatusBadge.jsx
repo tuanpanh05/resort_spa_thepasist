@@ -2,11 +2,12 @@ import React from "react";
 import { useLanguage } from "../../context/LanguageContext";
 
 export const ROOM_STATUS_MAP = {
-  PENDING:     { labelKey: "profile.statusPending", color: "bg-amber-100 text-amber-800 border-amber-200" },
-  CONFIRMED:   { labelKey: "profile.statusConfirmed",  color: "bg-blue-100 text-blue-800 border-blue-200" },
-  CHECKED_IN:  { labelKey: "profile.statusCheckedIn", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  CHECKED_OUT: { labelKey: "profile.statusCheckedOut", color: "bg-gray-100 text-gray-600 border-gray-200" },
-  CANCELLED:   { labelKey: "profile.statusCancelled",       color: "bg-red-100 text-red-700 border-red-200" },
+  PENDING:          { labelKey: "profile.statusPending", color: "bg-amber-100 text-amber-800 border-amber-200" },
+  PENDING_DEPOSIT:  { labelKey: "profile.statusPendingDeposit", color: "bg-amber-100 text-amber-800 border-amber-200" },
+  CONFIRMED:        { labelKey: "profile.statusConfirmed",  color: "bg-blue-100 text-blue-800 border-blue-200" },
+  CHECKED_IN:       { labelKey: "profile.statusCheckedIn", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  CHECKED_OUT:      { labelKey: "profile.statusCheckedOut", color: "bg-gray-100 text-gray-600 border-gray-200" },
+  CANCELLED:        { labelKey: "profile.statusCancelled",       color: "bg-red-100 text-red-700 border-red-200" },
 };
 
 export const SPA_STATUS_MAP = {

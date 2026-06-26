@@ -111,7 +111,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public VNPayPaymentDTO createPaymentUrl(Integer invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> notFound("Invoice not found: " + invoiceId));
@@ -121,6 +121,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
         if ("CANCELLED".equals(invoice.getStatus())) {
             throw conflict("Cancelled invoice cannot be paid");
+        }
+
+        RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null) {
+            recalculate(invoice, booking.getBookingId());
+            invoice = invoiceRepository.save(invoice);
         }
 
         BigDecimal payableAmount = payableAmount(invoice);
@@ -179,6 +185,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         RoomBooking booking = invoice.getRoomBooking();
+        if (booking != null) {
+            recalculate(invoice, booking.getBookingId());
+        }
         BigDecimal payableAmount = payableAmount(invoice);
 
         if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {

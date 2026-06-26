@@ -55,6 +55,7 @@ export default function GuestDashboard() {
 
   // Active step / date selection
   const [selectedDate, setSelectedDate] = useState("");
+  const [activeTab, setActiveTab] = useState("Breakfast");
   const [consentCheckbox, setConsentCheckbox] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
 
@@ -360,7 +361,7 @@ export default function GuestDashboard() {
                 </div>
                 <h2 className="font-serif text-2xl font-normal text-sage-900 mb-2">Đã Gửi Yêu Cầu Tới Bếp!</h2>
                 <p className="text-sage-600 text-[13px] mb-6 font-light">
-                  Đơn gọi món của quý khách đã được chuyển thẳng tới Bếp Trưởng. <strong>Tổng tiền gọi món sẽ được tính vào hóa đơn phòng (bill) khi quý khách Check-out.</strong> Xin vui lòng giữ mã đơn bên dưới để đối chiếu khi nhận món.
+                  Đơn gọi món của quý khách đã được chuyển thẳng tới Bếp Trưởng. <strong>Tổng tiền gọi món sẽ được tính vào hóa đơn (bill) khi thanh toán.</strong> Xin vui lòng giữ mã đơn bên dưới để đối chiếu khi nhận món.
                 </p>
                 <div className="border border-primary-100 bg-primary-50/20 text-left p-6 space-y-4 mb-8 text-xs sm:text-sm">
                   <div className="flex justify-between pb-3 border-b border-primary-100 font-bold uppercase text-[10px] text-sage-500 tracking-wider items-center">
@@ -385,7 +386,7 @@ export default function GuestDashboard() {
               <Card className="p-6 border-primary-200/50">
                 <h3 className="font-serif text-lg font-bold text-sage-900 border-b border-primary-100 pb-3 mb-4">
 
-                  Thông Tin Đặt Phòng
+                  Thông Tin Đặt Bàn
                 </h3>
                 <div className="space-y-3 text-xs text-sage-700">
                   <div className="flex justify-between items-center">
@@ -402,6 +403,12 @@ export default function GuestDashboard() {
                   </div>
                   {profileData.booking && (
                     <>
+                      <div className="flex justify-between items-center bg-sage-50/50 p-2 border border-sage-200 mt-2 mb-2">
+                        <span className="font-bold text-sage-700 uppercase tracking-wider text-[11px]">BÀN ĐƯỢC XẾP:</span>
+                        <span className="font-bold text-primary-800 text-base font-mono tracking-wider">
+                          {(profileData.booking.room || profileData.booking.tableName || "T01").split(',')[0].trim().replace(/Room-/gi, "").replace(/Room/gi, "").replace(/Phòng /gi, "")}
+                        </span>
+                      </div>
                       <div className="flex justify-between items-center pt-2 border-t border-dashed border-primary-100">
                         <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Mã đơn:</span>
                         <span className="font-bold text-primary-700">
@@ -411,11 +418,11 @@ export default function GuestDashboard() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Nhận phòng:</span>
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Giờ đến:</span>
                         <span className="font-medium">{new Date(profileData.booking.checkInDate).toLocaleDateString("vi-VN")}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Trả phòng:</span>
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Giờ về:</span>
                         <span className="font-medium">{new Date(profileData.booking.checkOutDate).toLocaleDateString("vi-VN")}</span>
                       </div>
                       <div className="flex justify-between items-center bg-sage-50/50 p-2 border border-sage-200 mt-2">
@@ -458,140 +465,218 @@ export default function GuestDashboard() {
                 <h4 className="font-serif text-base font-bold text-sage-900 mb-3">Lưu ý Dịch Vụ</h4>
                 <ul className="text-xs text-sage-600 space-y-2 font-medium">
                   <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Thời gian phục vụ: 06:00 - 22:00 hàng ngày.</li>
-                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Phí phục vụ tại phòng là 15% (đã bao gồm trong phụ phí dự kiến).</li>
+                  <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Phí phục vụ tại bàn là 15% (đã bao gồm trong phụ phí dự kiến).</li>
                   <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-1.5" /> Các món trong Gói Tiêu Chuẩn sẽ được miễn phí.</li>
                 </ul>
               </Card>
             </div>
 
             {/* Right Column: Menu & Orders */}
-            <div className="lg:col-span-8">
-              {/* Immediate Service Banner */}
-              <div className="mb-8 p-6 bg-amber-50/50 rounded-none border border-amber-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
-                  <div className="relative">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 rounded-none bg-amber-500 animate-pulse" />
-                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.2em]">Giao Tận Phòng Trong Ngày</span>
-                      </div>
-                      <span className="font-serif text-2xl font-semibold text-amber-950">{todayStr.split("-").slice(1).reverse().join("/")}</span>
-                  </div>
-                  <span className="relative px-5 py-2.5 bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-widest rounded-none border border-amber-200">Phục Vụ Ngay</span>
-              </div>
-
-              {/* MEAL TIMELINE */}
-              {selectedDate && (
-                <div className="space-y-8">
-                  {["Breakfast", "Lunch", "Dinner"].map((period) => {
-                    const periodDishes = menuItems.filter(item => {
-                        // Lọc theo bữa ăn
-                        if (item.periods) {
-                            return item.periods.includes(period);
-                        }
-                        return true;
-                    });
-
-                    return (
-                      <div key={period} className="space-y-4">
-                        <div className="flex items-center space-x-2 border-l-2 border-primary-800 pl-3">
-                          <h3 className="font-serif text-base font-bold text-sage-900">{period}</h3>
+            <div className="lg:col-span-8 flex flex-col h-full">
+              {/* Immediate Service Banner or Preselect Info */}
+              {orderMode === "extra" ? (
+                <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50/30 rounded-2xl border border-amber-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden shadow-sm">
+                    <div className="relative">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                          <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Phục Vụ Tại Bàn Trong Ngày</span>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {periodDishes.map((dish) => {
-                            const isAllergen = consentCheckbox && dish.isAllergen;
-                            // Only disable sold out items if ordering for today! Future dates ignore sold out.
-                            const isSoldOut = dish.soldOut === true && selectedDate === todayStr;
-                            const qty = selections[selectedDate]?.[period]?.[dish.foodId] || 0;
-                            const isIncluded = isIncludedInPackage(dish.foodId);
-
-                            return (
-                              <div key={dish.foodId} className={`flex flex-col justify-between transition-all duration-300 relative border overflow-hidden rounded-none group ${isSoldOut ? "border-gray-200 bg-gray-50/50 opacity-60 grayscale-[0.5]" : isAllergen ? "border-red-300 bg-red-50/30" : "border-primary-200/50 bg-white hover:border-primary-400"}`}>
-                                <div className="h-52 w-full relative overflow-hidden bg-sage-50">
-                                  <img src={dish.image || getFoodImage(dish)} alt={dish.dishName} className={`w-full h-full object-cover transition-transform duration-700 ${!isSoldOut && 'group-hover:scale-105'}`} />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-                                  
-                                  {isSoldOut && (
-                                    <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center">
-                                      <span className="bg-white/90 text-gray-800 font-bold text-[10px] px-4 py-2 rounded-none uppercase tracking-widest border border-gray-200">Hết Hàng</span>
-                                    </div>
-                                  )}
-                                  
-                                  {isAllergen && !isSoldOut && (
-                                    <div className="absolute inset-0 bg-red-900/10 border-2 border-red-500/30 rounded-none flex items-start justify-end p-4">
-                                      <span className="bg-red-600 text-white font-bold text-[9px] px-3 py-1.5 rounded-none uppercase tracking-wider animate-pulse border border-red-700 flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Dị Ứng</span>
-                                    </div>
-                                  )}
-
-                                  <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                                      {isIncluded ? (
-                                        <span className="bg-primary-500 text-white text-[9px] font-bold px-2.5 py-1 rounded-none uppercase tracking-wider border border-primary-600">Gói Miễn Phí</span>
-                                      ) : (
-                                        <span />
-                                      )}
-                                      <span className="text-white font-semibold font-serif text-lg drop-shadow-md">{formatCurrency(dish.price)}</span>
-                                  </div>
-                                </div>
-
-                                <div className="p-5 flex-1 flex flex-col justify-between">
-                                  <div>
-                                    <h4 className={`font-serif text-lg font-bold leading-tight ${isAllergen ? "text-red-900" : "text-sage-900"}`}>{dish.dishName}</h4>
-                                    <p className="text-xs text-sage-500 font-light mt-2 line-clamp-2 leading-relaxed">{dish.description}</p>
-                                    <div className="flex flex-wrap gap-1.5 mt-2">
-                                      {dish.dietaryTags && dish.dietaryTags.split(",").map((tag) => (
-                                        <span key={tag.trim()} className="text-[9px] font-bold uppercase tracking-wider border border-primary-200 text-primary-800 px-2 py-0.5 bg-primary-50/30">
-                                          {tag.trim()}
-                                        </span>
-                                      ))}
-                                    </div>
-                                    {isAllergen && <p className="text-[11px] text-red-600 mt-3 font-semibold bg-red-50 p-2.5 rounded-none border border-red-200">{dish.warningMessage}</p>}
-                                  </div>
-                                  
-                                  <div className="mt-5 flex justify-between items-center">
-                                    {isSoldOut ? (
-                                      <span className="text-[10px] font-bold border border-gray-200 px-4 py-2 rounded-none uppercase text-gray-500 tracking-wider">Tạm Ngưng</span>
-                                    ) : orderMode === 'preselect' && selectedDate === todayStr ? (
-                                      <div className="flex items-center space-x-2 w-full">
-                                        <span className="text-[10px] font-bold border border-amber-200 px-3 py-2 rounded-none uppercase text-amber-600 bg-amber-50 w-full text-center tracking-wider">Đã Chốt Bếp</span>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center justify-between w-full bg-sage-50/50 p-1 rounded-none border border-primary-200/50 group/controls">
-                                        <button disabled={qty===0} onClick={() => updateQuantity(selectedDate, period, dish.foodId, -1)} className="p-2 hover:bg-white border border-transparent hover:border-primary-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent rounded-none"><Minus className="h-4 w-4 text-sage-600"/></button>
-                                        <span className="font-sans text-sm font-semibold w-8 text-center text-sage-900">{qty}</span>
-                                        <button onClick={() => handleIncreaseQuantity(selectedDate, period, dish)} className={`p-2 rounded-none border transition-all ${isAllergen ? "bg-red-50 border-red-200 hover:bg-red-100 text-red-600" : "bg-primary-800 border-primary-900 hover:bg-primary-900 text-white"}`}><Plus className="h-4 w-4"/></button>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                        <span className="font-serif text-2xl font-bold text-amber-950 drop-shadow-sm">{todayStr.split("-").slice(1).reverse().join("/")}</span>
+                    </div>
+                    <span className="relative px-5 py-2 bg-amber-100/80 text-amber-800 text-[10px] font-bold uppercase tracking-widest rounded-full border border-amber-300 shadow-sm backdrop-blur-sm">Phục Vụ Ngay</span>
+                </div>
+              ) : (
+                <div className="mb-6 p-4 bg-gradient-to-r from-sage-50 to-emerald-50/30 rounded-2xl border border-sage-200/50 flex flex-col justify-between items-start gap-4 relative overflow-hidden shadow-sm">
+                    <div className="relative w-full">
+                        <div className="flex items-center justify-between w-full mb-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-sage-600" />
+                            <span className="text-[10px] font-bold text-sage-700 uppercase tracking-widest">Lên Kế Hoạch Ẩm Thực</span>
+                          </div>
+                          <span className="relative px-3 py-1 bg-sage-100/80 text-sage-800 text-[10px] font-bold uppercase tracking-widest rounded-full border border-sage-300 shadow-sm backdrop-blur-sm">Đặt Trước Hạn Chót 22:00</span>
                         </div>
-                      </div>
-                    );
-                  })}
+                        <div className="flex flex-wrap gap-2">
+                          {bookingDays.map(day => (
+                            <button 
+                              key={day}
+                              onClick={() => setSelectedDate(day)}
+                              className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all ${selectedDate === day ? "bg-sage-600 text-white border-sage-600 shadow-md" : "bg-white text-sage-600 border-sage-200 hover:border-sage-400"}`}
+                            >
+                              {day.split("-").slice(1).reverse().join("/")}
+                            </button>
+                          ))}
+                        </div>
+                    </div>
                 </div>
               )}
 
-              {/* Submit Bar */}
-              <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-none border-t border-primary-200 sticky bottom-0 z-40">
-                <div>
-                  <span className="text-xs font-medium text-sage-500 uppercase tracking-widest mb-1">Tổng cộng ({getSelectedItemsCount()} món)</span>
-                  <span className="font-serif text-3xl font-bold text-primary-950 block">{formatCurrency(calculateTotalBill())}</span>
-                </div>
-                <Button 
-                  disabled={submitting || getSelectedItemsCount()===0} 
-                  onClick={handleSubmitSelections} 
-                  variant={getSelectedItemsCount()===0 ? "secondary" : (orderMode === 'extra' ? "warning" : "primary")}
-                  className="w-full md:w-auto px-12 py-4"
+              {/* MODE SWITCHER */}
+              <div className="flex bg-sage-100/50 rounded-xl p-1 mb-4 border border-sage-200">
+                <button 
+                  onClick={() => handleModeSwitch("extra")}
+                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${orderMode === "extra" ? "bg-white text-primary-800 shadow-sm border border-sage-200" : "text-sage-500 hover:text-sage-700"}`}
                 >
-                  {submitting ? "Đang xử lý..." : orderMode === 'extra' ? "Xác Nhận Gọi Món" : "Lưu Thực Đơn"}
-                </Button>
+                  Gọi Thêm Tại Bàn
+                </button>
+                <button 
+                  onClick={() => handleModeSwitch("preselect")}
+                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${orderMode === "preselect" ? "bg-white text-primary-800 shadow-sm border border-sage-200" : "text-sage-500 hover:text-sage-700"}`}
+                >
+                  Đặt Trước Bữa Ăn (Kế Hoạch)
+                </button>
               </div>
 
+              {/* TABS HEADER */}
+              <div className="flex bg-white rounded-xl shadow-sm border border-primary-100 p-1 mb-6 relative z-10 overflow-x-auto hide-scrollbar">
+                {["Breakfast", "Lunch", "Dinner"].map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setActiveTab(period)}
+                    className={`flex-1 min-w-[100px] py-3 px-4 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                      activeTab === period 
+                        ? "bg-primary-800 text-white shadow-md transform scale-[1.02]" 
+                        : "text-sage-500 hover:text-primary-700 hover:bg-primary-50"
+                    }`}
+                  >
+                    {period === "Breakfast" && <Coffee className="w-4 h-4" />}
+                    {period === "Lunch" && <Sun className="w-4 h-4" />}
+                    {period === "Dinner" && <Moon className="w-4 h-4" />}
+                    {period}
+                  </button>
+                ))}
+              </div>
+
+              {/* MEAL TAB CONTENT */}
+              {selectedDate && (
+                <div className="flex-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-24">
+                    {menuItems.filter(item => !item.periods || item.periods.includes(activeTab)).map((dish) => {
+                      const isAllergen = consentCheckbox && dish.isAllergen;
+                      const isSoldOut = dish.soldOut === true && selectedDate === todayStr;
+                      const qty = selections[selectedDate]?.[activeTab]?.[dish.foodId] || 0;
+                      const isIncluded = isIncludedInPackage(dish.foodId);
+
+                      return (
+                        <div key={dish.foodId} className={`flex flex-col bg-white rounded-2xl overflow-hidden transition-all duration-300 border shadow-sm hover:shadow-lg ${isSoldOut ? "border-gray-200 bg-gray-50/80 opacity-70 grayscale-[0.5]" : isAllergen ? "border-red-300 bg-red-50/10 hover:border-red-400" : "border-primary-100 hover:border-primary-300 hover:-translate-y-1"}`}>
+                          
+                          {/* Image Section */}
+                          <div className="h-48 w-full relative overflow-hidden bg-sage-50">
+                            <img src={dish.image || getFoodImage(dish)} alt={dish.dishName} className={`w-full h-full object-cover transition-transform duration-700 ${!isSoldOut && 'hover:scale-110'}`} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-90" />
+                            
+                            {isSoldOut && (
+                              <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center">
+                                <span className="bg-white/95 text-gray-800 font-bold text-[10px] px-4 py-2 rounded-full uppercase tracking-widest shadow-lg">Hết Hàng</span>
+                              </div>
+                            )}
+                            
+                            {isAllergen && !isSoldOut && (
+                              <div className="absolute inset-0 bg-red-900/10 flex items-start justify-end p-3">
+                                <span className="bg-red-600/95 backdrop-blur-sm text-white font-bold text-[9px] px-3 py-1.5 rounded-full uppercase tracking-wider animate-pulse shadow-md flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Dị Ứng</span>
+                              </div>
+                            )}
+
+                            <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                                {isIncluded ? (
+                                  <span className="bg-primary-500/95 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">Gói Miễn Phí</span>
+                                ) : (
+                                  <span />
+                                )}
+                                <span className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg text-white font-semibold font-mono text-base tracking-wider border border-white/10 shadow-sm">
+                                  {formatCurrency(dish.price)}
+                                </span>
+                            </div>
+                          </div>
+
+                          {/* Content Section */}
+                          <div className="p-5 flex-1 flex flex-col justify-between relative bg-white">
+                            <div>
+                              <h4 className={`font-serif text-[17px] font-bold leading-snug line-clamp-2 ${isAllergen ? "text-red-900" : "text-sage-900"}`}>{dish.dishName}</h4>
+                              <p className="text-xs text-sage-500 font-light mt-2 line-clamp-2 leading-relaxed">{dish.description}</p>
+                              
+                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                {dish.dietaryTags && dish.dietaryTags.split(",").map((tag) => (
+                                  <span key={tag.trim()} className="text-[9px] font-bold uppercase tracking-wider border border-primary-200/60 text-primary-700 px-2.5 py-0.5 bg-primary-50/50 rounded-full">
+                                    {tag.trim()}
+                                  </span>
+                                ))}
+                              </div>
+                              
+                              {isAllergen && <div className="mt-3 bg-red-50/80 p-2.5 rounded-xl border border-red-100/50 flex items-start gap-2"><Info className="w-3 h-3 text-red-500 mt-0.5 shrink-0" /><p className="text-[10px] text-red-600 font-medium leading-relaxed">{dish.warningMessage}</p></div>}
+                            </div>
+                            
+                            {/* Controls */}
+                            <div className="mt-5 pt-4 border-t border-gray-100/80 flex flex-col gap-3">
+                              <div className="flex justify-between items-center">
+                                {isSoldOut ? (
+                                  <span className="text-[10px] font-bold bg-gray-100 px-4 py-2 rounded-xl uppercase text-gray-500 tracking-wider w-full text-center">Tạm Ngưng Phục Vụ</span>
+                                ) : orderMode === 'preselect' && selectedDate === todayStr ? (
+                                  <span className="text-[10px] font-bold border border-amber-200 px-3 py-2 rounded-xl uppercase text-amber-600 bg-amber-50 w-full text-center tracking-wider">Đã Chốt Bếp</span>
+                                ) : (
+                                  <div className="flex items-center justify-between w-full bg-sage-50/50 p-1.5 rounded-xl border border-primary-100">
+                                    <button disabled={qty===0} onClick={() => updateQuantity(selectedDate, activeTab, dish.foodId, -1)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white border border-transparent hover:border-primary-200 hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent"><Minus className="h-3.5 w-3.5 text-sage-600"/></button>
+                                    <span className="font-mono text-sm font-bold w-8 text-center text-primary-950">{qty}</span>
+                                    <button onClick={() => handleIncreaseQuantity(selectedDate, activeTab, dish)} className={`w-8 h-8 flex items-center justify-center rounded-lg shadow-sm transition-all ${isAllergen ? "bg-red-100 hover:bg-red-200 text-red-600" : "bg-primary-800 hover:bg-primary-900 hover:shadow-md text-white"}`}><Plus className="h-3.5 w-3.5"/></button>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {qty > 0 && !(orderMode === 'preselect' && selectedDate === todayStr) && (
+                                <div className="animate-fade-in">
+                                  <input 
+                                    type="text" 
+                                    placeholder="Ghi chú cho bếp (VD: Ít cay...)"
+                                    className="w-full text-[11px] p-2.5 border border-primary-200/50 rounded-xl bg-white text-sage-700 placeholder:text-sage-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all shadow-inner"
+                                    value={specialNotes[`${selectedDate}_${activeTab}_${dish.foodId}`] || ""}
+                                    onChange={(e) => handleNoteChange(selectedDate, activeTab, dish.foodId, e.target.value)}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {menuItems.filter(item => !item.periods || item.periods.includes(activeTab)).length === 0 && (
+                        <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+                            <Coffee className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                            <p className="text-gray-500 font-medium">Chưa có món ăn nào trong thực đơn này.</p>
+                        </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* STICKY BOTTOM SUBMIT BAR */}
+      {!successOrder && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-primary-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 transform transition-transform duration-500">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-6">
+              <div className="bg-primary-50 p-3 rounded-2xl hidden sm:block">
+                  <UtensilsCrossed className="w-6 h-6 text-primary-700" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-sage-500 uppercase tracking-widest mb-1 block">Đã Chọn ({getSelectedItemsCount()} món)</span>
+                <span className="font-serif text-2xl sm:text-3xl font-bold text-primary-950 block">{formatCurrency(calculateTotalBill())}</span>
+              </div>
+            </div>
+            <Button 
+              disabled={submitting || getSelectedItemsCount()===0} 
+              onClick={handleSubmitSelections} 
+              variant={getSelectedItemsCount()===0 ? "secondary" : (orderMode === 'extra' ? "warning" : "primary")}
+              className={`w-full sm:w-auto px-10 py-3.5 sm:py-4 rounded-xl text-sm font-bold tracking-widest uppercase transition-all duration-300 ${getSelectedItemsCount() > 0 ? 'shadow-xl shadow-primary-900/20 hover:-translate-y-1' : ''}`}
+            >
+              {submitting ? "Đang xử lý..." : orderMode === 'extra' ? "Xác Nhận Gọi Món" : "Lưu Thực Đơn"}
+            </Button>
+          </div>
+        </div>
+      )}
+
 
       {/* EMERGENCY ALLERGY MODAL */}
       {showAllergyWarningModal && pendingAllergyItem && (

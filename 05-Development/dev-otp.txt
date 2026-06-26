@@ -4,3 +4,8 @@ Purpose: FORGOT PASSWORD
 OTP Code: 413551
 Time: 2026-06-25T12:51:57.140206
 ========================================
+Email: dasd@gmail.com
+Purpose: REGISTER / ACTIVATE ACCOUNT
+OTP Code: 801488
+Time: 2026-06-26T23:23:22.526689700
+========================================
