@@ -74,9 +74,19 @@ export default function UpcomingPrep({
   const deliveringOrders = filteredOrders.filter((o) => o.status === "Delivering");
   const completedOrders = filteredOrders.filter((o) => o.status === "Completed");
 
-  // Tính tổng hợp sơ chế cho ngày được chọn
+  // Lọc riêng theo ngày và buổi (không bị ảnh hưởng bởi ô tìm kiếm) để tính tổng sơ chế
+  const ordersForPrepSummary = upcomingOrders.filter(o => {
+    if (o.date !== selectedDate) return false;
+    if (selectedPeriod !== "Tất cả") {
+      const hasMatchingItems = o.items.some(it => isItemInPeriod(it, selectedPeriod));
+      if (!hasMatchingItems && o.period !== selectedPeriod) return false;
+    }
+    return true;
+  });
+
+  // Tính tổng hợp sơ chế cho ngày được chọn (luôn hiển thị tổng của ngày, không bị lọc đi khi gõ tìm kiếm)
   const prepSummary = {};
-  filteredOrders.forEach(o => {
+  ordersForPrepSummary.forEach(o => {
     o.items.filter(item => isItemInPeriod(item, selectedPeriod)).forEach(item => {
       if (!prepSummary[item.name]) prepSummary[item.name] = 0;
       prepSummary[item.name] += item.qty;
@@ -104,7 +114,9 @@ export default function UpcomingPrep({
             </div>
             {(selectedPeriod !== "Tất cả" ? selectedPeriod : ord.period) && (
               <div className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full font-bold text-[10px] uppercase tracking-widest border border-amber-200 shadow-sm">
-                BUỔI {selectedPeriod !== "Tất cả" ? selectedPeriod : ord.period}
+                {selectedPeriod !== "Tất cả" 
+                  ? (selectedPeriod === "Cả ngày" ? "CẢ NGÀY" : `BUỔI ${selectedPeriod}`)
+                  : (ord.period === "Cả ngày" ? "CẢ NGÀY" : `BUỔI ${ord.period}`)}
               </div>
             )}
           </div>

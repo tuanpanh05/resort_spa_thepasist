@@ -280,7 +280,7 @@ public class RoomBookingService {
                                 .foodMenu(dish)
                                 .quantity(qty)
                                 .priceAtOrder(dish.getPrice())
-                                .specialNote("[Bữa: " + period + ", Ngày: " + dateStr + "]")
+                                .specialNote("[Period: " + period + ", Date: " + dateStr + "]")
                                 .isPackageIncluded(isPackageIncluded)
                                 .build();
 

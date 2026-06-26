@@ -353,12 +353,11 @@ public class GuestMealController {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
-        // Group selections by date and period
-        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDateAndPeriod = new HashMap<>();
+        // Group selections by date only (all periods for a day go into one order)
+        Map<String, List<MealPreselectionDTO.MealSelectionItem>> itemsByDate = new HashMap<>();
         for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
-            String period = item.getPeriod() != null ? item.getPeriod() : "Breakfast";
-            String key = item.getDate() + "_" + period;
-            itemsByDateAndPeriod.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
+            String dateKey = item.getDate();
+            itemsByDate.computeIfAbsent(dateKey, k -> new ArrayList<>()).add(item);
         }
 
         java.time.LocalDate today = java.time.LocalDate.now();
@@ -366,8 +365,14 @@ public class GuestMealController {
         java.time.LocalDate checkInDate = booking.getCheckInDate().toLocalDate();
         java.time.LocalDate checkOutDate = booking.getCheckOutDate().toLocalDate();
 
-        for (String key : itemsByDateAndPeriod.keySet()) {
-            String dateKey = key.split("_")[0];
+        List<Integer> createdOrderIds = new ArrayList<>();
+        BigDecimal grandTotalExtraCharges = BigDecimal.ZERO;
+        int totalItemCount = 0;
+
+        for (String dateKey : itemsByDate.keySet()) {
+            List<MealPreselectionDTO.MealSelectionItem> items = itemsByDate.get(dateKey);
+
+            LocalDateTime mealTime;
             try {
                 java.time.LocalDate targetDate = java.time.LocalDate.parse(dateKey);
                 if (!targetDate.isAfter(today)) {
@@ -379,58 +384,18 @@ public class GuestMealController {
                 if (targetDate.equals(today.plusDays(1)) && currentHour >= cutoffHour) {
                     return ResponseEntity.badRequest().body("Đã qua thời gian hạn chót (Cut-off Time " + cutoffHour + ":00). Không thể đặt trước món ăn cho ngày mai.");
                 }
-            } catch (Exception e) {
-                // Ignore parsing error, will be handled in the loop below
-            }
-        }
-
-        List<Integer> createdOrderIds = new ArrayList<>();
-        BigDecimal grandTotalExtraCharges = BigDecimal.ZERO;
-        int totalItemCount = 0;
-
-        for (Map.Entry<String, List<MealPreselectionDTO.MealSelectionItem>> entry : itemsByDateAndPeriod.entrySet()) {
-            String key = entry.getKey();
-            String[] parts = key.split("_");
-            String dateKey = parts[0];
-            String period = parts.length > 1 ? parts[1] : "Breakfast";
-            List<MealPreselectionDTO.MealSelectionItem> items = entry.getValue();
-
-            LocalDateTime mealTime;
-            try {
-                java.time.LocalDate d = java.time.LocalDate.parse(dateKey);
-                if (period.equalsIgnoreCase("Breakfast")) {
-                    mealTime = d.atTime(7, 0);
-                } else if (period.equalsIgnoreCase("Lunch")) {
-                    mealTime = d.atTime(11, 30);
-                } else if (period.equalsIgnoreCase("Dinner")) {
-                    mealTime = d.atTime(18, 0);
-                } else {
-                    mealTime = d.atTime(8, 0);
-                }
+                mealTime = targetDate.atTime(8, 0); // Default to morning for full-day combo
             } catch (Exception e) {
                 mealTime = LocalDateTime.now();
             }
 
-            // Find if an order already exists for this booking on this date AND this period
+            // Find if an order already exists for this booking on this date
             FoodOrder foodOrder = null;
             List<FoodOrder> existingOrders = foodOrderRepository.findByRoomBooking_BookingId(booking.getBookingId());
             for (FoodOrder eo : existingOrders) {
                 if (eo.getOrderTime() != null && eo.getOrderTime().toLocalDate().equals(mealTime.toLocalDate())) {
-                    int eoHour = eo.getOrderTime().getHour();
-                    int mealHour = mealTime.getHour();
-                    
-                    String eoPeriod = "Breakfast";
-                    if (eoHour >= 10 && eoHour < 14) eoPeriod = "Lunch";
-                    else if (eoHour >= 14) eoPeriod = "Dinner";
-                    
-                    String mPeriod = "Breakfast";
-                    if (mealHour >= 10 && mealHour < 14) mPeriod = "Lunch";
-                    else if (mealHour >= 14) mPeriod = "Dinner";
-
-                    if (eoPeriod.equals(mPeriod)) {
-                        foodOrder = eo;
-                        break;
-                    }
+                    foodOrder = eo;
+                    break;
                 }
             }
 
@@ -488,12 +453,16 @@ public class GuestMealController {
 
                 totalExtraCharges = totalExtraCharges.add(itemCost);
 
+                String assignedPeriod = item.getPeriod() != null ? item.getPeriod() : "Breakfast";
+                String noteStr = item.getSpecialNote() != null ? item.getSpecialNote().trim() : "";
+                String finalNote = "[Period: " + assignedPeriod + "]" + (noteStr.isEmpty() ? "" : " " + noteStr);
+
                 FoodOrderDetail detail = FoodOrderDetail.builder()
                         .foodOrder(foodOrder)
                         .foodMenu(dish)
                         .quantity(item.getQuantity())
                         .priceAtOrder(dish.getPrice())
-                        .specialNote(item.getSpecialNote())
+                        .specialNote(finalNote)
                         .isPackageIncluded(isPackageIncluded)
                         .build();
 
@@ -550,7 +519,8 @@ public class GuestMealController {
                     for (RoomBooking b : activeBookings) {
                         java.time.LocalDate checkIn = b.getCheckInDate().toLocalDate();
                         java.time.LocalDate checkOut = b.getCheckOutDate().toLocalDate();
-                        if (!checkOut.isBefore(today) && checkIn.isBefore(today.plusDays(3))) {
+                        // Chỉ hiển thị khách đang lưu trú tại resort ngày hôm nay
+                        if (!checkOut.isBefore(today) && !checkIn.isAfter(today)) {
                             isStayingToday = true;
                             break;
                         }

@@ -209,10 +209,7 @@ export default function DishFormModal({
                 <img 
                   src={dishForm.localPreview || (() => {
                     if (!dishForm.image) return "";
-                    if (dishForm.image.startsWith('/')) {
-                      const baseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api").replace('/api', '');
-                      return `${baseUrl}${dishForm.image}?t=${Date.now()}`;
-                    }
+                    // Ảnh trong public/ → Vite phục vụ trực tiếp qua đường dẫn tương đối
                     return `${dishForm.image}?t=${Date.now()}`;
                   })()} 
                   alt="Preview" 

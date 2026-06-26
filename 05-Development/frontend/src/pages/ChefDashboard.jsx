@@ -85,7 +85,9 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
-          origin: item.origin === "Room Service" ? "Tại Quán" : (item.origin || "Tại Quán"),
+          origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
+                  : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
+                  : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -175,7 +177,9 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
-          origin: item.origin === "Room Service" ? "Tại Quán" : (item.origin || "Tại Quán"),
+          origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
+                  : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
+                  : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -302,34 +306,31 @@ export default function ChefDashboard() {
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     const numericId = typeof orderId === "string" ? orderId.replace("ORD-", "") : orderId;
+    
+    const updateState = () => {
+      setOrders((prev) =>
+        prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
+      );
+      setUpcomingOrders((prev) =>
+        prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
+      );
+    };
+
     try {
       await axiosClient.put(`/chef/orders/${numericId}/status?status=${newStatus}`);
-      setOrders((prev) =>
-        prev.map((ord) => {
-          if (ord.id === orderId) {
-            return { ...ord, status: newStatus };
-          }
-          return ord;
-        }),
-      );
+      updateState();
     } catch (err) {
       console.warn("Failed to update status on backend", err);
-      setOrders((prev) =>
-        prev.map((ord) => {
-          if (ord.id === orderId) {
-            return { ...ord, status: newStatus };
-          }
-          return ord;
-        }),
-      );
+      updateState();
     }
-    const order = orders.find((ord) => ord.id === orderId);
+    
+    const order = orders.find((ord) => ord.id === orderId) || upcomingOrders.find((ord) => ord.id === orderId);
     const nextStatusText =
       newStatus === "Cooking" ? "bắt đầu chuẩn bị" 
       : newStatus === "Delivering" ? "xong món, đang giao" 
       : newStatus === "Cancelled" ? "bị hủy" 
       : "hoàn thành giao hàng";
-    const msg = `Đơn hàng ${orderId} của phòng ${order?.room || ""} đã ${nextStatusText}`;
+    const msg = `Đơn hàng ${orderId} của khách ${order?.guestName || "khách"} đã ${nextStatusText}`;
     playVoiceAlert(msg);
   };
 
@@ -520,17 +521,25 @@ export default function ChefDashboard() {
           </div>
         ) : (
           <>
-            {activeTab === "overview" && (
-              <ChefOverview
-                orders={orders}
-                allergies={allergies}
-                ingredients={ingredients}
-                dishes={dishes}
-                feedbacks={feedbacks}
-                setActiveTab={setActiveTab}
-                checkOrderAllergies={checkOrderAllergies}
-              />
-            )}
+            {activeTab === "overview" && (() => {
+              const todayObj = new Date();
+              const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+              const allTodayOrders = [
+                ...orders,
+                ...upcomingOrders.filter(o => o.date === todayStr)
+              ];
+              return (
+                <ChefOverview
+                  orders={allTodayOrders}
+                  allergies={allergies}
+                  ingredients={ingredients}
+                  dishes={dishes}
+                  feedbacks={feedbacks}
+                  setActiveTab={setActiveTab}
+                  checkOrderAllergies={checkOrderAllergies}
+                />
+              );
+            })()}
 
             {activeTab === "allergies" && <ManageAllergies allergies={allergies} />}
 

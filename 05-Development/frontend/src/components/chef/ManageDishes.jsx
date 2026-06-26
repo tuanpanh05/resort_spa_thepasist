@@ -202,7 +202,7 @@ export default function ManageDishes({ dishes, setDishes }) {
                 allergens: dishForm.allergens ? dishForm.allergens.split(",").map((s) => s.trim()) : [],
                 isTodayMenu: savedDish.isTodayMenu,
                 availableDays: savedDish.availableDays || dishForm.availableDays,
-                image: savedDish.imageUrl || d.image,
+                image: savedDish.imageUrl || dishForm.image || d.image,
                 isPackageIncluded: savedDish.isPackageIncluded !== false,
                 periods: savedDish.periods ? savedDish.periods.split(",").map(s => s.trim()) : d.periods,
                 enabled: savedDish.enabled,
@@ -258,8 +258,8 @@ export default function ManageDishes({ dishes, setDishes }) {
                 src={(() => {
                   if (!dish.image) return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
                   if (dish.image.startsWith('/')) {
-                    const baseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api").replace('/api', '');
-                    return baseUrl + dish.image;
+                    // Ảnh lưu trong frontend/public/ → Vite phục vụ trực tiếp qua đường dẫn tương đối
+                    return dish.image;
                   }
                   return dish.image;
                 })()} 

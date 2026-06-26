@@ -257,7 +257,7 @@ public class ChefMealController {
             if (availableDays != null) {
                 dish.setAvailableDays(availableDays);
             }
-            if (imageUrl != null) {
+            if (imageUrl != null && !imageUrl.isEmpty()) {
                 dish.setImageUrl(imageUrl);
             }
             dish.setIsPackageIncluded(isPackageIncluded);
@@ -304,6 +304,7 @@ public class ChefMealController {
         
         List<FoodOrder> orders = foodOrderRepository.findAll().stream()
                 .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(finalDate))
+                // Tab 4 KDS: chỉ hiện đơn gọi thêm tại bàn (ROOM SERVICE)
                 .filter(o -> !"PACKAGE MEAL".equals(o.getOrigin()))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
@@ -316,9 +317,11 @@ public class ChefMealController {
             String tableNumber = "N/A";
             if (order.getTable() != null) {
                 tableNumber = order.getTable().getTableNumber();
+            }
+            if (order.getRoomBooking() != null) {
+                map.put("mealCode", String.format("MEAL-%04d", order.getRoomBooking().getBookingId()));
+            } else if (order.getTable() != null) {
                 map.put("mealCode", "TABLE-" + order.getTable().getTableId());
-            } else if (order.getRoomBooking() != null) {
-                map.put("mealCode", "MEAL-" + order.getRoomBooking().getBookingId());
             } else {
                 map.put("mealCode", "GUEST");
             }
@@ -338,9 +341,13 @@ public class ChefMealController {
             map.put("items", items);
 
             // Concatenate notes
+            // Concatenate notes, filtering out system-generated [Bữa: ...] tags
             String note = details.stream()
                     .map(FoodOrderDetail::getSpecialNote)
                     .filter(n -> n != null && !n.trim().isEmpty())
+                    .map(String::trim)
+                    .filter(n -> !n.contains("Bữa:") && !n.contains("Bá»¯a:")) // Strip system tags and their mangled versions
+                    .distinct()
                     .collect(Collectors.joining("; "));
             map.put("note", note);
 
@@ -370,6 +377,7 @@ public class ChefMealController {
     public ResponseEntity<?> getUpcomingOrders() {
         java.time.LocalDate today = java.time.LocalDate.now();
         List<FoodOrder> orders = foodOrderRepository.findAll().stream()
+                // Tab 5: Đơn PACKAGE MEAL (combo, đặt trước bữa ăn) - hôm nay và tương lai
                 .filter(o -> o.getOrderTime() != null && !o.getOrderTime().toLocalDate().isBefore(today))
                 .filter(o -> o.getOrigin() == null || "PACKAGE MEAL".equals(o.getOrigin()))
                 .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
@@ -383,9 +391,11 @@ public class ChefMealController {
             String tableNumber = "N/A";
             if (order.getTable() != null) {
                 tableNumber = order.getTable().getTableNumber();
+            }
+            if (order.getRoomBooking() != null) {
+                map.put("mealCode", String.format("MEAL-%04d", order.getRoomBooking().getBookingId()));
+            } else if (order.getTable() != null) {
                 map.put("mealCode", "TABLE-" + order.getTable().getTableId());
-            } else if (order.getRoomBooking() != null) {
-                map.put("mealCode", "MEAL-" + order.getRoomBooking().getBookingId());
             } else {
                 map.put("mealCode", "GUEST");
             }
@@ -399,7 +409,22 @@ public class ChefMealController {
                 itemMap.put("foodId", d.getFoodMenu().getFoodId());
                 itemMap.put("name", d.getFoodMenu().getDishName());
                 itemMap.put("qty", d.getQuantity());
-                itemMap.put("periods", d.getFoodMenu().getPeriods());
+
+                String assignedPeriod = "";
+                String dNote = d.getSpecialNote();
+                if (dNote != null) {
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\[(?:Period|Bữa|Bá»¯a|B.*?a):\\s*([^,\\]]+)").matcher(dNote);
+                    if (m.find()) {
+                        assignedPeriod = m.group(1).trim();
+                    }
+                }
+
+                if (!assignedPeriod.isEmpty()) {
+                    itemMap.put("periods", assignedPeriod);
+                } else {
+                    itemMap.put("periods", d.getFoodMenu().getPeriods());
+                }
+
                 return itemMap;
             }).collect(Collectors.toList());
             map.put("items", items);
@@ -407,6 +432,9 @@ public class ChefMealController {
             String note = details.stream()
                     .map(FoodOrderDetail::getSpecialNote)
                     .filter(n -> n != null && !n.trim().isEmpty())
+                    .map(n -> n.replaceAll("\\[(?:Period|B[^\\]]+)\\]", "").trim())
+                    .filter(n -> !n.isEmpty())
+                    .distinct()
                     .collect(Collectors.joining("; "));
             map.put("note", note);
 
@@ -425,12 +453,30 @@ public class ChefMealController {
             map.put("date", order.getOrderTime().toLocalDate().toString());
             map.put("time", order.getOrderTime().format(DateTimeFormatter.ofPattern("HH:mm - dd/MM")));
             
-            int hour = order.getOrderTime().getHour();
+            // Determine period intelligently for combos
+            boolean hasBreakfast = false;
+            boolean hasLunch = false;
+            boolean hasDinner = false;
+            for(FoodOrderDetail d : details) {
+                String p = d.getFoodMenu().getPeriods();
+                if(p != null) {
+                    if(p.toLowerCase().contains("breakfast")) hasBreakfast = true;
+                    if(p.toLowerCase().contains("lunch")) hasLunch = true;
+                    if(p.toLowerCase().contains("dinner")) hasDinner = true;
+                }
+            }
+            int pCount = (hasBreakfast ? 1 : 0) + (hasLunch ? 1 : 0) + (hasDinner ? 1 : 0);
+
             String period = "Sáng";
-            if (hour >= 10 && hour < 14) {
-                period = "Trưa";
-            } else if (hour >= 14) {
-                period = "Tối";
+            if (pCount > 1 || (order.getOrigin() != null && order.getOrigin().equals("PACKAGE MEAL") && details.size() > 5)) {
+                period = "Cả ngày";
+            } else {
+                int hour = order.getOrderTime().getHour();
+                if (hour >= 10 && hour < 14) {
+                    period = "Trưa";
+                } else if (hour >= 14) {
+                    period = "Tối";
+                }
             }
             map.put("period", period);
             
