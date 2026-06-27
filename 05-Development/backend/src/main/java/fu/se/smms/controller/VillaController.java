@@ -71,6 +71,13 @@ public class VillaController {
                 dto.setCapacity(room.getRoomType().getMaxOccupancy());
                 dto.setBasePrice(room.getRoomType().getBasePricePerNight());
             }
+            
+            // Populate guest name if occupied or deposited
+            if ("OCCUPIED".equals(status) || "DEPOSITED".equals(status)) {
+                String guestName = roomBookingRepository.findActiveGuestNameByRoomId(room.getRoomId(), today);
+                dto.setGuestName(guestName);
+            }
+            
             return dto;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(villas);

@@ -26,3 +26,54 @@ Deposit Paid: 7,040,880 VNĐ
 Amount Due: 16,428,720 VNĐ
 Time Sent: 2026-06-27T17:52:55.480551800
 ========================================
+========================================
+INVOICE EMAIL
+Email: guest1@gmail.com
+Invoice: #NS-INV-53
+Guest: Trần Khách Hàng
+Total: 23,320,000 VNĐ
+Payment Method: Tiền mặt tại quầy
+Time Sent: 2026-06-28T01:06:42.128071
+========================================
+========================================
+INVOICE EMAIL
+Email: staff@nguson.com
+Invoice: #NS-INV-82
+Guest: Staff Ngu Son
+Total: 12,258,400 VNĐ
+Payment Method: Tiền mặt tại quầy
+Time Sent: 2026-06-28T01:08:43.149358300
+========================================
+========================================
+INVOICE EMAIL
+Email: nghiacoc2562005@gmail.com
+Invoice: #NS-INV-56
+Guest: b
+Total: 14,212,000 VNĐ
+Payment Method: Tiền mặt tại quầy
+Time Sent: 2026-06-28T01:29:19.028093800
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: staff@nguson.com
+Guest Name: Staff Ngu Son
+Booking ID: #NS-103
+Check-in: 2026-06-28T14:00
+Check-out: 2026-06-30T12:00
+Rooms: Biệt Thự Gia Đình Sen Trắng (Phòng BS-101)
+Total Amount: 51,348,000 VNĐ
+Deposit Paid: 15,404,400 VNĐ
+Amount Due: 35,943,600 VNĐ
+Time Sent: 2026-06-28T01:55:50.231113100
+========================================
+========================================
+SPA BOOKING CONFIRMATION EMAIL
+Email: staff@nguson.com
+Guest Name: Staff Ngu Son
+Service Name: Tắm lá thuốc người Dao Đỏ
+Start Time: 2026-06-29T08:00
+Therapist: Therapist Specialist
+Room: Therapy Room A
+Price: 600,000 VNĐ
+Time Sent: 2026-06-28T01:58:44.340028900
+========================================

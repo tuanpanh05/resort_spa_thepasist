@@ -127,31 +127,32 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
       case "AVAILABLE":
         return <span className="text-green-750 font-medium italic">Sẵn sàng đón khách</span>;
       case "DEPOSITED":
-        return <span className="text-indigo-750 font-semibold italic">Đã cọc - Chờ check-in hôm nay</span>;
+        return (
+          <div>
+            <span className="text-[10px] text-indigo-750 block font-medium">Khách chờ check-in:</span>
+            <span className="font-bold text-indigo-950 block truncate">
+              {villa.guestName || "Khách nghỉ dưỡng"}
+            </span>
+          </div>
+        );
       default:
         return <span className="text-sage-500 italic">{status}</span>;
     }
   };
 
   const getRoomCardStyle = (roomTypeName, status) => {
-    const lower = (roomTypeName || "").toLowerCase();
     let bgClass = "", borderClass = "";
     switch (status) {
-      case "AVAILABLE":   bgClass = "bg-emerald-100 hover:bg-emerald-200/80"; borderClass = "border-emerald-350"; break;
-      case "OCCUPIED":    bgClass = "bg-rose-100 hover:bg-rose-200/80";       borderClass = "border-rose-350";    break;
+      case "AVAILABLE":   bgClass = "bg-[#f0fff4]"; borderClass = "border-emerald-200"; break;
+      case "OCCUPIED":    bgClass = "bg-[#fff5f5]"; borderClass = "border-red-200";    break;
       case "CLEANING":
       case "DIRTY":
-      case "VACANT_NEEDS_CLEANING": bgClass = "bg-sky-100 hover:bg-sky-200/80"; borderClass = "border-sky-350"; break;
-      case "MAINTENANCE": bgClass = "bg-amber-100 hover:bg-amber-200/80";    borderClass = "border-amber-350";  break;
-      case "DEPOSITED":   bgClass = "bg-indigo-100 hover:bg-indigo-200/80";   borderClass = "border-indigo-350 shadow-sm"; break;
-      default:            bgClass = "bg-white hover:bg-slate-50";             borderClass = "border-slate-200";
+      case "VACANT_NEEDS_CLEANING": bgClass = "bg-[#f0f9ff]"; borderClass = "border-sky-200"; break;
+      case "MAINTENANCE": bgClass = "bg-[#fffbeb]"; borderClass = "border-amber-200";  break;
+      case "DEPOSITED":   bgClass = "bg-[#eef2ff]"; borderClass = "border-indigo-200"; break;
+      default:            bgClass = "bg-white";     borderClass = "border-slate-200";
     }
-    const base = "p-5 flex flex-col justify-between h-60 text-left rounded-2xl transition-all duration-300 relative overflow-hidden";
-    if (lower.includes("president") || lower.includes("suite"))
-      return `${base} ${bgClass} border-2 border-amber-400 ring-4 ring-amber-400/20 shadow-md hover:shadow-lg`;
-    if (lower.includes("vip") || lower.includes("villa") || lower.includes("pool"))
-      return `${base} ${bgClass} border-2 border-indigo-300 ring-2 ring-indigo-300/10 shadow-sm hover:shadow-md`;
-    return `${base} ${bgClass} border-2 ${borderClass} shadow-xs`;
+    return `p-5 flex flex-col justify-between h-60 text-left rounded-2xl border ${bgClass} ${borderClass} shadow-sm hover:shadow-md transition-shadow relative overflow-hidden`;
   };
 
   const getRoomIcon = (roomTypeName) => {
@@ -219,131 +220,212 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
     return acc;
   }, {});
 
-  // ─── Pill Tab Component (Jp Design System) ───────────────────────
-  const PillTab = ({ id, label, active, onClick }) => (
-    <button
-      onClick={() => onClick(id)}
-      style={{
-        borderRadius: "100px",
-        fontFamily: "'Inter', 'Satoshi', ui-sans-serif, system-ui, sans-serif",
-        letterSpacing: "0.020em",
-        transition: "background 0.18s ease, color 0.18s ease",
-        cursor: "pointer",
-        border: "none",
-        outline: "none",
-        padding: "8px 18px",
-        background: active ? "#202020" : "transparent",
-        color: active ? "#ffffff" : "#333333",
-        fontSize: "13px",
-        fontWeight: "500",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {label}
-    </button>
-  );
-
   // ─── Render ──────────────────────────────────────────────────────
+  // Dynamic stats calculation
+  const totalCount = villas.length;
+  const availableCount = villas.filter(v => v.status === "AVAILABLE" || v.status === "DEPOSITED").length;
+  const cleaningCount = villas.filter(v => ["CLEANING", "DIRTY", "VACANT_NEEDS_CLEANING"].includes(v.status)).length;
+  const maintenanceCount = villas.filter(v => v.status === "MAINTENANCE").length;
+  const totalRemainingCapacity = villas
+    .filter(v => v.status === "AVAILABLE")
+    .reduce((sum, v) => sum + (v.capacity || 2), 0);
+
   return (
-    <div className="space-y-0 animate-fade-in text-left">
-
-      {/* Header */}
-      <div className="bg-white border border-primary-100 p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h3 className="font-serif text-lg font-normal text-sage-950">Sơ Đồ Phòng / Villa</h3>
-          <p className="text-xs text-sage-500 mt-1">
-            Giám sát trạng thái phòng theo thời gian thực. Thay đổi trạng thái phòng qua hệ thống.
-          </p>
+    <div className="space-y-6 animate-fade-in text-left">
+      {/* Summary Row */}
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Available Card */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Số lượng phòng sẵn sàng</p>
+            <p className="text-2xl font-bold text-emerald-700">{availableCount} <span className="text-sm font-normal text-gray-400">/ {totalCount}</span></p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={loadVillas}
-            className="px-4 py-2.5 bg-primary-100 hover:bg-primary-200 text-primary-900 rounded-none text-xs font-semibold tracking-wider flex items-center space-x-1.5 cursor-pointer uppercase"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span>Tải lại</span>
-          </button>
-          <button
-            onClick={() => setShowReportRoomModal(true)}
-            className="px-5 py-2.5 bg-red-800 hover:bg-red-900 text-white rounded-none text-xs font-semibold tracking-wider flex items-center space-x-1.5 cursor-pointer shadow-sm uppercase"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Báo phòng hỏng</span>
-          </button>
+
+        {/* Cleaning Card */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-sky-500 flex items-center gap-4">
+          <div className="p-3 bg-sky-50 rounded-lg text-sky-650">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 01-.586 1.414l-5 5c-.126.126-.254.246-.386.358m15.186.106A2 2 0 0119 14.25a2 2 0 01-2-2V8.5" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Số lượng phòng đang dọn</p>
+            <p className="text-2xl font-bold text-sky-700">{cleaningCount}</p>
+          </div>
         </div>
-      </div>
 
-      {/* ── Jp-style Pill Filter Bar ── */}
-      {!loading && villas.length > 0 && (
-        <div
-          style={{
-            background: "#ffffff",
-            borderBottom: "1px solid #e6e6e6",
-            borderTop: "1px solid #e6e6e6",
-            padding: "14px 20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            marginBottom: "24px",
-          }}
-        >
+        {/* Maintenance Card */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 flex items-center gap-4">
+          <div className="p-3 bg-orange-50 rounded-lg text-orange-655">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Số lượng phòng bảo trì</p>
+            <p className="text-2xl font-bold text-orange-700">{maintenanceCount}</p>
+          </div>
+        </div>
 
+        {/* Capacity Card */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-500 flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 rounded-lg text-indigo-650">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Tổng sức chứa còn lại</p>
+            <p className="text-2xl font-bold text-indigo-700">{totalRemainingCapacity} <span className="text-xs font-normal text-gray-400">người</span></p>
+          </div>
+        </div>
+      </section>
 
-          {/* Row 2: Status filter */}
-          <div style={{ display: "flex", alignItems: "center", gap: "2px", flexWrap: "wrap" }}>
-            <span style={{
-              fontSize: "11px", fontWeight: "500", color: "#838383",
-              letterSpacing: "0.020em", marginRight: "10px", whiteSpace: "nowrap",
-              fontFamily: "'Inter', ui-sans-serif, sans-serif", minWidth: "70px",
-            }}>
-              Trạng thái
-            </span>
-            {STATUS_FILTERS.map((f) => (
-              <PillTab key={f.id} id={f.id} label={f.label}
-                active={activeStatusFilter === f.id} onClick={setActiveStatusFilter} />
-            ))}
+      {/* Dashboard Controls */}
+      <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-wrap items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Sơ Đồ Phòng / Villa</h3>
+            <p className="text-sm text-gray-500">Giám sát trạng thái phòng theo thời gian thực. Thay đổi trạng thái phòng qua hệ thống.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadVillas}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              TẢI LẠI
+            </button>
+            <button
+              onClick={() => setShowReportRoomModal(true)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              BÁO PHÒNG HỎNG
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-4 pt-4 border-t border-gray-100">
+          {/* Status Filters */}
+          <div className="flex items-center gap-6 text-sm">
+            <span className="text-gray-400 font-medium w-20">Trạng thái</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                onClick={() => setActiveStatusFilter("all")}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                  activeStatusFilter === "all" ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                Mọi trạng thái
+              </button>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeStatusFilter === "AVAILABLE"}
+                  onChange={() => setActiveStatusFilter(activeStatusFilter === "AVAILABLE" ? "all" : "AVAILABLE")}
+                  className="rounded text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Sẵn sàng
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeStatusFilter === "OCCUPIED"}
+                  onChange={() => setActiveStatusFilter(activeStatusFilter === "OCCUPIED" ? "all" : "OCCUPIED")}
+                  className="rounded text-red-500 focus:ring-red-500 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span> Có khách
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeStatusFilter === "CLEANING"}
+                  onChange={() => setActiveStatusFilter(activeStatusFilter === "CLEANING" ? "all" : "CLEANING")}
+                  className="rounded text-sky-500 focus:ring-sky-500 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-sky-500"></span> Dọn phòng
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeStatusFilter === "MAINTENANCE"}
+                  onChange={() => setActiveStatusFilter(activeStatusFilter === "MAINTENANCE" ? "all" : "MAINTENANCE")}
+                  className="rounded text-gray-400 focus:ring-gray-400 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-gray-400"></span> Bảo trì
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeStatusFilter === "DEPOSITED"}
+                  onChange={() => setActiveStatusFilter(activeStatusFilter === "DEPOSITED" ? "all" : "DEPOSITED")}
+                  className="rounded text-orange-500 focus:ring-orange-500 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-orange-500"></span> Đã cọc
+                </span>
+              </label>
+            </div>
           </div>
 
-          {/* Hairline divider */}
-          <div style={{ height: "1px", background: "#e6e6e6" }} />
-
-          {/* Row 3: Capacity filter + count badge */}
-          <div style={{ display: "flex", alignItems: "center", gap: "2px", flexWrap: "wrap" }}>
-            <span style={{
-              fontSize: "11px", fontWeight: "500", color: "#838383",
-              letterSpacing: "0.020em", marginRight: "10px", whiteSpace: "nowrap",
-              fontFamily: "'Inter', ui-sans-serif, sans-serif", minWidth: "70px",
-            }}>
-              Sức chứa
-            </span>
-            {CAPACITY_FILTERS.map((f) => (
-              <PillTab key={f.id} id={f.id} label={f.label}
-                active={activeCapacityFilter === f.id} onClick={setActiveCapacityFilter} />
-            ))}
-            {/* Result count badge — Jp indigo-pulse accent */}
-            <span style={{
-              marginLeft: "auto",
-              borderRadius: "100px",
-              background: "#4177ff",
-              color: "#ffffff",
-              fontSize: "11px",
-              fontWeight: "500",
-              padding: "4px 14px",
-              letterSpacing: "0.020em",
-              fontFamily: "'Inter', ui-sans-serif, sans-serif",
-            }}>
+          {/* Capacity Filters */}
+          <div className="flex items-center gap-6 text-sm">
+            <span className="text-gray-400 font-medium w-20">Sức chứa</span>
+            <div className="flex flex-wrap items-center gap-4 flex-1">
+              <button
+                onClick={() => setActiveCapacityFilter("all")}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                  activeCapacityFilter === "all" ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                Mọi sức chứa
+              </button>
+              {["2", "3", "4", "8", "25", "50"].map((cap) => (
+                <button
+                  key={cap}
+                  onClick={() => setActiveCapacityFilter(cap)}
+                  className={`flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                    activeCapacityFilter === cap ? "text-indigo-600 font-bold" : "text-gray-650 hover:text-indigo-600"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                  </svg>
+                  {cap} người
+                </button>
+              ))}
+            </div>
+            <span className="px-3 py-1 bg-indigo-600 text-white rounded-md text-[10px] font-bold">
               {filteredVillas.length} phòng
             </span>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Content wrapper */}
-      <div className="space-y-6" style={{ paddingTop: "0" }}>
-
+      {/* Grid of Grouped Rooms */}
+      <section className="space-y-6">
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 p-4 flex items-center gap-2 text-red-700 text-xs">
+          <div className="bg-red-50 border border-red-200 p-4 flex items-center gap-2 text-red-750 text-xs">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -359,63 +441,69 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
 
         {/* Empty filtered state */}
         {!loading && filteredVillas.length === 0 && villas.length > 0 && (
-          <div style={{
-            textAlign: "center", padding: "64px 24px", color: "#838383",
-            fontFamily: "'Inter', ui-sans-serif, sans-serif",
-          }}>
-            <div style={{ fontSize: "38px", marginBottom: "12px", opacity: 0.4 }}>🔍</div>
-            <p style={{ fontSize: "14px", fontWeight: "500", color: "#333333" }}>Không có phòng phù hợp</p>
-            <p style={{ fontSize: "13px", marginTop: "4px" }}>Thử chọn loại phòng hoặc trạng thái khác.</p>
+          <div className="bg-white border border-gray-200 p-12 text-center rounded-xl">
+            <p className="text-sm text-gray-500 font-medium">Không tìm thấy phòng nào phù hợp với bộ lọc.</p>
             <button
               onClick={() => { setActiveTypeFilter("all"); setActiveStatusFilter("all"); setActiveCapacityFilter("all"); }}
-              style={{
-                marginTop: "16px", borderRadius: "100px", background: "#202020",
-                color: "#ffffff", fontSize: "13px", fontWeight: "500", padding: "8px 18px",
-                border: "none", cursor: "pointer", letterSpacing: "0.020em",
-              }}
+              className="mt-3 px-4 py-2 bg-gray-800 text-white text-xs font-semibold rounded-lg hover:bg-gray-900 transition-colors cursor-pointer"
             >
-              Xem tất cả phòng
+              Đặt lại bộ lọc
             </button>
           </div>
         )}
 
-        {/* Room Grid grouped by roomTypeName */}
         {!loading && filteredVillas.length > 0 && (
           <div className="space-y-8">
             {Object.entries(grouped).map(([typeName, roomsOfType]) => (
               <div key={typeName} className="space-y-4">
-                <h4 className="font-serif text-sm font-bold text-sage-900 border-l-4 border-primary-700 pl-3 uppercase tracking-wider">
-                  {typeName} ({roomsOfType.length} phòng)
-                </h4>
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-6 bg-black rounded-full"></div>
+                  <h4 className="text-md font-bold text-gray-800 uppercase tracking-tight">
+                    {typeName} ({roomsOfType.length} phòng)
+                  </h4>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {roomsOfType.map((villa) => (
                     <div key={villa.roomId} className={getRoomCardStyle(villa.roomTypeName, villa.status)}>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-extrabold text-primary-955 bg-primary-100/80 border border-primary-250 px-2 py-0.5 uppercase rounded-sm font-mono flex items-center">
-                            {getRoomIcon(villa.roomTypeName)}
-                            <span>Phòng: {villa.roomNumber}</span>
+                      <div className="space-y-4 flex-grow flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                          <span className="px-2 py-1 bg-gray-200 rounded text-[10px] font-bold flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                            </svg>
+                            PHÒNG: {villa.roomNumber}
                           </span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider border ${getStatusStyle(villa.status)}`}>
+                          <span className={`text-[10px] font-bold uppercase ${
+                            villa.status === "AVAILABLE" ? "text-emerald-600" :
+                            villa.status === "OCCUPIED" ? "text-red-600" :
+                            villa.status === "MAINTENANCE" ? "text-amber-600" :
+                            villa.status === "DEPOSITED" ? "text-indigo-650" : "text-sky-600"
+                          }`}>
                             {getStatusLabel(villa.status)}
                           </span>
                         </div>
 
-                        <div className="h-20 w-full bg-white/70 backdrop-blur-xs rounded-xl overflow-hidden relative flex flex-col justify-center px-3 border border-white/80 text-xs">
-                          {getStatusDescription(villa.status, villa)}
+                        <div className="min-h-[60px] py-2 flex flex-col justify-center">
+                          <div className="text-gray-750 italic text-xs">
+                            {getStatusDescription(villa.status, villa)}
+                          </div>
                         </div>
 
-                        <div className="flex justify-between items-center text-[10px] pt-1">
-                          <span className="font-serif font-normal text-sage-955">{villa.roomTypeName || "—"}</span>
-                          <span className="font-semibold text-primary-955">{formatPrice(villa.basePrice)}/đêm</span>
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-200/50 text-[10px]">
+                          <span className="text-gray-400 max-w-[120px] truncate" title={villa.roomTypeName}>
+                            {villa.roomTypeName || "—"}
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {formatPrice(villa.basePrice)}/đêm
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex justify-end space-x-1.5 pt-2 border-t border-primary-100/50 mt-2">
+                      <div className="mt-3">
                         <select
                           value={villa.status}
                           onChange={(e) => handleUpdateRoomStatus(villa.roomId, e.target.value)}
-                          className="p-1.5 border border-primary-250 text-[10px] focus:outline-none bg-white cursor-pointer rounded-md w-full font-semibold"
+                          className="w-full text-xs border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white p-2 font-medium cursor-pointer"
                         >
                           {villa.status === "DEPOSITED" && (
                             <option value="DEPOSITED">Đã cọc (Deposited)</option>
@@ -424,7 +512,8 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
                           <option value="OCCUPIED">Có khách (Occupied)</option>
                           <option value="CLEANING">Dọn dẹp (Cleaning)</option>
                           <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
-                          <option value="VACANT_NEEDS_CLEANING">Cần dọn (Needs Cleaning)</option>
+                          <option value="DIRTY">Cần dọn (Dirty)</option>
+                          <option value="VACANT_NEEDS_CLEANING">Cần dọn dẹp (Needs Cleaning)</option>
                         </select>
                       </div>
                     </div>
@@ -434,8 +523,8 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
             ))}
           </div>
         )}
-
-      </div>{/* end content wrapper */}
+      </section>
+      {/* end of grid section */}
 
       {/* Report Broken Room Modal */}
       {showReportRoomModal && (
