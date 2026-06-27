@@ -155,7 +155,6 @@ public class SpaBookingController {
         );
         return ResponseEntity.ok(response);
     }
-<<<<<<< HEAD
     
 
     /**
@@ -175,7 +174,7 @@ public class SpaBookingController {
         String r = role.toUpperCase();
         return r.equals("THERAPIST") || r.equals("SPA") || r.equals("YOGA")
                 || r.equals("PHYSIO") || r.equals("ADMIN") || r.equals("MANAGER");
-=======
+    }
 
     /**
      * Cancel a spa session.
@@ -193,6 +192,5 @@ public class SpaBookingController {
         String reason = request.get("reason");
         SpaBookingResponseDTO response = spaBookingService.cancelSpaBooking(spaBookingId, reason);
         return ResponseEntity.ok(response);
->>>>>>> 4205dfc98a1725c5256ce2bca41bbb23039913e5
     }
 }
