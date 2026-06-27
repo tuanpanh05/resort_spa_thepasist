@@ -66,7 +66,7 @@ export default function ChefDashboard() {
         currentTables.push({
           id: roomStr,
           status: "Occupied",
-          capacity: 4, 
+          capacity: 4,
           currentGuest: activeRooms[roomStr]
         });
       }
@@ -86,8 +86,8 @@ export default function ChefDashboard() {
           guestName: item.guestName,
           room: extractFirstTable(item.room),
           origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
-                  : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
-                  : (item.origin || "Tại Quán"),
+            : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
+              : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -114,12 +114,14 @@ export default function ChefDashboard() {
   const fetchChefData = async () => {
     setLoading(true);
     try {
-      const [menuRes, ordersRes, upcomingOrdersRes, allergiesRes, tablesRes] = await Promise.all([
+      const [menuRes, ordersRes, upcomingOrdersRes, allergiesRes, tablesRes, inventoryRes, procurementsRes] = await Promise.all([
         axiosClient.get("/chef/menu"),
         axiosClient.get("/chef/orders"),
         axiosClient.get("/chef/orders/upcoming"),
         axiosClient.get("/guest/chef/allergies"),
-        axiosClient.get("/chef/tables")
+        axiosClient.get("/chef/tables"),
+        axiosClient.get("/chef/inventory").catch(err => ({ data: [] })),
+        axiosClient.get("/chef/procurements").catch(err => ({ data: [] }))
       ]);
 
       const mappedAllergies = allergiesRes.data.map(item => {
@@ -178,8 +180,8 @@ export default function ChefDashboard() {
           guestName: item.guestName,
           room: extractFirstTable(item.room),
           origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
-                  : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
-                  : (item.origin || "Tại Quán"),
+            : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
+              : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -216,7 +218,9 @@ export default function ChefDashboard() {
       setDishes(mappedDishes);
       setOrders(mappedOrders);
       setUpcomingOrders(mappedUpcomingOrders);
-      
+      setIngredients(inventoryRes.data);
+      setProcurements(procurementsRes.data);
+
       const realTables = tablesRes.data.map(t => ({
         id: t.id,
         status: t.status === "AVAILABLE" ? "Available" : "Occupied",
@@ -306,7 +310,7 @@ export default function ChefDashboard() {
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     const numericId = typeof orderId === "string" ? orderId.replace("ORD-", "") : orderId;
-    
+
     const updateState = () => {
       setOrders((prev) =>
         prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
@@ -323,15 +327,7 @@ export default function ChefDashboard() {
       console.warn("Failed to update status on backend", err);
       updateState();
     }
-    
-    const order = orders.find((ord) => ord.id === orderId) || upcomingOrders.find((ord) => ord.id === orderId);
-    const nextStatusText =
-      newStatus === "Cooking" ? "bắt đầu chuẩn bị" 
-      : newStatus === "Delivering" ? "xong món, đang giao" 
-      : newStatus === "Cancelled" ? "bị hủy" 
-      : "hoàn thành giao hàng";
-    const msg = `Đơn hàng ${orderId} của khách ${order?.guestName || "khách"} đã ${nextStatusText}`;
-    playVoiceAlert(msg);
+
   };
 
   // Allergy Matching helper for orders
@@ -423,59 +419,59 @@ export default function ChefDashboard() {
         />
       )}
 
-      <OperationSidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isMobileMenuOpen={isMobileMenuOpen} 
+      <OperationSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
         userRoleLabel="Executive Chef"
         handleLogout={() => {
-            if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?"))
-                window.location.href = "/dang-nhap";
+          if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?"))
+            window.location.href = "/dang-nhap";
         }}
         sidebarItems={[
-            {
-              id: "overview",
-              label: "1. Bếp tổng quan",
-              icon: LayoutDashboard,
-            },
-            {
-              id: "allergies",
-              label: "2. Cảnh báo dị ứng",
-              icon: ShieldAlert,
-              badge: `${allergies.filter((a) => a.allergies.length > 0).length}`,
-            },
-            {
-              id: "menu",
-              label: "3. Thực đơn hôm nay",
-              icon: Utensils,
-              badge: `${dishes.filter((d) => d.isTodayMenu).length}`,
-            },
-            {
-              id: "orders",
-              label: "4. Đơn đặt món",
-              icon: Clock,
-              badge: `${orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled").length}`,
-            },
-            {
-              id: "upcoming",
-              label: "5. Đơn Combo Đặt Trước",
-              icon: Package,
-              badge: `${upcomingOrders.length}`,
-            },
-            { id: "dishes", label: "6. Danh mục món ăn", icon: FileText },
-            {
-              id: "inventory",
-              label: "7. Kho & Gọi hàng",
-              icon: Package,
-              badge: `${ingredients.filter((i) => i.status !== "Đầy đủ").length}`,
-            },
-            {
-              id: "tables",
-              label: "8. Quản Lý Bàn",
-              icon: LayoutDashboard,
-            },
-          ]}
+          {
+            id: "overview",
+            label: "1. Bếp tổng quan",
+            icon: LayoutDashboard,
+          },
+          {
+            id: "allergies",
+            label: "2. Cảnh báo dị ứng",
+            icon: ShieldAlert,
+            badge: `${allergies.filter((a) => a.allergies.length > 0).length}`,
+          },
+          {
+            id: "menu",
+            label: "3. Thực đơn hôm nay",
+            icon: Utensils,
+            badge: `${dishes.filter((d) => d.isTodayMenu).length}`,
+          },
+          {
+            id: "orders",
+            label: "4. Đơn đặt món",
+            icon: Clock,
+            badge: `${orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled").length}`,
+          },
+          {
+            id: "upcoming",
+            label: "5. Đơn Combo Đặt Trước",
+            icon: Package,
+            badge: `${upcomingOrders.length}`,
+          },
+          { id: "dishes", label: "6. Danh mục món ăn", icon: FileText },
+          {
+            id: "inventory",
+            label: "7. Kho & Gọi hàng",
+            icon: Package,
+            badge: `${ingredients.filter((i) => i.status !== "Đầy đủ").length}`,
+          },
+          {
+            id: "tables",
+            label: "8. Quản Lý Bàn",
+            icon: LayoutDashboard,
+          },
+        ]}
       />
 
       {/* Main Content Area */}
@@ -491,7 +487,7 @@ export default function ChefDashboard() {
               {activeTab === "menu" &&
                 "3. Quản Lý Thực Đơn Hàng Ngày (Menu Today)"}
               {activeTab === "orders" && "4. Danh Sách Gọi Món & Tiến Độ Nấu"}
-              {activeTab === "upcoming" && "5. Quản Lý Đơn Combo Đặt Trước (Upcoming Combos)"}
+              {activeTab === "upcoming" && "5. Quản Lý Đơn Đặt Trước"}
               {activeTab === "dishes" && "6. Cơ Sở Dữ Liệu Danh Mục Món Ăn"}
               {activeTab === "inventory" &&
                 "7. Kho Nguyên Liệu & Yêu Cầu Thu Mua"}
@@ -523,7 +519,7 @@ export default function ChefDashboard() {
           <>
             {activeTab === "overview" && (() => {
               const todayObj = new Date();
-              const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+              const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
               const allTodayOrders = [
                 ...orders,
                 ...upcomingOrders.filter(o => o.date === todayStr)

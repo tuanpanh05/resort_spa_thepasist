@@ -78,7 +78,8 @@ export default function MealSelectionStep({
   // Convert internal dailyMenus structure → { "yyyy-MM-dd": { period: { foodId: qty } } }
   const buildMealSelectionsFromCombo = (safeCombo, openBookingDays) => {
     const result = {};
-    openBookingDays.forEach((dateStr, dayIndex) => {
+    const actualDaysCount = Math.min(openBookingDays.length, Math.max(1, nightsCount));
+    openBookingDays.slice(0, actualDaysCount).forEach((dateStr, dayIndex) => {
       const menuDayIndex = dayIndex % Math.max(1, safeCombo.dailyMenus.length);
       const menu = safeCombo.dailyMenus[menuDayIndex] || [];
       const dateObj = {};
@@ -114,7 +115,8 @@ export default function MealSelectionStep({
     try {
       if (!combo.dailyMenus || combo.dailyMenus.length === 0) return 0;
       let sum = 0;
-      mealBookingDays.forEach((date, index) => {
+      const actualDaysCount = Math.min(openDays.length, Math.max(1, nightsCount));
+      openDays.slice(0, actualDaysCount).forEach((date, index) => {
         const menuDayIndex = index % combo.dailyMenus.length;
         const dailyMenu = combo.dailyMenus[menuDayIndex] || [];
         
@@ -431,7 +433,8 @@ export default function MealSelectionStep({
         {safeCombos.map((combo) => {
           const isSelected = selectedComboId === combo.id;
           const totalComboPrice = calculateTotalComboPrice(combo);
-          const avgPricePerDay = totalComboPrice / (guestsCount * Math.max(1, openDays.length || nightsCount));
+          const actualDaysCount = Math.min(openDays.length, Math.max(1, nightsCount));
+          const avgPricePerDay = actualDaysCount > 0 ? totalComboPrice / (guestsCount * actualDaysCount) : 0;
           const hasSubstitutions = combo.allergenWarnings.length > 0;
           const blocked = allDaysBlocked;
 
@@ -504,7 +507,7 @@ export default function MealSelectionStep({
                 <div className="space-y-2 pt-5 border-t border-[#1a2f23]/10">
                   <div className="flex justify-between items-center text-[13px]">
                     <span className="text-sage-500">Số lượng:</span>
-                    <span className="font-semibold text-[#1a2f23]">{guestsCount} Khách × {nightsCount} Ngày</span>
+                    <span className="font-semibold text-[#1a2f23]">{guestsCount} Khách × {actualDaysCount} Ngày</span>
                   </div>
                   <div className="flex justify-between items-center text-[13px]">
                     <span className="text-sage-500">Trung bình:</span>
