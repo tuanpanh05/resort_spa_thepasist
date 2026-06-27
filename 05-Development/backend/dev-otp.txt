@@ -4,3 +4,25 @@ Purpose: REGISTER / ACTIVATE ACCOUNT
 OTP Code: 886848
 Time: 2026-06-26T23:12:32.191444700
 ========================================
+========================================
+INVOICE EMAIL
+Email: staff@nguson.com
+Invoice: #NS-INV-55
+Guest: Staff Ngu Son
+Total: 137,500,000 VNĐ
+Payment Method: Tiền mặt tại quầy
+Time Sent: 2026-06-27T17:52:21.553161600
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: staff@nguson.com
+Guest Name: Staff Ngu Son
+Booking ID: #NS-97
+Check-in: 2026-06-28T14:00
+Check-out: 2026-06-29T12:00
+Rooms: Bungalow Đá Cuội Bên Rừng (Phòng BD-102), Bungalow Đá Cuội Bên Rừng (Phòng BD-103)
+Total Amount: 23,469,600 VNĐ
+Deposit Paid: 7,040,880 VNĐ
+Amount Due: 16,428,720 VNĐ
+Time Sent: 2026-06-27T17:52:55.480551800
+========================================

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * API utility for making authenticated requests to the backend.
  * Base URL: http://localhost:8080/api
  */
@@ -246,9 +246,16 @@ export const bookingLookupApi = {
   getGuestProfile: (email) =>
     apiRequest(`/guest/profile?email=${encodeURIComponent(email)}`),
 
-  /** GET /bookings/:id/itinerary â€” Lá»‹ch trÃ¬nh khÃ¡ch hÃ ng */
+  /** GET /bookings/:id/itinerary — Lịch trình khách hàng */
   getItinerary: (bookingId) =>
     apiRequest(`/bookings/${bookingId}/itinerary`),
+
+  /** POST /bookings/:id/cancel — Hủy đặt phòng */
+  cancel: (bookingId, reason) =>
+    apiRequest(`/bookings/${bookingId}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
 };
 
 

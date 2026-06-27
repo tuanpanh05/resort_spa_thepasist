@@ -65,7 +65,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
                  INNER JOIN dbo.food_order o ON o.order_id = d.order_id
                  WHERE o.room_booking_id = :bookingId
                    AND d.is_package_included = 0
-                   AND o.status IN ('READY', 'DELIVERED')),
+                   AND o.status IN ('PENDING', 'PREPARING', 'READY', 'DELIVERED')),
                 0
             ) + COALESCE(
                 (SELECT SUM(o.total_amount - o.refund_amount)

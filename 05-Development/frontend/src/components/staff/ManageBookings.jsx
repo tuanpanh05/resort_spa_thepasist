@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Search, Edit, X, UserCheck, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus } from "lucide-react";
-import { staffApi, bookingApi, masterDataApi } from "../../api";
+import { Search, Edit, X, UserCheck, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
+import { staffApi, bookingApi, masterDataApi, paymentApi, bookingLookupApi } from "../../api";
 
 /**
  * UC08: ManageBookings — Arrivals Dashboard & Check-In Management.
@@ -25,6 +25,17 @@ export default function ManageBookings({
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Check-Out modal states
+  const [showCheckOutModal, setShowCheckOutModal] = useState(false);
+  const [checkOutBooking, setCheckOutBooking] = useState(null);
+  const [checkoutInvoice, setCheckoutInvoice] = useState(null);
+  const [checkoutItinerary, setCheckoutItinerary] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
+  const [checkoutVoucherCode, setCheckoutVoucherCode] = useState("");
+  const [isApplyingCheckoutVoucher, setIsApplyingCheckoutVoucher] = useState(false);
+  const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState("CASH");
 
   // Check-In modal state
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -150,6 +161,116 @@ export default function ManageBookings({
       setWalkInError(err.message || "Không thể đặt phòng cho khách vãng lai.");
     } finally {
       setWalkInLoading(false);
+    }
+  };
+
+  // Format error messages to hide raw database/SQL exceptions from guests/staff
+  const cleanErrorMessage = (err) => {
+    const msg = err?.message || "";
+    if (msg.includes("constraint") || msg.includes("execute statement") || msg.includes("SQL") || msg.includes("constraint") || msg.includes("foreign key") || msg.includes("check constraint")) {
+      return "Hệ thống gặp sự cố khi đồng bộ hóa đơn với Cơ sở dữ liệu. Vui lòng liên hệ quản trị viên hoặc kiểm tra kết nối DB.";
+    }
+    return msg || "Đã xảy ra lỗi không xác định.";
+  };
+
+  // Open Check-Out & Generate Invoice details
+  const openCheckOutModal = async (booking) => {
+    setCheckOutBooking(booking);
+    setCheckoutInvoice(null);
+    setCheckoutItinerary(null);
+    setCheckoutError(null);
+    setCheckoutVoucherCode("");
+    setShowCheckOutModal(true);
+    setCheckoutLoading(true);
+    try {
+      // 1. Create or get existing invoice
+      const invoiceData = await paymentApi.createInvoice(booking.bookingId);
+      setCheckoutInvoice(invoiceData);
+      
+      // 2. Get itinerary details (timeline services)
+      const itineraryData = await bookingLookupApi.getItinerary(booking.bookingId);
+      setCheckoutItinerary(itineraryData);
+    } catch (err) {
+      setCheckoutError(cleanErrorMessage(err));
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  // Perform standard Cash payment & Check-out
+  const handlePerformCheckout = async () => {
+    if (!checkoutInvoice) return;
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      // 1. Mark cash payment (pays off remaining amount)
+      await paymentApi.markCashPayment(checkoutInvoice.invoiceId);
+      
+      // 2. Perform checkout
+      await paymentApi.performCheckout(checkoutInvoice.invoiceId);
+      
+      alert(`Đã hoàn tất check-out cho khách ${checkOutBooking.guestName}! Phòng đã chuyển sang trạng thái cần vệ sinh (DIRTY).`);
+      setShowCheckOutModal(false);
+      await loadAllData();
+    } catch (err) {
+      setCheckoutError(cleanErrorMessage(err));
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  // Perform early/force check-out (cancels pending F&B)
+  const handleForceCheckout = async () => {
+    if (!checkoutInvoice) return;
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      // Mark cash payment
+      await paymentApi.markCashPayment(checkoutInvoice.invoiceId);
+      
+      // Perform early checkout (force cancel pending food and checkout)
+      await paymentApi.earlyCheckout(checkoutInvoice.invoiceId);
+      
+      alert(`Đã hoàn tất check-out sớm (Hủy cưỡng bức các đơn ăn uống chưa phục vụ) cho khách ${checkOutBooking.guestName}!`);
+      setShowCheckOutModal(false);
+      await loadAllData();
+    } catch (err) {
+      setCheckoutError(cleanErrorMessage(err));
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  // Apply voucher at counter
+  const handleApplyCheckoutVoucher = async () => {
+    if (!checkoutInvoice || !checkoutVoucherCode.trim()) return;
+    setIsApplyingCheckoutVoucher(true);
+    setCheckoutError(null);
+    try {
+      const updated = await paymentApi.applyVoucher(checkoutInvoice.invoiceId, checkoutVoucherCode.trim());
+      setCheckoutInvoice(updated);
+      alert("Áp dụng mã giảm giá thành công!");
+    } catch (err) {
+      setCheckoutError(cleanErrorMessage(err));
+    } finally {
+      setIsApplyingCheckoutVoucher(false);
+    }
+  };
+
+  // Remove voucher at counter
+  const handleRemoveCheckoutVoucher = async () => {
+    if (!checkoutInvoice) return;
+    setIsApplyingCheckoutVoucher(true);
+    setCheckoutError(null);
+    try {
+      const updated = await paymentApi.removeVoucher(checkoutInvoice.invoiceId);
+      setCheckoutInvoice(updated);
+      setCheckoutVoucherCode("");
+      alert("Đã gỡ bỏ mã giảm giá.");
+    } catch (err) {
+      setCheckoutError(cleanErrorMessage(err));
+    } finally {
+      setIsApplyingCheckoutVoucher(false);
     }
   };
 
@@ -465,6 +586,15 @@ export default function ManageBookings({
                                 Chưa đến ngày check-in
                               </span>
                             )
+                          )}
+                          {b.status === "CHECKED_IN" && (
+                            <button
+                              onClick={() => openCheckOutModal(b)}
+                              className="px-2.5 py-1.5 bg-red-700 hover:bg-red-850 text-white rounded-none text-[10px] font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-1 transition-colors"
+                            >
+                              <LogOut className="h-3 w-3" />
+                              Check-out
+                            </button>
                           )}
                           {onViewItinerary && (
                             <button
@@ -794,6 +924,313 @@ export default function ManageBookings({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Checkout Modal */}
+      {showCheckOutModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh] text-left border-t-4 border-red-700 relative">
+            <button
+              onClick={() => setShowCheckOutModal(false)}
+              className="absolute top-4 right-4 text-sage-400 hover:text-sage-950 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="border-b border-primary-50 pb-3">
+              <h3 className="font-serif text-lg font-bold text-sage-950 flex items-center gap-2">
+                <LogOut className="h-5 w-5 text-red-700" />
+                Thủ Tục Trả Phòng & Hóa Đơn Tổng Hợp (Guest Folio)
+              </h3>
+              <p className="text-xs text-sage-500 mt-1">
+                Xem chi tiết các dịch vụ sử dụng, áp dụng giảm giá và xác nhận thanh toán dư nợ tại quầy.
+              </p>
+            </div>
+
+            {checkoutLoading && !checkoutInvoice ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-3 text-sage-500">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Đang tải hóa đơn Guest Folio...</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {checkoutError && (
+                  <div className="bg-red-50 border border-red-200 text-red-750 p-4 text-xs font-medium space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <AlertCircle className="h-4.5 w-4.5 text-red-600 flex-shrink-0" />
+                      <span>{checkoutError}</span>
+                    </div>
+                    {checkoutError.includes("chế biến") && (
+                      <div className="pt-2 border-t border-red-200/50 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleForceCheckout}
+                          className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold uppercase tracking-wider text-[10px] cursor-pointer border-none"
+                        >
+                          Hủy cưỡng bức và Check-out sớm
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Guest Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-primary-50/20 p-4 text-xs">
+                  <div>
+                    <span className="text-sage-400 block uppercase tracking-wider text-[9px] mb-1">Khách lưu trú</span>
+                    <strong className="text-sage-900 text-sm">{checkOutBooking?.guestName}</strong>
+                    <div className="text-sage-500 font-mono mt-0.5">{checkOutBooking?.guestPhone}</div>
+                  </div>
+                  <div>
+                    <span className="text-sage-400 block uppercase tracking-wider text-[9px] mb-1">Mã đặt phòng / Phòng</span>
+                    <strong className="text-sage-900 text-sm">#BK-{checkOutBooking?.bookingId}</strong>
+                    <div className="text-sage-500 font-mono mt-0.5">Phòng: {checkOutBooking?.roomNumber || "Chưa gán"}</div>
+                  </div>
+                </div>
+
+                {/* Detailed Booked Items */}
+                <div className="border border-primary-100 bg-[#fafbfa] p-4 text-xs space-y-4">
+                  <h4 className="font-serif font-bold text-sage-900 uppercase tracking-wider border-b border-primary-50 pb-2">
+                    Chi Tiết Dịch Vụ Đã Đặt
+                  </h4>
+
+                  {/* Room & Nights */}
+                  <div className="flex justify-between border-b border-dashed border-primary-50 pb-2">
+                    <div>
+                      <span className="font-semibold text-sage-800">🛏️ Tiền phòng / Villa ({checkOutBooking?.roomTypeName})</span>
+                      <span className="text-[10px] text-sage-400 block mt-0.5">
+                        Thời gian: {formatDate(checkOutBooking?.checkInDate)} - {formatDate(checkOutBooking?.checkOutDate)}
+                      </span>
+                    </div>
+                    <span className="font-mono font-semibold">{formatCurrency(checkoutInvoice?.roomSubtotal)}</span>
+                  </div>
+
+                  {/* Spa */}
+                  {checkoutItinerary?.timeline?.some(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED")) && (
+                    <div className="border-b border-dashed border-primary-50 pb-2 space-y-1.5">
+                      <span className="font-semibold text-sage-800">💆‍♀️ Trị liệu Spa:</span>
+                      <div className="space-y-1.5 pl-4">
+                        {checkoutItinerary.timeline
+                          .filter(e => e.type === "SPA" && e.status && (e.status.toUpperCase() === "CONFIRMED" || e.status.toUpperCase() === "COMPLETED"))
+                          .map((event, idx) => (
+                            <div key={`left-spa-${idx}`} className="flex justify-between text-sage-600">
+                              <span>💆‍♀️ {event.title}</span>
+                              <span className="font-mono">{formatCurrency(event.price)}</span>
+                            </div>
+                          ))}
+                        {checkoutInvoice?.spaChildDiscount > 0 && (
+                          <div className="flex justify-between text-emerald-700 font-semibold">
+                            <span>👶 Giảm giá dịch vụ Trẻ em:</span>
+                            <span className="font-mono">-{formatCurrency(checkoutInvoice.spaChildDiscount)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* F&B */}
+                  {checkoutItinerary?.timeline?.some(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED" || e.status.toUpperCase() === "PENDING" || e.status.toUpperCase() === "PREPARING")) && (
+                    <div className="border-b border-dashed border-primary-50 pb-2 space-y-1.5">
+                      <span className="font-semibold text-sage-800">🍲 Dịch vụ ẩm thực F&B:</span>
+                      <div className="space-y-1.5 pl-4">
+                        {checkoutItinerary.timeline
+                          .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED" || e.status.toUpperCase() === "PENDING" || e.status.toUpperCase() === "PREPARING"))
+                          .map((event, idx) => (
+                            <div key={idx} className="flex justify-between text-sage-600">
+                              <span>{event.title} ({event.description || "Số lượng: 1"})</span>
+                              <span className="font-mono">{formatCurrency(event.price)}</span>
+                            </div>
+                          ))}
+                        {checkoutInvoice?.foodChildDiscount > 0 && (
+                          <div className="flex justify-between text-emerald-700 font-semibold">
+                            <span>👶 Giảm giá ẩm thực Trẻ em:</span>
+                            <span className="font-mono">-{formatCurrency(checkoutInvoice.foodChildDiscount)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Voucher input form */}
+                <div className="border-t border-primary-50 pt-4 space-y-2 text-xs">
+                  <h4 className="font-serif font-bold text-sage-900 uppercase tracking-wider">
+                    Mã Giảm Giá / Voucher
+                  </h4>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={checkoutVoucherCode}
+                      onChange={(e) => setCheckoutVoucherCode(e.target.value)}
+                      placeholder="Ví dụ: WELCOME10, NGUSON50..."
+                      disabled={checkoutInvoice?.discountAmount > 0 || isApplyingCheckoutVoucher}
+                      className="flex-1 px-3 py-2 text-xs border border-primary-200 focus:outline-primary-300 uppercase bg-white disabled:bg-sage-50 disabled:text-sage-400"
+                    />
+                    {checkoutInvoice?.discountAmount > 0 ? (
+                      <button
+                        type="button"
+                        onClick={handleRemoveCheckoutVoucher}
+                        disabled={isApplyingCheckoutVoucher}
+                        className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-750 font-bold uppercase tracking-wider cursor-pointer border-none"
+                      >
+                        Gỡ bỏ
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleApplyCheckoutVoucher}
+                        disabled={isApplyingCheckoutVoucher || !checkoutVoucherCode.trim()}
+                        className="px-6 py-2 bg-primary-800 hover:bg-primary-900 text-white font-bold uppercase tracking-wider disabled:opacity-50 transition-all cursor-pointer border-none"
+                      >
+                        {isApplyingCheckoutVoucher ? "Đang áp dụng..." : "Áp dụng"}
+                      </button>
+                    )}
+                  </div>
+                  {checkoutInvoice?.discountAmount > 0 && (
+                    <p className="text-[10px] text-green-700 font-medium">
+                      ✓ Đã áp dụng Voucher thành công!
+                    </p>
+                  )}
+                </div>
+
+
+                {/* Payment Method Selector */}
+                <div className="border-t border-primary-50 pt-4 space-y-2.5 text-xs">
+                  <h4 className="font-serif font-bold text-sage-900 uppercase tracking-wider">
+                    Phương Thức Thanh Toán
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className={`flex items-center gap-2.5 p-3 border cursor-pointer transition-all rounded-lg ${checkoutPaymentMethod === 'CASH' ? 'border-[#cda250] bg-[#cda250]/5 font-semibold text-sage-900 shadow-sm' : 'border-primary-100 bg-white text-sage-600 hover:border-primary-200'}`}>
+                      <input
+                        type="radio"
+                        name="checkoutPaymentMethod"
+                        value="CASH"
+                        checked={checkoutPaymentMethod === "CASH"}
+                        onChange={() => setCheckoutPaymentMethod("CASH")}
+                        className="accent-[#cda250] h-4 w-4"
+                      />
+                      <span>Thanh toán tại quầy (Tiền mặt / POS)</span>
+                    </label>
+                    <label className={`flex items-center gap-2.5 p-3 border cursor-pointer transition-all rounded-lg ${checkoutPaymentMethod === 'VNPAY' ? 'border-[#cda250] bg-[#cda250]/5 font-semibold text-sage-900 shadow-sm' : 'border-primary-100 bg-white text-sage-600 hover:border-primary-200'}`}>
+                      <input
+                        type="radio"
+                        name="checkoutPaymentMethod"
+                        value="VNPAY"
+                        checked={checkoutPaymentMethod === "VNPAY"}
+                        onChange={() => setCheckoutPaymentMethod("VNPAY")}
+                        className="accent-[#cda250] h-4 w-4"
+                      />
+                      <span>Thanh toán qua VNPay</span>
+                    </label>
+                  </div>
+                </div>
+
+                {checkoutPaymentMethod === 'VNPAY' && (
+                  <div className="bg-blue-50/50 border border-blue-200/50 text-blue-800 p-4 text-xs font-normal space-y-1 rounded-lg">
+                    <p className="font-semibold">ℹ️ Hướng dẫn thanh toán VNPay:</p>
+                    <p>Khách hàng quét mã VNPay QR hiển thị trên màn hình phụ tại quầy hoặc từ Email hóa đơn để hoàn tất thanh toán nốt phần dư nợ.</p>
+                    <p className="text-[10px] text-sage-500 italic mt-2">(Phần quét mã kết nối thiết bị chuyên dụng do nhân viên kỹ thuật khác phụ trách kết nối)</p>
+                  </div>
+                )}
+
+                {/* Pricing summary */}
+                <div className="border-t border-primary-100 pt-4 space-y-2.5 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-sage-500">Tiền phòng (Villa):</span>
+                    <span className="font-semibold font-mono">{formatCurrency(checkoutInvoice?.roomSubtotal)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sage-500">Trị liệu Spa phát sinh:</span>
+                    <span className="font-semibold font-mono">{formatCurrency((checkoutInvoice?.spaSubtotal || 0) + (checkoutInvoice?.spaChildDiscount || 0))}</span>
+                  </div>
+                  {checkoutInvoice?.spaChildDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-semibold pl-4">
+                      <span>Giảm giá dịch vụ Trẻ em (Spa):</span>
+                      <span className="font-mono">-{formatCurrency(checkoutInvoice.spaChildDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sage-500">Dịch vụ ẩm thực F&B phát sinh:</span>
+                    <span className="font-semibold font-mono">{formatCurrency((checkoutInvoice?.foodSubtotal || 0) + (checkoutInvoice?.foodChildDiscount || 0))}</span>
+                  </div>
+                  {checkoutInvoice?.foodChildDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-semibold pl-4">
+                      <span>Giảm giá ẩm thực Trẻ em (F&B):</span>
+                      <span className="font-mono">-{formatCurrency(checkoutInvoice.foodChildDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sage-500">Thuế VAT & Phí dịch vụ (10%):</span>
+                    <span className="font-semibold font-mono">{formatCurrency(checkoutInvoice?.taxAndFees)}</span>
+                  </div>
+
+                  <div className="border-t border-dashed border-primary-100 my-1"></div>
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-sage-900 font-semibold">Tổng cộng Folio phòng (Gốc):</span>
+                    <span className="font-bold font-mono">{formatCurrency((checkoutInvoice?.roomSubtotal || 0) + (checkoutInvoice?.spaSubtotal || 0) + (checkoutInvoice?.foodSubtotal || 0) + (checkoutInvoice?.taxAndFees || 0))}</span>
+                  </div>
+
+                  {checkoutInvoice?.discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-semibold">
+                      <span>Mã giảm giá áp dụng ({checkoutInvoice.voucherCode}):</span>
+                      <span className="font-mono">-{formatCurrency(checkoutInvoice.discountAmount)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-emerald-700 bg-emerald-50/50 p-2 font-semibold">
+                    <span>Đã đặt cọc thanh toán (30%):</span>
+                    <span className="font-mono">-{formatCurrency(checkoutInvoice?.depositAmount)}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-base bg-primary-50 p-3 font-serif border border-primary-100">
+                    <span className="font-bold text-sage-950">Số tiền còn lại cần thanh toán:</span>
+                    <span className="font-bold text-primary-950 font-mono text-lg">{formatCurrency(checkoutInvoice?.amountDue)}</span>
+                  </div>
+                </div>
+
+                {/* Footer buttons */}
+                <div className="flex justify-end space-x-2 pt-4 border-t border-primary-50">
+                  <button
+                    type="button"
+                    onClick={() => setShowCheckOutModal(false)}
+                    className="px-4 py-2 border border-primary-100 text-xs font-semibold uppercase tracking-wider hover:bg-primary-50 cursor-pointer"
+                    disabled={checkoutLoading}
+                  >
+                    Đóng
+                  </button>
+                  {checkoutPaymentMethod === 'CASH' ? (
+                    <button
+                      type="button"
+                      onClick={handlePerformCheckout}
+                      disabled={checkoutLoading}
+                      className="px-6 py-2 bg-red-750 hover:bg-red-850 text-white text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-2 disabled:opacity-50 border-none animate-fade-in"
+                    >
+                      {checkoutLoading ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        <>
+                          <LogOut className="h-3.5 w-3.5" />
+                          Xác nhận nhận tiền mặt & Check-out
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={true}
+                      className="px-6 py-2 bg-blue-600 text-white text-xs font-semibold uppercase tracking-wider opacity-55 cursor-not-allowed border-none animate-fade-in"
+                    >
+                      Thanh toán VNPay (Chờ người khác xử lý)
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

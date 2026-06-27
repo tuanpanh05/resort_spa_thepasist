@@ -214,4 +214,8 @@ public class InvoiceDTO {
     private BigDecimal spaChildDiscount;
     public BigDecimal getSpaChildDiscount() { return spaChildDiscount; }
     public void setSpaChildDiscount(BigDecimal spaChildDiscount) { this.spaChildDiscount = spaChildDiscount; }
+
+    private BigDecimal foodChildDiscount;
+    public BigDecimal getFoodChildDiscount() { return foodChildDiscount; }
+    public void setFoodChildDiscount(BigDecimal foodChildDiscount) { this.foodChildDiscount = foodChildDiscount; }
 }

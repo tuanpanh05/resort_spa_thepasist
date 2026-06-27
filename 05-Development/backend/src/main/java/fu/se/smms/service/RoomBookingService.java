@@ -101,10 +101,14 @@ public class RoomBookingService {
         RoomBooking booking = new RoomBooking();
         booking.setUser(user);
         booking.setSpecialRequests(dto.getSpecialRequests());
-        booking.setGuestsCount(dto.getGuestsCount() != null ? dto.getGuestsCount() : 1);
-        booking.setChildrenUnder5(dto.getChildrenUnder5() != null ? dto.getChildrenUnder5() : 0);
-        booking.setChildren5to12(dto.getChildren5to12() != null ? dto.getChildren5to12() : 0);
-        booking.setChildrenCount(dto.getChildrenCount() != null ? dto.getChildrenCount() : 0);
+        // BR-CHILD: Trẻ 5-12 tính vào 1 slot người lớn, trẻ dưới 5 không tính
+        int actualAdults = dto.getGuestsCount() != null ? dto.getGuestsCount() : 1;
+        int actualUnder5 = dto.getChildrenUnder5() != null ? dto.getChildrenUnder5() : 0;
+        int actual5to12 = dto.getChildren5to12() != null ? dto.getChildren5to12() : 0;
+        booking.setGuestsCount(actualAdults + actual5to12);
+        booking.setChildrenUnder5(actualUnder5);
+        booking.setChildren5to12(actual5to12);
+        booking.setChildrenCount(actualUnder5 + actual5to12);
         if (dto.getPackageIds() != null && !dto.getPackageIds().isEmpty()) {
             List<RetreatPackage> packages = new ArrayList<>();
             for (Integer pkgId : dto.getPackageIds()) {
