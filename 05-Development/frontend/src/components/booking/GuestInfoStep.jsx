@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Phone, Mail, Users, Calendar, ChevronRight } from "lucide-react";
+import { User, Phone, Mail, Users, Calendar, ChevronRight, Smile } from "lucide-react";
 
 export default function GuestInfoStep({
   guestInfo,
@@ -12,6 +12,32 @@ export default function GuestInfoStep({
   lookupStatus,
   setLookupStatus,
 }) {
+  const handleChildrenAgeChange = (field, value) => {
+    const val = value.replace(/[^0-9]/g, "");
+    let cleanVal = val;
+    if (cleanVal.length > 1 && cleanVal.startsWith("0")) {
+      cleanVal = cleanVal.replace(/^0+/, "");
+    }
+    
+    const newGuestInfo = {
+      ...guestInfo,
+      [field]: cleanVal !== "" ? Number(cleanVal) : ""
+    };
+    
+    const under5 = Number(newGuestInfo.childrenUnder5 || 0);
+    const between5And12 = Number(newGuestInfo.children5to12 || 0);
+    newGuestInfo.childrenCount = under5 + between5And12;
+    
+    setGuestInfo(newGuestInfo);
+    if (setFormErrors) {
+      setFormErrors({
+        ...formErrors,
+        [field]: "",
+        childrenCount: ""
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
@@ -121,7 +147,7 @@ export default function GuestInfoStep({
 
         <div>
           <label className="block text-resort-label uppercase text-sage-800 font-semibold mb-2">
-            {"Số lượng khách hàng"} <span className="text-red-500">*</span>
+            {"Người lớn"} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
@@ -146,6 +172,61 @@ export default function GuestInfoStep({
               {formErrors.guestsCount}
             </span>
           )}
+        </div>
+
+        {/* Children details sub-section */}
+        <div className="sm:col-span-2 border border-[#cda250]/20 bg-[#cda250]/5 p-5 rounded-xl space-y-4">
+          <span className="block text-resort-label uppercase text-sage-800 font-bold tracking-wide border-b border-[#cda250]/15 pb-2">
+            Số lượng trẻ em theo độ tuổi
+          </span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] uppercase text-sage-700 font-bold mb-1.5">
+                Dưới 5 tuổi (Miễn phí)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={guestInfo.childrenUnder5 !== undefined ? guestInfo.childrenUnder5 : ""}
+                  onChange={(e) => handleChildrenAgeChange('childrenUnder5', e.target.value)}
+                  className={`w-full pl-9 pr-3 py-2 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                    formErrors.childrenUnder5 ? "border-red-400" : "border-[#cda250]/20"
+                  }`}
+                />
+                <Smile className="h-4 w-4 text-sage-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              </div>
+              {formErrors.childrenUnder5 && (
+                <span className="text-[9px] text-red-500 font-normal mt-1 block">
+                  {formErrors.childrenUnder5}
+                </span>
+              )}
+            </div>
+            <div>
+              <label className="block text-[11px] uppercase text-sage-700 font-bold mb-1.5">
+                Từ 5 - 12 tuổi
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={guestInfo.children5to12 !== undefined ? guestInfo.children5to12 : ""}
+                  onChange={(e) => handleChildrenAgeChange('children5to12', e.target.value)}
+                  className={`w-full pl-9 pr-3 py-2 bg-white border text-resort-input text-[#1a2f23] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#cda250] focus:border-[#cda250] transition-all ${
+                    formErrors.children5to12 ? "border-red-400" : "border-[#cda250]/20"
+                  }`}
+                />
+                <Smile className="h-4 w-4 text-sage-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              </div>
+              {formErrors.children5to12 && (
+                <span className="text-[9px] text-red-500 font-normal mt-1 block">
+                  {formErrors.children5to12}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
 

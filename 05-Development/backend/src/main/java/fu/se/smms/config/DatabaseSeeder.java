@@ -72,6 +72,59 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
+            System.out.println("[DB Seeder] Creating restaurant_table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.restaurant_table', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.restaurant_table (
+                        table_id INT IDENTITY(1,1) PRIMARY KEY,
+                        table_number VARCHAR(20) NOT NULL UNIQUE,
+                        capacity INT NOT NULL,
+                        status VARCHAR(50) NOT NULL DEFAULT 'AVAILABLE'
+                    );
+                END
+                """);
+
+            Integer existingTables = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM dbo.restaurant_table", Integer.class);
+            if (existingTables != null && existingTables == 0) {
+                System.out.println("[DB Seeder] Seeding default restaurant tables...");
+                jdbcTemplate.execute("""
+                    INSERT INTO dbo.restaurant_table (table_number, capacity, status) VALUES 
+                    ('T-01', 2, 'AVAILABLE'),
+                    ('T-02', 2, 'AVAILABLE'),
+                    ('T-03', 2, 'AVAILABLE'),
+                    ('T-04', 2, 'AVAILABLE'),
+                    ('T-05', 2, 'AVAILABLE'),
+                    ('T-06', 4, 'AVAILABLE'),
+                    ('T-07', 4, 'AVAILABLE'),
+                    ('T-08', 4, 'AVAILABLE'),
+                    ('T-09', 4, 'AVAILABLE'),
+                    ('T-10', 4, 'AVAILABLE'),
+                    ('T-11', 6, 'AVAILABLE'),
+                    ('T-12', 6, 'AVAILABLE'),
+                    ('T-13', 6, 'AVAILABLE'),
+                    ('T-14', 8, 'AVAILABLE'),
+                    ('T-15', 8, 'AVAILABLE')
+                    """);
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not create/seed restaurant_table: " + e.getMessage());
+        }
+
+        try {
+            System.out.println("[DB Seeder] Ensuring table_id column in food_order table...");
+            jdbcTemplate.execute("""
+                IF NOT EXISTS(SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.food_order') AND name = 'table_id')
+                BEGIN
+                    ALTER TABLE dbo.food_order ADD table_id INT NULL FOREIGN KEY REFERENCES dbo.restaurant_table(table_id);
+                END
+                """);
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not add table_id to food_order: " + e.getMessage());
+        }
+
+
+        try {
             System.out.println("[DB Seeder] Altering columns to NVARCHAR and adding available_days...");
             jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN full_name NVARCHAR(255) NOT NULL");
             jdbcTemplate.execute("ALTER TABLE retreat_packages ALTER COLUMN name NVARCHAR(200) NOT NULL");
@@ -122,6 +175,11 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD special_requests NVARCHAR(MAX) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD guests_count INT NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD children_under_5 INT NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD children_5_to_12 INT NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD children_count INT NULL"); } catch (Exception e) {}
 
             try { jdbcTemplate.execute("ALTER TABLE food_order ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE food_order ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
@@ -130,9 +188,10 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
-            System.out.println("[DB Seeder] Successfully added/verified cancellation columns.");
+            try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD google_calendar_event_id VARCHAR(255) NULL"); } catch (Exception e) {}
+            System.out.println("[DB Seeder] Successfully added/verified cancellation and calendar columns.");
         } catch (Exception e) {
-            System.err.println("[DB Seeder] Warning: Could not add cancellation columns: " + e.getMessage());
+            System.err.println("[DB Seeder] Warning: Could not add cancellation or calendar columns: " + e.getMessage());
         }
 
         try {
@@ -213,24 +272,21 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.update("DELETE FROM room"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM room_types"); } catch (Exception e) {}
 
-            // Seed new room types
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Gá»— HÆ°á»›ng Suá»‘i', 3200000.00, 2, 65)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow ÄÃ¡ Cuá»™i BÃªn Rá»«ng', 3800000.00, 2, 75)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biá»‡t Thá»± Äá»“i TrÃ  Thiá»n Äá»‹nh', 5800000.00, 4, 120)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biá»‡t Thá»± Gia ÄÃ¬nh Sen Tráº¯ng', 7500000.00, 8, 180)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'NhÃ  SÃ n Cá»™ng Äá»“ng ÄÃ´ng SÆ¡n', 9000000.00, 25, 250)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'NhÃ  Chung 50 Thung LÅ©ng Xanh', 12500000.00, 50, 450)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Gỗ Hướng Suối', 3200000.00, 2, 65)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Đá Cuội Bên Rừng', 3800000.00, 3, 75)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Đồi Trà Thiền Định', 5800000.00, 4, 120)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Gia Đình Sen Trắng', 7500000.00, 8, 180)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Sàn Cộng Đồng Đông Sơn', 9000000.00, 25, 250)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Chung 50 Thung Lũng Xanh', 12500000.00, 50, 450)");
 
-            // Get Room Type IDs to ensure we insert with correct IDs
-            Integer woodBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Gá»— HÆ°á»›ng Suá»‘i'", Integer.class);
-            Integer pebbleBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow ÄÃ¡ Cuá»™i BÃªn Rá»«ng'", Integer.class);
-            Integer teaVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biá»‡t Thá»± Äá»“i TrÃ  Thiá»n Äá»‹nh'", Integer.class);
-            Integer lotusVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biá»‡t Thá»± Gia ÄÃ¬nh Sen Tráº¯ng'", Integer.class);
-            Integer donSanId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'NhÃ  SÃ n Cá»™ng Äá»“ng ÄÃ´ng SÆ¡n'", Integer.class);
-            Integer valley50Id = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'NhÃ  Chung 50 Thung LÅ©ng Xanh'", Integer.class);
+            Integer woodBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Gỗ Hướng Suối'", Integer.class);
+            Integer pebbleBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Đá Cuội Bên Rừng'", Integer.class);
+            Integer teaVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Đồi Trà Thiền Định'", Integer.class);
+            Integer lotusVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Gia Đình Sen Trắng'", Integer.class);
+            Integer donSanId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Sàn Cộng Đồng Đông Sơn'", Integer.class);
+            Integer valley50Id = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Chung 50 Thung Lũng Xanh'", Integer.class);
 
-            if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null) {
-                // 10 Bungalow Gá»— HÆ°á»›ng Suá»‘i (BG-101 to BG-110)
+            if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null && valley50Id != null) {
                 for (int i = 1; i <= 10; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", woodBungId, String.format("BG-%03d", 100 + i));
                 }

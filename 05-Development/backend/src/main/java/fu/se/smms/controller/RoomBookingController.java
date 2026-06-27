@@ -131,6 +131,7 @@ public class RoomBookingController {
         map.put("status", b.getStatus());
         map.put("totalDeposit", b.getTotalDeposit());
         map.put("createdAt", b.getCreatedAt());
+        map.put("specialRequests", b.getSpecialRequests());
 
         try {
             InvoiceDTO inv = invoiceService.createInvoice(b.getBookingId());

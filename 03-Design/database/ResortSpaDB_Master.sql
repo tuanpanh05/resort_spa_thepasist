@@ -28,6 +28,7 @@ IF OBJECT_ID('dbo.payment_transaction_log', 'U') IS NOT NULL DROP TABLE dbo.paym
 IF OBJECT_ID('dbo.invoice', 'U') IS NOT NULL DROP TABLE dbo.invoice;
 IF OBJECT_ID('dbo.food_order_detail', 'U') IS NOT NULL DROP TABLE dbo.food_order_detail;
 IF OBJECT_ID('dbo.food_order', 'U') IS NOT NULL DROP TABLE dbo.food_order;
+IF OBJECT_ID('dbo.restaurant_table', 'U') IS NOT NULL DROP TABLE dbo.restaurant_table;
 IF OBJECT_ID('dbo.cart_item', 'U') IS NOT NULL DROP TABLE dbo.cart_item;
 IF OBJECT_ID('dbo.package_food_limit', 'U') IS NOT NULL DROP TABLE dbo.package_food_limit;
 IF OBJECT_ID('dbo.food_menu', 'U') IS NOT NULL DROP TABLE dbo.food_menu;
@@ -158,6 +159,7 @@ CREATE TABLE dbo.room_booking (
     status         VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
     total_deposit  DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     created_at     DATETIME2    NOT NULL DEFAULT GETDATE(),
+    special_requests NVARCHAR(MAX) NULL,
 
     CONSTRAINT CK_room_booking_dates   CHECK (check_out_date > check_in_date),
     CONSTRAINT CK_room_booking_status  CHECK (status IN ('PENDING','PENDING_DEPOSIT','CONFIRMED','CHECKED_IN','CHECKED_OUT','CANCELLED')),
@@ -259,6 +261,15 @@ CREATE TABLE dbo.food_menu (
 GO
 
 
+-- 2.10.1 Restaurant Table
+CREATE TABLE dbo.restaurant_table (
+    table_id INT IDENTITY(1,1) PRIMARY KEY,
+    table_number VARCHAR(20) NOT NULL UNIQUE,
+    capacity INT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'AVAILABLE'
+);
+GO
+
 -- 2.11 Food Order
 CREATE TABLE dbo.food_order (
     order_id        INT           IDENTITY(1,1) PRIMARY KEY,
@@ -268,6 +279,7 @@ CREATE TABLE dbo.food_order (
     status          VARCHAR(50)   NOT NULL,
     total_amount    DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     origin          VARCHAR(50)   NULL,
+    table_id        INT           NULL     REFERENCES dbo.restaurant_table(table_id) ON DELETE NO ACTION,
 
     CONSTRAINT CK_food_order_status CHECK (status IN ('PENDING','PREPARING','READY','DELIVERED','CANCELLED')),
     CONSTRAINT CK_food_order_amount CHECK (total_amount >= 0)
@@ -493,7 +505,7 @@ GO
 INSERT INTO dbo.room_types (type_name, base_price, capacity, area_sqm)
 VALUES
     (N'Bungalow Gỗ Hướng Suối',     3200000.00, 2, 65),
-    (N'Bungalow Đá Cuội Bên Rừng',   3800000.00, 2, 75),
+    (N'Bungalow Đá Cuội Bên Rừng',   3800000.00, 3, 75),
     (N'Biệt Thự Đồi Trà Thiền Định',  5800000.00, 4, 120),
     (N'Biệt Thự Gia Đình Sen Trắng', 7500000.00, 8, 180),
     (N'Nhà Sàn Cộng Đồng Đông Sơn',  9000000.00, 25, 250);

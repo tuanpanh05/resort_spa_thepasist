@@ -58,6 +58,21 @@ public class RoomBooking {
     @Column(name = "refund_amount", precision = 12, scale = 2)
     private BigDecimal refundAmount;
 
+    @Column(name = "special_requests", columnDefinition = "NVARCHAR(MAX)")
+    private String specialRequests;
+
+    @Column(name = "guests_count")
+    private Integer guestsCount;
+
+    @Column(name = "children_under_5")
+    private Integer childrenUnder5;
+
+    @Column(name = "children_5_to_12")
+    private Integer children5to12;
+
+    @Column(name = "children_count")
+    private Integer childrenCount;
+
     @OneToMany(mappedBy = "roomBooking", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<RoomBookingDetail> details;
 
@@ -127,4 +142,19 @@ public class RoomBooking {
 
     public BigDecimal getRefundAmount() { return refundAmount; }
     public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
+
+    public String getSpecialRequests() { return specialRequests; }
+    public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
+
+    public Integer getGuestsCount() { return guestsCount; }
+    public void setGuestsCount(Integer guestsCount) { this.guestsCount = guestsCount; }
+
+    public Integer getChildrenUnder5() { return childrenUnder5; }
+    public void setChildrenUnder5(Integer childrenUnder5) { this.childrenUnder5 = childrenUnder5; }
+
+    public Integer getChildren5to12() { return children5to12; }
+    public void setChildren5to12(Integer children5to12) { this.children5to12 = children5to12; }
+
+    public Integer getChildrenCount() { return childrenCount; }
+    public void setChildrenCount(Integer childrenCount) { this.childrenCount = childrenCount; }
 }

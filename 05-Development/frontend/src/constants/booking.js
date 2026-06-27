@@ -37,7 +37,7 @@ export const villasList = [
     description: "Vách đá cuội tự nhiên mộc mạc và sang trọng sườn đồi thông. Sở hữu bồn tắm lộ thiên và mái kính ngắm sao đêm tuyệt đẹp.",
     price: 3800000,
     size: "75 m²",
-    capacity: "2 Người lớn",
+    capacity: "3 Người lớn",
     view: "Rừng Thông",
     image: "/room_pebble.jpg",
   },
@@ -118,6 +118,34 @@ export const servicesList = [
     description: "Xe sang đón tiễn hai chiều đảm bảo sự thoải mái tối đa cho hành trình.",
     price: 600000,
     type: "flat",
+  },
+  {
+    id: "srv-playground",
+    title: "Vé Khu Vui Chơi Trẻ Em (Công Viên Nước & Trò Chơi)",
+    description: "Bao gồm công viên nước và tất cả các trò chơi trẻ em hay chơi (Trị giá thực tế 500k).",
+    price: 400000,
+    type: "per-guest",
+  },
+  {
+    id: "srv-dao-red-kid",
+    title: "Tắm lá thuốc Dao Đỏ cho trẻ (5-12 tuổi)",
+    description: "Liệu trình ngâm tắm lá thuốc Dao Đỏ ôn hòa giúp trẻ tăng sức đề kháng và ngủ sâu giấc. (Giảm 30% so với người lớn)",
+    price: 420000,
+    type: "per-guest",
+  },
+  {
+    id: "srv-massage-kid",
+    title: "Massage toàn thân tràm kháng khuẩn (5-12 tuổi)",
+    description: "Massage nhẹ nhàng kết hợp tinh dầu tràm giúp làm ấm cơ thể và bảo vệ hô hấp bé. (Giảm 30% so với người lớn)",
+    price: 560000,
+    type: "per-guest",
+  },
+  {
+    id: "srv-posture-kid",
+    title: "Nắn chỉnh cột sống học đường (5-12 tuổi)",
+    description: "Nắn chỉnh Chiropractic học đường giúp bé phòng ngừa cong vẹo cột sống do tư thế học tập. (Giảm 30% so với người lớn)",
+    price: 840000,
+    type: "per-guest",
   },
 ];
 

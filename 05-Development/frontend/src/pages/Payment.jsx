@@ -32,6 +32,16 @@ export default function Payment() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
+  // Voucher states
+  const [voucherCode, setVoucherCode] = useState("");
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+
+  useEffect(() => {
+    if (invoice && invoice.voucherCode) {
+      setVoucherCode(invoice.voucherCode);
+    }
+  }, [invoice]);
+
   useEffect(() => {
     setLoading(true);
     setErrorMsg(null);
@@ -39,7 +49,10 @@ export default function Payment() {
       .then((data) => {
         setInvoice(data);
         setLoading(false);
-        if (data.status === "PAID") {
+        const isPaidNow = 
+          data.status === "PAID" || 
+          (data.bookingStatus === "CONFIRMED" && Number(data.depositAmount || 0) > 0);
+        if (isPaidNow) {
           setIsPaid(true);
         }
       })
@@ -96,6 +109,36 @@ export default function Payment() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    setIsApplyingVoucher(true);
+    try {
+      const updatedInvoice = await paymentApi.applyVoucher(invoiceId, voucherCode.trim());
+      setInvoice(updatedInvoice);
+      alert("Áp dụng mã giảm giá thành công!");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Không thể áp dụng mã giảm giá.");
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = async () => {
+    setIsApplyingVoucher(true);
+    try {
+      const updatedInvoice = await paymentApi.removeVoucher(invoiceId);
+      setInvoice(updatedInvoice);
+      setVoucherCode("");
+      alert("Đã gỡ bỏ mã giảm giá.");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Không thể gỡ bỏ mã giảm giá.");
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
+
   const handlePaymentSubmit = (e) => {
     if (e) e.preventDefault();
     setIsProcessing(true);
@@ -148,12 +191,11 @@ export default function Payment() {
         setInvoice(data);
         setIsProcessing(false);
         
-        const isPaidNow = data.status === "PAID";
-        const isDepositConfirmed = 
-          isDepositPayment && 
-          data.bookingStatus === "CONFIRMED";
+        const isPaidNow = 
+          data.status === "PAID" || 
+          (data.bookingStatus === "CONFIRMED" && Number(data.depositAmount || 0) > 0);
 
-        if (isPaidNow || isDepositConfirmed) {
+        if (isPaidNow) {
           setIsPaid(true);
         } else {
           alert("Hóa đơn hiện vẫn chưa được xác nhận thanh toán. Vui lòng liên hệ quầy lễ tân.");
@@ -291,6 +333,13 @@ export default function Payment() {
                             <span className="font-mono">{formatCurrency(event.price)}</span>
                           </div>
                         ))}
+
+                      {invoice?.spaChildDiscount > 0 && (
+                        <div className="flex justify-between text-emerald-700 text-[10px] pl-4 font-semibold">
+                          <span>👶 Giảm giá dịch vụ Trẻ em:</span>
+                          <span className="font-mono">-{formatCurrency(invoice.spaChildDiscount)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -473,6 +522,49 @@ export default function Payment() {
                   )}
                 </div>
 
+                {/* Voucher input form */}
+                {!isPaid && (
+                  <div className="border-t border-primary-100 pt-6 space-y-3">
+                    <h4 className="font-serif font-bold text-xs text-sage-900 uppercase tracking-wider">
+                      Mã Giảm Giá / Voucher
+                    </h4>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={voucherCode}
+                        onChange={(e) => setVoucherCode(e.target.value)}
+                        placeholder="Ví dụ: WELCOME10, NGUSON50..."
+                        disabled={invoice?.discountAmount > 0 || isApplyingVoucher}
+                        className="flex-1 px-3 py-2 text-xs border border-primary-200 focus:outline-primary-300 uppercase bg-white disabled:bg-sage-50 disabled:text-sage-400"
+                      />
+                      {invoice?.discountAmount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={handleRemoveVoucher}
+                          disabled={isApplyingVoucher}
+                          className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-750 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          Gỡ bỏ
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleApplyVoucher}
+                          disabled={isApplyingVoucher || !voucherCode.trim()}
+                          className="px-4 py-2 bg-primary-850 hover:bg-primary-900 text-white text-xs font-semibold uppercase tracking-wider disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                          {isApplyingVoucher ? "Đang áp dụng..." : "Áp dụng"}
+                        </button>
+                      )}
+                    </div>
+                    {invoice?.discountAmount > 0 && (
+                      <p className="text-[10px] text-green-700 font-medium">
+                        ✓ Đã áp dụng Voucher thành công!
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Price summary table */}
                 <div className="border-t border-primary-100 pt-6 space-y-3.5 text-xs sm:text-sm">
                   <div className="flex justify-between">
@@ -481,8 +573,14 @@ export default function Payment() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sage-500 font-light">Trị liệu Spa phát sinh:</span>
-                    <span className="font-semibold font-mono">{formatCurrency(invoice?.spaSubtotal)}</span>
+                    <span className="font-semibold font-mono">{formatCurrency((invoice?.spaSubtotal || 0) + (invoice?.spaChildDiscount || 0))}</span>
                   </div>
+                  {invoice?.spaChildDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-700 bg-emerald-50/30 p-1 px-2 font-semibold">
+                      <span>Giảm giá dịch vụ Trẻ em:</span>
+                      <span className="font-mono">-{formatCurrency(invoice.spaChildDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-sage-500 font-light">Dịch vụ ẩm thực F&B phát sinh:</span>
                     <span className="font-semibold font-mono">{formatCurrency(invoice?.foodSubtotal)}</span>
@@ -495,9 +593,22 @@ export default function Payment() {
                   <div className="border-t border-dashed border-primary-100 my-1"></div>
 
                   <div className="flex justify-between">
-                    <span className="text-sage-900 font-medium">Tổng cộng Folio phòng:</span>
-                    <span className="font-bold font-mono">{formatCurrency(invoice?.finalAmount)}</span>
+                    <span className="text-sage-900 font-medium">Tổng cộng Folio phòng (Gốc):</span>
+                    <span className="font-bold font-mono">{formatCurrency((invoice?.roomSubtotal || 0) + (invoice?.spaSubtotal || 0) + (invoice?.foodSubtotal || 0) + (invoice?.taxAndFees || 0))}</span>
                   </div>
+
+                  {invoice?.discountAmount > 0 && (
+                    <div className="flex justify-between text-green-700 bg-green-50/50 p-1 px-2 font-semibold">
+                      <span>Mã giảm giá áp dụng ({invoice.voucherCode}):</span>
+                      <span className="font-mono">-{formatCurrency(invoice.discountAmount)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between border-t border-primary-100 pt-2 font-bold text-sage-955">
+                    <span>Tổng thanh toán sau giảm:</span>
+                    <span className="font-mono text-primary-900">{formatCurrency(invoice?.finalAmount)}</span>
+                  </div>
+
                   <div className="flex justify-between text-green-700 bg-green-50/50 p-1.5 px-2.5">
                     <span className="font-medium">
                       {isDepositPayment ? "Tiền cọc cần thanh toán (30%):" : "Đã khấu trừ tiền đặt cọc (30%):"}

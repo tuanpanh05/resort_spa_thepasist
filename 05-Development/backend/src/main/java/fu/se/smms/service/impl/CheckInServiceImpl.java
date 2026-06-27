@@ -116,6 +116,7 @@ public class CheckInServiceImpl {
             dto.setCheckOutDate(booking.getCheckOutDate());
             dto.setDepositPaid(booking.getTotalDeposit());
             dto.setStatus(booking.getStatus());
+            dto.setSpecialRequests(booking.getSpecialRequests());
 
             // Guest info
             User guest = booking.getUser();

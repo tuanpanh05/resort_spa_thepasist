@@ -25,7 +25,12 @@ export default function ConfirmationStep({
   handleVerifyPayment,
   handlePrevStep,
   selectedPackages = [],
+  servicesTotalBeforeDiscount,
+  childDiscountUnder5,
+  childDiscount5to12,
+  chargedGuestsCount: passedChargedGuestsCount,
 }) {
+  const chargedGuestsCount = passedChargedGuestsCount || (Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0));
   return (
     <div className="space-y-6 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
@@ -64,7 +69,19 @@ export default function ConfirmationStep({
               <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">
                 Số người đi cùng
               </span>
-              <span className="font-semibold text-[#1a2f23]">{guestInfo.guestsCount} Khách hàng</span>
+              <span className="font-semibold text-[#1a2f23]">
+                {guestInfo.guestsCount} Người lớn
+                {guestInfo.childrenCount > 0 ? (
+                  `, ${guestInfo.childrenCount} Trẻ em` + (
+                    (guestInfo.childrenUnder5 > 0 || guestInfo.children5to12 > 0)
+                      ? ` (${[
+                          guestInfo.childrenUnder5 > 0 ? `${guestInfo.childrenUnder5} dưới 5t` : "",
+                          guestInfo.children5to12 > 0 ? `${guestInfo.children5to12} 5-12t` : ""
+                        ].filter(Boolean).join(", ")})`
+                      : ""
+                  )
+                ) : ""}
+              </span>
             </div>
             <div>
               <span className="text-sage-400 block text-[9px] uppercase tracking-wider mb-0.5">
@@ -163,16 +180,22 @@ export default function ConfirmationStep({
 
             {/* Service items */}
             {selectedServices.map((s) => {
+              const isKidService = ["srv-playground", "srv-dao-red-kid", "srv-massage-kid", "srv-posture-kid"].includes(s.id);
+              const multiplier = isKidService ? Number(guestInfo.children5to12 || 0) : chargedGuestsCount;
               let itemTotal = 0;
               let descriptionText = "";
               const pricingType = s.pricingType || s.type || "per-guest";
               const serviceTitle = s.name || s.title || "Dịch vụ";
               if (pricingType === "per-guest") {
-                itemTotal = s.price * guestInfo.guestsCount;
-                descriptionText = `${formatCurrency(s.price)}/khách × ${guestInfo.guestsCount} Khách`;
+                itemTotal = s.price * multiplier;
+                descriptionText = isKidService 
+                  ? `${formatCurrency(s.price)}/trẻ × ${multiplier} Trẻ em (5-12 tuổi)`
+                  : `${formatCurrency(s.price)}/khách × ${multiplier} Khách`;
               } else if (pricingType === "per-guest-per-night") {
-                itemTotal = s.price * guestInfo.guestsCount * nightsCount;
-                descriptionText = `${formatCurrency(s.price)}/khách/đêm × ${guestInfo.guestsCount} Khách × ${nightsCount} Đêm`;
+                itemTotal = s.price * multiplier * nightsCount;
+                descriptionText = isKidService
+                  ? `${formatCurrency(s.price)}/trẻ/đêm × ${multiplier} Trẻ em (5-12 tuổi) × ${nightsCount} Đêm`
+                  : `${formatCurrency(s.price)}/khách/đêm × ${multiplier} Khách × ${nightsCount} Đêm`;
               } else {
                 itemTotal = s.price;
                 descriptionText = "Chi phí một lượt";
@@ -194,6 +217,35 @@ export default function ConfirmationStep({
                 </div>
               );
             })}
+
+            {/* Child Discounts */}
+            {childDiscountUnder5 > 0 && (
+              <div className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10 text-emerald-700 font-semibold">
+                <div>
+                  <span className="font-serif text-sm block">
+                    👶 Giảm giá Trẻ em dưới 5 tuổi (100% dịch vụ)
+                  </span>
+                  <span className="text-[10px] text-emerald-600/80 font-light block mt-0.5">
+                    Miễn phí dịch vụ cho {guestInfo.childrenUnder5} trẻ
+                  </span>
+                </div>
+                <span>-{formatCurrency(childDiscountUnder5)}</span>
+              </div>
+            )}
+
+            {childDiscount5to12 > 0 && (
+              <div className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10 text-emerald-700 font-semibold">
+                <div>
+                  <span className="font-serif text-sm block">
+                    🧒 Giảm giá Trẻ em 5-12 tuổi (30% dịch vụ)
+                  </span>
+                  <span className="text-[10px] text-emerald-600/80 font-light block mt-0.5">
+                    Giảm 30% dịch vụ cho {guestInfo.children5to12} trẻ
+                  </span>
+                </div>
+                <span>-{formatCurrency(childDiscount5to12)}</span>
+              </div>
+            )}
 
             {/* Extra Meal Items */}
             {mealTotal > 0 && (

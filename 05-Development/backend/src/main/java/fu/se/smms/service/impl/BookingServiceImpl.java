@@ -165,6 +165,10 @@ public class BookingServiceImpl {
         booking.setStatus("PENDING_DEPOSIT");
         booking.setTotalDeposit(BigDecimal.ZERO);
         booking.setCreatedAt(LocalDateTime.now());
+        booking.setGuestsCount(2);
+        booking.setChildrenUnder5(0);
+        booking.setChildren5to12(0);
+        booking.setChildrenCount(0);
 
         RoomBooking savedBooking = roomBookingRepository.save(booking);
 

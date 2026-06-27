@@ -1,18 +1,6 @@
 ========================================
-<<<<<<< HEAD
-Email: hoaianh12@imail.edu.vn
+Email: hoanganh@imail.edu.vn
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 523700
-Time: 2026-06-27T00:43:52.216325800
-=======
-Email: tuananh1122hy@gmail.com
-Purpose: FORGOT PASSWORD
-OTP Code: 413551
-Time: 2026-06-25T12:51:57.140206
-========================================
-Email: dasd@gmail.com
-Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 801488
-Time: 2026-06-26T23:23:22.526689700
->>>>>>> 4205dfc98a1725c5256ce2bca41bbb23039913e5
+OTP Code: 726265
+Time: 2026-06-27T12:45:05.282956500
 ========================================

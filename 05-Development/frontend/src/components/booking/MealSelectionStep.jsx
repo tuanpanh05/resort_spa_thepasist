@@ -1,30 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Info, AlertTriangle, ArrowLeft, ChevronRight, Check, Clock } from "lucide-react";
 import { detectAllergens } from "../../utils/health";
+import { COMBOS } from "../../constants/mealCombos";
 
-const COMBOS = [
-  {
-    id: "detox",
-    name: "Gói Detox Thanh Lọc (3 Bữa/Ngày)",
-    description: "Chế độ ăn thanh lọc cơ thể với thực đơn luân phiên 7 ngày vô cùng phong phú. Giúp đào thải độc tố nhưng vẫn tràn đầy năng lượng.",
-    image: "/images/combos/detox_combo.png",
-    dailyMenus: []
-  },
-  {
-    id: "recovery",
-    name: "Gói Phục Hồi Năng Lượng (3 Bữa/Ngày)",
-    description: "Tập trung vào bữa sáng dinh dưỡng, bữa trưa nhẹ nhàng và bữa tối cao cấp, phục hồi năng lượng toàn diện. Thực đơn luân phiên 7 ngày.",
-    image: "/images/combos/recovery_combo.png",
-    dailyMenus: []
-  },
-  {
-    id: "vip",
-    name: "Gói Thưởng Thức VIP (3 Bữa/Ngày)",
-    description: "Trải nghiệm ẩm thực thượng hạng với các đặc sản tuyển chọn và đồ uống cao cấp, luân phiên trong 7 ngày không lặp lại.",
-    image: "/images/combos/vip_combo.png",
-    dailyMenus: []
-  }
-];
 
 export default function MealSelectionStep({
   mealBookingDays,
@@ -42,6 +20,7 @@ export default function MealSelectionStep({
   mealTotal,
   handlePrevStep,
   handleNextStep,
+  setMealSelections,
 }) {
   // ── BR-10: Real-time cut-off detection ──────────────────────────────────
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
@@ -70,7 +49,7 @@ export default function MealSelectionStep({
   // Show cut-off warning when tomorrow is next and it's past 22:00
   const showCutoffWarning = currentHour >= CUTOFF_HOUR && tomorrowStr && mealBookingDays.includes(tomorrowStr);
   const nightsCount = Math.max(1, mealBookingDays.length - 1);
-  const guestsCount = guestInfo.guestsCount || 1;
+  const guestsCount = Math.max(1, Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0));
   const [viewMenuCombo, setViewMenuCombo] = React.useState(null);
   const [selectedDishDetail, setSelectedDishDetail] = React.useState(null);
 
@@ -358,6 +337,48 @@ export default function MealSelectionStep({
     if (allDaysBlocked) return;  // BR-10: all days blocked
     handleSelectCombo(comboId);
   };
+
+  const selectedCombo = safeCombos.find(c => c.id === selectedComboId);
+
+  React.useEffect(() => {
+    if (selectedCombo) {
+      const newSelections = {};
+      mealBookingDays.forEach((date, index) => {
+        const menuDayIndex = index % selectedCombo.dailyMenus.length;
+        const dailyMenu = selectedCombo.dailyMenus[menuDayIndex] || [];
+        
+        const dateSel = {};
+        dailyMenu.forEach(item => {
+          const period = item.period;
+          if (!dateSel[period]) {
+            dateSel[period] = {};
+          }
+          const count = item.qty || 1;
+          
+          if (item.allergicSubId) {
+            if (count > 1) {
+              dateSel[period][item.allergicSubId] = (dateSel[period][item.allergicSubId] || 0) + 1;
+              dateSel[period][item.foodId] = (dateSel[period][item.foodId] || 0) + (count - 1);
+            } else {
+              dateSel[period][item.allergicSubId] = (dateSel[period][item.allergicSubId] || 0) + 1;
+            }
+          } else if (item.noSubstituteFound) {
+            if (count > 1) {
+              dateSel[period][item.foodId] = (dateSel[period][item.foodId] || 0) + (count - 1);
+            }
+          } else {
+            dateSel[period][item.foodId] = (dateSel[period][item.foodId] || 0) + count;
+          }
+        });
+        
+        newSelections[date] = dateSel;
+      });
+      
+      setMealSelections(newSelections);
+    }
+  }, [selectedCombo, mealBookingDays, setMealSelections]);
+
+
 
   return (
     <div className="space-y-6 text-left animate-fade-in">

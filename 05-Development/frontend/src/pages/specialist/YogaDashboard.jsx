@@ -93,6 +93,7 @@ export default function YogaDashboard() {
     setBookingMsg(null);
     if (!form.guestUserId) { setBookingMsg({ type: "error", text: "Vui lòng nhập mã học viên (User ID)." }); return; }
     if (!matchResult) { setBookingMsg({ type: "error", text: "Hãy chạy ghép lịch tự động trước." }); return; }
+    if (!form.roomBookingId) { setBookingMsg({ type: "error", text: "Vui lòng nhập mã đặt phòng lưu trú. Khách phải có đặt phòng tại resort mới được đặt dịch vụ spa." }); return; }
     setMatching(true);
     try {
       const dto = { spaServiceId: Number(form.serviceId), startDatetime: `${form.date}T${form.time}:00`,
@@ -265,7 +266,7 @@ export default function YogaDashboard() {
                 <div><h3 className="font-serif font-bold text-slate-900">Mở lớp / Đặt buổi tập cho học viên</h3><p className="text-xs text-slate-500 mt-1">Hệ thống tự động ghép HLV trống + phòng tập trống và chống trùng lịch khi xác nhận.</p></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Mã học viên (User ID)"><input value={form.guestUserId} onChange={(e) => setForm({ ...form, guestUserId: e.target.value })} placeholder="VD: 5" className="yinput" /></Field>
-                  <Field label="Mã đặt phòng (tuỳ chọn)"><input value={form.roomBookingId} onChange={(e) => setForm({ ...form, roomBookingId: e.target.value })} placeholder="Để trống nếu không gắn folio" className="yinput" /></Field>
+                  <Field label="Mã đặt phòng lưu trú (bắt buộc)"><input value={form.roomBookingId} onChange={(e) => setForm({ ...form, roomBookingId: e.target.value })} placeholder="VD: 12" className="yinput" /></Field>
                   <Field label="Buổi tập"><select value={form.serviceId} onChange={(e) => { setForm({ ...form, serviceId: e.target.value }); setMatchResult(null); }} className="yinput"><option value="">— Chọn buổi tập Yoga —</option>{services.map((s) => <option key={s.serviceId} value={s.serviceId}>{s.name} ({s.durationMinutes}p)</option>)}</select></Field>
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Ngày"><input type="date" value={form.date} onChange={(e) => { setForm({ ...form, date: e.target.value }); setMatchResult(null); }} className="yinput" /></Field>

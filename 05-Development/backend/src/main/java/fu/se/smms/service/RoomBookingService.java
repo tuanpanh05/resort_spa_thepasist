@@ -34,6 +34,7 @@ public class RoomBookingService {
     private final RoomBookingDetailRepository roomBookingDetailRepository;
     private final SystemConfigurationRepository systemConfigurationRepository;
     private final TableAssignmentService tableAssignmentService;
+    private final TreatmentRoomRepository treatmentRoomRepository;
 
     public RoomBookingService(UserRepository userRepository,
                               RoomBookingRepository roomBookingRepository,
@@ -49,7 +50,8 @@ public class RoomBookingService {
                               InvoiceRepository invoiceRepository,
                               RoomBookingDetailRepository roomBookingDetailRepository,
                               SystemConfigurationRepository systemConfigurationRepository,
-                              TableAssignmentService tableAssignmentService) {
+                              TableAssignmentService tableAssignmentService,
+                              TreatmentRoomRepository treatmentRoomRepository) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.retreatPackageRepository = retreatPackageRepository;
@@ -65,6 +67,7 @@ public class RoomBookingService {
         this.roomBookingDetailRepository = roomBookingDetailRepository;
         this.systemConfigurationRepository = systemConfigurationRepository;
         this.tableAssignmentService = tableAssignmentService;
+        this.treatmentRoomRepository = treatmentRoomRepository;
     }
 
     @Transactional
@@ -100,6 +103,11 @@ public class RoomBookingService {
         // 3. Create RoomBooking
         RoomBooking booking = new RoomBooking();
         booking.setUser(user);
+        booking.setSpecialRequests(dto.getSpecialRequests());
+        booking.setGuestsCount(dto.getGuestsCount() != null ? dto.getGuestsCount() : 1);
+        booking.setChildrenUnder5(dto.getChildrenUnder5() != null ? dto.getChildrenUnder5() : 0);
+        booking.setChildren5to12(dto.getChildren5to12() != null ? dto.getChildren5to12() : 0);
+        booking.setChildrenCount(dto.getChildrenCount() != null ? dto.getChildrenCount() : 0);
         if (dto.getPackageIds() != null && !dto.getPackageIds().isEmpty()) {
             List<RetreatPackage> packages = new ArrayList<>();
             for (Integer pkgId : dto.getPackageIds()) {
@@ -365,6 +373,10 @@ public class RoomBookingService {
         }
         userRepository.save(user);
 
+        if (dto.getSpecialRequests() != null) {
+            booking.setSpecialRequests(dto.getSpecialRequests());
+        }
+
         // 3. Update dates if provided
         if (dto.getCheckInDate() != null && dto.getCheckOutDate() != null) {
             LocalDateTime newCheckIn = dto.getCheckInDate().toLocalDate().atTime(14, 0, 0);
@@ -500,6 +512,42 @@ public class RoomBookingService {
             for (Invoice invoice : invoices) {
                 invoice.setStatus("CANCELLED");
                 invoiceRepository.save(invoice);
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
+        // Cancel all pending / preparing food orders
+        try {
+            List<FoodOrder> pendingOrders = foodOrderRepository.findByRoomBooking_BookingId(bookingId)
+                    .stream()
+                    .filter(o -> "PENDING".equalsIgnoreCase(o.getStatus()) || "PREPARING".equalsIgnoreCase(o.getStatus()))
+                    .collect(Collectors.toList());
+            for (FoodOrder order : pendingOrders) {
+                order.setStatus("CANCELLED");
+            }
+            if (!pendingOrders.isEmpty()) {
+                foodOrderRepository.saveAll(pendingOrders);
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
+        // Cancel all associated spa bookings
+        try {
+            List<SpaBooking> spaBookings = spaBookingRepository.findByRoomBookingId(bookingId);
+            for (SpaBooking sb : spaBookings) {
+                if ("PENDING".equalsIgnoreCase(sb.getStatus()) || "CONFIRMED".equalsIgnoreCase(sb.getStatus())) {
+                    sb.setStatus("CANCELLED");
+                    sb.setCancellationReason(reason != null && !reason.isBlank() ? reason : "Hủy do hủy phòng đặt cùng.");
+                    sb.setCancellationTime(now);
+                    sb.setRefundAmount(BigDecimal.ZERO);
+                    if (sb.getTreatmentRoom() != null) {
+                        sb.getTreatmentRoom().setStatus("AVAILABLE");
+                        treatmentRoomRepository.save(sb.getTreatmentRoom());
+                    }
+                    spaBookingRepository.save(sb);
+                }
             }
         } catch (Exception e) {
             // Non-fatal
