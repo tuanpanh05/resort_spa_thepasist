@@ -155,5 +155,7 @@ public interface RoomBookingRepository extends JpaRepository<RoomBooking, Intege
                                           @Param("excludeBookingId") Integer excludeBookingId,
                                           @Param("checkIn") LocalDateTime checkIn,
                                           @Param("checkOut") LocalDateTime checkOut);
+
+    List<RoomBooking> findByStatusAndCreatedAtBefore(String status, LocalDateTime threshold);
 }
 

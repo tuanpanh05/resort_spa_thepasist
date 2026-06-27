@@ -1,8 +1,8 @@
 ========================================
-Email: testspec@gmail.com
+Email: hoanganh@imail.edu.vn
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 886848
-Time: 2026-06-26T23:12:32.191444700
+OTP Code: 726265
+Time: 2026-06-27T12:45:05.282956500
 ========================================
 ========================================
 INVOICE EMAIL

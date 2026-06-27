@@ -64,6 +64,8 @@ export default function SpaBookingWizard({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(null);
+  // BR: Spa services require an active resort room booking to attach the folio.
+  const [selectedRoomBookingId, setSelectedRoomBookingId] = useState("");
 
   const [medicalProfile, setMedicalProfile] = useState(initProfile);
   const [consentChecked, setConsentChecked] = useState(initProfile?.explicitConsentSigned || false);
@@ -95,6 +97,19 @@ export default function SpaBookingWizard({
     setBookingError("");
     if (!consentChecked) { setBookingError("Bạn cần đồng ý cam kết điều khoản y tế trước khi đặt lịch."); return; }
     if (!selectedSlot) { setBookingError("Vui lòng chọn khung giờ trị liệu."); return; }
+
+    // BR: Phải có đặt phòng lưu trú tại resort mới được đặt dịch vụ spa.
+    if ((userBookings || []).length === 0) {
+      setBookingError("Bạn cần có đặt phòng lưu trú tại resort trước khi đặt dịch vụ spa. Vui lòng đặt phòng trước.");
+      return;
+    }
+    // Free (package) booking đã gắn sẵn mã đặt phòng theo gói; booking tính phí cần chọn mã đặt phòng.
+    const effectiveRoomBookingId = isFree ? matchedPackage.bookingId : (selectedRoomBookingId ? Number(selectedRoomBookingId) : null);
+    if (!effectiveRoomBookingId) {
+      setBookingError("Vui lòng chọn mã đặt phòng lưu trú để gắn dịch vụ spa.");
+      return;
+    }
+
     setIsBooking(true);
     try {
       // Persist consent silently if it was just ticked
@@ -114,7 +129,7 @@ export default function SpaBookingWizard({
         therapistId: selectedSlot.therapistId,
         treatmentRoomId: selectedSlot.treatmentRoomId,
         isPackageIncluded: isFree,
-        roomBookingId: isFree ? matchedPackage.bookingId : null,
+        roomBookingId: effectiveRoomBookingId,
         price: isFree ? 0 : selectedService.price,
       };
       const result = await spaApi.schedule(payload);
@@ -128,7 +143,7 @@ export default function SpaBookingWizard({
 
   const resetAll = () => {
     setBookingResult(null); setStep(1); setSelectedService(null);
-    setSelectedDate(""); setSlots([]); setSelectedSlot(null); setBookingError("");
+    setSelectedDate(""); setSlots([]); setSelectedSlot(null); setBookingError(""); setSelectedRoomBookingId("");
   };
 
   // ----- Success screen -----------------------------------------------------
@@ -342,6 +357,36 @@ export default function SpaBookingWizard({
             </div>
           </div>
 
+          {/* BR: Liên kết mã đặt phòng lưu trú (bắt buộc) */}
+          <div className="p-4 bg-warm-cream/60 rounded-xl border border-sage-mist/50 space-y-2">
+            <span className="block text-[10px] font-bold text-forest-ink uppercase tracking-wider">
+              Mã đặt phòng lưu trú
+            </span>
+            {isFree ? (
+              <p className="text-xs text-green-700 font-medium">
+                Đã gắn với đơn đặt phòng BK-{String(matchedPackage.bookingId).padStart(4, "0")} (miễn phí theo gói {matchedPackage.packageName}).
+              </p>
+            ) : (userBookings || []).length === 0 ? (
+              <p className="text-xs text-red-700 font-medium">
+                Bạn cần có đặt phòng lưu trú tại resort trước khi đặt dịch vụ spa.
+                <Link to="/dat-lich" className="underline font-semibold ml-1 hover:text-red-800">Đặt phòng ngay &rarr;</Link>
+              </p>
+            ) : (
+              <select
+                value={selectedRoomBookingId}
+                onChange={(e) => { setSelectedRoomBookingId(e.target.value); setBookingError(""); }}
+                className="w-full px-3 py-2 rounded-md border border-sage-mist bg-white text-xs focus:outline-none focus:border-forest-ink"
+              >
+                <option value="">-- Chọn đơn đặt phòng --</option>
+                {userBookings.map((b) => (
+                  <option key={b.bookingId} value={b.bookingId}>
+                    BK-{String(b.bookingId).padStart(4, "0")} ({b.packageName || "Tiêu chuẩn"})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           {/* Consent */}
           <div className="p-4 bg-sage-50 rounded-xl border border-sage-200">
             {medicalProfile == null ? (
@@ -366,7 +411,7 @@ export default function SpaBookingWizard({
             <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start gap-2"><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />{bookingError}</div>
           )}
 
-          <button type="button" onClick={handleBook} disabled={isBooking || medicalProfile == null || !consentChecked}
+          <button type="button" onClick={handleBook} disabled={isBooking || medicalProfile == null || !consentChecked || (userBookings || []).length === 0 || (!isFree && !selectedRoomBookingId)}
             className="w-full bg-forest-ink text-warm-cream hover:bg-forest-ink/90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs py-4 rounded-lg uppercase tracking-widest transition-all shadow-md cursor-pointer flex items-center justify-center gap-2">
             {isBooking ? (<><Loader2 className="w-4 h-4 animate-spin" /> Đang đặt lịch...</>) : (<><Sparkles className="w-4 h-4" /> Đặt lịch ngay</>)}
           </button>

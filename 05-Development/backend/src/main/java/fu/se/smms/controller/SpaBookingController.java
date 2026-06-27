@@ -155,6 +155,8 @@ public class SpaBookingController {
         );
         return ResponseEntity.ok(response);
     }
+    
+
     /**
      * Available time slots for a service on a given day (3-step wizard).
      * Each slot already has a free therapist + room reserved by the matcher.

@@ -1,6 +1,6 @@
 package fu.se.smms.service.impl;
 
-import fu.se.smms.config.VNPayProperties;
+import fu.se.smms.service.VNPayService;
 import fu.se.smms.dto.InvoiceDTO;
 import fu.se.smms.dto.VNPayPaymentDTO;
 import fu.se.smms.entity.Invoice;
@@ -17,6 +17,7 @@ import fu.se.smms.entity.FoodOrder;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
+import fu.se.smms.repository.TreatmentRoomRepository;
 import fu.se.smms.service.EmailService;
 import fu.se.smms.service.InvoiceService;
 import fu.se.smms.entity.Voucher;
@@ -48,13 +49,12 @@ import java.util.TreeMap;
 public class InvoiceServiceImpl implements InvoiceService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InvoiceServiceImpl.class);
     private static final BigDecimal TAX_RATE = new BigDecimal("0.10");
-    private static final DateTimeFormatter VNPAY_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final InvoiceRepository invoiceRepository;
     private final RoomBookingRepository roomBookingRepository;
     private final RoomRepository roomRepository;
     private final PaymentTransactionLogRepository transactionLogRepository;
-    private final VNPayProperties vnPayProperties;
+    private final VNPayService vnPayService;
     private final SystemConfigurationRepository systemConfigurationRepository;
     private final FoodOrderRepository foodOrderRepository;
     private final EmailService emailService;
@@ -64,13 +64,15 @@ public class InvoiceServiceImpl implements InvoiceService {
     private VoucherRepository voucherRepository;
     @Autowired
     private VoucherService voucherService;
+    @Autowired
+    private TreatmentRoomRepository treatmentRoomRepository;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
             RoomBookingRepository roomBookingRepository,
             RoomRepository roomRepository,
             PaymentTransactionLogRepository transactionLogRepository,
-            VNPayProperties vnPayProperties,
+            VNPayService vnPayService,
             SystemConfigurationRepository systemConfigurationRepository,
             FoodOrderRepository foodOrderRepository,
             EmailService emailService,
@@ -80,7 +82,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.roomBookingRepository = roomBookingRepository;
         this.roomRepository = roomRepository;
         this.transactionLogRepository = transactionLogRepository;
-        this.vnPayProperties = vnPayProperties;
+        this.vnPayService = vnPayService;
         this.systemConfigurationRepository = systemConfigurationRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.emailService = emailService;
@@ -107,6 +109,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional(readOnly = true)
     public List<InvoiceDTO> getAllInvoices() {
         return invoiceRepository.findAll().stream()
+                .filter(i -> !"CANCELLED".equals(i.getStatus()))
                 .map(this::toDto)
                 .toList();
     }
@@ -145,45 +148,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
 
         BigDecimal payableAmount = payableAmount(invoice);
-        long amountInVnpayUnit = payableAmount
-                .multiply(BigDecimal.valueOf(100))
-                .setScale(0, RoundingMode.HALF_UP)
-                .longValueExact();
-        String orderId = invoice.getInvoiceId().toString();
-        String orderInfo = "Thanh toan hoa don " + invoice.getInvoiceId();
-
-        Map<String, String> params = new LinkedHashMap<>();
-        params.put("vnp_Version", vnPayProperties.getVersion());
-        params.put("vnp_Command", vnPayProperties.getCommand());
-        params.put("vnp_TmnCode", vnPayProperties.getTmnCode());
-        params.put("vnp_Amount", String.valueOf(amountInVnpayUnit));
-        params.put("vnp_CurrCode", vnPayProperties.getCurrCode());
-        params.put("vnp_TxnRef", orderId);
-        params.put("vnp_OrderInfo", orderInfo);
-        params.put("vnp_OrderType", vnPayProperties.getOrderType());
-        params.put("vnp_Locale", vnPayProperties.getLocale());
-        params.put("vnp_ReturnUrl", vnPayProperties.getReturnUrl());
-        params.put("vnp_IpAddr", currentClientIp());
-        params.put("vnp_CreateDate", LocalDateTime.now().format(VNPAY_DATE_FORMAT));
-        params.put("vnp_ExpireDate", LocalDateTime.now()
-                .plusMinutes(vnPayProperties.getExpireMinutes())
-                .format(VNPAY_DATE_FORMAT));
-
-        String query = buildQuery(params);
-        String hashData = buildHashData(params);
-        log.info("[VNPay Debug] hashSecret: {}", vnPayProperties.getHashSecret());
-        log.info("[VNPay Debug] hashData: {}", hashData);
-        String secureHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
-        log.info("[VNPay Debug] secureHash: {}", secureHash);
-
-        VNPayPaymentDTO dto = new VNPayPaymentDTO();
-        dto.setOrderId(orderId);
-        dto.setAmount(payableAmount.setScale(0, RoundingMode.HALF_UP).longValueExact());
-        dto.setOrderInfo(orderInfo);
-        dto.setReturnUrl(vnPayProperties.getReturnUrl());
-        dto.setPaymentUrl(vnPayProperties.getPayUrl() + "?" + query + "&vnp_SecureHash=" + secureHash);
-        dto.setSecureHash(secureHash);
-        return dto;
+        return vnPayService.createPaymentUrl(invoice, payableAmount);
     }
 
     @Override
@@ -395,6 +360,50 @@ public class InvoiceServiceImpl implements InvoiceService {
                     log.info("[VNPay Auto-Checkout] Successfully checked-out bookingId={} and marked rooms as DIRTY", booking.getBookingId());
                 }
             }
+        } else {
+            if (booking != null && "PENDING_DEPOSIT".equals(booking.getStatus())) {
+                booking.setStatus("CANCELLED");
+                booking.setCancellationReason("Hủy tự động do thanh toán cọc thất bại hoặc bị hủy.");
+                booking.setCancellationTime(LocalDateTime.now());
+                booking.setRefundAmount(BigDecimal.ZERO);
+                roomBookingRepository.save(booking);
+
+                invoice.setStatus("CANCELLED");
+
+                try {
+                    List<fu.se.smms.entity.FoodOrder> pendingOrders = foodOrderRepository.findByRoomBooking_BookingId(booking.getBookingId())
+                            .stream()
+                            .filter(o -> "PENDING".equalsIgnoreCase(o.getStatus()) || "PREPARING".equalsIgnoreCase(o.getStatus()))
+                            .toList();
+                    for (fu.se.smms.entity.FoodOrder order : pendingOrders) {
+                        order.setStatus("CANCELLED");
+                    }
+                    if (!pendingOrders.isEmpty()) {
+                        foodOrderRepository.saveAll(pendingOrders);
+                    }
+                } catch (Exception e) {
+                    log.error("[PaymentCallback] Error cancelling food orders: {}", e.getMessage());
+                }
+
+                try {
+                    List<SpaBooking> spaBookings = spaBookingRepository.findByRoomBookingId(booking.getBookingId());
+                    for (SpaBooking sb : spaBookings) {
+                        if ("PENDING".equalsIgnoreCase(sb.getStatus()) || "CONFIRMED".equalsIgnoreCase(sb.getStatus())) {
+                            sb.setStatus("CANCELLED");
+                            sb.setCancellationReason("Hủy do thanh toán cọc phòng thất bại.");
+                            sb.setCancellationTime(LocalDateTime.now());
+                            sb.setRefundAmount(BigDecimal.ZERO);
+                            if (sb.getTreatmentRoom() != null) {
+                                sb.getTreatmentRoom().setStatus("AVAILABLE");
+                                treatmentRoomRepository.save(sb.getTreatmentRoom());
+                            }
+                            spaBookingRepository.save(sb);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("[PaymentCallback] Error cancelling spa bookings: {}", e.getMessage());
+                }
+            }
         }
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
@@ -423,7 +432,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     @Transactional
     public InvoiceDTO processVNPayCallback(Map<String, String> callbackParams) {
-        verifyVNPaySignature(callbackParams);
+        vnPayService.verifyVNPaySignature(callbackParams);
 
         String orderId = callbackParams.get("vnp_TxnRef");
         Integer invoiceId = parseInvoiceId(orderId);
@@ -440,7 +449,10 @@ public class InvoiceServiceImpl implements InvoiceService {
             return toDto(invoice);
         }
 
-        validateVNPayAmount(orderId, callbackParams.get("vnp_Amount"));
+        BigDecimal expectedAmount = payableAmount(invoice);
+        if (!vnPayService.isVNPayAmountValid(expectedAmount, callbackParams.get("vnp_Amount"))) {
+            throw conflict("Invalid VNPay amount");
+        }
 
         VNPayPaymentDTO dto = new VNPayPaymentDTO();
         dto.setOrderId(orderId);
@@ -455,7 +467,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional
     public Map<String, String> processVNPayIpn(Map<String, String> callbackParams) {
         try {
-            verifyVNPaySignature(callbackParams);
+            vnPayService.verifyVNPaySignature(callbackParams);
             String orderId = callbackParams.get("vnp_TxnRef");
             Invoice invoice = invoiceRepository.findById(parseInvoiceId(orderId))
                     .orElse(null);
@@ -470,7 +482,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                     && defaultZero(invoice.getDepositAmount()).signum() > 0) {
                 return ipnResponse("02", "Order already confirmed");
             }
-            if (!isVNPayAmountValid(invoice, callbackParams.get("vnp_Amount"))) {
+            BigDecimal expectedAmount = payableAmount(invoice);
+            if (!vnPayService.isVNPayAmountValid(expectedAmount, callbackParams.get("vnp_Amount"))) {
                 return ipnResponse("04", "Invalid amount");
             }
 
@@ -785,48 +798,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
     }
 
-    private void verifyVNPaySignature(Map<String, String> callbackParams) {
-        String receivedHash = callbackParams.get("vnp_SecureHash");
-        if (receivedHash == null || receivedHash.isBlank()) {
-            throw new BusinessException("INV-001", HttpStatus.BAD_REQUEST, "Missing VNPay secure hash");
-        }
 
-        Map<String, String> signedParams = new TreeMap<>();
-        for (Map.Entry<String, String> entry : callbackParams.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (key.startsWith("vnp_") && !"vnp_SecureHash".equals(key) && !"vnp_SecureHashType".equals(key)) {
-                signedParams.put(key, value);
-            }
-        }
-
-        String hashData = buildHashData(signedParams);
-        String calculatedHash = hmacSha512(vnPayProperties.getHashSecret(), hashData);
-
-        if (!calculatedHash.equalsIgnoreCase(receivedHash)) {
-            throw new BusinessException("INV-403", HttpStatus.FORBIDDEN, "Invalid VNPay secure hash");
-        }
-    }
-
-    private void validateVNPayAmount(String orderId, String rawAmount) {
-        Invoice invoice = invoiceRepository.findById(parseInvoiceId(orderId))
-                .orElseThrow(() -> notFound("Invoice not found: " + orderId));
-        if (!isVNPayAmountValid(invoice, rawAmount)) {
-            throw conflict("Invalid VNPay amount");
-        }
-    }
-
-    private boolean isVNPayAmountValid(Invoice invoice, String rawAmount) {
-        try {
-            long expected = payableAmount(invoice)
-                    .multiply(BigDecimal.valueOf(100))
-                    .setScale(0, RoundingMode.HALF_UP)
-                    .longValueExact();
-            return expected == Long.parseLong(rawAmount);
-        } catch (Exception ex) {
-            return false;
-        }
-    }
 
     private Map<String, String> ipnResponse(String rspCode, String message) {
         Map<String, String> response = new LinkedHashMap<>();
@@ -856,6 +828,14 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElse(new BigDecimal("0.30"));
     }
 
+    private BusinessException notFound(String message) {
+        return new BusinessException("INV-404", HttpStatus.NOT_FOUND, message);
+    }
+
+    private BusinessException conflict(String message) {
+        return new BusinessException("INV-409", HttpStatus.CONFLICT, message);
+    }
+
     private String currentClientIp() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
@@ -873,52 +853,6 @@ public class InvoiceServiceImpl implements InvoiceService {
             ip = "127.0.0.1";
         }
         return ip;
-    }
-
-    private String buildQuery(Map<String, String> params) {
-        return params.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
-                .map(entry -> encode(entry.getKey()) + "=" + encode(entry.getValue()))
-                .reduce((left, right) -> left + "&" + right)
-                .orElse("");
-    }
-
-    private String buildHashData(Map<String, String> params) {
-        return params.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
-                .map(entry -> entry.getKey() + "=" + encode(entry.getValue()))
-                .reduce((left, right) -> left + "&" + right)
-                .orElse("");
-    }
-
-    private String encode(String value) {
-        if (value == null) return "";
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
-    }
-
-    private String hmacSha512(String key, String data) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA512");
-            mac.init(new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512"));
-            byte[] bytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hash = new StringBuilder();
-            for (byte b : bytes) {
-                hash.append(String.format("%02x", b));
-            }
-            return hash.toString();
-        } catch (Exception ex) {
-            throw new BusinessException("INV-500", HttpStatus.INTERNAL_SERVER_ERROR, "Cannot sign VNPay request");
-        }
-    }
-
-    private BusinessException notFound(String message) {
-        return new BusinessException("INV-404", HttpStatus.NOT_FOUND, message);
-    }
-
-    private BusinessException conflict(String message) {
-        return new BusinessException("INV-409", HttpStatus.CONFLICT, message);
     }
 
     /**

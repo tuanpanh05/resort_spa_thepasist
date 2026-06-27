@@ -50,9 +50,9 @@ public class SpaBooking {
 
     @Column(name = "is_package_included", nullable = false)
     private Boolean isPackageIncluded = false;
+
     @Column(name = "google_calendar_event_id", length = 255)
     private String googleCalendarEventId;
-
     @Column(name = "cancellation_reason")
     private String cancellationReason;
 
@@ -61,7 +61,6 @@ public class SpaBooking {
 
     @Column(name = "refund_amount", precision = 12, scale = 2)
     private BigDecimal refundAmount;
-
 
     @PrePersist
     protected void onCreate() {
@@ -107,7 +106,6 @@ public class SpaBooking {
 
     public String getGoogleCalendarEventId() { return googleCalendarEventId; }
     public void setGoogleCalendarEventId(String googleCalendarEventId) { this.googleCalendarEventId = googleCalendarEventId; }
-
     public String getCancellationReason() { return cancellationReason; }
     public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
 
@@ -116,5 +114,4 @@ public class SpaBooking {
 
     public BigDecimal getRefundAmount() { return refundAmount; }
     public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
-
 }

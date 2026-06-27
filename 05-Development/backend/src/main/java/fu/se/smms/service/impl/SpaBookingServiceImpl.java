@@ -249,11 +249,38 @@ public class SpaBookingServiceImpl implements SpaBookingService {
             booking.setIsPackageIncluded(false);
             booking.setPriceAtBooking(request.getPrice() != null ? request.getPrice() : service.getPrice());
 
-            if (request.getRoomBookingId() != null) {
-                RoomBooking roomBooking = roomBookingRepository.findById(request.getRoomBookingId())
-                        .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin phÃ²ng Ä‘Ã£ Ä‘áº·t."));
-                booking.setRoomBooking(roomBooking);
+            // BR: Khach hang phai co dat phong luu tru tai resort moi duoc dat dich vu spa.
+            if (request.getRoomBookingId() == null) {
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST,
+                        "Ban can co dat phong luu tru tai resort truoc khi dat dich vu spa.");
             }
+            RoomBooking roomBooking = roomBookingRepository.findById(request.getRoomBookingId())
+                    .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND,
+                            "Khong tim thay thong tin phong da dat."));
+
+            // Dat phong phai thuoc ve khach hang dang dat spa.
+            if (roomBooking.getUser() == null || !roomBooking.getUser().getUserId().equals(userId)) {
+                throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN,
+                        "Ma dat phong khong thuoc ve khach hang nay.");
+            }
+
+            // Dat phong phai dang hoat dong (chua bi huy / chua tra phong).
+            String rbStatus = roomBooking.getStatus();
+            if (rbStatus == null
+                    || "CANCELLED".equalsIgnoreCase(rbStatus)
+                    || "CHECKED_OUT".equalsIgnoreCase(rbStatus)) {
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST,
+                        "Dat phong khong con hieu luc. Vui long co dat phong dang hoat dong de dat dich vu spa.");
+            }
+
+            // BR-30: Thoi gian tri lieu phai nam trong khoang luu tru.
+            if (start.isBefore(roomBooking.getCheckInDate()) || end.isAfter(roomBooking.getCheckOutDate())) {
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST,
+                        String.format("Thoi gian tri lieu phai nam trong khoang luu tru (%s - %s).",
+                                roomBooking.getCheckInDate(), roomBooking.getCheckOutDate()));
+            }
+
+            booking.setRoomBooking(roomBooking);
         }
 
         SpaBooking savedBooking = spaBookingRepository.save(booking);
@@ -442,7 +469,6 @@ public class SpaBookingServiceImpl implements SpaBookingService {
                 return c;
         }
     }
-
     @Override
     @Transactional
     public SpaBookingResponseDTO cancelSpaBooking(Integer spaBookingId, String reason) {

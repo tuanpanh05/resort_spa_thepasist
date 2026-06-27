@@ -133,6 +133,7 @@ export default function SpaDashboard() {
     setBookingMsg(null);
     if (!form.guestUserId) { setBookingMsg({ type: "error", text: "Vui lòng nhập mã khách hàng (User ID)." }); return; }
     if (!matchResult) { setBookingMsg({ type: "error", text: "Vui lòng chạy ghép lịch tự động trước." }); return; }
+    if (!form.roomBookingId) { setBookingMsg({ type: "error", text: "Vui lòng nhập mã đặt phòng lưu trú. Khách phải có đặt phòng tại resort mới được đặt dịch vụ spa." }); return; }
     setMatching(true);
     try {
       const dto = {
@@ -394,8 +395,8 @@ export default function SpaDashboard() {
                   <Field label="Mã khách hàng (User ID)">
                     <input value={form.guestUserId} onChange={(e) => setForm({ ...form, guestUserId: e.target.value })} placeholder="VD: 5" className="input" />
                   </Field>
-                  <Field label="Mã đặt phòng (tuỳ chọn)">
-                    <input value={form.roomBookingId} onChange={(e) => setForm({ ...form, roomBookingId: e.target.value })} placeholder="Để trống nếu không gắn folio" className="input" />
+                  <Field label="Mã đặt phòng lưu trú (bắt buộc)">
+                    <input value={form.roomBookingId} onChange={(e) => setForm({ ...form, roomBookingId: e.target.value })} placeholder="VD: 12" className="input" />
                   </Field>
                   <Field label="Dịch vụ">
                     <select value={form.serviceId} onChange={(e) => { setForm({ ...form, serviceId: e.target.value }); setMatchResult(null); }} className="input">
