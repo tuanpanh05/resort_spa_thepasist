@@ -42,7 +42,8 @@ public class CheckInController {
         checkInService.performCheckIn(
                 request.getBookingId(),
                 request.getIdentityDocument(),
-                request.getNationality());
+                request.getNationality(),
+                request.getAccompanyingGuests());
         return ResponseEntity.ok(Map.of(
                 "message", "Check-in thành công! Phòng đã được cập nhật trạng thái OCCUPIED.",
                 "bookingId", String.valueOf(request.getBookingId())));

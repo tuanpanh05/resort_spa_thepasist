@@ -39,15 +39,19 @@ public class CheckInServiceImpl {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private fu.se.smms.repository.AccompanyingGuestRepository accompanyingGuestRepository;
+
     /**
      * Perform guest check-in.
      *
      * @param bookingId        The booking ID to check in.
      * @param identityDocument CCCD or Passport number of the primary guest (must not be null/blank).
      * @param nationality      Nationality of the primary guest.
+     * @param accompanyingGuests Accompanying guests lists.
      */
     @Transactional
-    public void performCheckIn(Integer bookingId, String identityDocument, String nationality) {
+    public void performCheckIn(Integer bookingId, String identityDocument, String nationality, List<fu.se.smms.dto.AccompanyingGuestDTO> accompanyingGuests) {
         // 1. Lookup booking
         RoomBooking booking = roomBookingRepository.findById(bookingId)
                 .orElseThrow(() -> new BusinessException(
@@ -86,6 +90,25 @@ public class CheckInServiceImpl {
             userRepository.save(guest);
         }
 
+        // 4b. Save accompanying guests
+        if (accompanyingGuests != null && !accompanyingGuests.isEmpty()) {
+            List<fu.se.smms.entity.AccompanyingGuest> existing = accompanyingGuestRepository.findByBookingId(bookingId);
+            if (existing != null && !existing.isEmpty()) {
+                accompanyingGuestRepository.deleteAll(existing);
+            }
+
+            for (fu.se.smms.dto.AccompanyingGuestDTO dto : accompanyingGuests) {
+                if (dto.getFullName() == null || dto.getFullName().isBlank()) continue;
+                fu.se.smms.entity.AccompanyingGuest guestObj = new fu.se.smms.entity.AccompanyingGuest();
+                guestObj.setBookingId(bookingId);
+                guestObj.setFullName(dto.getFullName().trim());
+                guestObj.setIdentityDocument(dto.getIdentityDocument() != null ? dto.getIdentityDocument().trim() : null);
+                guestObj.setRelationship(dto.getRelationship() != null ? dto.getRelationship().trim() : null);
+                guestObj.setIsChild(dto.getIsChild() != null ? dto.getIsChild() : false);
+                accompanyingGuestRepository.save(guestObj);
+            }
+        }
+
         // 5. Update booking status to CHECKED_IN
         booking.setStatus("CHECKED_IN");
         roomBookingRepository.save(booking);
@@ -117,6 +140,8 @@ public class CheckInServiceImpl {
             dto.setDepositPaid(booking.getTotalDeposit());
             dto.setStatus(booking.getStatus());
             dto.setSpecialRequests(booking.getSpecialRequests());
+            dto.setGuestsCount(booking.getGuestsCount());
+            dto.setChildrenCount(booking.getChildrenCount());
 
             // Guest info
             User guest = booking.getUser();

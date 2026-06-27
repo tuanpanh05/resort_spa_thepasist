@@ -273,6 +273,14 @@ export const staffApi = {
       body: JSON.stringify(dto),
     }),
 
+  addExtraServices: (bookingId, dto) =>
+    apiRequest(`/bookings/${bookingId}/add-extra`, {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+
+  getFoodMenu: () => apiRequest("/chef/menu"),
+
   /** UC09: GET /v1/villas â€” Láº¥y danh sÃ¡ch phÃ²ng/villa */
   getVillas: () => apiRequest("/v1/villas"),
 

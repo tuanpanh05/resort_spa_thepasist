@@ -21,6 +21,8 @@ public class ArrivalDTO {
     private BigDecimal depositPaid;
     private String status;
     private String specialRequests;
+    private Integer guestsCount;
+    private Integer childrenCount;
 
     public ArrivalDTO() {}
 
@@ -60,4 +62,10 @@ public class ArrivalDTO {
 
     public String getSpecialRequests() { return specialRequests; }
     public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
+
+    public Integer getGuestsCount() { return guestsCount; }
+    public void setGuestsCount(Integer guestsCount) { this.guestsCount = guestsCount; }
+
+    public Integer getChildrenCount() { return childrenCount; }
+    public void setChildrenCount(Integer childrenCount) { this.childrenCount = childrenCount; }
 }
