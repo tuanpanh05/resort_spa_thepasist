@@ -21,6 +21,9 @@ public class ChefMealController {
     private final PackageFoodLimitRepository packageFoodLimitRepository;
     private final InvoiceRepository invoiceRepository;
     private final RestaurantTableRepository restaurantTableRepository;
+    private final InventoryRepository inventoryRepository;
+    private final DishIngredientRepository dishIngredientRepository;
+    private final ProcurementRequestRepository procurementRequestRepository;
 
     public ChefMealController(FoodMenuRepository foodMenuRepository,
             FoodOrderRepository foodOrderRepository,
@@ -28,7 +31,10 @@ public class ChefMealController {
             RoomBookingRepository roomBookingRepository,
             PackageFoodLimitRepository packageFoodLimitRepository,
             InvoiceRepository invoiceRepository,
-            RestaurantTableRepository restaurantTableRepository) {
+            RestaurantTableRepository restaurantTableRepository,
+            InventoryRepository inventoryRepository,
+            DishIngredientRepository dishIngredientRepository,
+            ProcurementRequestRepository procurementRequestRepository) {
         this.foodMenuRepository = foodMenuRepository;
         this.foodOrderRepository = foodOrderRepository;
         this.foodOrderDetailRepository = foodOrderDetailRepository;
@@ -36,6 +42,9 @@ public class ChefMealController {
         this.packageFoodLimitRepository = packageFoodLimitRepository;
         this.invoiceRepository = invoiceRepository;
         this.restaurantTableRepository = restaurantTableRepository;
+        this.inventoryRepository = inventoryRepository;
+        this.dishIngredientRepository = dishIngredientRepository;
+        this.procurementRequestRepository = procurementRequestRepository;
     }
 
     @GetMapping("/tables")
@@ -49,6 +58,34 @@ public class ChefMealController {
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(tables);
+    }
+
+    @PostMapping("/tables/{tableNumber}/book")
+    public ResponseEntity<?> bookTable(@PathVariable String tableNumber) {
+        RestaurantTable table = restaurantTableRepository.findByTableNumber(tableNumber).orElse(null);
+        if (table == null) return ResponseEntity.badRequest().build();
+        table.setStatus("OCCUPIED");
+        restaurantTableRepository.save(table);
+        return ResponseEntity.ok(Collections.singletonMap("success", true));
+    }
+
+    @PostMapping("/tables/{tableNumber}/release")
+    public ResponseEntity<?> releaseTable(@PathVariable String tableNumber) {
+        RestaurantTable table = restaurantTableRepository.findByTableNumber(tableNumber).orElse(null);
+        if (table != null) {
+            table.setStatus("AVAILABLE");
+            restaurantTableRepository.save(table);
+
+            List<FoodOrder> activeOrders = foodOrderRepository.findAll().stream()
+                    .filter(o -> o.getTable() != null && o.getTable().getTableId().equals(table.getTableId()))
+                    .filter(o -> !o.getStatus().equals("Completed") && !o.getStatus().equals("Cancelled"))
+                    .collect(Collectors.toList());
+            for (FoodOrder o : activeOrders) {
+                o.setStatus("Completed");
+                foodOrderRepository.save(o);
+            }
+        }
+        return ResponseEntity.ok(Collections.singletonMap("success", true));
     }
 
     @GetMapping("/menu")
@@ -306,8 +343,12 @@ public class ChefMealController {
                 .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(finalDate))
                 // Tab 4 KDS: chỉ hiện đơn gọi thêm tại bàn (ROOM SERVICE)
                 .filter(o -> !"PACKAGE MEAL".equals(o.getOrigin()))
+                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"PENDING_DEPOSIT".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
+            List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
+            if (details == null || details.isEmpty()) return null;
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", "ORD-" + order.getOrderId());
             map.put("orderId", order.getOrderId());
@@ -329,8 +370,7 @@ public class ChefMealController {
             map.put("tableNumber", tableNumber);
             map.put("origin", order.getOrigin() != null ? order.getOrigin() : (order.getRoomBooking() != null ? "ROOM SERVICE" : "RESTAURANT"));
 
-            // Fetch order items details
-            List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
+            // Map order items details
             List<Map<String, Object>> items = details.stream().map(d -> {
                 Map<String, Object> itemMap = new HashMap<>();
                 itemMap.put("foodId", d.getFoodMenu().getFoodId());
@@ -369,7 +409,7 @@ public class ChefMealController {
             map.put("time", formattedTime);
 
             return map;
-        }).collect(Collectors.toList());
+        }).filter(m -> m != null).collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
 
@@ -380,9 +420,12 @@ public class ChefMealController {
                 // Tab 5: Đơn PACKAGE MEAL (combo, đặt trước bữa ăn) - hôm nay và tương lai
                 .filter(o -> o.getOrderTime() != null && !o.getOrderTime().toLocalDate().isBefore(today))
                 .filter(o -> o.getOrigin() == null || "PACKAGE MEAL".equals(o.getOrigin()))
-                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
+                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"PENDING_DEPOSIT".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
+            List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
+            if (details == null || details.isEmpty()) return null;
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", "ORD-" + order.getOrderId());
             map.put("orderId", order.getOrderId());
@@ -403,7 +446,6 @@ public class ChefMealController {
             map.put("tableNumber", tableNumber);
             map.put("origin", order.getOrigin() != null ? order.getOrigin() : "PACKAGE MEAL");
             
-            List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
             List<Map<String, Object>> items = details.stream().map(d -> {
                 Map<String, Object> itemMap = new HashMap<>();
                 itemMap.put("foodId", d.getFoodMenu().getFoodId());
@@ -481,7 +523,7 @@ public class ChefMealController {
             map.put("period", period);
             
             return map;
-        }).collect(Collectors.toList());
+        }).filter(m -> m != null).collect(Collectors.toList());
         return ResponseEntity.ok(response);
     }
 
@@ -507,6 +549,25 @@ public class ChefMealController {
 
         order.setStatus(dbStatus);
         foodOrderRepository.save(order);
+
+        // Deduct inventory when DELIVERED
+        if ("DELIVERED".equals(dbStatus)) {
+            List<FoodOrderDetail> orderItems = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
+            for (FoodOrderDetail item : orderItems) {
+                if (item.getFoodMenu() != null) {
+                    List<DishIngredient> recipe = dishIngredientRepository.findByFoodMenu_FoodId(item.getFoodMenu().getFoodId());
+                    for (DishIngredient ingredient : recipe) {
+                        Inventory inv = ingredient.getInventory();
+                        double quantityInKg = (ingredient.getAmountInGrams() * item.getQuantity()) / 1000.0;
+                        inv.setStock(inv.getStock() - quantityInKg);
+                        if (inv.getStock() < 0) {
+                            inv.setStock(0.0); // Prevent negative stock
+                        }
+                        inventoryRepository.save(inv);
+                    }
+                }
+            }
+        }
 
         // Gap 4: Billing Synchronization. Append total amount to Invoice when DELIVERED
         if ("DELIVERED".equals(dbStatus) && order.getRoomBooking() != null && order.getTotalAmount() != null) {
@@ -568,5 +629,133 @@ public class ChefMealController {
         foodOrderRepository.save(order);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Item removed successfully"));
+    }
+
+    @GetMapping("/inventory")
+    public ResponseEntity<?> getInventory() {
+        List<Inventory> inventoryList = inventoryRepository.findAll().stream()
+                .filter(inv -> inv.getCategory() != null && inv.getCategory().contains("Bếp"))
+                .filter(inv -> inv.getUnit() != null && inv.getUnit().equalsIgnoreCase("Kg"))
+                .collect(Collectors.toList());
+        List<Map<String, Object>> response = inventoryList.stream().map(inv -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", inv.getId());
+            map.put("name", inv.getName());
+            map.put("category", inv.getCategory());
+            map.put("stock", inv.getStock());
+            map.put("minQty", inv.getMinQty());
+            map.put("unit", inv.getUnit());
+            
+            String status = "Đầy đủ";
+            if (inv.getStock() == null || inv.getStock() == 0) status = "Hết hàng";
+            else if (inv.getStock() < inv.getMinQty()) status = "Sắp hết";
+            map.put("status", status);
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/inventory/{id}")
+    public ResponseEntity<?> updateInventoryStock(@PathVariable String id, @RequestBody Map<String, Object> payload) {
+        Optional<Inventory> invOpt = inventoryRepository.findById(id);
+        if (invOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Inventory not found");
+        }
+        try {
+            Inventory inv = invOpt.get();
+            if (payload.containsKey("stock")) {
+                inv.setStock(Double.parseDouble(payload.get("stock").toString()));
+            }
+            if (payload.containsKey("minQty")) {
+                inv.setMinQty(Double.parseDouble(payload.get("minQty").toString()));
+            }
+            inventoryRepository.save(inv);
+            return ResponseEntity.ok(Map.of("success", true, "inventory", inv));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to update inventory: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/procurements")
+    public ResponseEntity<?> getProcurements() {
+        List<ProcurementRequest> requests = procurementRequestRepository.findAllByOrderByRequestDateDesc().stream()
+                .filter(req -> req.getInventory() != null 
+                            && req.getInventory().getCategory() != null 
+                            && req.getInventory().getCategory().contains("Bếp")
+                            && "Kg".equalsIgnoreCase(req.getInventory().getUnit()))
+                .collect(Collectors.toList());
+        List<Map<String, Object>> response = requests.stream().map(req -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", "REQ-" + req.getId());
+            map.put("dbId", req.getId());
+            map.put("name", req.getInventory() != null ? req.getInventory().getName() : "Unknown");
+            map.put("qty", req.getQty());
+            map.put("unit", req.getInventory() != null ? req.getInventory().getUnit() : "Kg");
+            map.put("date", req.getRequestDate().toString());
+            map.put("status", req.getStatus());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/procurements")
+    public ResponseEntity<?> createProcurementRequest(@RequestBody Map<String, Object> payload) {
+        try {
+            String name = (String) payload.get("name");
+            Double qty = Double.parseDouble(payload.get("qty").toString());
+            
+            // Find inventory by name (since frontend sends name)
+            Optional<Inventory> invOpt = inventoryRepository.findAll().stream()
+                .filter(i -> i.getName().equalsIgnoreCase(name))
+                .findFirst();
+                
+            if (invOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Inventory item not found");
+            }
+            
+            ProcurementRequest request = ProcurementRequest.builder()
+                .inventory(invOpt.get())
+                .qty(qty)
+                .requestDate(java.time.LocalDate.now())
+                .status("Chờ duyệt")
+                .build();
+                
+            procurementRequestRepository.save(request);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", "REQ-" + request.getId());
+            map.put("name", request.getInventory().getName());
+            map.put("qty", request.getQty());
+            map.put("unit", request.getInventory().getUnit());
+            map.put("date", request.getRequestDate().toString());
+            map.put("status", request.getStatus());
+            
+            return ResponseEntity.ok(Map.of("success", true, "request", map));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to create procurement: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/procurements/{id}/approve")
+    public ResponseEntity<?> approveProcurement(@PathVariable Integer id) {
+        Optional<ProcurementRequest> reqOpt = procurementRequestRepository.findById(id);
+        if (reqOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Request not found");
+        }
+        
+        ProcurementRequest req = reqOpt.get();
+        if ("Đã nhập kho".equals(req.getStatus())) {
+            return ResponseEntity.badRequest().body("Request already approved");
+        }
+        
+        req.setStatus("Đã nhập kho");
+        procurementRequestRepository.save(req);
+        
+        // Add to inventory
+        Inventory inv = req.getInventory();
+        inv.setStock(inv.getStock() + req.getQty());
+        inventoryRepository.save(inv);
+        
+        return ResponseEntity.ok(Map.of("success", true, "message", "Approved successfully"));
     }
 }

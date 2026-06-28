@@ -10,4 +10,5 @@ import java.util.List;
 public interface RestaurantTableRepository extends JpaRepository<RestaurantTable, Integer> {
     List<RestaurantTable> findByStatus(String status);
     List<RestaurantTable> findByStatusAndCapacityGreaterThanEqualOrderByCapacityAsc(String status, Integer capacity);
+    java.util.Optional<RestaurantTable> findByTableNumber(String tableNumber);
 }

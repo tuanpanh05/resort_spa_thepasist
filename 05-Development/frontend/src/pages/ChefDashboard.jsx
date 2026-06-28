@@ -44,6 +44,7 @@ export default function ChefDashboard() {
   const [ingredients, setIngredients] = useState([]);
   const [procurements, setProcurements] = useState([]);
   const [tables, setTables] = useState([]);
+  const [baseTables, setBaseTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
 
@@ -66,7 +67,7 @@ export default function ChefDashboard() {
         currentTables.push({
           id: roomStr,
           status: "Occupied",
-          capacity: 4, 
+          capacity: 4,
           currentGuest: activeRooms[roomStr]
         });
       }
@@ -85,9 +86,10 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
+          tableNumber: extractFirstTable(item.room),
           origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
-                  : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
-                  : (item.origin || "Tại Quán"),
+            : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
+              : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -98,8 +100,12 @@ export default function ChefDashboard() {
           mealCode: item.mealCode
         };
       });
-      setOrders(mappedOrders);
-      setTables(computeDynamicTables(mappedOrders, tables));
+      const finalOrders = mappedOrders.filter(o => 
+          !["Đặt Trước Bữa Ăn", "PACKAGE MEAL", "COMBO"].includes(o.origin) &&
+          !(o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
+      );
+      setOrders(finalOrders);
+      setTables(computeDynamicTables(finalOrders, baseTables));
     } catch (err) {
       console.warn("Could not fetch orders for date", err);
     }
@@ -114,12 +120,14 @@ export default function ChefDashboard() {
   const fetchChefData = async () => {
     setLoading(true);
     try {
-      const [menuRes, ordersRes, upcomingOrdersRes, allergiesRes, tablesRes] = await Promise.all([
+      const [menuRes, ordersRes, upcomingOrdersRes, allergiesRes, tablesRes, inventoryRes, procurementsRes] = await Promise.all([
         axiosClient.get("/chef/menu"),
         axiosClient.get("/chef/orders"),
         axiosClient.get("/chef/orders/upcoming"),
         axiosClient.get("/guest/chef/allergies"),
-        axiosClient.get("/chef/tables")
+        axiosClient.get("/chef/tables"),
+        axiosClient.get("/chef/inventory").catch(err => ({ data: [] })),
+        axiosClient.get("/chef/procurements").catch(err => ({ data: [] }))
       ]);
 
       const mappedAllergies = allergiesRes.data.map(item => {
@@ -177,9 +185,10 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
+          tableNumber: extractFirstTable(item.room),
           origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
-                  : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
-                  : (item.origin || "Tại Quán"),
+            : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
+              : (item.origin || "Tại Quán"),
           items: item.items.map(it => ({
             name: it.name,
             qty: it.qty
@@ -197,6 +206,7 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
+          tableNumber: extractFirstTable(item.room),
           origin: item.origin === "Room Service" ? "Tại Quán" : item.origin,
           items: item.items.map(it => ({
             name: it.name,
@@ -212,18 +222,31 @@ export default function ChefDashboard() {
         };
       });
 
+      const finalOrders = mappedOrders.filter(o => 
+          !["Đặt Trước Bữa Ăn", "PACKAGE MEAL", "COMBO"].includes(o.origin) &&
+          !(o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
+      );
+
+      const finalUpcomingOrders = mappedUpcomingOrders.filter(o => 
+          ["Đặt Trước Bữa Ăn", "PACKAGE MEAL", "COMBO"].includes(o.origin) ||
+          (o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
+      );
+
       setAllergies(mappedAllergies);
       setDishes(mappedDishes);
-      setOrders(mappedOrders);
-      setUpcomingOrders(mappedUpcomingOrders);
-      
+      setOrders(finalOrders);
+      setUpcomingOrders(finalUpcomingOrders);
+      setIngredients(inventoryRes.data);
+      setProcurements(procurementsRes.data);
+
       const realTables = tablesRes.data.map(t => ({
         id: t.id,
-        status: t.status === "AVAILABLE" ? "Available" : "Occupied",
+        status: (t.status && t.status.toUpperCase() === "AVAILABLE") ? "Available" : "Occupied",
         capacity: t.capacity,
         currentGuest: null
       }));
-      setTables(computeDynamicTables(mappedOrders, realTables));
+      setBaseTables(realTables);
+      setTables(computeDynamicTables(finalOrders, realTables));
     } catch (err) {
       console.warn("Could not fetch chef data from live server.", err);
       // Leave state as empty arrays — do not fallback to mock data
@@ -306,7 +329,7 @@ export default function ChefDashboard() {
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     const numericId = typeof orderId === "string" ? orderId.replace("ORD-", "") : orderId;
-    
+
     const updateState = () => {
       setOrders((prev) =>
         prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus } : ord))
@@ -323,15 +346,7 @@ export default function ChefDashboard() {
       console.warn("Failed to update status on backend", err);
       updateState();
     }
-    
-    const order = orders.find((ord) => ord.id === orderId) || upcomingOrders.find((ord) => ord.id === orderId);
-    const nextStatusText =
-      newStatus === "Cooking" ? "bắt đầu chuẩn bị" 
-      : newStatus === "Delivering" ? "xong món, đang giao" 
-      : newStatus === "Cancelled" ? "bị hủy" 
-      : "hoàn thành giao hàng";
-    const msg = `Đơn hàng ${orderId} của khách ${order?.guestName || "khách"} đã ${nextStatusText}`;
-    playVoiceAlert(msg);
+
   };
 
   // Allergy Matching helper for orders
@@ -423,59 +438,59 @@ export default function ChefDashboard() {
         />
       )}
 
-      <OperationSidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isMobileMenuOpen={isMobileMenuOpen} 
+      <OperationSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
         userRoleLabel="Executive Chef"
         handleLogout={() => {
-            if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?"))
-                window.location.href = "/dang-nhap";
+          if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?"))
+            window.location.href = "/dang-nhap";
         }}
         sidebarItems={[
-            {
-              id: "overview",
-              label: "1. Bếp tổng quan",
-              icon: LayoutDashboard,
-            },
-            {
-              id: "allergies",
-              label: "2. Cảnh báo dị ứng",
-              icon: ShieldAlert,
-              badge: `${allergies.filter((a) => a.allergies.length > 0).length}`,
-            },
-            {
-              id: "menu",
-              label: "3. Thực đơn hôm nay",
-              icon: Utensils,
-              badge: `${dishes.filter((d) => d.isTodayMenu).length}`,
-            },
-            {
-              id: "orders",
-              label: "4. Đơn đặt món",
-              icon: Clock,
-              badge: `${orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled").length}`,
-            },
-            {
-              id: "upcoming",
-              label: "5. Đơn Combo Đặt Trước",
-              icon: Package,
-              badge: `${upcomingOrders.length}`,
-            },
-            { id: "dishes", label: "6. Danh mục món ăn", icon: FileText },
-            {
-              id: "inventory",
-              label: "7. Kho & Gọi hàng",
-              icon: Package,
-              badge: `${ingredients.filter((i) => i.status !== "Đầy đủ").length}`,
-            },
-            {
-              id: "tables",
-              label: "8. Quản Lý Bàn",
-              icon: LayoutDashboard,
-            },
-          ]}
+          {
+            id: "overview",
+            label: "1. Bếp tổng quan",
+            icon: LayoutDashboard,
+          },
+          {
+            id: "allergies",
+            label: "2. Cảnh báo dị ứng",
+            icon: ShieldAlert,
+            badge: `${allergies.filter((a) => a.allergies.length > 0).length}`,
+          },
+          {
+            id: "menu",
+            label: "3. Thực đơn hôm nay",
+            icon: Utensils,
+            badge: `${dishes.filter((d) => d.isTodayMenu).length}`,
+          },
+          {
+            id: "orders",
+            label: "4. Đơn đặt món",
+            icon: Clock,
+            badge: `${orders.filter((o) => o.status !== "Completed" && o.status !== "Cancelled").length}`,
+          },
+          {
+            id: "upcoming",
+            label: "5. Đơn Combo Đặt Trước",
+            icon: Package,
+            badge: `${upcomingOrders.length}`,
+          },
+          { id: "dishes", label: "6. Danh mục món ăn", icon: FileText },
+          {
+            id: "inventory",
+            label: "7. Kho & Gọi hàng",
+            icon: Package,
+            badge: `${ingredients.filter((i) => i.status !== "Đầy đủ").length}`,
+          },
+          {
+            id: "tables",
+            label: "8. Quản Lý Bàn",
+            icon: LayoutDashboard,
+          },
+        ]}
       />
 
       {/* Main Content Area */}
@@ -491,7 +506,7 @@ export default function ChefDashboard() {
               {activeTab === "menu" &&
                 "3. Quản Lý Thực Đơn Hàng Ngày (Menu Today)"}
               {activeTab === "orders" && "4. Danh Sách Gọi Món & Tiến Độ Nấu"}
-              {activeTab === "upcoming" && "5. Quản Lý Đơn Combo Đặt Trước (Upcoming Combos)"}
+              {activeTab === "upcoming" && "5. Quản Lý Đơn Đặt Trước"}
               {activeTab === "dishes" && "6. Cơ Sở Dữ Liệu Danh Mục Món Ăn"}
               {activeTab === "inventory" &&
                 "7. Kho Nguyên Liệu & Yêu Cầu Thu Mua"}
@@ -523,7 +538,7 @@ export default function ChefDashboard() {
           <>
             {activeTab === "overview" && (() => {
               const todayObj = new Date();
-              const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+              const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
               const allTodayOrders = [
                 ...orders,
                 ...upcomingOrders.filter(o => o.date === todayStr)
@@ -575,6 +590,15 @@ export default function ChefDashboard() {
               <ManageDishes dishes={dishes} setDishes={setDishes} />
             )}
 
+            {activeTab === "tables" && (
+              <ManageTables 
+                tables={tables} 
+                setTables={setTables} 
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+              />
+            )}
+
             {activeTab === "inventory" && (
               <ManageInventory
                 ingredients={ingredients}
@@ -584,12 +608,7 @@ export default function ChefDashboard() {
               />
             )}
 
-            {activeTab === "tables" && (
-              <ManageTables
-                tables={tables}
-                setTables={setTables}
-              />
-            )}
+
           </>
         )}
       </main>

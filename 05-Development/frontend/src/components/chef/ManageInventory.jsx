@@ -4,6 +4,7 @@ import Button from "../ui/Button";
 import Card from "../ui/Card";
 import Modal from "../ui/Modal";
 import { Table } from "../ui/Table";
+import axiosClient from "../../api/axiosClient";
 
 export default function ManageInventory({
   ingredients,
@@ -19,70 +20,95 @@ export default function ManageInventory({
     unit: "Kg",
   });
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!setIngredients) return;
     
-    setIngredients((prev) =>
-      prev.map((ing) => {
-        if (ing.id === editingIng.id) {
-          const stock = parseFloat(editingIng.stock);
-          const minQty = parseFloat(editingIng.minQty);
-          let status = "Đầy đủ";
-          if (stock === 0) status = "Hết hàng";
-          else if (stock < minQty) status = "Sắp hết";
-          return { ...ing, stock, minQty, status };
-        }
-        return ing;
-      })
-    );
-    setEditingIng(null);
+    try {
+      const payload = {
+        stock: parseFloat(editingIng.stock),
+        minQty: parseFloat(editingIng.minQty)
+      };
+      await axiosClient.put(`/chef/inventory/${editingIng.id}`, payload);
+      
+      setIngredients((prev) =>
+        prev.map((ing) => {
+          if (ing.id === editingIng.id) {
+            const stock = payload.stock;
+            const minQty = payload.minQty;
+            let status = "Đầy đủ";
+            if (stock === 0) status = "Hết hàng";
+            else if (stock < minQty) status = "Sắp hết";
+            return { ...ing, stock, minQty, status };
+          }
+          return ing;
+        })
+      );
+      setEditingIng(null);
+    } catch (err) {
+      console.error("Failed to update inventory", err);
+      alert("Cập nhật thất bại");
+    }
   };
 
-  const handleCreateRequest = (e) => {
+  const handleCreateRequest = async (e) => {
     e.preventDefault();
     if (!requestForm.qty) {
       alert("Vui lòng điền số lượng cần nhập.");
       return;
     }
-    const newReq = {
-      id: `REQ-${Math.floor(10 + Math.random() * 90)}`,
-      name: requestForm.name,
-      qty: parseFloat(requestForm.qty),
-      unit: requestForm.unit,
-      date: new Date().toISOString().split("T")[0],
-      status: "Chờ duyệt",
-    };
-    setProcurements((prev) => [newReq, ...prev]);
-    setShowRequestModal(false);
-    setRequestForm({ name: "Nấm đùi gà tươi", qty: "", unit: "Kg" });
-    alert(
-      `Đã gửi yêu cầu mua thêm ${newReq.qty} ${newReq.unit} ${newReq.name} lên phòng quản trị.`,
-    );
+    
+    try {
+      const payload = {
+        name: requestForm.name,
+        qty: parseFloat(requestForm.qty)
+      };
+      
+      const res = await axiosClient.post('/chef/procurements', payload);
+      
+      if (res.data.success) {
+        setProcurements((prev) => [res.data.request, ...prev]);
+        setShowRequestModal(false);
+        setRequestForm({ name: "Nấm đùi gà tươi", qty: "", unit: "Kg" });
+        alert(
+          `Đã gửi yêu cầu mua thêm ${res.data.request.qty} ${res.data.request.unit} ${res.data.request.name} lên phòng quản trị.`,
+        );
+      }
+    } catch (err) {
+      console.error("Failed to create request", err);
+      alert("Tạo yêu cầu thất bại");
+    }
   };
 
-  const handleApproveRequest = (reqId) => {
+  const handleApproveRequest = async (reqId) => {
     const req = procurements.find((r) => r.id === reqId);
     if (!req) return;
 
-    setProcurements((prev) =>
-      prev.map((r) => (r.id === reqId ? { ...r, status: "Đã nhập kho" } : r))
-    );
-
-    if (setIngredients) {
-      setIngredients((prev) =>
-        prev.map((ing) => {
-          if (ing.name === req.name) {
-            const stock = parseFloat(ing.stock) + parseFloat(req.qty);
-            const minQty = parseFloat(ing.minQty);
-            let status = "Đầy đủ";
-            if (stock === 0) status = "Hết hàng";
-            else if (stock < minQty) status = "Sắp hết";
-            return { ...ing, stock, status };
-          }
-          return ing;
-        })
+    try {
+      await axiosClient.put(`/chef/procurements/${req.dbId || req.id.replace('REQ-','')}/approve`);
+      
+      setProcurements((prev) =>
+        prev.map((r) => (r.id === reqId ? { ...r, status: "Đã nhập kho" } : r))
       );
+
+      if (setIngredients) {
+        setIngredients((prev) =>
+          prev.map((ing) => {
+            if (ing.name === req.name) {
+              const stock = parseFloat(ing.stock) + parseFloat(req.qty);
+              const minQty = parseFloat(ing.minQty);
+              let status = "Đầy đủ";
+              if (stock === 0) status = "Hết hàng";
+              else if (stock < minQty) status = "Sắp hết";
+              return { ...ing, stock, status };
+            }
+            return ing;
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Failed to approve request", err);
+      alert("Phê duyệt thất bại");
     }
   };
 

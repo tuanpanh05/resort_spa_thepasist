@@ -364,7 +364,7 @@ public class GuestMealServiceImpl implements GuestMealService {
             }
 
             if (foodOrder == null) {
-                RestaurantTable assignedTable = tableAssignmentService.assignTable(2);
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(2, mealTime);
 
                 foodOrder = FoodOrder.builder()
                         .user(user)
@@ -377,8 +377,7 @@ public class GuestMealServiceImpl implements GuestMealService {
                         .build();
                 foodOrder = foodOrderRepository.save(foodOrder);
             } else {
-                List<FoodOrderDetail> oldDetails = foodOrderDetailRepository.findByFoodOrder_OrderId(foodOrder.getOrderId());
-                foodOrderDetailRepository.deleteAll(oldDetails);
+                // Do not delete old items!
             }
 
             createdOrderIds.add(foodOrder.getOrderId());
@@ -386,6 +385,15 @@ public class GuestMealServiceImpl implements GuestMealService {
             BigDecimal totalExtraCharges = BigDecimal.ZERO;
             List<FoodOrderDetail> detailsToSave = new ArrayList<>();
             Map<Integer, Integer> dailySelectedCounts = new HashMap<>();
+
+            List<FoodOrderDetail> existingDetails = new ArrayList<>();
+            if (foodOrder.getOrderId() != null) {
+                existingDetails = foodOrderDetailRepository.findByFoodOrder_OrderId(foodOrder.getOrderId());
+                for (FoodOrderDetail od : existingDetails) {
+                    int qty = dailySelectedCounts.getOrDefault(od.getFoodMenu().getFoodId(), 0);
+                    dailySelectedCounts.put(od.getFoodMenu().getFoodId(), qty + od.getQuantity());
+                }
+            }
 
             for (MealPreselectionDTO.MealSelectionItem item : items) {
                 Optional<FoodMenu> menuOpt = foodMenuRepository.findById(item.getFoodId());
@@ -419,22 +427,37 @@ public class GuestMealServiceImpl implements GuestMealService {
                 String noteStr = item.getSpecialNote() != null ? item.getSpecialNote().trim() : "";
                 String finalNote = "[Period: " + assignedPeriod + "]" + (noteStr.isEmpty() ? "" : " " + noteStr);
 
-                FoodOrderDetail detail = FoodOrderDetail.builder()
-                        .foodOrder(foodOrder)
-                        .foodMenu(dish)
-                        .quantity(item.getQuantity())
-                        .priceAtOrder(dish.getPrice())
-                        .specialNote(finalNote)
-                        .isPackageIncluded(isPackageIncluded)
-                        .build();
+                FoodOrderDetail existingDetail = null;
+                for (FoodOrderDetail od : existingDetails) {
+                    if (od.getFoodMenu().getFoodId().equals(item.getFoodId()) &&
+                        (od.getSpecialNote() != null && od.getSpecialNote().equals(finalNote)) &&
+                        (od.getIsPackageIncluded() != null && od.getIsPackageIncluded() == isPackageIncluded)) {
+                        existingDetail = od;
+                        break;
+                    }
+                }
 
-                detailsToSave.add(detail);
+                if (existingDetail != null) {
+                    existingDetail.setQuantity(existingDetail.getQuantity() + item.getQuantity());
+                    detailsToSave.add(existingDetail);
+                } else {
+                    FoodOrderDetail detail = FoodOrderDetail.builder()
+                            .foodOrder(foodOrder)
+                            .foodMenu(dish)
+                            .quantity(item.getQuantity())
+                            .priceAtOrder(dish.getPrice())
+                            .specialNote(finalNote)
+                            .isPackageIncluded(isPackageIncluded)
+                            .build();
+                    detailsToSave.add(detail);
+                }
             }
 
             foodOrderDetailRepository.saveAll(detailsToSave);
             totalItemCount += detailsToSave.size();
 
-            foodOrder.setTotalAmount(totalExtraCharges);
+            BigDecimal currentTotal = foodOrder.getTotalAmount() != null ? foodOrder.getTotalAmount() : BigDecimal.ZERO;
+            foodOrder.setTotalAmount(currentTotal.add(totalExtraCharges));
             foodOrderRepository.save(foodOrder);
 
             grandTotalExtraCharges = grandTotalExtraCharges.add(totalExtraCharges);
@@ -560,7 +583,7 @@ public class GuestMealServiceImpl implements GuestMealService {
         Map<Integer, Integer> packageLimitMap = limits.stream()
                 .collect(Collectors.toMap(l -> l.getFoodMenu().getFoodId(), PackageFoodLimit::getQuantityPerDay));
 
-        RestaurantTable assignedTable = tableAssignmentService.assignTable(2);
+        RestaurantTable assignedTable = tableAssignmentService.assignTable(2, java.time.LocalDateTime.now());
 
         FoodOrder foodOrder = FoodOrder.builder()
                 .user(user)

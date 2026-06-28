@@ -175,7 +175,21 @@ export default function UpcomingPrep({
             {ord.time}
           </span>
           {nextStatus ? (
-            <div className="flex items-center space-x-2 flex-1 ml-4">
+            <div className="flex items-center space-x-2 flex-1 ml-2">
+              {status === "Pending" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                      if (window.confirm("Bạn có chắc chắn muốn hủy đơn này không?")) {
+                          handleUpdateOrderStatus(ord.id, "Cancelled");
+                      }
+                  }}
+                  className="flex items-center justify-center px-3 py-2.5 text-red-500 bg-red-50 border border-red-200 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-red-100 transition-all shadow-sm"
+                  title="Hủy đơn"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleUpdateOrderStatus(ord.id, nextStatus)}

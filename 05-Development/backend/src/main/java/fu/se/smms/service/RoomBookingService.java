@@ -249,7 +249,7 @@ public class RoomBookingService {
                     mealTime = LocalDateTime.now();
                 }
 
-                RestaurantTable assignedTable = tableAssignmentService.assignTable(dto.getGuestsCount() != null ? dto.getGuestsCount() : 2);
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(dto.getGuestsCount() != null ? dto.getGuestsCount() : 2, mealTime);
 
                 FoodOrder foodOrder = FoodOrder.builder()
                         .user(user)

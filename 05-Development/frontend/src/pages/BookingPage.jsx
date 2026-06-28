@@ -366,7 +366,8 @@ export default function BookingPage() {
           const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
           if (item) {
             if (item.isPackageIncluded) {
-              if (qty > 1) extra += item.price * (qty - 1);
+              const chargeableQty = Math.max(0, qty - chargedGuestsCount);
+              extra += item.price * chargeableQty;
             } else {
               extra += item.price * qty;
             }
@@ -759,8 +760,6 @@ export default function BookingPage() {
                   mealTotal={mealTotal}
                   handlePrevStep={handlePrevStep}
                   handleNextStep={handleNextStep}
-                  selectedComboId={selectedComboId}
-                  handleSelectCombo={handleSelectCombo}
                 />
               )}
               {step === 5 && (
