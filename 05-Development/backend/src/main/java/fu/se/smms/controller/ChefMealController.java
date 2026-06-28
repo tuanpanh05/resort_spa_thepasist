@@ -60,6 +60,34 @@ public class ChefMealController {
         return ResponseEntity.ok(tables);
     }
 
+    @PostMapping("/tables/{tableNumber}/book")
+    public ResponseEntity<?> bookTable(@PathVariable String tableNumber) {
+        RestaurantTable table = restaurantTableRepository.findByTableNumber(tableNumber).orElse(null);
+        if (table == null) return ResponseEntity.badRequest().build();
+        table.setStatus("OCCUPIED");
+        restaurantTableRepository.save(table);
+        return ResponseEntity.ok(Collections.singletonMap("success", true));
+    }
+
+    @PostMapping("/tables/{tableNumber}/release")
+    public ResponseEntity<?> releaseTable(@PathVariable String tableNumber) {
+        RestaurantTable table = restaurantTableRepository.findByTableNumber(tableNumber).orElse(null);
+        if (table != null) {
+            table.setStatus("AVAILABLE");
+            restaurantTableRepository.save(table);
+
+            List<FoodOrder> activeOrders = foodOrderRepository.findAll().stream()
+                    .filter(o -> o.getTable() != null && o.getTable().getTableId().equals(table.getTableId()))
+                    .filter(o -> !o.getStatus().equals("Completed") && !o.getStatus().equals("Cancelled"))
+                    .collect(Collectors.toList());
+            for (FoodOrder o : activeOrders) {
+                o.setStatus("Completed");
+                foodOrderRepository.save(o);
+            }
+        }
+        return ResponseEntity.ok(Collections.singletonMap("success", true));
+    }
+
     @GetMapping("/menu")
     public ResponseEntity<?> getMenu() {
         List<FoodMenu> menuList = foodMenuRepository.findAll();
@@ -315,6 +343,7 @@ public class ChefMealController {
                 .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(finalDate))
                 // Tab 4 KDS: chỉ hiện đơn gọi thêm tại bàn (ROOM SERVICE)
                 .filter(o -> !"PACKAGE MEAL".equals(o.getOrigin()))
+                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"PENDING_DEPOSIT".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
             List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());
@@ -391,7 +420,7 @@ public class ChefMealController {
                 // Tab 5: Đơn PACKAGE MEAL (combo, đặt trước bữa ăn) - hôm nay và tương lai
                 .filter(o -> o.getOrderTime() != null && !o.getOrderTime().toLocalDate().isBefore(today))
                 .filter(o -> o.getOrigin() == null || "PACKAGE MEAL".equals(o.getOrigin()))
-                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
+                .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"PENDING_DEPOSIT".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {
             List<FoodOrderDetail> details = foodOrderDetailRepository.findByFoodOrder_OrderId(order.getOrderId());

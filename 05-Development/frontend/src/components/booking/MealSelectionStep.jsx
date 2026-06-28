@@ -1,30 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Info, AlertTriangle, ArrowLeft, ChevronRight, Check, Clock } from "lucide-react";
 import { detectAllergens } from "../../utils/health";
+import { COMBOS } from "../../constants/mealCombos";
 
-const COMBOS = [
-  {
-    id: "detox",
-    name: "Gói Detox Thanh Lọc (3 Bữa/Ngày)",
-    description: "Chế độ ăn thanh lọc cơ thể với thực đơn luân phiên 7 ngày vô cùng phong phú. Giúp đào thải độc tố nhưng vẫn tràn đầy năng lượng.",
-    image: "/images/combos/detox_combo.png",
-    dailyMenus: []
-  },
-  {
-    id: "recovery",
-    name: "Gói Phục Hồi Năng Lượng (3 Bữa/Ngày)",
-    description: "Tập trung vào bữa sáng dinh dưỡng, bữa trưa nhẹ nhàng và bữa tối cao cấp, phục hồi năng lượng toàn diện. Thực đơn luân phiên 7 ngày.",
-    image: "/images/combos/recovery_combo.png",
-    dailyMenus: []
-  },
-  {
-    id: "vip",
-    name: "Gói Thưởng Thức VIP (3 Bữa/Ngày)",
-    description: "Trải nghiệm ẩm thực thượng hạng với các đặc sản tuyển chọn và đồ uống cao cấp, luân phiên trong 7 ngày không lặp lại.",
-    image: "/images/combos/vip_combo.png",
-    dailyMenus: []
-  }
-];
 
 export default function MealSelectionStep({
   mealBookingDays,
@@ -42,6 +20,7 @@ export default function MealSelectionStep({
   mealTotal,
   handlePrevStep,
   handleNextStep,
+  setMealSelections,
 }) {
   // ── BR-10: Real-time cut-off detection ──────────────────────────────────
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
@@ -70,7 +49,7 @@ export default function MealSelectionStep({
   // Show cut-off warning when tomorrow is next and it's past 22:00
   const showCutoffWarning = currentHour >= CUTOFF_HOUR && tomorrowStr && mealBookingDays.includes(tomorrowStr);
   const nightsCount = Math.max(1, mealBookingDays.length - 1);
-  const guestsCount = guestInfo.guestsCount || 1;
+  const guestsCount = Math.max(1, Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0));
   const [viewMenuCombo, setViewMenuCombo] = React.useState(null);
   const [selectedDishDetail, setSelectedDishDetail] = React.useState(null);
 
@@ -78,19 +57,19 @@ export default function MealSelectionStep({
   // Convert internal dailyMenus structure → { "yyyy-MM-dd": { period: { foodId: qty } } }
   const buildMealSelectionsFromCombo = (safeCombo, openBookingDays) => {
     const result = {};
-    const actualDaysCount = Math.min(openBookingDays.length, Math.max(1, nightsCount));
+    const actualDaysCount = openBookingDays.length;
     openBookingDays.slice(0, actualDaysCount).forEach((dateStr, dayIndex) => {
       const menuDayIndex = dayIndex % Math.max(1, safeCombo.dailyMenus.length);
       const menu = safeCombo.dailyMenus[menuDayIndex] || [];
       const dateObj = {};
       menu.forEach(item => {
-        // Use substituted foodId if present, else original
-        const effectiveFoodId = item.isSubstituted && item.allergicSubId ? item.allergicSubId : item.foodId;
-        if (!effectiveFoodId) return;
         const period = item.period || "Breakfast";
         if (!dateObj[period]) dateObj[period] = {};
+
         const qty = item.qty || 1;
-        dateObj[period][effectiveFoodId] = (dateObj[period][effectiveFoodId] || 0) + qty;
+        if (!item.noSubstituteFound) {
+            dateObj[period][item.foodId] = (dateObj[period][item.foodId] || 0) + qty;
+        }
       });
       if (Object.keys(dateObj).length > 0) result[dateStr] = dateObj;
     });
@@ -115,27 +94,28 @@ export default function MealSelectionStep({
     try {
       if (!combo.dailyMenus || combo.dailyMenus.length === 0) return 0;
       let sum = 0;
-      const actualDaysCount = Math.min(openDays.length, Math.max(1, nightsCount));
+      const actualDaysCount = openDays.length;
+      const chargedGuestsCount = guestsCount;
       openDays.slice(0, actualDaysCount).forEach((date, index) => {
         const menuDayIndex = index % combo.dailyMenus.length;
         const dailyMenu = combo.dailyMenus[menuDayIndex] || [];
         
         dailyMenu.forEach(item => {
           const count = item.qty || 1;
-          if (item.allergicSubId && count > 1) {
-              const subDish = packageMenuItems.find(m => m.foodId === item.allergicSubId);
+          
+          const addPrice = (dish, qty) => {
+              if (!dish) return;
+              if (dish.isPackageIncluded) {
+                  const chargeableQty = Math.max(0, qty - chargedGuestsCount);
+                  sum += dish.price * chargeableQty;
+              } else {
+                  sum += dish.price * qty;
+              }
+          };
+
+          if (!item.noSubstituteFound) {
               const origDish = packageMenuItems.find(m => m.foodId === item.foodId);
-              if (subDish) sum += subDish.price * 1;
-              if (origDish) sum += origDish.price * (count - 1);
-          } else if (item.allergicSubId && count === 1) {
-              const subDish = packageMenuItems.find(m => m.foodId === item.allergicSubId);
-              if (subDish) sum += subDish.price * 1;
-          } else if (item.noSubstituteFound && count > 1) {
-              const origDish = packageMenuItems.find(m => m.foodId === item.foodId);
-              if (origDish) sum += origDish.price * (count - 1);
-          } else if (!item.noSubstituteFound) {
-              const origDish = packageMenuItems.find(m => m.foodId === item.foodId);
-              if (origDish) sum += origDish.price * count;
+              addPrice(origDish, count);
           }
         });
       });
@@ -191,29 +171,21 @@ export default function MealSelectionStep({
             const substitute = packageMenuItems.find((m) => 
               m.foodId !== item.foodId && 
               m.periods && m.periods.includes(item.period) &&
+              m.category === dish.category &&
               !isDishAllergen(m)
             );
             
             if (substitute) {
-              newMenu.push({ ...item, foodId: item.foodId, allergicSubId: substitute.foodId, isSubstituted: true, originalName: dish.dishName, subName: substitute.dishName });
-              const msg = guestsCount > 1 
-                  ? `Thay thế 1 phần ${dish.dishName} ➔ ${substitute.dishName}`
-                  : `Thay thế món ${dish.dishName} ➔ ${substitute.dishName}`;
+              newMenu.push({ ...item, foodId: substitute.foodId, isSubstituted: true, originalName: dish.dishName, subName: substitute.dishName, replacedForAll: true });
+              const msg = `Thay thế món ${dish.dishName} ➔ ${substitute.dishName}`;
               if (!allergenWarnings.includes(msg)) {
                  allergenWarnings.push(msg);
               }
             } else {
-              if (guestsCount > 1) {
-                newMenu.push({ ...item, isSubstituted: true, noSubstituteFound: true, originalName: dish.dishName });
-                const msg = `1 phần ${dish.dishName} bị loại bỏ (Không tìm được món an toàn)`;
-                if (!allergenWarnings.includes(msg)) {
-                   allergenWarnings.push(msg);
-                }
-              } else {
-                const msg = `Loại bỏ món ${dish.dishName} (Không tìm được món thay thế an toàn)`;
-                if (!allergenWarnings.includes(msg)) {
-                   allergenWarnings.push(msg);
-                }
+              newMenu.push({ ...item, isSubstituted: true, noSubstituteFound: true, originalName: dish.dishName, replacedForAll: true });
+              const msg = `Loại bỏ món ${dish.dishName} (Không tìm được món thay thế an toàn)`;
+              if (!allergenWarnings.includes(msg)) {
+                 allergenWarnings.push(msg);
               }
             }
           } else {
@@ -361,6 +333,10 @@ export default function MealSelectionStep({
     handleSelectCombo(comboId);
   };
 
+  const selectedCombo = safeCombos.find(c => c.id === selectedComboId);
+
+
+
   return (
     <div className="space-y-6 text-left animate-fade-in">
       <div className="border-b border-[#cda250]/15 pb-4 mb-8">
@@ -433,7 +409,7 @@ export default function MealSelectionStep({
         {safeCombos.map((combo) => {
           const isSelected = selectedComboId === combo.id;
           const totalComboPrice = calculateTotalComboPrice(combo);
-          const actualDaysCount = Math.min(openDays.length, Math.max(1, nightsCount));
+          const actualDaysCount = openDays.length;
           const avgPricePerDay = actualDaysCount > 0 ? totalComboPrice / (guestsCount * actualDaysCount) : 0;
           const hasSubstitutions = combo.allergenWarnings.length > 0;
           const blocked = allDaysBlocked;
@@ -589,7 +565,7 @@ export default function MealSelectionStep({
                   <div className="p-10 text-center text-sage-500 italic font-medium">
                     Thực đơn chi tiết đang được Đầu bếp trưởng lên công thức và cập nhật. Vui lòng thử lại sau!
                   </div>
-                ) : Array.from({ length: Math.max(1, mealBookingDays.length) }).map((_, dayIdx) => {
+                ) : Array.from({ length: openDays.length }).map((_, dayIdx) => {
                   const menuDayIndex = dayIdx % Math.max(1, viewMenuCombo.dailyMenus.length);
                   const menu = viewMenuCombo.dailyMenus[menuDayIndex] || [];
 
@@ -631,17 +607,12 @@ export default function MealSelectionStep({
                                   
                                   // Determine display logic for substitutions
                                   const displays = [];
-                                  if (item.allergicSubId && count > 1) {
-                                      displays.push({ dishId: item.allergicSubId, qty: 1, isSub: true, msg: `Đổi dị ứng` });
-                                      displays.push({ dishId: item.foodId, qty: count - 1, isSub: false });
-                                  } else if (item.allergicSubId && count === 1) {
-                                      displays.push({ dishId: item.allergicSubId, qty: 1, isSub: true, msg: `Đổi dị ứng` });
-                                  } else if (item.noSubstituteFound && count > 1) {
-                                      displays.push({ dishId: item.foodId, qty: count - 1, isSub: false, msg: `Loại bỏ 1 phần (Dị ứng)` });
-                                  } else if (!item.noSubstituteFound) {
-                                      displays.push({ dishId: item.foodId, qty: count, isSub: false });
-                                  } else if (item.noSubstituteFound && count === 1) {
+                                  if (item.isSubstituted && !item.noSubstituteFound) {
+                                      displays.push({ dishId: item.foodId, qty: count, isSub: true, msg: `Đổi dị ứng` });
+                                  } else if (item.noSubstituteFound) {
                                       displays.push({ dishId: null, qty: 0, isSub: true, msg: `Bị loại bỏ (Dị ứng)` });
+                                  } else {
+                                      displays.push({ dishId: item.foodId, qty: count, isSub: false });
                                   }
 
                                   return displays.map((disp, dIdx) => {

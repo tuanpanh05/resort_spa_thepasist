@@ -34,6 +34,13 @@ public class RoomBookingService {
     private final RoomBookingDetailRepository roomBookingDetailRepository;
     private final SystemConfigurationRepository systemConfigurationRepository;
     private final TableAssignmentService tableAssignmentService;
+    private final TreatmentRoomRepository treatmentRoomRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private fu.se.smms.repository.SpaServiceRepository spaServiceRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private fu.se.smms.service.SpaBookingService spaBookingService;
 
     public RoomBookingService(UserRepository userRepository,
                               RoomBookingRepository roomBookingRepository,
@@ -49,7 +56,8 @@ public class RoomBookingService {
                               InvoiceRepository invoiceRepository,
                               RoomBookingDetailRepository roomBookingDetailRepository,
                               SystemConfigurationRepository systemConfigurationRepository,
-                              TableAssignmentService tableAssignmentService) {
+                              TableAssignmentService tableAssignmentService,
+                              TreatmentRoomRepository treatmentRoomRepository) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.retreatPackageRepository = retreatPackageRepository;
@@ -65,6 +73,7 @@ public class RoomBookingService {
         this.roomBookingDetailRepository = roomBookingDetailRepository;
         this.systemConfigurationRepository = systemConfigurationRepository;
         this.tableAssignmentService = tableAssignmentService;
+        this.treatmentRoomRepository = treatmentRoomRepository;
     }
 
     @Transactional
@@ -100,6 +109,15 @@ public class RoomBookingService {
         // 3. Create RoomBooking
         RoomBooking booking = new RoomBooking();
         booking.setUser(user);
+        booking.setSpecialRequests(dto.getSpecialRequests());
+        // BR-CHILD: Trẻ 5-12 tính vào 1 slot người lớn, trẻ dưới 5 không tính
+        int actualAdults = dto.getGuestsCount() != null ? dto.getGuestsCount() : 1;
+        int actualUnder5 = dto.getChildrenUnder5() != null ? dto.getChildrenUnder5() : 0;
+        int actual5to12 = dto.getChildren5to12() != null ? dto.getChildren5to12() : 0;
+        booking.setGuestsCount(actualAdults + actual5to12);
+        booking.setChildrenUnder5(actualUnder5);
+        booking.setChildren5to12(actual5to12);
+        booking.setChildrenCount(actualUnder5 + actual5to12);
         if (dto.getPackageIds() != null && !dto.getPackageIds().isEmpty()) {
             List<RetreatPackage> packages = new ArrayList<>();
             for (Integer pkgId : dto.getPackageIds()) {
@@ -231,7 +249,7 @@ public class RoomBookingService {
                     mealTime = LocalDateTime.now();
                 }
 
-                RestaurantTable assignedTable = tableAssignmentService.assignTable(dto.getGuestsCount() != null ? dto.getGuestsCount() : 2);
+                RestaurantTable assignedTable = tableAssignmentService.assignTable(dto.getGuestsCount() != null ? dto.getGuestsCount() : 2, mealTime);
 
                 FoodOrder foodOrder = FoodOrder.builder()
                         .user(user)
@@ -364,6 +382,10 @@ public class RoomBookingService {
             user.setPhone(dto.getPhone());
         }
         userRepository.save(user);
+
+        if (dto.getSpecialRequests() != null) {
+            booking.setSpecialRequests(dto.getSpecialRequests());
+        }
 
         // 3. Update dates if provided
         if (dto.getCheckInDate() != null && dto.getCheckOutDate() != null) {
@@ -505,6 +527,42 @@ public class RoomBookingService {
             // Non-fatal
         }
 
+        // Cancel all pending / preparing food orders
+        try {
+            List<FoodOrder> pendingOrders = foodOrderRepository.findByRoomBooking_BookingId(bookingId)
+                    .stream()
+                    .filter(o -> "PENDING".equalsIgnoreCase(o.getStatus()) || "PREPARING".equalsIgnoreCase(o.getStatus()))
+                    .collect(Collectors.toList());
+            for (FoodOrder order : pendingOrders) {
+                order.setStatus("CANCELLED");
+            }
+            if (!pendingOrders.isEmpty()) {
+                foodOrderRepository.saveAll(pendingOrders);
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
+        // Cancel all associated spa bookings
+        try {
+            List<SpaBooking> spaBookings = spaBookingRepository.findByRoomBookingId(bookingId);
+            for (SpaBooking sb : spaBookings) {
+                if ("PENDING".equalsIgnoreCase(sb.getStatus()) || "CONFIRMED".equalsIgnoreCase(sb.getStatus())) {
+                    sb.setStatus("CANCELLED");
+                    sb.setCancellationReason(reason != null && !reason.isBlank() ? reason : "Hủy do hủy phòng đặt cùng.");
+                    sb.setCancellationTime(now);
+                    sb.setRefundAmount(BigDecimal.ZERO);
+                    if (sb.getTreatmentRoom() != null) {
+                        sb.getTreatmentRoom().setStatus("AVAILABLE");
+                        treatmentRoomRepository.save(sb.getTreatmentRoom());
+                    }
+                    spaBookingRepository.save(sb);
+                }
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
+
         return saved;
     }
 
@@ -599,5 +657,135 @@ public class RoomBookingService {
         }
 
         return saved;
+    }
+
+    @Transactional
+    public java.util.Map<String, Object> addExtraServices(Integer bookingId, fu.se.smms.dto.AddExtraServicesDTO dto) {
+        RoomBooking booking = roomBookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng với ID: " + bookingId));
+
+        java.math.BigDecimal totalAddedPrice = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal additionalDeposit = java.math.BigDecimal.ZERO;
+        
+        java.util.List<String> messages = new java.util.ArrayList<>();
+
+        // 1. Handle Room Addition
+        if (dto.getRoomId() != null) {
+            Room room = roomRepository.findById(dto.getRoomId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng với ID: " + dto.getRoomId()));
+            
+            java.time.LocalDateTime checkIn = booking.getCheckInDate();
+            java.time.LocalDateTime checkOut = booking.getCheckOutDate();
+            if (dto.getCheckInDate() != null && !dto.getCheckInDate().isBlank()) {
+                checkIn = java.time.LocalDate.parse(dto.getCheckInDate()).atTime(14, 0);
+            }
+            if (dto.getCheckOutDate() != null && !dto.getCheckOutDate().isBlank()) {
+                checkOut = java.time.LocalDate.parse(dto.getCheckOutDate()).atTime(12, 0);
+            }
+
+            long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn.toLocalDate(), checkOut.toLocalDate());
+            if (nights <= 0) nights = 1;
+
+            java.math.BigDecimal roomPrice = room.getRoomType().getBasePricePerNight().multiply(java.math.BigDecimal.valueOf(nights));
+            
+            RoomBookingDetail detail = new RoomBookingDetail();
+            detail.setRoomBooking(booking);
+            detail.setRoom(room);
+            detail.setPriceAtBooking(room.getRoomType().getBasePricePerNight());
+            roomBookingDetailRepository.save(detail);
+
+            if ("CHECKED_IN".equals(booking.getStatus())) {
+                room.setStatus("OCCUPIED");
+                roomRepository.save(room);
+            }
+
+            totalAddedPrice = totalAddedPrice.add(roomPrice);
+            java.math.BigDecimal extraRoomDeposit = roomPrice.multiply(java.math.BigDecimal.valueOf(0.5)); // 50% deposit
+            additionalDeposit = additionalDeposit.add(extraRoomDeposit);
+            
+            booking.setTotalDeposit(booking.getTotalDeposit().add(extraRoomDeposit));
+            messages.add("Đã thêm phòng " + room.getRoomNumber() + " (" + nights + " đêm).");
+        }
+
+        // 2. Handle Retreat Package Addition
+        if (dto.getPackageId() != null) {
+            RetreatPackage retreatPackage = retreatPackageRepository.findById(dto.getPackageId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy gói trị liệu với ID: " + dto.getPackageId()));
+            
+            if (booking.getRetreatPackages() == null) {
+                booking.setRetreatPackages(new java.util.ArrayList<>());
+            }
+            booking.getRetreatPackages().add(retreatPackage);
+            
+            totalAddedPrice = totalAddedPrice.add(retreatPackage.getPrice());
+            messages.add("Đã thêm gói retreat: " + retreatPackage.getName() + ".");
+        }
+
+        // 3. Handle Food Addition
+        if (dto.getFoodMenuId() != null) {
+            int qty = dto.getFoodQuantity() != null ? dto.getFoodQuantity() : 1;
+            FoodMenu food = foodMenuRepository.findById(dto.getFoodMenuId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn với ID: " + dto.getFoodMenuId()));
+            
+            java.math.BigDecimal foodPrice = food.getPrice().multiply(java.math.BigDecimal.valueOf(qty));
+
+            FoodOrder order = new FoodOrder();
+            order.setRoomBooking(booking);
+            order.setUser(booking.getUser());
+            order.setStatus("PREPARING");
+            order.setOrigin("RECEPTIONIST");
+            order.setOrderTime(java.time.LocalDateTime.now());
+            order.setTotalAmount(foodPrice);
+            foodOrderRepository.save(order);
+
+            FoodOrderDetail orderDetail = new FoodOrderDetail();
+            orderDetail.setFoodOrder(order);
+            orderDetail.setFoodMenu(food);
+            orderDetail.setQuantity(qty);
+            orderDetail.setPriceAtOrder(food.getPrice());
+            foodOrderDetailRepository.save(orderDetail);
+
+            totalAddedPrice = totalAddedPrice.add(foodPrice);
+            messages.add("Đã đặt thêm món ăn: " + food.getDishName() + " x" + qty + ".");
+        }
+
+        // 4. Handle Spa Addition
+        if (dto.getSpaServiceId() != null && dto.getSpaStartDatetime() != null) {
+            SpaService spa = spaServiceRepository.findById(dto.getSpaServiceId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ Spa với ID: " + dto.getSpaServiceId()));
+
+            java.time.LocalDateTime startDt = java.time.LocalDateTime.parse(dto.getSpaStartDatetime());
+            
+            fu.se.smms.dto.SpaBookingRequestDTO spaReq = new fu.se.smms.dto.SpaBookingRequestDTO();
+            spaReq.setSpaServiceId(dto.getSpaServiceId());
+            spaReq.setStartDatetime(startDt);
+            spaReq.setRoomBookingId(bookingId);
+            spaReq.setIsPackageIncluded(false);
+
+            spaBookingService.scheduleSpaBooking(booking.getUser().getUserId(), spaReq, "RECEPTIONIST");
+
+            totalAddedPrice = totalAddedPrice.add(spa.getPrice());
+            messages.add("Đã đặt thêm Spa: " + spa.getName() + " lúc " + startDt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM")) + ".");
+        }
+
+        roomBookingRepository.save(booking);
+
+        Integer invoiceId = null;
+        try {
+            fu.se.smms.dto.InvoiceDTO inv = invoiceService.createInvoice(bookingId);
+            if (inv != null) {
+                invoiceId = inv.getInvoiceId();
+            }
+        } catch (Exception ignored) {
+        }
+
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("success", true);
+        result.put("message", String.join(" ", messages));
+        result.put("totalAddedPrice", totalAddedPrice);
+        result.put("additionalDeposit", additionalDeposit);
+        result.put("invoiceId", invoiceId);
+        
+        return result;
     }
 }

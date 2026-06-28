@@ -61,8 +61,8 @@ public class UserServiceImpl implements UserService {
 
         if (existingUserOpt.isPresent()) {
             User existing = existingUserOpt.get();
-            if ("GUEST".equalsIgnoreCase(existing.getRole())) {
-                // Upgrade GUEST user to CUSTOMER or detected role
+            if ("GUEST".equalsIgnoreCase(existing.getRole()) || "INACTIVE".equals(existing.getStatus())) {
+                // Upgrade GUEST user to CUSTOMER or detected role, or allow re-registering an unverified INACTIVE user
                 existing.setPasswordHash(passwordEncoder.encode(request.getPassword()));
                 if (request.getFullName() != null && !request.getFullName().isBlank()) {
                     existing.setFullName(request.getFullName());
@@ -110,7 +110,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
-        return new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName());
+        return new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName(), user.getSpecialty());
     }
 
     @Override
@@ -141,7 +141,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
-        return new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName());
+        return new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName(), user.getSpecialty());
     }
 
     @Override

@@ -19,6 +19,8 @@ public class CheckInRequestDTO {
     @NotBlank(message = "Quốc tịch là bắt buộc.")
     private String nationality;
 
+    private java.util.List<AccompanyingGuestDTO> accompanyingGuests;
+
     public CheckInRequestDTO() {}
 
     public Integer getBookingId() { return bookingId; }
@@ -29,4 +31,7 @@ public class CheckInRequestDTO {
 
     public String getNationality() { return nationality; }
     public void setNationality(String nationality) { this.nationality = nationality; }
+
+    public java.util.List<AccompanyingGuestDTO> getAccompanyingGuests() { return accompanyingGuests; }
+    public void setAccompanyingGuests(java.util.List<AccompanyingGuestDTO> accompanyingGuests) { this.accompanyingGuests = accompanyingGuests; }
 }

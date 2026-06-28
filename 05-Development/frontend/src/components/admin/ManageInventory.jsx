@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PlusCircle, AlertCircle } from "lucide-react";
+import { PlusCircle, AlertCircle, Package, CheckCircle } from "lucide-react";
 import SectionHeader from "../ui/SectionHeader";
 import Button from "../ui/Button";
 import InventoryTable from "./InventoryTable";
@@ -86,6 +86,46 @@ export default function ManageInventory({ inventory, loadInventory }) {
           <span>Tạo Mã Vật Tư Mới</span>
         </Button>
       </SectionHeader>
+
+      {/* Stats Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-primary-50 text-primary-900 rounded-xl">
+            <Package className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Tổng loại vật tư</p>
+            <p className="text-2xl font-bold text-sage-900">{inventory.length}</p>
+            <p className="text-[10px] text-sage-500 font-medium">Mã hàng hóa tiêu hao</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className={`p-3 rounded-xl ${lowStockCount > 0 ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider font-semibold">Báo động đỏ</p>
+            <p className={`text-2xl font-bold ${lowStockCount > 0 ? "text-red-600 animate-pulse" : "text-green-600"}`}>
+              {lowStockCount}
+            </p>
+            <p className="text-[10px] text-sage-500 font-medium">Đang dưới mức tối thiểu</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-primary-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+            <CheckCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-sage-500 uppercase tracking-wider">Tồn kho an toàn</p>
+            <p className="text-2xl font-bold text-green-600">
+              {inventory.filter(item => item.stock > item.minQty).length}
+            </p>
+            <p className="text-[10px] text-sage-500 font-medium">Số vật tư ở mức an toàn</p>
+          </div>
+        </div>
+      </div>
 
       {lowStockCount > 0 && (
         <div className="bg-red-50 border-l-4 border-red-700 p-4 text-xs flex items-start gap-3">

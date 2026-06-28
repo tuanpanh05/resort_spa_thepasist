@@ -53,11 +53,11 @@ public class SpaBookingController {
             @RequestParam(value = "guestUserId", required = false) Integer guestUserId) {
 
         if (principal == null) {
-            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "BÃ¡ÂºÂ¡n cÃ¡ÂºÂ§n Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»Æ’ thÃ¡Â»Â±c hiÃ¡Â»â€¡n tÃƒÂ¡c vÃ¡Â»Â¥ nÃƒÂ y.");
         }
 
         User currentUser = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "Không tìm thấy người dùng hiện tại."));
+                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i."));
 
         Integer targetUserId = guestUserId;
         if (targetUserId == null) {
@@ -66,7 +66,7 @@ public class SpaBookingController {
             // Receptionist or Staff is booking on behalf of guest
             String role = currentUser.getRole();
             if (!"RECEPTIONIST".equalsIgnoreCase(role) && !"STAFF".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role) && !"MANAGER".equalsIgnoreCase(role)) {
-                throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "Bạn không có quyền đăng ký lịch hẹn cho người dùng khác.");
+                throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân Ã„â€˜Ã„Æ’ng kÃƒÂ½ lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n cho ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng khÃƒÂ¡c.");
             }
         }
 
@@ -88,14 +88,14 @@ public class SpaBookingController {
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         if (principal == null) {
-            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "BÃ¡ÂºÂ¡n cÃ¡ÂºÂ§n Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»Æ’ thÃ¡Â»Â±c hiÃ¡Â»â€¡n tÃƒÂ¡c vÃ¡Â»Â¥ nÃƒÂ y.");
         }
 
         User therapist = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin tài khoản kỹ thuật viên."));
+                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y thÃƒÂ´ng tin tÃƒÂ i khoÃ¡ÂºÂ£n kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t viÃƒÂªn."));
 
-        if (!"THERAPIST".equalsIgnoreCase(therapist.getRole())) {
-            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "Chỉ kỹ thuật viên trị liệu mới có quyền xem lịch làm việc này.");
+        if (!isSpecialist(therapist.getRole())) {
+            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "ChÃ¡Â»â€° kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t viÃƒÂªn trÃ¡Â»â€¹ liÃ¡Â»â€¡u mÃ¡Â»â€ºi cÃƒÂ³ quyÃ¡Â»Ân xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c nÃƒÂ y.");
         }
 
         List<SpecialistSpaAppointmentDTO> schedule = spaBookingService.getTherapistSchedule(therapist.getUserId(), date);
@@ -113,14 +113,14 @@ public class SpaBookingController {
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
 
         if (principal == null) {
-            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "BÃ¡ÂºÂ¡n cÃ¡ÂºÂ§n Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»Æ’ thÃ¡Â»Â±c hiÃ¡Â»â€¡n tÃƒÂ¡c vÃ¡Â»Â¥ nÃƒÂ y.");
         }
 
         User therapist = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin tài khoản kỹ thuật viên."));
+                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y thÃƒÂ´ng tin tÃƒÂ i khoÃ¡ÂºÂ£n kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t viÃƒÂªn."));
 
-        if (!"THERAPIST".equalsIgnoreCase(therapist.getRole())) {
-            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "Chỉ kỹ thuật viên trị liệu mới có quyền xem lịch làm việc này.");
+        if (!isSpecialist(therapist.getRole())) {
+            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "ChÃ¡Â»â€° kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t viÃƒÂªn trÃ¡Â»â€¹ liÃ¡Â»â€¡u mÃ¡Â»â€ºi cÃƒÂ³ quyÃ¡Â»Ân xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c nÃƒÂ y.");
         }
 
         List<SpecialistSpaAppointmentDTO> schedule = spaBookingService.getTherapistScheduleRange(therapist.getUserId(), start, end);
@@ -138,14 +138,14 @@ public class SpaBookingController {
             @RequestParam("status") String status) {
 
         if (principal == null) {
-            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện tác vụ này.");
+            throw new BusinessException("AUTH-001", HttpStatus.UNAUTHORIZED, "BÃ¡ÂºÂ¡n cÃ¡ÂºÂ§n Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»Æ’ thÃ¡Â»Â±c hiÃ¡Â»â€¡n tÃƒÂ¡c vÃ¡Â»Â¥ nÃƒÂ y.");
         }
 
         User therapist = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "Không tìm thấy thông tin tài khoản kỹ thuật viên."));
+                .orElseThrow(() -> new BusinessException("AUTH-002", HttpStatus.NOT_FOUND, "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y thÃƒÂ´ng tin tÃƒÂ i khoÃ¡ÂºÂ£n kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t viÃƒÂªn."));
 
-        if (!"THERAPIST".equalsIgnoreCase(therapist.getRole())) {
-            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "Chỉ kỹ thuật viên trị liệu mới có quyền cập nhật trạng thái lịch hẹn.");
+        if (!isSpecialist(therapist.getRole())) {
+            throw new BusinessException("AUTH-403", HttpStatus.FORBIDDEN, "ChÃ¡Â»â€° kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t viÃƒÂªn trÃ¡Â»â€¹ liÃ¡Â»â€¡u mÃ¡Â»â€ºi cÃƒÂ³ quyÃ¡Â»Ân cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n.");
         }
 
         SpaBookingResponseDTO response = spaBookingService.updateSessionStatus(
@@ -154,6 +154,26 @@ public class SpaBookingController {
                 therapist.getUserId()
         );
         return ResponseEntity.ok(response);
+    }
+    
+
+    /**
+     * Available time slots for a service on a given day (3-step wizard).
+     * Each slot already has a free therapist + room reserved by the matcher.
+     */
+    @GetMapping("/available-slots")
+    public ResponseEntity<List<TimeSlotDTO>> getAvailableSlots(
+            @RequestParam("spaServiceId") Integer spaServiceId,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<TimeSlotDTO> slots = spaBookingService.getAvailableSlots(spaServiceId, date);
+        return ResponseEntity.ok(slots);
+    }
+
+    private boolean isSpecialist(String role) {
+        if (role == null) return false;
+        String r = role.toUpperCase();
+        return r.equals("THERAPIST") || r.equals("SPA") || r.equals("YOGA")
+                || r.equals("PHYSIO") || r.equals("ADMIN") || r.equals("MANAGER");
     }
 
     /**

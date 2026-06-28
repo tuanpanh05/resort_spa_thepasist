@@ -80,3 +80,8 @@ nbdist/
 # ===== Vite cache =====
 node_modules/.vite/
 
+# ===== Google Calendar API credentials (NEVER commit) =====
+**/google-service-account*.json
+**/google-calendar-credentials*.json
+05-Development/backend/credentials/
+credentials/

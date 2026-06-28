@@ -72,6 +72,59 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
+            System.out.println("[DB Seeder] Creating restaurant_table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.restaurant_table', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.restaurant_table (
+                        table_id INT IDENTITY(1,1) PRIMARY KEY,
+                        table_number VARCHAR(20) NOT NULL UNIQUE,
+                        capacity INT NOT NULL,
+                        status VARCHAR(50) NOT NULL DEFAULT 'AVAILABLE'
+                    );
+                END
+                """);
+
+            Integer existingTables = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM dbo.restaurant_table", Integer.class);
+            if (existingTables != null && existingTables == 0) {
+                System.out.println("[DB Seeder] Seeding default restaurant tables...");
+                jdbcTemplate.execute("""
+                    INSERT INTO dbo.restaurant_table (table_number, capacity, status) VALUES 
+                    ('T-01', 2, 'AVAILABLE'),
+                    ('T-02', 2, 'AVAILABLE'),
+                    ('T-03', 2, 'AVAILABLE'),
+                    ('T-04', 2, 'AVAILABLE'),
+                    ('T-05', 2, 'AVAILABLE'),
+                    ('T-06', 4, 'AVAILABLE'),
+                    ('T-07', 4, 'AVAILABLE'),
+                    ('T-08', 4, 'AVAILABLE'),
+                    ('T-09', 4, 'AVAILABLE'),
+                    ('T-10', 4, 'AVAILABLE'),
+                    ('T-11', 6, 'AVAILABLE'),
+                    ('T-12', 6, 'AVAILABLE'),
+                    ('T-13', 6, 'AVAILABLE'),
+                    ('T-14', 8, 'AVAILABLE'),
+                    ('T-15', 8, 'AVAILABLE')
+                    """);
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not create/seed restaurant_table: " + e.getMessage());
+        }
+
+        try {
+            System.out.println("[DB Seeder] Ensuring table_id column in food_order table...");
+            jdbcTemplate.execute("""
+                IF NOT EXISTS(SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.food_order') AND name = 'table_id')
+                BEGIN
+                    ALTER TABLE dbo.food_order ADD table_id INT NULL FOREIGN KEY REFERENCES dbo.restaurant_table(table_id);
+                END
+                """);
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not add table_id to food_order: " + e.getMessage());
+        }
+
+
+        try {
             System.out.println("[DB Seeder] Altering columns to NVARCHAR and adding available_days...");
             jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN full_name NVARCHAR(255) NOT NULL");
             jdbcTemplate.execute("ALTER TABLE retreat_packages ALTER COLUMN name NVARCHAR(200) NOT NULL");
@@ -122,6 +175,11 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD special_requests NVARCHAR(MAX) NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD guests_count INT NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD children_under_5 INT NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD children_5_to_12 INT NULL"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("ALTER TABLE room_booking ADD children_count INT NULL"); } catch (Exception e) {}
 
             try { jdbcTemplate.execute("ALTER TABLE food_order ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE food_order ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
@@ -130,36 +188,37 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD refund_amount DECIMAL(12, 2) NULL"); } catch (Exception e) {}
-            System.out.println("[DB Seeder] Successfully added/verified cancellation columns.");
+            try { jdbcTemplate.execute("ALTER TABLE spa_booking ADD google_calendar_event_id VARCHAR(255) NULL"); } catch (Exception e) {}
+            System.out.println("[DB Seeder] Successfully added/verified cancellation and calendar columns.");
         } catch (Exception e) {
-            System.err.println("[DB Seeder] Warning: Could not add cancellation columns: " + e.getMessage());
+            System.err.println("[DB Seeder] Warning: Could not add cancellation or calendar columns: " + e.getMessage());
         }
 
         try {
             System.out.println("[DB Seeder] Skipping hardcoded Food Menu updates to preserve user edits.");
             /* 
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Cháo Yến Mạch Hạt Chia', description=N'Cháo yến mạch nguyên cám nấu cùng hạt chia, hạt óc chó và dâu tây tươi.', dietary_tags='Vegan, Healthy', price=120000, available_days='1,3,5', image_url='/images/dishes/dish_chao_yen_mach.png', is_package_included=1, periods='Breakfast' WHERE food_id=1");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Bún Gạo Lứt Chay', description=N'Bún nưa ăn kèm đậu hũ non, nấm đùi gà và nước dùng ngọt thanh từ củ quả.', dietary_tags='Vegan, Healthy', price=150000, available_days='0,2,4,6', image_url='/images/dishes/dish_bun_gao_lut.png', is_package_included=1, periods='Breakfast' WHERE food_id=2");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Bánh Mì Nguyên Cám Trứng Chần', description=N'Bánh mì đen nguyên cám nướng giòn kèm bơ sáp và trứng chần.', dietary_tags='Healthy, Vegetarian', price=140000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_banh_mi_trung.png', is_package_included=1, periods='Breakfast' WHERE food_id=3");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Phở Gạo Lứt Bò Thảo Mộc', description=N'Phở nấu từ gạo lứt nảy mầm, nước dùng hầm xương bò thảo mộc trong 12h.', dietary_tags='Healthy, Meat', price=250000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_pho_bo.png', is_package_included=0, periods='Breakfast' WHERE food_id=4");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Nước Ép Green Detox', description=N'Nước ép giải độc gan từ cần tây hữu cơ, táo xanh, cải xoăn và gừng.', dietary_tags='Vegan, Detox', price=95000, available_days='0,2,4,6', image_url='/images/dishes/dish_green_detox.png', is_package_included=1, periods='Breakfast,Lunch' WHERE food_id=5");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Trà Thảo Mộc Hoa Cúc', description=N'Trà hoa cúc ủ lạnh thanh nhiệt, giúp an thần và dễ tiêu hóa.', dietary_tags='Vegan, Detox', price=85000, available_days='1,3,5', image_url='/images/dishes/dish_tra_hoa_cuc.png', is_package_included=1, periods='Breakfast,Lunch' WHERE food_id=6");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Organic Avocado Quinoa Salad', description=N'Salad diêm mạch hữu cơ với bơ sáp cắt lát, hạt bí ngô và sốt chanh mật ong.', dietary_tags='Vegan, Gluten-Free', price=180000, available_days='1,3,5', image_url='/images/dishes/dish_quinoa_salad.png', is_package_included=1, periods='Lunch' WHERE food_id=7");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Mì Soba Lạnh Nhật Bản', description=N'Mì kiều mạch Nhật Bản thanh mát, ăn kèm rong biển và nước tương dashi nấm.', dietary_tags='Vegan, Healthy', price=210000, available_days='0,2,4,6', image_url='/images/dishes/dish_mi_soba.png', is_package_included=1, periods='Lunch' WHERE food_id=8");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Cơm Gạo Lứt Ngũ Sắc', description=N'Cơm gạo lứt dẻo nấu cùng đậu gà, bắp, đậu hà lan và hạt sen.', dietary_tags='Vegan, Healthy', price=160000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_com_gao_lut.png', is_package_included=1, periods='Lunch,Dinner' WHERE food_id=9");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Cá Hồi Áp Chảo Măng Tây', description=N'Cá hồi Na Uy áp chảo sốt bơ chanh ăn kèm măng tây nướng.', dietary_tags='Seafood, Keto', price=450000, available_days='1,3,5', image_url='/images/dishes/dish_ca_hoi.png', is_package_included=1, periods='Dinner' WHERE food_id=10");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Ginseng Chicken Soup', description=N'Canh gà hầm sâm và táo đỏ bổ trung ích khí, hỗ trợ phục hồi sức khỏe.', dietary_tags='Keto, Healthy', price=320000, available_days='0,2,4,6', image_url='/images/dishes/dish_chicken_soup.png', is_package_included=1, periods='Dinner' WHERE food_id=11");
-            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Súp Bí Đỏ Hạnh Nhân', description=N'Súp bí đỏ sánh mịn nấu cùng sữa hạnh nhân hữu cơ và dầu olive.', dietary_tags='Vegan, Gluten-Free', price=150000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_sup_bi_do.png', is_package_included=1, periods='Dinner' WHERE food_id=12");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'ChÃ¡o Yáº¿n Máº¡ch Háº¡t Chia', description=N'ChÃ¡o yáº¿n máº¡ch nguyÃªn cÃ¡m náº¥u cÃ¹ng háº¡t chia, háº¡t Ã³c chÃ³ vÃ  dÃ¢u tÃ¢y tÆ°Æ¡i.', dietary_tags='Vegan, Healthy', price=120000, available_days='1,3,5', image_url='/images/dishes/dish_chao_yen_mach.png', is_package_included=1, periods='Breakfast' WHERE food_id=1");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'BÃºn Gáº¡o Lá»©t Chay', description=N'BÃºn nÆ°a Äƒn kÃ¨m Ä‘áº­u hÅ© non, náº¥m Ä‘Ã¹i gÃ  vÃ  nÆ°á»›c dÃ¹ng ngá»t thanh tá»« cá»§ quáº£.', dietary_tags='Vegan, Healthy', price=150000, available_days='0,2,4,6', image_url='/images/dishes/dish_bun_gao_lut.png', is_package_included=1, periods='Breakfast' WHERE food_id=2");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'BÃ¡nh MÃ¬ NguyÃªn CÃ¡m Trá»©ng Cháº§n', description=N'BÃ¡nh mÃ¬ Ä‘en nguyÃªn cÃ¡m nÆ°á»›ng giÃ²n kÃ¨m bÆ¡ sÃ¡p vÃ  trá»©ng cháº§n.', dietary_tags='Healthy, Vegetarian', price=140000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_banh_mi_trung.png', is_package_included=1, periods='Breakfast' WHERE food_id=3");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Phá»Ÿ Gáº¡o Lá»©t BÃ² Tháº£o Má»™c', description=N'Phá»Ÿ náº¥u tá»« gáº¡o lá»©t náº£y máº§m, nÆ°á»›c dÃ¹ng háº§m xÆ°Æ¡ng bÃ² tháº£o má»™c trong 12h.', dietary_tags='Healthy, Meat', price=250000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_pho_bo.png', is_package_included=0, periods='Breakfast' WHERE food_id=4");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'NÆ°á»›c Ã‰p Green Detox', description=N'NÆ°á»›c Ã©p giáº£i Ä‘á»™c gan tá»« cáº§n tÃ¢y há»¯u cÆ¡, tÃ¡o xanh, cáº£i xoÄƒn vÃ  gá»«ng.', dietary_tags='Vegan, Detox', price=95000, available_days='0,2,4,6', image_url='/images/dishes/dish_green_detox.png', is_package_included=1, periods='Breakfast,Lunch' WHERE food_id=5");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'TrÃ  Tháº£o Má»™c Hoa CÃºc', description=N'TrÃ  hoa cÃºc á»§ láº¡nh thanh nhiá»‡t, giÃºp an tháº§n vÃ  dá»… tiÃªu hÃ³a.', dietary_tags='Vegan, Detox', price=85000, available_days='1,3,5', image_url='/images/dishes/dish_tra_hoa_cuc.png', is_package_included=1, periods='Breakfast,Lunch' WHERE food_id=6");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Organic Avocado Quinoa Salad', description=N'Salad diÃªm máº¡ch há»¯u cÆ¡ vá»›i bÆ¡ sÃ¡p cáº¯t lÃ¡t, háº¡t bÃ­ ngÃ´ vÃ  sá»‘t chanh máº­t ong.', dietary_tags='Vegan, Gluten-Free', price=180000, available_days='1,3,5', image_url='/images/dishes/dish_quinoa_salad.png', is_package_included=1, periods='Lunch' WHERE food_id=7");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'MÃ¬ Soba Láº¡nh Nháº­t Báº£n', description=N'MÃ¬ kiá»u máº¡ch Nháº­t Báº£n thanh mÃ¡t, Äƒn kÃ¨m rong biá»ƒn vÃ  nÆ°á»›c tÆ°Æ¡ng dashi náº¥m.', dietary_tags='Vegan, Healthy', price=210000, available_days='0,2,4,6', image_url='/images/dishes/dish_mi_soba.png', is_package_included=1, periods='Lunch' WHERE food_id=8");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'CÆ¡m Gáº¡o Lá»©t NgÅ© Sáº¯c', description=N'CÆ¡m gáº¡o lá»©t dáº»o náº¥u cÃ¹ng Ä‘áº­u gÃ , báº¯p, Ä‘áº­u hÃ  lan vÃ  háº¡t sen.', dietary_tags='Vegan, Healthy', price=160000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_com_gao_lut.png', is_package_included=1, periods='Lunch,Dinner' WHERE food_id=9");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'CÃ¡ Há»“i Ãp Cháº£o MÄƒng TÃ¢y', description=N'CÃ¡ há»“i Na Uy Ã¡p cháº£o sá»‘t bÆ¡ chanh Äƒn kÃ¨m mÄƒng tÃ¢y nÆ°á»›ng.', dietary_tags='Seafood, Keto', price=450000, available_days='1,3,5', image_url='/images/dishes/dish_ca_hoi.png', is_package_included=1, periods='Dinner' WHERE food_id=10");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'Ginseng Chicken Soup', description=N'Canh gÃ  háº§m sÃ¢m vÃ  tÃ¡o Ä‘á» bá»• trung Ã­ch khÃ­, há»— trá»£ phá»¥c há»“i sá»©c khá»e.', dietary_tags='Keto, Healthy', price=320000, available_days='0,2,4,6', image_url='/images/dishes/dish_chicken_soup.png', is_package_included=1, periods='Dinner' WHERE food_id=11");
+            jdbcTemplate.update("UPDATE food_menu SET dish_name=N'SÃºp BÃ­ Äá» Háº¡nh NhÃ¢n', description=N'SÃºp bÃ­ Ä‘á» sÃ¡nh má»‹n náº¥u cÃ¹ng sá»¯a háº¡nh nhÃ¢n há»¯u cÆ¡ vÃ  dáº§u olive.', dietary_tags='Vegan, Gluten-Free', price=150000, available_days='0,1,2,3,4,5,6', image_url='/images/dishes/dish_sup_bi_do.png', is_package_included=1, periods='Dinner' WHERE food_id=12");
             
             // For 13 and 14, try to insert if they don't exist. We use a simple count check.
             Integer count13 = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM food_menu WHERE food_id=13", Integer.class);
             if (count13 != null && count13 == 0) {
-                jdbcTemplate.update("INSERT INTO food_menu (dish_name, description, dietary_tags, price, periods, is_today_menu, available_days, image_url, is_package_included) VALUES (N'Steak Bò Wagyu', N'Thăn nội bò Wagyu nướng than hoa mềm tan, ăn kèm rau củ nướng.', 'Meat, Keto', 1250000, 'Dinner', 1, '0,1,2,3,4,5,6', '/images/dishes/dish_steak_wagyu.png', 0)");
+                jdbcTemplate.update("INSERT INTO food_menu (dish_name, description, dietary_tags, price, periods, is_today_menu, available_days, image_url, is_package_included) VALUES (N'Steak BÃ² Wagyu', N'ThÄƒn ná»™i bÃ² Wagyu nÆ°á»›ng than hoa má»m tan, Äƒn kÃ¨m rau cá»§ nÆ°á»›ng.', 'Meat, Keto', 1250000, 'Dinner', 1, '0,1,2,3,4,5,6', '/images/dishes/dish_steak_wagyu.png', 0)");
             }
             
             Integer count14 = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM food_menu WHERE food_id=14", Integer.class);
             if (count14 != null && count14 == 0) {
-                jdbcTemplate.update("INSERT INTO food_menu (dish_name, description, dietary_tags, price, periods, is_today_menu, available_days, image_url, is_package_included) VALUES (N'Tôm Sú Rim Tỏi Ớt', N'Tôm sú biển tươi ngon rim tỏi ớt thơm lừng cay cay ngọt ngọt.', 'Seafood, Spicy', 390000, 'Lunch,Dinner', 1, '0,1,2,3,4,5,6', '/images/dishes/dish_tom_su.png', 0)");
+                jdbcTemplate.update("INSERT INTO food_menu (dish_name, description, dietary_tags, price, periods, is_today_menu, available_days, image_url, is_package_included) VALUES (N'TÃ´m SÃº Rim Tá»i á»št', N'TÃ´m sÃº biá»ƒn tÆ°Æ¡i ngon rim tá»i á»›t thÆ¡m lá»«ng cay cay ngá»t ngá»t.', 'Seafood, Spicy', 390000, 'Lunch,Dinner', 1, '0,1,2,3,4,5,6', '/images/dishes/dish_tom_su.png', 0)");
             }
             */
             System.out.println("[DB Seeder] Food Menu items preserved successfully.");
@@ -167,13 +226,14 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.err.println("[DB Seeder] Could not check Food Menu. Reason: " + e.getMessage());
         }
 
+        ensureSpecialtySchema();
         seedUser("admin@nguson.com", "Administrator", "0900000000", "ADMIN");
         seedUser("staff@nguson.com", "Staff Member", "0900000001", "STAFF");
         seedUser("chef@nguson.com", "Chef Specialist", "0900000002", "CHEF");
-        seedUser("therapist@nguson.com", "Therapist Specialist", "0900000003", "THERAPIST");
-        seedUser("spa@nguson.com", "Spa Specialist", "0900000004", "THERAPIST");
-        seedUser("yoga@nguson.com", "Yoga Trainer", "0900000005", "THERAPIST");
-        seedUser("physio@nguson.com", "Physiotherapist", "0900000006", "THERAPIST");
+        seedUser("therapist@nguson.com", "KTV Spa Trị Liệu", "0900000003", "THERAPIST", "SPA");
+        seedUser("spa@nguson.com", "KTV Spa Himalaya", "0900000004", "THERAPIST", "SPA");
+        seedUser("yoga@nguson.com", "HLV Yoga Bờ Biển", "0900000005", "THERAPIST", "YOGA");
+        seedUser("physio@nguson.com", "BS Vật Lý Trị Liệu", "0900000006", "THERAPIST", "PHYSIO");
 
         try {
             // Check if database is already seeded to avoid losing user data
@@ -212,15 +272,13 @@ public class DatabaseSeeder implements CommandLineRunner {
             try { jdbcTemplate.update("DELETE FROM room"); } catch (Exception e) {}
             try { jdbcTemplate.update("DELETE FROM room_types"); } catch (Exception e) {}
 
-            // Seed new room types
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Gỗ Hướng Suối', 3200000.00, 2, 65)");
-            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Đá Cuội Bên Rừng', 3800000.00, 2, 75)");
+            jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Bungalow Đá Cuội Bên Rừng', 3800000.00, 3, 75)");
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Đồi Trà Thiền Định', 5800000.00, 4, 120)");
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Biệt Thự Gia Đình Sen Trắng', 7500000.00, 8, 180)");
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Sàn Cộng Đồng Đông Sơn', 9000000.00, 25, 250)");
             jdbcTemplate.update("INSERT INTO room_types (type_name, base_price, capacity, area_sqm) VALUES (N'Nhà Chung 50 Thung Lũng Xanh', 12500000.00, 50, 450)");
 
-            // Get Room Type IDs to ensure we insert with correct IDs
             Integer woodBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Gỗ Hướng Suối'", Integer.class);
             Integer pebbleBungId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Bungalow Đá Cuội Bên Rừng'", Integer.class);
             Integer teaVillaId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Biệt Thự Đồi Trà Thiền Định'", Integer.class);
@@ -228,33 +286,32 @@ public class DatabaseSeeder implements CommandLineRunner {
             Integer donSanId = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Sàn Cộng Đồng Đông Sơn'", Integer.class);
             Integer valley50Id = jdbcTemplate.queryForObject("SELECT room_type_id FROM room_types WHERE type_name = N'Nhà Chung 50 Thung Lũng Xanh'", Integer.class);
 
-            if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null) {
-                // 10 Bungalow Gỗ Hướng Suối (BG-101 to BG-110)
+            if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null && valley50Id != null) {
                 for (int i = 1; i <= 10; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", woodBungId, String.format("BG-%03d", 100 + i));
                 }
 
-                // 10 Bungalow Đá Cuội Bên Rừng (BD-101 to BD-110)
+                // 10 Bungalow ÄÃ¡ Cuá»™i BÃªn Rá»«ng (BD-101 to BD-110)
                 for (int i = 1; i <= 10; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", pebbleBungId, String.format("BD-%03d", 100 + i));
                 }
 
-                // 10 Biệt Thự Đồi Trà Thiền Định (BT-101 to BT-110)
+                // 10 Biá»‡t Thá»± Äá»“i TrÃ  Thiá»n Äá»‹nh (BT-101 to BT-110)
                 for (int i = 1; i <= 10; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", teaVillaId, String.format("BT-%03d", 100 + i));
                 }
 
-                // 5 Biệt Thự Gia Đình Sen Trắng (BS-101 to BS-105)
+                // 5 Biá»‡t Thá»± Gia ÄÃ¬nh Sen Tráº¯ng (BS-101 to BS-105)
                 for (int i = 1; i <= 5; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", lotusVillaId, String.format("BS-%03d", 100 + i));
                 }
 
-                // 5 Nhà Sàn Cộng Đồng Đông Sơn (NS-101 to NS-105)
+                // 5 NhÃ  SÃ n Cá»™ng Äá»“ng ÄÃ´ng SÆ¡n (NS-101 to NS-105)
                 for (int i = 1; i <= 5; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", donSanId, String.format("NS-%03d", 100 + i));
                 }
 
-                // 5 Nhà Chung 50 Thung Lũng Xanh (NC-101 to NC-105)
+                // 5 NhÃ  Chung 50 Thung LÅ©ng Xanh (NC-101 to NC-105)
                 for (int i = 1; i <= 5; i++) {
                     jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", valley50Id, String.format("NC-%03d", 100 + i));
                 }
@@ -281,9 +338,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Seed default complaints
                 try {
                     jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -3, GETDATE()), ?)",
-                            5, "Trần Khách Hàng", "BG-101", "Gối hơi cao, cần đổi 2 gối lông vũ mềm hơn.", "Resolved", "Đã giao gối mới lúc 15:00");
+                            5, "Tráº§n KhÃ¡ch HÃ ng", "BG-101", "Gá»‘i hÆ¡i cao, cáº§n Ä‘á»•i 2 gá»‘i lÃ´ng vÅ© má»m hÆ¡n.", "Resolved", "ÄÃ£ giao gá»‘i má»›i lÃºc 15:00");
                     jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -1, GETDATE()), NULL)",
-                            6, "Lê Minh Châu", "BG-102", "Wifi trong góc phòng hơi yếu, thỉnh thoảng mất kết nối.", "Open");
+                            6, "LÃª Minh ChÃ¢u", "BG-102", "Wifi trong gÃ³c phÃ²ng hÆ¡i yáº¿u, thá»‰nh thoáº£ng máº¥t káº¿t ná»‘i.", "Open");
                     System.out.println("[DB Seeder] Seeded default complaints successfully.");
                 } catch (Exception e) {
                     System.err.println("[DB Seeder] Warning: Complaints seeding failed: " + e.getMessage());
@@ -347,6 +404,10 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedUser(String email, String fullName, String phone, String role) {
+        seedUser(email, fullName, phone, role, null);
+    }
+
+    private void seedUser(String email, String fullName, String phone, String role, String specialty) {
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             user = User.builder()
@@ -355,16 +416,37 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .fullName(fullName)
                     .phone(phone)
                     .role(role)
+                    .specialty(specialty)
                     .status("ACTIVE")
                     .build();
             userRepository.save(user);
-            System.out.println("[DB Seeder] Seeded user: " + email + " with role: " + role);
+            System.out.println("[DB Seeder] Seeded: " + email + " role=" + role + " specialty=" + specialty);
         } else {
             user.setPasswordHash(passwordEncoder.encode("123456"));
             user.setStatus("ACTIVE");
             user.setRole(role);
+            if (specialty != null) user.setSpecialty(specialty);
             userRepository.save(user);
-            System.out.println("[DB Seeder] Force updated user credentials, role and status: " + email);
+            System.out.println("[DB Seeder] Updated: " + email + " specialty=" + specialty);
+        }
+    }
+
+    private void ensureSpecialtySchema() {
+        try { jdbcTemplate.execute("ALTER TABLE users ADD specialty VARCHAR(20) NULL"); } catch (Exception e) {}
+        try { jdbcTemplate.execute("ALTER TABLE treatment_room ADD category VARCHAR(20) NULL"); } catch (Exception e) {}
+        try { jdbcTemplate.execute("UPDATE treatment_room SET category='SPA' WHERE room_name IN (N'Therapy Room A',N'Therapy Room B',N'Red Dao Bath Room 1') AND (category IS NULL)"); } catch (Exception e) {}
+        Integer cnt = 0;
+        try { cnt = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM treatment_room", Integer.class); } catch (Exception e) {}
+        if (cnt == null || cnt < 4) {
+            try {
+                jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'Phong Tri Lieu Spa A') INSERT INTO treatment_room(room_name,status,category) VALUES(N'Phong Tri Lieu Spa A','AVAILABLE','SPA')");
+                jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'Phong Tri Lieu Spa B') INSERT INTO treatment_room(room_name,status,category) VALUES(N'Phong Tri Lieu Spa B','AVAILABLE','SPA')");
+                jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'Phong Yoga Vom Kinh') INSERT INTO treatment_room(room_name,status,category) VALUES(N'Phong Yoga Vom Kinh','AVAILABLE','YOGA')");
+                jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'San Yoga Bo Bien') INSERT INTO treatment_room(room_name,status,category) VALUES(N'San Yoga Bo Bien','AVAILABLE','YOGA')");
+                jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'Phong VLTL 1') INSERT INTO treatment_room(room_name,status,category) VALUES(N'Phong VLTL 1','AVAILABLE','PHYSIO')");
+                jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'Phong VLTL 2') INSERT INTO treatment_room(room_name,status,category) VALUES(N'Phong VLTL 2','AVAILABLE','PHYSIO')");
+                System.out.println("[DB Seeder] Seeded 6 treatment rooms across SPA/YOGA/PHYSIO.");
+            } catch (Exception e) { System.err.println("[DB Seeder] Room seed warning: " + e.getMessage()); }
         }
     }
 }

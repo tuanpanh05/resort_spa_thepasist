@@ -456,6 +456,26 @@ export default function ManagePayments() {
                         {formatCurrency(selectedInvoice.taxAndFees)}
                       </td>
                     </tr>
+                    {selectedInvoice.discountAmount > 0 && (
+                      <tr>
+                        <td className="py-3 px-2 text-sage-500 italic">
+                          Tổng tiền tạm tính (trước giảm)
+                        </td>
+                        <td className="py-3 px-2 text-right text-sage-600">
+                          {formatCurrency((selectedInvoice.roomSubtotal || 0) + (selectedInvoice.spaSubtotal || 0) + (selectedInvoice.foodSubtotal || 0) + (selectedInvoice.taxAndFees || 0))}
+                        </td>
+                      </tr>
+                    )}
+                    {selectedInvoice.discountAmount > 0 && (
+                      <tr className="text-primary-850 font-semibold bg-primary-50/10">
+                        <td className="py-3 px-2">
+                          Mã giảm giá đã áp dụng ({selectedInvoice.voucherCode})
+                        </td>
+                        <td className="py-3 px-2 text-right text-primary-900">
+                          - {formatCurrency(selectedInvoice.discountAmount)}
+                        </td>
+                      </tr>
+                    )}
                     <tr className="bg-primary-50/20 font-bold text-primary-950 border-t border-primary-200">
                       <td className="py-3 px-2 text-primary-900">
                         TỔNG HÓA ĐƠN TỔNG CỘNG (100%)

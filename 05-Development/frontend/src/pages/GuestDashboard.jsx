@@ -406,7 +406,9 @@ export default function GuestDashboard() {
                       <div className="flex justify-between items-center bg-sage-50/50 p-2 border border-sage-200 mt-2 mb-2">
                         <span className="font-bold text-sage-700 uppercase tracking-wider text-[11px]">BÀN ĐƯỢC XẾP:</span>
                         <span className="font-bold text-primary-800 text-base font-mono tracking-wider">
-                          {(profileData.booking.room || profileData.booking.tableName || "T01").split(',')[0].trim().replace(/Room-/gi, "").replace(/Room/gi, "").replace(/Phòng /gi, "")}
+                          {(profileData.booking.tableName && profileData.booking.tableName !== "N/A" ? profileData.booking.tableName : profileData.booking.room) 
+                            ? (profileData.booking.tableName && profileData.booking.tableName !== "N/A" ? profileData.booking.tableName : profileData.booking.room).split(',')[0].trim().replace(/Room-/gi, "").replace(/Room/gi, "").replace(/Phòng /gi, "")
+                            : "Đang Xếp Bàn..."}
                         </span>
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-dashed border-primary-100">
@@ -418,11 +420,11 @@ export default function GuestDashboard() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Giờ đến:</span>
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Ngày nhận phòng:</span>
                         <span className="font-medium">{new Date(profileData.booking.checkInDate).toLocaleDateString("vi-VN")}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Giờ về:</span>
+                        <span className="font-medium text-sage-500 uppercase tracking-wider text-[10px]">Ngày trả phòng:</span>
                         <span className="font-medium">{new Date(profileData.booking.checkOutDate).toLocaleDateString("vi-VN")}</span>
                       </div>
                       <div className="flex justify-between items-center bg-sage-50/50 p-2 border border-sage-200 mt-2">

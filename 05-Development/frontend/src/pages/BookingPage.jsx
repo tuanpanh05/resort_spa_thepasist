@@ -36,6 +36,9 @@ export default function BookingPage() {
     checkInDate: new Date(Date.now() + 86400000).toISOString().split("T")[0], // Tomorrow
     checkOutDate: new Date(Date.now() + 172800000).toISOString().split("T")[0], // Day after tomorrow
     guestsCount: 2,
+    childrenCount: 0,
+    childrenUnder5: 0,
+    children5to12: 0,
     healthNote: "",
     specialRequest: "",
   }));
@@ -69,21 +72,11 @@ export default function BookingPage() {
 
   // Step 4: Meal Selections { "yyyy-MM-dd": { "Breakfast": { foodId: qty }, ... } }
   const [mealSelections, setMealSelections] = useState({});
+  const [selectedComboId, setSelectedComboId] = useState(null);
   const [selectedMealDate, setSelectedMealDate] = useState("");
   const [mealBookingDays, setMealBookingDays] = useState([]);
   const [packageMenuItems, setPackageMenuItems] = useState([]);
-  const [selectedComboId, setSelectedComboId] = useState("");
 
-  const handleSelectCombo = (comboId) => {
-    setSelectedComboId(comboId);
-    // If deselected, clear meal selections
-    if (!comboId) setMealSelections({});
-  };
-
-  // Called by MealSelectionStep whenever the combo-derived meals are computed
-  const handleComboMealsChange = (computedMeals) => {
-    setMealSelections(computedMeals);
-  };
 
   // Copy helper
   const [copiedField, setCopiedField] = useState(null);
@@ -320,6 +313,8 @@ export default function BookingPage() {
     } else {
       setMealBookingDays([]);
     }
+    setSelectedComboId(null);
+    setMealSelections({});
   }, [guestInfo.checkInDate, guestInfo.checkOutDate, selectedMealDate]);
 
   const selectedVillaIdFirst = Object.keys(selectedRooms).find(id => selectedRooms[id] > 0);
@@ -337,19 +332,31 @@ export default function BookingPage() {
   };
   const villaTotal = calculateVillaTotal();
 
-  let servicesTotal = 0;
+  const chargedGuestsCount = Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0);
+  let servicesTotalBeforeDiscount = 0;
+  let childDiscountUnder5 = 0;
+  let childDiscount5to12 = 0;
   // Use spaServices fetched from API instead of mock servicesList
   const selectedServices = spaServices.filter((s) => selectedServiceIds.includes(s.id || s.serviceId));
   selectedServices.forEach((s) => {
     const pricingType = s.pricingType || s.type || "per-guest";
+    let basePriceForService = 0;
     if (pricingType === "per-guest") {
-      servicesTotal += s.price * guestInfo.guestsCount;
+      basePriceForService = s.price;
     } else if (pricingType === "per-guest-per-night") {
-      servicesTotal += s.price * guestInfo.guestsCount * nightsCount;
+      basePriceForService = s.price * nightsCount;
+    }
+
+    if (basePriceForService > 0) {
+      servicesTotalBeforeDiscount += basePriceForService * chargedGuestsCount;
+      childDiscountUnder5 += basePriceForService * Number(guestInfo.childrenUnder5 || 0) * 1.0;
+      childDiscount5to12 += basePriceForService * Number(guestInfo.children5to12 || 0) * 0.3;
     } else {
-      servicesTotal += s.price;
+      servicesTotalBeforeDiscount += s.price;
     }
   });
+
+  const servicesTotal = servicesTotalBeforeDiscount - childDiscountUnder5 - childDiscount5to12;
 
   const calculateMealTotal = () => {
     let extra = 0;
@@ -359,7 +366,8 @@ export default function BookingPage() {
           const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
           if (item) {
             if (item.isPackageIncluded) {
-              if (qty > 1) extra += item.price * (qty - 1);
+              const chargeableQty = Math.max(0, qty - chargedGuestsCount);
+              extra += item.price * chargeableQty;
             } else {
               extra += item.price * qty;
             }
@@ -370,6 +378,22 @@ export default function BookingPage() {
     return extra;
   };
   const mealTotal = calculateMealTotal();
+
+  // BR-CHILD: Giảm giá food cho trẻ em
+  // Trẻ dưới 5: miễn phí 100% phần food tương ứng (theo tỷ lệ)
+  // Trẻ 5-12: giảm 30% phần food tương ứng (theo tỷ lệ)
+  const totalPeople = Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0);
+  let foodChildDiscountUnder5 = 0;
+  let foodChildDiscount5to12 = 0;
+  if (totalPeople > 0 && mealTotal > 0) {
+    const under5Count = Number(guestInfo.childrenUnder5 || 0);
+    const child5to12Count = Number(guestInfo.children5to12 || 0);
+    foodChildDiscountUnder5 = mealTotal * (under5Count / totalPeople) * 1.0;    // 100% miễn phí
+    foodChildDiscount5to12 = mealTotal * (child5to12Count / totalPeople) * 0.3; // giảm 30%
+  }
+  // Cộng dồn giảm giá food vào giảm giá trẻ em chung (Spa + Food)
+  childDiscountUnder5 += foodChildDiscountUnder5;
+  childDiscount5to12 += foodChildDiscount5to12;
 
   const getMealSelectedCount = () => {
     let count = 0;
@@ -393,8 +417,25 @@ export default function BookingPage() {
     });
   };
 
+  // Called by MealSelectionStep whenever the combo-derived meals are computed
+  const handleComboMealsChange = (computedMeals) => {
+    setMealSelections(computedMeals);
+  };
+
+  const handleSelectCombo = (comboId) => {
+    if (selectedComboId === comboId) {
+      setSelectedComboId(null);
+      setMealSelections({});
+    } else {
+      setSelectedComboId(comboId);
+    }
+  };
+
   const selectedPackages = [];
-  const totalAmount = villaTotal + servicesTotal + mealTotal;
+  const mealAfterDiscount = mealTotal - foodChildDiscountUnder5 - foodChildDiscount5to12;
+  const baseTotal = villaTotal + servicesTotal + Math.max(0, mealAfterDiscount);
+  // Add 10% VAT & service fee to match backend calculations
+  const totalAmount = baseTotal * 1.1;
   const depositAmount = totalAmount * 0.3;
   const remainingAmount = totalAmount * 0.7;
 
@@ -413,6 +454,15 @@ export default function BookingPage() {
     }
     if (!guestInfo.guestsCount || Number(guestInfo.guestsCount) <= 0) {
       errors.guestsCount = "Số lượng khách hàng phải là số nguyên dương.";
+    }
+    if (guestInfo.childrenCount !== "" && (isNaN(guestInfo.childrenCount) || Number(guestInfo.childrenCount) < 0)) {
+      errors.childrenCount = "Số lượng trẻ em phải là số không âm.";
+    }
+    if (guestInfo.childrenUnder5 !== "" && (isNaN(guestInfo.childrenUnder5) || Number(guestInfo.childrenUnder5) < 0)) {
+      errors.childrenUnder5 = "Số lượng trẻ em dưới 5 tuổi phải là số không âm.";
+    }
+    if (guestInfo.children5to12 !== "" && (isNaN(guestInfo.children5to12) || Number(guestInfo.children5to12) < 0)) {
+      errors.children5to12 = "Số lượng trẻ em từ 5 đến 12 tuổi phải là số không âm.";
     }
 
     const checkIn = new Date(guestInfo.checkInDate);
@@ -434,40 +484,40 @@ export default function BookingPage() {
   const handleNextStep = async () => {
     if (step === 1) {
       if (validateStep1()) {
-        const count = Number(guestInfo.guestsCount);
+        const count = Number(guestInfo.guestsCount || 0) + Number(guestInfo.children5to12 || 0);
+        
+        let currentRoomTypes = roomTypes;
+        if (!currentRoomTypes || currentRoomTypes.length === 0) {
+          try {
+            const checkIn = guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : null;
+            const checkOut = guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : null;
+            currentRoomTypes = await masterDataApi.getRoomTypes(checkIn, checkOut);
+            setRoomTypes(currentRoomTypes);
+          } catch (e) {
+            console.error("Failed to load room types:", e);
+          }
+        }
+
+        const totalCapacity = currentRoomTypes.reduce((sum, rt) => {
+          const count = rt.availableRoomsCount !== undefined ? rt.availableRoomsCount : 0;
+          const cap = rt.maxOccupancy !== undefined ? rt.maxOccupancy : 0;
+          return sum + (count * cap);
+        }, 0);
+
+        if (totalCapacity < count) {
+          alert(`Hiện tại khu nghỉ dưỡng không còn đủ phòng trống để đáp ứng số lượng khách của bạn (Số khách yêu cầu: ${count} người, tổng sức chứa tối đa còn lại: ${totalCapacity} người). Mong quý khách thông cảm.`);
+          navigate("/");
+          return;
+        }
+
         if (count > 100) {
-          const confirmOk = window.confirm("Bạn có chắc là đặt phòng này không?");
-          if (confirmOk) {
-            let currentRoomTypes = roomTypes;
-            if (!currentRoomTypes || currentRoomTypes.length === 0) {
-              try {
-                const checkIn = guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : null;
-                const checkOut = guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : null;
-                currentRoomTypes = await masterDataApi.getRoomTypes(checkIn, checkOut);
-                setRoomTypes(currentRoomTypes);
-              } catch (e) {
-                console.error("Failed to load room types:", e);
-              }
-            }
-
-            const totalCapacity = currentRoomTypes.reduce((sum, rt) => {
-              const count = rt.availableRoomsCount !== undefined ? rt.availableRoomsCount : 0;
-              const cap = rt.maxOccupancy !== undefined ? rt.maxOccupancy : 0;
-              return sum + (count * cap);
-            }, 0);
-
-            if (totalCapacity < count) {
-              alert("Hiện tại khu nghỉ dưỡng không còn đủ phòng . Mong quý khách thông cảm");
-              navigate("/");
-              return;
-            }
-            setStep(2);
-          } else {
+          const confirmOk = window.confirm("Bạn có chắc chắn muốn đặt phòng cho đoàn khách số lượng lớn này không?");
+          if (!confirmOk) {
             return;
           }
-        } else {
-          setStep(2);
         }
+        
+        setStep(2);
       }
     } else if (step === 2) {
       if (validateStep2()) setStep(3);
@@ -486,6 +536,27 @@ export default function BookingPage() {
             alert(`Hạng phòng "${rt ? rt.typeName : ''}" đã không còn đủ phòng trống cho số lượng bạn chọn trong khoảng thời gian này.`);
             return;
           }
+        }
+      }
+      // Check if total max occupancy of selected rooms is sufficient for total guests (adults + children 5-12)
+      const totalGuests = Number(guestInfo.guestsCount || 0) + Number(guestInfo.children5to12 || 0);
+      let totalCapacity = 0;
+      Object.entries(selectedRooms).forEach(([roomTypeId, qty]) => {
+        if (qty > 0) {
+          const rt = roomTypes.find((r) => r.roomTypeId === Number(roomTypeId));
+          if (rt) {
+            totalCapacity += (rt.maxOccupancy || 2) * qty;
+          }
+        }
+      });
+
+      if (totalGuests > totalCapacity) {
+        const confirmOk = window.confirm(
+          `Không đủ phòng! Sức chứa tối đa của các biệt thự đã chọn (${totalCapacity} người) không đủ cho số lượng khách của bạn (${totalGuests} người).\n\nBạn có chắc chắn muốn tiếp tục đặt đơn này không?\n\nNhấn 'OK' để tiếp tục đặt đơn, hoặc nhấn 'Cancel' để thoát ra trang chủ.`
+        );
+        if (!confirmOk) {
+          navigate("/");
+          return;
         }
       }
       setStep(4);
@@ -518,6 +589,9 @@ export default function BookingPage() {
         checkInDate: (guestInfo.checkInDate ? guestInfo.checkInDate.split("T")[0] : "") + "T14:00:00",
         checkOutDate: (guestInfo.checkOutDate ? guestInfo.checkOutDate.split("T")[0] : "") + "T12:00:00",
         guestsCount: guestInfo.guestsCount,
+        childrenCount: guestInfo.childrenCount || 0,
+        childrenUnder5: guestInfo.childrenUnder5 || 0,
+        children5to12: guestInfo.children5to12 || 0,
         villaId: selectedVillaIdFirst ? Number(selectedVillaIdFirst) : null,
         roomId: 1,
         roomQuantity: selectedVillaIdFirst ? selectedRooms[selectedVillaIdFirst] : 1,
@@ -527,7 +601,8 @@ export default function BookingPage() {
         serviceIds: numericServiceIds,
         allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
         explicitConsentSigned: consentDataProcessing && consentSharing,
-        mealSelections: mealSelections
+        mealSelections: mealSelections,
+        specialRequests: guestInfo.specialRequest || ""
       };
 
       const res = await axiosClient.post('/bookings/create', payload);
@@ -678,6 +753,7 @@ export default function BookingPage() {
                   selectedComboId={selectedComboId}
                   handleSelectCombo={handleSelectCombo}
                   onComboMealsChange={handleComboMealsChange}
+                  setMealSelections={setMealSelections}
                   updateMealQty={updateMealQty}
                   formatCurrency={formatCurrency}
                   getMealSelectedCount={getMealSelectedCount}
@@ -710,6 +786,10 @@ export default function BookingPage() {
                   handleVerifyPayment={handleVerifyPayment}
                   handlePrevStep={handlePrevStep}
                   selectedPackages={selectedPackages}
+                  servicesTotalBeforeDiscount={servicesTotalBeforeDiscount}
+                  childDiscountUnder5={childDiscountUnder5}
+                  childDiscount5to12={childDiscount5to12}
+                  chargedGuestsCount={chargedGuestsCount}
                 />
               )}
             </div>
@@ -732,6 +812,10 @@ export default function BookingPage() {
                 formatCurrency={formatCurrency}
                 selectedVilla={selectedVilla}
                 selectedPackages={selectedPackages}
+                servicesTotalBeforeDiscount={servicesTotalBeforeDiscount}
+                childDiscountUnder5={childDiscountUnder5}
+                childDiscount5to12={childDiscount5to12}
+                chargedGuestsCount={chargedGuestsCount}
               />
             </div>
           </div>

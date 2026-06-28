@@ -13,6 +13,7 @@ import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
 import fu.se.smms.repository.FoodOrderRepository;
+import fu.se.smms.repository.SpaBookingRepository;
 import fu.se.smms.entity.SystemConfiguration;
 import fu.se.smms.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,7 @@ class InvoiceServiceImplTest {
     private SystemConfigurationRepository systemConfigurationRepository;
     private FoodOrderRepository foodOrderRepository;
     private EmailService emailService;
+    private SpaBookingRepository spaBookingRepository;
     private InvoiceServiceImpl service;
     private VNPayProperties vnPayProperties;
 
@@ -59,6 +61,7 @@ class InvoiceServiceImplTest {
         systemConfigurationRepository = mock(SystemConfigurationRepository.class);
         foodOrderRepository = mock(FoodOrderRepository.class);
         emailService = mock(EmailService.class);
+        spaBookingRepository = mock(SpaBookingRepository.class);
 
         SystemConfiguration depositConfig = new SystemConfiguration();
         depositConfig.setConfigKey("deposit_ratio");
@@ -76,7 +79,8 @@ class InvoiceServiceImplTest {
                 invoiceRepository, roomBookingRepository,
                 roomRepository, transactionLogRepository,
                 vnPayProperties, systemConfigurationRepository,
-                foodOrderRepository, emailService
+                foodOrderRepository, emailService,
+                spaBookingRepository
         );
 
         // Default stubbing to prevent recalculate() from throwing exceptions or returning null
@@ -205,6 +209,7 @@ class InvoiceServiceImplTest {
         InvoiceDTO dto = service.processVNPayCallback(params);
 
         assertEquals("PAID", dto.getStatus());
+        assertEquals(BigDecimal.ZERO, dto.getAmountDue());
         assertEquals("VNP123456", dto.getVnpayTranId());
         assertNotNull(dto.getPaymentTime());
 
@@ -308,6 +313,7 @@ class InvoiceServiceImplTest {
         InvoiceDTO dto = service.markCashPayment(1);
 
         assertEquals("PAID", dto.getStatus());
+        assertEquals(BigDecimal.ZERO, dto.getAmountDue());
         assertNull(dto.getVnpayTranId());
         assertNotNull(dto.getPaymentTime());
         // BR-26: Audit trail should be written
@@ -422,6 +428,86 @@ class InvoiceServiceImplTest {
 
         Map<String, String> response = service.processVNPayIpn(params);
         assertEquals("97", response.get("RspCode"));
+    }
+
+    // ─── Child Food Discount Tests ──────────────────────────────────────────
+
+    @Test
+    @DisplayName("UC21-TC02: createInvoice applies 100% food discount for children under 5")
+    void childUnder5FoodDiscountTest() {
+        User user = new User();
+        user.setUserId(5);
+
+        RoomBooking booking = new RoomBooking();
+        booking.setBookingId(1);
+        booking.setUser(user);
+        // 2 adults + 1 child under 5 = 3 people. Under 5 is not counted as slot.
+        booking.setGuestsCount(2); 
+        booking.setChildrenUnder5(1);
+        booking.setChildren5to12(0);
+
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId(1);
+        invoice.setUser(user);
+        invoice.setRoomBooking(booking);
+
+        when(roomBookingRepository.findById(1)).thenReturn(Optional.of(booking));
+        when(invoiceRepository.findFirstByRoomBooking_BookingId(1)).thenReturn(Optional.of(invoice));
+
+        // Subtotals setup: room=0, spa=0, food=300,000 VND
+        when(invoiceRepository.sumRoomSubtotal(1)).thenReturn(BigDecimal.ZERO);
+        when(invoiceRepository.sumSpaSubtotal(1)).thenReturn(BigDecimal.ZERO);
+        when(invoiceRepository.sumFoodSubtotal(1)).thenReturn(new BigDecimal("300000.00"));
+
+        InvoiceDTO result = service.createInvoice(1);
+
+        // Proportional count: 3 people total (2 adults + 1 child under 5).
+        // Proportional food cost for child under 5: 300,000 * 1/3 = 100,000 VND.
+        // Discount: 100,000 * 100% = 100,000 VND.
+        // Expected food remaining: 300,000 - 100,000 = 200,000 VND.
+        // FinalAmount (with 10% tax on 200k): 200,000 + 20,000 = 220,000 VND.
+        assertEquals(new BigDecimal("100000"), result.getFoodChildDiscount());
+        assertEquals(new BigDecimal("200000.00"), result.getFoodSubtotal());
+        assertEquals(new BigDecimal("220000.00"), result.getFinalAmount());
+    }
+
+    @Test
+    @DisplayName("UC21-TC03: createInvoice applies 30% food discount for children 5-12")
+    void child5to12FoodDiscountTest() {
+        User user = new User();
+        user.setUserId(5);
+
+        RoomBooking booking = new RoomBooking();
+        booking.setBookingId(1);
+        booking.setUser(user);
+        // 2 adults + 1 child (5-12) = 3 slots total (guestsCount = 3 because 5-12 counts as slot).
+        booking.setGuestsCount(3); 
+        booking.setChildrenUnder5(0);
+        booking.setChildren5to12(1);
+
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId(1);
+        invoice.setUser(user);
+        invoice.setRoomBooking(booking);
+
+        when(roomBookingRepository.findById(1)).thenReturn(Optional.of(booking));
+        when(invoiceRepository.findFirstByRoomBooking_BookingId(1)).thenReturn(Optional.of(invoice));
+
+        // Subtotals setup: room=0, spa=0, food=300,000 VND
+        when(invoiceRepository.sumRoomSubtotal(1)).thenReturn(BigDecimal.ZERO);
+        when(invoiceRepository.sumSpaSubtotal(1)).thenReturn(BigDecimal.ZERO);
+        when(invoiceRepository.sumFoodSubtotal(1)).thenReturn(new BigDecimal("300000.00"));
+
+        InvoiceDTO result = service.createInvoice(1);
+
+        // Proportional count: 3 people total (3 slots).
+        // Proportional food cost for child 5-12: 300,000 * 1/3 = 100,000 VND.
+        // Discount: 100,000 * 30% = 30,000 VND.
+        // Expected food remaining: 300,000 - 30,000 = 270,000 VND.
+        // FinalAmount (with 10% tax on 270k): 270,000 + 27,000 = 297,000 VND.
+        assertEquals(new BigDecimal("30000"), result.getFoodChildDiscount());
+        assertEquals(new BigDecimal("270000.00"), result.getFoodSubtotal());
+        assertEquals(new BigDecimal("297000.00"), result.getFinalAmount());
     }
 
     // ─── Helper methods ────────────────────────────────────────────────────────

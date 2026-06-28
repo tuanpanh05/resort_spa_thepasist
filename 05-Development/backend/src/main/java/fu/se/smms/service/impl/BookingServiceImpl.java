@@ -95,12 +95,13 @@ public class BookingServiceImpl {
     public RoomBooking createBooking(Integer userId, Integer packageId, Integer roomId,
                                      LocalDateTime checkIn, LocalDateTime checkOut) {
         java.util.List<Integer> packageIds = packageId != null ? java.util.List.of(packageId) : java.util.Collections.emptyList();
-        return createBooking(userId, packageIds, roomId, checkIn, checkOut);
+        return createBooking(userId, packageIds, roomId, checkIn, checkOut, 2, 0, 0);
     }
 
     @Transactional
     public RoomBooking createBooking(Integer userId, java.util.List<Integer> packageIds, Integer roomId,
-                                     LocalDateTime checkIn, LocalDateTime checkOut) {
+                                     LocalDateTime checkIn, LocalDateTime checkOut,
+                                     Integer guestsCount, Integer childrenUnder5, Integer children5to12) {
         // Validate dates
         if (checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
             throw new BusinessException(
@@ -165,6 +166,15 @@ public class BookingServiceImpl {
         booking.setStatus("PENDING_DEPOSIT");
         booking.setTotalDeposit(BigDecimal.ZERO);
         booking.setCreatedAt(LocalDateTime.now());
+        // BR-CHILD: Trẻ 5-12 tính vào 1 slot người lớn, trẻ dưới 5 không tính
+        int actualAdults = guestsCount != null ? guestsCount : 2;
+        int actualUnder5 = childrenUnder5 != null ? childrenUnder5 : 0;
+        int actual5to12 = children5to12 != null ? children5to12 : 0;
+        // guestsCount = người lớn + trẻ 5-12 (tính slot capacity)
+        booking.setGuestsCount(actualAdults + actual5to12);
+        booking.setChildrenUnder5(actualUnder5);
+        booking.setChildren5to12(actual5to12);
+        booking.setChildrenCount(actualUnder5 + actual5to12);
 
         RoomBooking savedBooking = roomBookingRepository.save(booking);
 

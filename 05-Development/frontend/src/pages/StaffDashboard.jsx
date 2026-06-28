@@ -13,7 +13,7 @@ import {
   staffInitialPayments as initialPayments,
   staffInitialChatMessages
 } from '../mockData';
-import { complaintsApi } from '../api';
+import { complaintsApi, shiftApi, userApi } from '../api';
 
 // Import sub-components
 import OperationLayout from '../layouts/OperationLayout';
@@ -30,6 +30,7 @@ export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState('bookings');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -42,8 +43,47 @@ export default function StaffDashboard() {
     if (roleUpper !== "STAFF" && roleUpper !== "RECEPTIONIST" && roleUpper !== "ADMIN" && roleUpper !== "MANAGER") {
       alert("Bạn không có quyền truy cập vào khu vực nhân viên!");
       navigate("/");
+      return;
     }
+
+    // Load active staff profile and sync attendance status from database
+    userApi.getProfile()
+      .then(user => {
+        setCurrentUser(user);
+        syncClockState(user);
+      })
+      .catch(err => console.error("Không thể tải thông tin nhân viên:", err));
   }, [navigate]);
+
+  const syncClockState = async (user) => {
+    const role = (user.role || "").toUpperCase();
+    if (role === "ADMIN" || role === "MANAGER") {
+      // Admins and Managers bypass the clock-in block
+      setClockState({
+        isClockedIn: true,
+        clockInTime: "System",
+        clockOutTime: null,
+        history: ["Quản trị viên / Quản lý luôn có quyền truy cập."]
+      });
+      return;
+    }
+
+    try {
+      const list = await shiftApi.getAllShifts();
+      const userShift = list.find(s => s.name === user.fullName);
+      if (userShift) {
+        const isClockedIn = userShift.status === "Checked-in" || userShift.status === "Checked-In";
+        setClockState({
+          isClockedIn,
+          clockInTime: isClockedIn ? "08:00" : null,
+          clockOutTime: null,
+          history: isClockedIn ? [`Vào ca lúc 08:00 ngày hôm nay (Đã đồng bộ từ Database)`] : []
+        });
+      }
+    } catch (err) {
+      console.error("Lỗi khi đồng bộ ca trực từ database:", err);
+    }
+  };
 
   // Load complaints from backend database
   useEffect(() => {
@@ -60,8 +100,6 @@ export default function StaffDashboard() {
   const [payments, setPayments] = useState(initialPayments);
   const [shiftSwapRequests, setShiftSwapRequests] = useState([]);
   const [selectedItineraryBookingId, setSelectedItineraryBookingId] = useState(null);
-
-
 
   // Clock Attendance States
   const [clockState, setClockState] = useState({
@@ -93,27 +131,51 @@ export default function StaffDashboard() {
     alert(`Đã hoàn tất check-out phòng ${booking.room}. Phòng được đưa vào danh sách chờ dọn dẹp.`);
   };
 
-  const handleClockIn = () => {
+  const handleClockIn = async () => {
     const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setClockState(prev => ({
-      ...prev,
-      isClockedIn: true,
-      clockInTime: timeStr,
-      clockOutTime: null,
-      history: [`Vào ca lúc ${timeStr} ngày 25/05/2026`, ...prev.history]
-    }));
-    alert(`Điểm danh vào ca làm việc thành công lúc ${timeStr}! Chúc bạn làm việc hiệu quả.`);
+    try {
+      if (currentUser) {
+        await shiftApi.clockInByName(
+          currentUser.fullName, 
+          "Checked-in", 
+          currentUser.role === "STAFF" ? "Lễ tân chính" : currentUser.role,
+          "Lễ tân"
+        );
+      }
+      setClockState(prev => ({
+        ...prev,
+        isClockedIn: true,
+        clockInTime: timeStr,
+        clockOutTime: null,
+        history: [`Vào ca lúc ${timeStr} ngày hôm nay`, ...prev.history]
+      }));
+      alert(`Điểm danh vào ca làm việc thành công lúc ${timeStr} (Đã cập nhật Database)!`);
+    } catch (err) {
+      alert("Lỗi lưu điểm danh vào ca trực: " + err.message);
+    }
   };
 
-  const handleClockOut = () => {
+  const handleClockOut = async () => {
     const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setClockState(prev => ({
-      ...prev,
-      isClockedIn: false,
-      clockOutTime: timeStr,
-      history: [`Ra ca lúc ${timeStr} ngày 25/05/2026 (Hoàn thành ca trực)`, ...prev.history]
-    }));
-    alert(`Điểm danh ra ca làm việc thành công lúc ${timeStr}! Cảm ơn bạn.`);
+    try {
+      if (currentUser) {
+        await shiftApi.clockInByName(
+          currentUser.fullName, 
+          "Absent", 
+          currentUser.role === "STAFF" ? "Lễ tân chính" : currentUser.role,
+          "Lễ tân"
+        );
+      }
+      setClockState(prev => ({
+        ...prev,
+        isClockedIn: false,
+        clockOutTime: timeStr,
+        history: [`Ra ca lúc ${timeStr} ngày hôm nay (Lưu vào Database)`, ...prev.history]
+      }));
+      alert(`Điểm danh ra ca làm việc thành công lúc ${timeStr} (Đã cập nhật Database)!`);
+    } catch (err) {
+      alert("Lỗi lưu điểm danh ra ca: " + err.message);
+    }
   };
 
   const handleLogout = () => {
@@ -172,70 +234,95 @@ export default function StaffDashboard() {
     >
 
 
-      {activeTab === 'bookings' && (
-        <ManageBookings
-          bookings={bookings}
-          rooms={rooms}
-          payments={payments}
-          setBookings={setBookings}
-          setRooms={setRooms}
-          setPayments={setPayments}
-          onViewItinerary={handleViewItinerary}
-        />
-      )}
+      <div className="relative min-h-[600px] flex flex-col flex-1">
+        {/* Clock-in Security Block Overlay for other tabs */}
+        {activeTab !== 'shifts' && !clockState.isClockedIn && (
+          <div className="absolute inset-0 bg-[#faf8f5]/65 backdrop-blur-md z-40 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+            <div className="max-w-md bg-white border border-[#cda250]/30 p-8 shadow-2xl space-y-6 text-center">
+              <div className="w-16 h-16 bg-[#faf8f5] border border-[#cda250]/20 rounded-full flex items-center justify-center mx-auto text-[#cda250]">
+                <Clock className="h-8 w-8 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-serif text-xl font-normal text-sage-950">Chưa Điểm Danh Vào Ca</h3>
+                <p className="text-xs text-sage-500 leading-relaxed">
+                  Theo quy định vận hành của Ngũ Sơn Resort, bạn cần thực hiện điểm danh vào ca trực trước khi thao tác các tác vụ đặt phòng và check-in khách hàng.
+                </p>
+              </div>
+              <button
+                onClick={handleClockIn}
+                className="w-full py-3 bg-primary-800 hover:bg-primary-900 text-white rounded-none text-xs font-semibold uppercase tracking-wider cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(26,44,34,0.1)]"
+              >
+                Điểm danh vào ca trực ngay
+              </button>
+            </div>
+          </div>
+        )}
 
-      {activeTab === 'rooms' && (
-        <ManageRooms
-          rooms={rooms}
-          setRooms={setRooms}
-          setComplaints={setComplaints}
-        />
-      )}
+        {activeTab === 'bookings' && (
+          <ManageBookings
+            bookings={bookings}
+            rooms={rooms}
+            payments={payments}
+            setBookings={setBookings}
+            setRooms={setRooms}
+            setPayments={setPayments}
+            onViewItinerary={handleViewItinerary}
+          />
+        )}
 
-      {activeTab === 'itinerary' && (
-        <BookingItinerary
-          bookingId={selectedItineraryBookingId}
-          onClose={() => {
-            setSelectedItineraryBookingId(null);
-            setActiveTab('bookings');
-          }}
-        />
-      )}
+        {activeTab === 'rooms' && (
+          <ManageRooms
+            rooms={rooms}
+            setRooms={setRooms}
+            setComplaints={setComplaints}
+          />
+        )}
 
-      {activeTab === 'services' && (
-        <ManageServices
-          services={services}
-          setServices={setServices}
-          rooms={rooms}
-        />
-      )}
+        {activeTab === 'itinerary' && (
+          <BookingItinerary
+            bookingId={selectedItineraryBookingId}
+            onClose={() => {
+              setSelectedItineraryBookingId(null);
+              setActiveTab('bookings');
+            }}
+          />
+        )}
 
-      {activeTab === 'support' && (
-        <ManageSupport
-          complaints={complaints}
-          setComplaints={setComplaints}
-          rooms={rooms}
-        />
-      )}
+        {activeTab === 'services' && (
+          <ManageServices
+            services={services}
+            setServices={setServices}
+            rooms={rooms}
+          />
+        )}
 
-      {activeTab === 'payments' && (
-        <ManagePayments />
-      )}
+        {activeTab === 'support' && (
+          <ManageSupport
+            complaints={complaints}
+            setComplaints={setComplaints}
+            rooms={rooms}
+          />
+        )}
 
-      {activeTab === 'shifts' && (
-        <ManageShifts
-          clockState={clockState}
-          setClockState={setClockState}
-          shiftSwapRequests={shiftSwapRequests}
-          setShiftSwapRequests={setShiftSwapRequests}
-          handleClockIn={handleClockIn}
-          handleClockOut={handleClockOut}
-        />
-      )}
+        {activeTab === 'payments' && (
+          <ManagePayments />
+        )}
 
-      {activeTab === 'profile' && (
-        <StaffProfile />
-      )}
+        {activeTab === 'shifts' && (
+          <ManageShifts
+            clockState={clockState}
+            setClockState={setClockState}
+            shiftSwapRequests={shiftSwapRequests}
+            setShiftSwapRequests={setShiftSwapRequests}
+            handleClockIn={handleClockIn}
+            handleClockOut={handleClockOut}
+          />
+        )}
+
+        {activeTab === 'profile' && (
+          <StaffProfile />
+        )}
+      </div>
     </OperationLayout>
   );
 }

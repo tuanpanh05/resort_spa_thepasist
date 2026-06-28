@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { LayoutDashboard, PlusCircle, Users, CheckCircle, XCircle, LogOut } from 'lucide-react';
+import axiosClient from '../../api/axiosClient';
 
-export default function ManageTables({ tables, setTables }) {
+export default function ManageTables({ tables, setTables, selectedDate, setSelectedDate }) {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestCount, setGuestCount] = useState(1);
@@ -11,7 +12,7 @@ export default function ManageTables({ tables, setTables }) {
   const availableTables = tables.filter(t => t.status === 'Available');
   const occupiedTables = tables.filter(t => t.status === 'Occupied');
 
-  const handleBookTable = (e) => {
+  const handleBookTable = async (e) => {
     e.preventDefault();
     setBookingError('');
 
@@ -25,7 +26,6 @@ export default function ManageTables({ tables, setTables }) {
       return;
     }
 
-    // Thuật toán: Tìm bàn trống có capacity >= guestCount, chọn bàn có capacity nhỏ nhất (để tối ưu)
     const suitableTables = availableTables
       .filter(t => t.capacity >= guestCount)
       .sort((a, b) => a.capacity - b.capacity);
@@ -35,30 +35,38 @@ export default function ManageTables({ tables, setTables }) {
       return;
     }
 
-    const assignedTable = suitableTables[0]; // Chọn bàn vừa nhất
+    const assignedTable = suitableTables[0];
 
-    // Cập nhật trạng thái bàn
-    setTables(prev => prev.map(t => 
-      t.id === assignedTable.id 
-        ? { ...t, status: 'Occupied', guestName: guestName } 
-        : t
-    ));
+    try {
+      await axiosClient.post(`/chef/tables/${assignedTable.id}/book`);
+      setTables(prev => prev.map(t => 
+        t.id === assignedTable.id 
+          ? { ...t, status: 'Occupied', guestName: guestName } 
+          : t
+      ));
+      alert(`Xếp bàn thành công! Đã xếp khách ${guestName} (${guestCount} người) vào bàn ${assignedTable.id} (Sức chứa: ${assignedTable.capacity}).`);
+    } catch (err) {
+      setBookingError('Có lỗi xảy ra khi xếp bàn. Vui lòng thử lại.');
+      return;
+    }
 
-    alert(`Xếp bàn thành công! Đã xếp khách ${guestName} (${guestCount} người) vào bàn ${assignedTable.id} (Sức chứa: ${assignedTable.capacity}).`);
-    
-    // Đóng modal và reset form
     setShowBookingModal(false);
     setGuestName('');
     setGuestCount(1);
   };
 
-  const handleReleaseTable = (tableId) => {
+  const handleReleaseTable = async (tableId) => {
     if (confirm(`Bạn có chắc chắn muốn kết thúc phục vụ và dọn bàn ${tableId}?`)) {
-      setTables(prev => prev.map(t => 
-        t.id === tableId 
-          ? { ...t, status: 'Available', guestName: '' } 
-          : t
-      ));
+      try {
+        await axiosClient.post(`/chef/tables/${tableId}/release`);
+        setTables(prev => prev.map(t => 
+          t.id === tableId 
+            ? { ...t, status: 'Available', guestName: '' } 
+            : t
+        ));
+      } catch (err) {
+        alert('Lỗi hệ thống khi dọn bàn.');
+      }
     }
   };
 
@@ -75,13 +83,24 @@ export default function ManageTables({ tables, setTables }) {
             Tổng: {tables.length} bàn | Trống: {availableTables.length} | Đang phục vụ: {occupiedTables.length}
           </p>
         </div>
-        <button
-          onClick={() => setShowBookingModal(true)}
-          className="px-4 py-2 bg-primary-800 hover:bg-primary-900 text-white rounded-none text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-2"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Đặt Bàn Nhanh
-        </button>
+        <div className="flex items-center gap-3">
+          <input
+            type="date"
+            value={selectedDate || ''}
+            onChange={(e) => {
+              if (setSelectedDate) setSelectedDate(e.target.value);
+            }}
+            className="px-3 py-2 border border-sage-300 rounded text-sm text-sage-800 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer bg-white"
+            title="Xem trước sơ đồ bàn theo ngày"
+          />
+          <button
+            onClick={() => setShowBookingModal(true)}
+            className="px-4 py-2 bg-primary-800 hover:bg-primary-900 text-white rounded-none text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-2"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Đặt Bàn Nhanh
+          </button>
+        </div>
       </div>
 
       {/* Tables Grid */}

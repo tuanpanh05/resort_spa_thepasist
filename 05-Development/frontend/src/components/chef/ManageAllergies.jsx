@@ -42,7 +42,7 @@ export default function ManageAllergies({ allergies }) {
         headers={[
           "Mã KH",
           "Họ và Tên",
-          "Số Bàn",
+          "Số Phòng",
           "Ngày sử dụng",
           "Dị ứng ghi chú (Allergies)",
           "Chế độ ăn (Dietary Profile)",
@@ -56,7 +56,7 @@ export default function ManageAllergies({ allergies }) {
             </td>
             <td className="p-4 font-bold text-primary-950">{item.guest}</td>
             <td className="p-4 font-bold text-primary-900 font-mono">
-              BÀN {item.room}
+              PHÒNG {item.room}
             </td>
             <td className="p-4 text-sage-600">{item.checkIn}</td>
             <td className="p-4">
@@ -65,11 +65,10 @@ export default function ManageAllergies({ allergies }) {
                   item.allergies.map((alg, i) => (
                     <span
                       key={i}
-                      className={`px-2 py-0.5 rounded-none text-[10px] font-bold text-white ${
-                        alg === "Hải sản" || alg === "Đậu phộng"
+                      className={`px-2 py-0.5 rounded-none text-[10px] font-bold text-white ${alg === "Hải sản" || alg === "Đậu phộng"
                           ? "bg-red-700"
                           : "bg-amber-700"
-                      }`}
+                        }`}
                     >
                       {alg}
                     </span>

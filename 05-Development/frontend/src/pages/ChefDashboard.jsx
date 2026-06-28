@@ -44,6 +44,7 @@ export default function ChefDashboard() {
   const [ingredients, setIngredients] = useState([]);
   const [procurements, setProcurements] = useState([]);
   const [tables, setTables] = useState([]);
+  const [baseTables, setBaseTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
 
@@ -85,6 +86,7 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
+          tableNumber: extractFirstTable(item.room),
           origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
             : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
               : (item.origin || "Tại Quán"),
@@ -98,8 +100,12 @@ export default function ChefDashboard() {
           mealCode: item.mealCode
         };
       });
-      setOrders(mappedOrders);
-      setTables(computeDynamicTables(mappedOrders, tables));
+      const finalOrders = mappedOrders.filter(o => 
+          !["Đặt Trước Bữa Ăn", "PACKAGE MEAL", "COMBO"].includes(o.origin) &&
+          !(o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
+      );
+      setOrders(finalOrders);
+      setTables(computeDynamicTables(finalOrders, baseTables));
     } catch (err) {
       console.warn("Could not fetch orders for date", err);
     }
@@ -179,6 +185,7 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
+          tableNumber: extractFirstTable(item.room),
           origin: item.origin === "ROOM SERVICE" ? "Gọi Thêm Tại Bàn"
             : item.origin === "PACKAGE MEAL" ? "Đặt Trước Bữa Ăn"
               : (item.origin || "Tại Quán"),
@@ -199,6 +206,7 @@ export default function ChefDashboard() {
           orderId: item.orderId,
           guestName: item.guestName,
           room: extractFirstTable(item.room),
+          tableNumber: extractFirstTable(item.room),
           origin: item.origin === "Room Service" ? "Tại Quán" : item.origin,
           items: item.items.map(it => ({
             name: it.name,
@@ -214,20 +222,31 @@ export default function ChefDashboard() {
         };
       });
 
+      const finalOrders = mappedOrders.filter(o => 
+          !["Đặt Trước Bữa Ăn", "PACKAGE MEAL", "COMBO"].includes(o.origin) &&
+          !(o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
+      );
+
+      const finalUpcomingOrders = mappedUpcomingOrders.filter(o => 
+          ["Đặt Trước Bữa Ăn", "PACKAGE MEAL", "COMBO"].includes(o.origin) ||
+          (o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
+      );
+
       setAllergies(mappedAllergies);
       setDishes(mappedDishes);
-      setOrders(mappedOrders);
-      setUpcomingOrders(mappedUpcomingOrders);
+      setOrders(finalOrders);
+      setUpcomingOrders(finalUpcomingOrders);
       setIngredients(inventoryRes.data);
       setProcurements(procurementsRes.data);
 
       const realTables = tablesRes.data.map(t => ({
         id: t.id,
-        status: t.status === "AVAILABLE" ? "Available" : "Occupied",
+        status: (t.status && t.status.toUpperCase() === "AVAILABLE") ? "Available" : "Occupied",
         capacity: t.capacity,
         currentGuest: null
       }));
-      setTables(computeDynamicTables(mappedOrders, realTables));
+      setBaseTables(realTables);
+      setTables(computeDynamicTables(finalOrders, realTables));
     } catch (err) {
       console.warn("Could not fetch chef data from live server.", err);
       // Leave state as empty arrays — do not fallback to mock data
@@ -571,6 +590,15 @@ export default function ChefDashboard() {
               <ManageDishes dishes={dishes} setDishes={setDishes} />
             )}
 
+            {activeTab === "tables" && (
+              <ManageTables 
+                tables={tables} 
+                setTables={setTables} 
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+              />
+            )}
+
             {activeTab === "inventory" && (
               <ManageInventory
                 ingredients={ingredients}
@@ -580,12 +608,7 @@ export default function ChefDashboard() {
               />
             )}
 
-            {activeTab === "tables" && (
-              <ManageTables
-                tables={tables}
-                setTables={setTables}
-              />
-            )}
+
           </>
         )}
       </main>

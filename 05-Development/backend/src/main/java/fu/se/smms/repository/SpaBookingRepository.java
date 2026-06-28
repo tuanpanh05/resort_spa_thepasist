@@ -5,6 +5,8 @@ import fu.se.smms.entity.User;
 import fu.se.smms.entity.TreatmentRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -75,6 +77,32 @@ public interface SpaBookingRepository extends JpaRepository<SpaBooking, Integer>
                                                @Param("endDatetime") LocalDateTime endDatetime);
 
     @Query("SELECT u FROM User u WHERE u.role = 'THERAPIST' AND u.status = 'ACTIVE' " +
+           "AND (:specialty IS NULL OR u.specialty = :specialty) " +
+           "AND NOT EXISTS (" +
+           "  SELECT sb FROM SpaBooking sb " +
+           "  WHERE sb.therapist.userId = u.userId " +
+           "  AND sb.status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS') " +
+           "  AND sb.startDatetime < :endDatetime " +
+           "  AND sb.endDatetime > :startDatetime" +
+           ")")
+    List<User> findAvailableTherapistsBySpecialty(@Param("specialty") String specialty,
+                                                  @Param("startDatetime") LocalDateTime startDatetime,
+                                                  @Param("endDatetime") LocalDateTime endDatetime);
+
+    @Query("SELECT tr FROM TreatmentRoom tr WHERE tr.status = 'AVAILABLE' " +
+           "AND (:category IS NULL OR tr.category = :category) " +
+           "AND NOT EXISTS (" +
+           "  SELECT sb FROM SpaBooking sb " +
+           "  WHERE sb.treatmentRoom.treatmentRoomId = tr.treatmentRoomId " +
+           "  AND sb.status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS') " +
+           "  AND sb.startDatetime < :endDatetime " +
+           "  AND sb.endDatetime > :startDatetime" +
+           ")")
+    List<TreatmentRoom> findAvailableRoomsByCategory(@Param("category") String category,
+                                                     @Param("startDatetime") LocalDateTime startDatetime,
+                                                     @Param("endDatetime") LocalDateTime endDatetime);
+
+    @Query("SELECT u FROM User u WHERE u.role = 'THERAPIST' AND u.status = 'ACTIVE' " +
            "AND NOT EXISTS (" +
            "  SELECT sb FROM SpaBooking sb " +
            "  WHERE sb.therapist.userId = u.userId " +
@@ -121,4 +149,13 @@ public interface SpaBookingRepository extends JpaRepository<SpaBooking, Integer>
            "AND sb.startDatetime >= :start " +
            "AND sb.startDatetime <= :end")
     List<SpaBooking> findUpcomingConfirmedBookings(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    /**
+     * Persists the Google Calendar event ID after an async calendar sync.
+     * Runs in its own transaction since it is invoked from a background thread.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE SpaBooking sb SET sb.googleCalendarEventId = :eventId WHERE sb.spaBookingId = :bookingId")
+    void updateGoogleEventId(@Param("bookingId") Integer bookingId, @Param("eventId") String eventId);
 }

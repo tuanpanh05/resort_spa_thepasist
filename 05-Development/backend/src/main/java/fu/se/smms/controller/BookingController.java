@@ -95,12 +95,16 @@ public class BookingController {
         }
 
         // createBooking internally creates the invoice via invoiceService.createInvoice
+        // BR-CHILD: Truyền thông tin trẻ em để tính slot và giảm giá
         RoomBooking booking = bookingService.createBooking(
                 user.getUserId(),
                 request.getPackageIds(),
                 request.getRoomId(),
                 request.getCheckInDate(),
-                request.getCheckOutDate());
+                request.getCheckOutDate(),
+                request.getGuestsCount(),
+                request.getChildrenUnder5(),
+                request.getChildren5to12());
 
         // Retrieve the invoice that was already created inside createBooking
         // createInvoice is idempotent — returns existing invoice if one already exists

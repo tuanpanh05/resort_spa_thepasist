@@ -87,8 +87,8 @@ export default function ChefOverview({
                 >
                   <div>
                     <div className="flex justify-between items-center text-[10px]">
-                      <span className="text-sage-500 font-mono font-bold">
-                        BÀN {item.tableNumber}
+                      <span className="text-sage-500 font-mono font-bold uppercase">
+                        PHÒNG {item.room}
                       </span>
                       <span className="text-red-700 font-bold uppercase text-[9px] tracking-wider">
                         {item.dietary}

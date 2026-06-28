@@ -14,6 +14,7 @@ import {
   Clock,
   LogOut,
   Menu,
+  Ticket,
 } from "lucide-react";
 import { paymentApi, staffApi, complaintsApi, shiftApi, inventoryApi } from "../api";
 
@@ -41,6 +42,7 @@ import ManageSupport from "../components/admin/ManageSupport";
 import ManagePayments from "../components/admin/ManagePayments";
 import ManageShifts from "../components/admin/ManageShifts";
 import ManageInventory from "../components/admin/ManageInventory";
+import ManageVouchers from "../components/admin/ManageVouchers";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -252,6 +254,7 @@ export default function AdminDashboard() {
     { id: "services", label: "Quản Lý Dịch Vụ", icon: Flower },
     { id: "support", label: "Phản Hồi & Khiếu Nại", icon: MessageSquare },
     { id: "payments", label: "Nhật Ký Hóa Đơn", icon: CreditCard },
+    { id: "vouchers", label: "Quản Lý Voucher", icon: Ticket },
     { id: "shifts", label: "Điều Hành Ca Trực", icon: Clock },
     { id: "inventory", label: "Kho Vật Tư Tiêu Hao", icon: Package },
   ];
@@ -308,6 +311,7 @@ export default function AdminDashboard() {
               {activeTab === "shifts" &&
                 "7. Điều Hành Ca Làm Việc & Attendance"}
               {activeTab === "inventory" && "8. Quản Lý Kho & Vật Tư Resort"}
+              {activeTab === "vouchers" && "9. Quản Lý Chương Trình Voucher & Khuyến Mãi"}
             </h1>
           </div>
           <div className="flex items-center space-x-4">
@@ -377,6 +381,10 @@ export default function AdminDashboard() {
               inventory={inventory}
               loadInventory={loadInventory}
             />
+          )}
+
+          {activeTab === "vouchers" && (
+            <ManageVouchers />
           )}
         </div>
       </main>

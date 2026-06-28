@@ -98,6 +98,17 @@ public class RoomBookingController {
         }
     }
 
+    @PostMapping("/{bookingId}/add-extra")
+    public ResponseEntity<?> addExtraServices(@PathVariable Integer bookingId,
+                                               @RequestBody fu.se.smms.dto.AddExtraServicesDTO request) {
+        try {
+            Map<String, Object> response = roomBookingService.addExtraServices(bookingId, request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{bookingId}/cancel")
     public ResponseEntity<?> cancelBooking(@PathVariable Integer bookingId,
                                             @RequestBody Map<String, String> request) {
@@ -131,6 +142,7 @@ public class RoomBookingController {
         map.put("status", b.getStatus());
         map.put("totalDeposit", b.getTotalDeposit());
         map.put("createdAt", b.getCreatedAt());
+        map.put("specialRequests", b.getSpecialRequests());
 
         try {
             InvoiceDTO inv = invoiceService.createInvoice(b.getBookingId());

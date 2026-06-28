@@ -21,8 +21,13 @@ export default function DetailModal({
   remainingAmount,
   bookingStatus,
   paymentStatus,
+  servicesTotalBeforeDiscount,
+  childDiscountUnder5,
+  childDiscount5to12,
+  chargedGuestsCount: passedChargedGuestsCount,
 }) {
   if (!isOpen) return null;
+  const chargedGuestsCount = passedChargedGuestsCount || (Number(guestInfo.guestsCount || 0) + Number(guestInfo.childrenUnder5 || 0) + Number(guestInfo.children5to12 || 0));
 
   return (
     <div
@@ -66,18 +71,36 @@ export default function DetailModal({
               Dịch vụ đi kèm
             </span>
             {selectedServices.map(s => {
-              let itemCost = 0;
-              if (s.type === "per-guest") itemCost = s.price * guestInfo.guestsCount;
-              else if (s.type === "per-guest-per-night")
-                itemCost = s.price * guestInfo.guestsCount * nightsCount;
-              else itemCost = s.price;
+               const isKidService = ["srv-playground", "srv-dao-red-kid", "srv-massage-kid", "srv-posture-kid"].includes(s.id);
+               const multiplier = isKidService ? Number(guestInfo.children5to12 || 0) : chargedGuestsCount;
+               let itemCost = 0;
+               const pricingType = s.pricingType || s.type || "per-guest";
+               const serviceTitle = s.name || s.title || "Dịch vụ";
+               if (pricingType === "per-guest") itemCost = s.price * multiplier;
+               else if (pricingType === "per-guest-per-night")
+                 itemCost = s.price * multiplier * nightsCount;
+               else itemCost = s.price;
               return (
-                <div key={s.id} className="flex justify-between text-gray-600 text-xs">
-                  <span className="truncate pr-4">• {s.title.split("&")[0].trim()}</span>
+                <div key={s.id || s.serviceId} className="flex justify-between text-gray-600 text-xs">
+                  <span className="truncate pr-4">• {(serviceTitle).split("&")[0].trim()}</span>
                   <span className="font-mono">{formatCurrency(itemCost)}</span>
                 </div>
               );
             })}
+
+            {/* Child Discounts */}
+            {childDiscountUnder5 > 0 && (
+              <div className="flex justify-between text-emerald-700 font-semibold text-xs pt-1">
+                <span>👶 Giảm giá trẻ dưới 5t (100% DV & ẩm thực):</span>
+                <span className="font-mono">-{formatCurrency(childDiscountUnder5)}</span>
+              </div>
+            )}
+            {childDiscount5to12 > 0 && (
+              <div className="flex justify-between text-emerald-700 font-semibold text-xs pt-1">
+                <span>🧒 Giảm giá trẻ 5-12t (30% DV & ẩm thực):</span>
+                <span className="font-mono">-{formatCurrency(childDiscount5to12)}</span>
+              </div>
+            )}
           </div>
         )}
         {/* Totals */}

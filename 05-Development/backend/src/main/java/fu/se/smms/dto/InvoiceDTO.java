@@ -177,4 +177,45 @@ public class InvoiceDTO {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    private String customerPhone;
+    private String customerEmail;
+    private String cancellationReason;
+    private LocalDateTime cancellationTime;
+    private BigDecimal refundAmount;
+    private String cancellationDetails;
+    private String voucherCode;
+    private BigDecimal discountAmount;
+
+    public String getCustomerPhone() { return customerPhone; }
+    public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
+
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+
+    public LocalDateTime getCancellationTime() { return cancellationTime; }
+    public void setCancellationTime(LocalDateTime cancellationTime) { this.cancellationTime = cancellationTime; }
+
+    public BigDecimal getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
+
+    public String getCancellationDetails() { return cancellationDetails; }
+    public void setCancellationDetails(String cancellationDetails) { this.cancellationDetails = cancellationDetails; }
+
+    public String getVoucherCode() { return voucherCode; }
+    public void setVoucherCode(String voucherCode) { this.voucherCode = voucherCode; }
+
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+
+    private BigDecimal spaChildDiscount;
+    public BigDecimal getSpaChildDiscount() { return spaChildDiscount; }
+    public void setSpaChildDiscount(BigDecimal spaChildDiscount) { this.spaChildDiscount = spaChildDiscount; }
+
+    private BigDecimal foodChildDiscount;
+    public BigDecimal getFoodChildDiscount() { return foodChildDiscount; }
+    public void setFoodChildDiscount(BigDecimal foodChildDiscount) { this.foodChildDiscount = foodChildDiscount; }
 }

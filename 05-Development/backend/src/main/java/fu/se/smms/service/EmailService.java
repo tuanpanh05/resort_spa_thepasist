@@ -61,5 +61,14 @@ public interface EmailService {
         java.math.BigDecimal depositAmount,
         java.math.BigDecimal amountDue
     );
-}
 
+    /**
+     * Sends an HTML invoice (receipt) email after a payment is completed successfully.
+     * Used when an invoice transitions to PAID (full check-out payment) so the guest
+     * automatically receives their itemized invoice by email.
+     *
+     * @param toEmail recipient's email address
+     * @param invoice the fully-populated invoice details to render in the email
+     */
+    void sendInvoiceEmail(String toEmail, fu.se.smms.dto.InvoiceDTO invoice);
+}

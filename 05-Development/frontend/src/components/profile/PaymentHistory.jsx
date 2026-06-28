@@ -100,7 +100,7 @@ export default function PaymentHistory({ profile }) {
                 </div>
                 <div className="flex justify-between text-xs font-semibold text-rose-700">
                   <span>{t("profile.paymentAmountDue")}:</span>
-                  <span>{fmtCurrency(inv.amountDue)}</span>
+                  <span>{inv.status === "PAID" ? fmtCurrency(0) : fmtCurrency(inv.amountDue)}</span>
                 </div>
 
                 {inv.status === "PAID" && (

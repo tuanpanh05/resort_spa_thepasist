@@ -50,6 +50,9 @@ public class User {
     @Column(name = "reminder_lead_time_mins")
     private Integer reminderLeadTimeMins = 30;
 
+    @Column(name = "specialty", length = 20)
+    private String specialty;
+
     public User() {}
 
     public User(Integer userId, String email, String passwordHash, String fullName, String phone, String idPassportEncrypted, String role, String status, LocalDateTime createdAt) {
@@ -78,6 +81,7 @@ public class User {
         private String role;
         private String status;
         private LocalDateTime createdAt;
+        private String specialty;
 
         public Builder userId(Integer userId) {
             this.userId = userId;
@@ -119,13 +123,20 @@ public class User {
             return this;
         }
 
+        public Builder specialty(String specialty) {
+            this.specialty = specialty;
+            return this;
+        }
+
         public Builder createdAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
             return this;
         }
 
         public User build() {
-            return new User(userId, email, passwordHash, fullName, phone, idPassportEncrypted, role, status, createdAt);
+            User u = new User(userId, email, passwordHash, fullName, phone, idPassportEncrypted, role, status, createdAt);
+            u.setSpecialty(specialty);
+            return u;
         }
     }
 
@@ -245,5 +256,13 @@ public class User {
 
     public void setReminderLeadTimeMins(Integer reminderLeadTimeMins) {
         this.reminderLeadTimeMins = reminderLeadTimeMins;
+    }
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 }

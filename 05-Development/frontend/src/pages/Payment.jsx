@@ -18,6 +18,7 @@ import {
 import { paymentApi, bookingLookupApi } from "../api";
 
 export default function Payment() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const invoiceIdParam = searchParams.get("invoiceId");
   
@@ -32,6 +33,37 @@ export default function Payment() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
+  // Countdown Timer states (1 minute timeout)
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [showTimeoutModal, setShowTimeoutModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Reset countdown whenever invoiceId changes
+  useEffect(() => {
+    setTimeLeft(60);
+    setShowTimeoutModal(false);
+  }, [invoiceId]);
+
+  // Sync state with URL parameter changes
+  useEffect(() => {
+    if (invoiceIdParam) {
+      const parsed = parseInt(invoiceIdParam);
+      if (!isNaN(parsed) && parsed !== invoiceId) {
+        setInvoiceId(parsed);
+      }
+    }
+  }, [invoiceIdParam]);
+
+  // Voucher states
+  const [voucherCode, setVoucherCode] = useState("");
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+
+  useEffect(() => {
+    if (invoice && invoice.voucherCode) {
+      setVoucherCode(invoice.voucherCode);
+    }
+  }, [invoice]);
+
   useEffect(() => {
     setLoading(true);
     setErrorMsg(null);
@@ -39,7 +71,10 @@ export default function Payment() {
       .then((data) => {
         setInvoice(data);
         setLoading(false);
-        if (data.status === "PAID") {
+        const isPaidNow = 
+          data.status === "PAID" || 
+          (data.bookingStatus === "CONFIRMED" && Number(data.depositAmount || 0) > 0);
+        if (isPaidNow) {
           setIsPaid(true);
         }
       })
@@ -62,6 +97,51 @@ export default function Payment() {
       setItinerary(null);
     }
   }, [invoice]);
+
+  const handleTimeoutCancellation = async () => {
+    if (isCancelling) return;
+    setIsCancelling(true);
+    try {
+      const bookingId = invoice?.bookingId;
+      if (bookingId) {
+        await bookingLookupApi.cancel(bookingId, "Hết hạn thời gian thanh toán cọc (1 phút)");
+      }
+      setShowTimeoutModal(true);
+    } catch (err) {
+      console.error("Lỗi khi tự động hủy đặt phòng:", err);
+      // Vẫn mở modal thông báo cho khách hàng
+      setShowTimeoutModal(true);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  useEffect(() => {
+    // Chỉ kích hoạt timer nếu đơn đang chờ thanh toán cọc (PENDING_DEPOSIT) và chưa thanh toán
+    if (!invoice || invoice.bookingStatus !== "PENDING_DEPOSIT" || invoice.status !== "UNPAID" || isPaid) {
+      return;
+    }
+
+    if (timeLeft <= 0) {
+      handleTimeoutCancellation();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [invoice, timeLeft, isPaid]);
+
+  useEffect(() => {
+    if (showTimeoutModal) {
+      const redirectTimer = setTimeout(() => {
+        navigate("/");
+      }, 5000);
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [showTimeoutModal]);
 
   const handleSelectInvoice = (e) => {
     const val = parseInt(e.target.value);
@@ -94,6 +174,36 @@ export default function Payment() {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    setIsApplyingVoucher(true);
+    try {
+      const updatedInvoice = await paymentApi.applyVoucher(invoiceId, voucherCode.trim());
+      setInvoice(updatedInvoice);
+      alert("Áp dụng mã giảm giá thành công!");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Không thể áp dụng mã giảm giá.");
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = async () => {
+    setIsApplyingVoucher(true);
+    try {
+      const updatedInvoice = await paymentApi.removeVoucher(invoiceId);
+      setInvoice(updatedInvoice);
+      setVoucherCode("");
+      alert("Đã gỡ bỏ mã giảm giá.");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Không thể gỡ bỏ mã giảm giá.");
+    } finally {
+      setIsApplyingVoucher(false);
+    }
   };
 
   const handlePaymentSubmit = (e) => {
@@ -148,12 +258,11 @@ export default function Payment() {
         setInvoice(data);
         setIsProcessing(false);
         
-        const isPaidNow = data.status === "PAID";
-        const isDepositConfirmed = 
-          isDepositPayment && 
-          data.bookingStatus === "CONFIRMED";
+        const isPaidNow = 
+          data.status === "PAID" || 
+          (data.bookingStatus === "CONFIRMED" && Number(data.depositAmount || 0) > 0);
 
-        if (isPaidNow || isDepositConfirmed) {
+        if (isPaidNow) {
           setIsPaid(true);
         } else {
           alert("Hóa đơn hiện vẫn chưa được xác nhận thanh toán. Vui lòng liên hệ quầy lễ tân.");
@@ -291,21 +400,34 @@ export default function Payment() {
                             <span className="font-mono">{formatCurrency(event.price)}</span>
                           </div>
                         ))}
+
+                      {invoice?.spaChildDiscount > 0 && (
+                        <div className="flex justify-between text-emerald-700 text-[10px] pl-4 font-semibold">
+                          <span>👶 Giảm giá dịch vụ Trẻ em:</span>
+                          <span className="font-mono">-{formatCurrency(invoice.spaChildDiscount)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Food */}
-                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED")).length > 0 && (
+                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED" || e.status.toUpperCase() === "PENDING" || e.status.toUpperCase() === "PREPARING")).length > 0 && (
                     <div className="space-y-1.5">
                       <span className="font-semibold text-sage-800 block">🍲 Dịch vụ ẩm thực F&B:</span>
                       {itinerary.timeline
-                        .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED"))
+                        .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED" || e.status.toUpperCase() === "PENDING" || e.status.toUpperCase() === "PREPARING"))
                         .map((event, idx) => (
                           <div key={idx} className="flex justify-between text-sage-500 text-[10px] pl-4 font-light">
                             <span>{event.title} ({event.description || "Số lượng: 1"})</span>
                             <span className="font-mono">{formatCurrency(event.price)}</span>
                           </div>
                         ))}
+                      {invoice?.foodChildDiscount > 0 && (
+                        <div className="flex justify-between text-emerald-700 text-[10px] pl-4 font-semibold">
+                          <span>👶 Giảm giá ẩm thực Trẻ em:</span>
+                          <span className="font-mono">-{formatCurrency(invoice.foodChildDiscount)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -354,6 +476,19 @@ export default function Payment() {
                     Chi Tiết Guest Folio
                   </h2>
                 </div>
+
+                {/* Countdown Timer Widget */}
+                {invoice?.bookingStatus === "PENDING_DEPOSIT" && invoice?.status === "UNPAID" && !isPaid && (
+                  <div className="p-4 bg-red-50 border border-red-200/50 flex items-center justify-between text-xs text-red-700 font-semibold rounded-none animate-pulse">
+                    <span className="flex items-center">
+                      <AlertCircle className="h-4.5 w-4.5 text-red-650 mr-1.5 flex-shrink-0 animate-bounce" />
+                      Thời gian hoàn tất thanh toán cọc:
+                    </span>
+                    <span className="font-mono text-sm bg-red-600 text-white px-2 py-0.5 rounded font-bold">
+                      {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                )}
 
                 {/* Guest details items */}
                 <div className="space-y-4 text-xs sm:text-sm">
@@ -448,15 +583,15 @@ export default function Payment() {
                     </div>
                   )}
 
-                  {/* Food Orders */}
-                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED")).length > 0 && (
+                   {/* Food Orders */}
+                  {itinerary?.timeline?.filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED" || e.status.toUpperCase() === "PENDING" || e.status.toUpperCase() === "PREPARING")).length > 0 && (
                     <div className="space-y-1.5 border-b border-dashed border-primary-100 pb-3">
                       <div className="font-semibold text-sage-900 text-[11px]">
                         🍲 Dịch vụ ẩm thực F&B:
                       </div>
                       <div className="space-y-1.5 pl-4">
                         {itinerary.timeline
-                          .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED"))
+                          .filter(e => e.type === "FOOD" && e.status && (e.status.toUpperCase() === "READY" || e.status.toUpperCase() === "DELIVERED" || e.status.toUpperCase() === "PENDING" || e.status.toUpperCase() === "PREPARING"))
                           .map((event, idx) => (
                             <div key={idx} className="flex justify-between text-sage-600 text-[10px] font-light">
                               <div>
@@ -468,10 +603,59 @@ export default function Payment() {
                               <span className="font-mono">{formatCurrency(event.price)}</span>
                             </div>
                           ))}
+                        {invoice?.foodChildDiscount > 0 && (
+                          <div className="flex justify-between text-emerald-700 text-[10px] font-semibold">
+                            <span>👶 Giảm giá ẩm thực Trẻ em:</span>
+                            <span className="font-mono">-{formatCurrency(invoice.foodChildDiscount)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
+
+                {/* Voucher input form */}
+                {!isPaid && (
+                  <div className="border-t border-primary-100 pt-6 space-y-3">
+                    <h4 className="font-serif font-bold text-xs text-sage-900 uppercase tracking-wider">
+                      Mã Giảm Giá / Voucher
+                    </h4>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={voucherCode}
+                        onChange={(e) => setVoucherCode(e.target.value)}
+                        placeholder="Ví dụ: WELCOME10, NGUSON50..."
+                        disabled={invoice?.discountAmount > 0 || isApplyingVoucher}
+                        className="flex-1 px-3 py-2 text-xs border border-primary-200 focus:outline-primary-300 uppercase bg-white disabled:bg-sage-50 disabled:text-sage-400"
+                      />
+                      {invoice?.discountAmount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={handleRemoveVoucher}
+                          disabled={isApplyingVoucher}
+                          className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-750 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          Gỡ bỏ
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleApplyVoucher}
+                          disabled={isApplyingVoucher || !voucherCode.trim()}
+                          className="px-4 py-2 bg-primary-850 hover:bg-primary-900 text-white text-xs font-semibold uppercase tracking-wider disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                          {isApplyingVoucher ? "Đang áp dụng..." : "Áp dụng"}
+                        </button>
+                      )}
+                    </div>
+                    {invoice?.discountAmount > 0 && (
+                      <p className="text-[10px] text-green-700 font-medium">
+                        ✓ Đã áp dụng Voucher thành công!
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Price summary table */}
                 <div className="border-t border-primary-100 pt-6 space-y-3.5 text-xs sm:text-sm">
@@ -481,12 +665,24 @@ export default function Payment() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sage-500 font-light">Trị liệu Spa phát sinh:</span>
-                    <span className="font-semibold font-mono">{formatCurrency(invoice?.spaSubtotal)}</span>
+                    <span className="font-semibold font-mono">{formatCurrency((invoice?.spaSubtotal || 0) + (invoice?.spaChildDiscount || 0))}</span>
                   </div>
+                  {invoice?.spaChildDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-700 bg-emerald-50/30 p-1 px-2 font-semibold">
+                      <span>Giảm giá dịch vụ Trẻ em:</span>
+                      <span className="font-mono">-{formatCurrency(invoice.spaChildDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-sage-500 font-light">Dịch vụ ẩm thực F&B phát sinh:</span>
-                    <span className="font-semibold font-mono">{formatCurrency(invoice?.foodSubtotal)}</span>
+                    <span className="font-semibold font-mono">{formatCurrency((invoice?.foodSubtotal || 0) + (invoice?.foodChildDiscount || 0))}</span>
                   </div>
+                  {invoice?.foodChildDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-700 bg-emerald-50/30 p-1 px-2 font-semibold">
+                      <span>Giảm giá ẩm thực Trẻ em:</span>
+                      <span className="font-mono">-{formatCurrency(invoice.foodChildDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-sage-500 font-light">Thuế VAT & Phí dịch vụ (10%):</span>
                     <span className="font-semibold font-mono">{formatCurrency(invoice?.taxAndFees)}</span>
@@ -495,9 +691,22 @@ export default function Payment() {
                   <div className="border-t border-dashed border-primary-100 my-1"></div>
 
                   <div className="flex justify-between">
-                    <span className="text-sage-900 font-medium">Tổng cộng Folio phòng:</span>
-                    <span className="font-bold font-mono">{formatCurrency(invoice?.finalAmount)}</span>
+                    <span className="text-sage-900 font-medium">Tổng cộng Folio phòng (Gốc):</span>
+                    <span className="font-bold font-mono">{formatCurrency((invoice?.roomSubtotal || 0) + (invoice?.spaSubtotal || 0) + (invoice?.foodSubtotal || 0) + (invoice?.taxAndFees || 0))}</span>
                   </div>
+
+                  {invoice?.discountAmount > 0 && (
+                    <div className="flex justify-between text-green-700 bg-green-50/50 p-1 px-2 font-semibold">
+                      <span>Mã giảm giá áp dụng ({invoice.voucherCode}):</span>
+                      <span className="font-mono">-{formatCurrency(invoice.discountAmount)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between border-t border-primary-100 pt-2 font-bold text-sage-955">
+                    <span>Tổng thanh toán sau giảm:</span>
+                    <span className="font-mono text-primary-900">{formatCurrency(invoice?.finalAmount)}</span>
+                  </div>
+
                   <div className="flex justify-between text-green-700 bg-green-50/50 p-1.5 px-2.5">
                     <span className="font-medium">
                       {isDepositPayment ? "Tiền cọc cần thanh toán (30%):" : "Đã khấu trừ tiền đặt cọc (30%):"}
@@ -651,6 +860,32 @@ export default function Payment() {
           )
         )}
       </div>
+
+      {/* Timeout Modal */}
+      {showTimeoutModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-white border border-red-100 max-w-md w-full p-8 text-center shadow-2xl relative overflow-hidden m-4">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-red-650" />
+            <div className="inline-flex p-4 bg-red-50 text-red-700 rounded-full mb-5">
+              <AlertCircle className="h-12 w-12" />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-sage-900 mb-2">Hết Thời Gian Thanh Toán!</h3>
+            <p className="text-xs text-sage-600 font-light leading-relaxed mb-6">
+              Đơn đặt phòng của quý khách đã tự động bị hủy trên hệ thống do không hoàn tất đặt cọc đúng hạn (1 phút). Phòng đã được giải phóng cho khách hàng khác. Quý khách vui lòng thực hiện đặt lịch lại.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="w-full py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border-none"
+            >
+              Về trang chủ
+            </button>
+            <div className="mt-4 text-[9px] text-sage-400 font-light">
+              Tự động chuyển hướng về trang chủ sau 5 giây...
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
