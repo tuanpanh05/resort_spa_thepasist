@@ -86,12 +86,42 @@ export default function ManageVouchers() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    // Bước 1: Kiểm tra xem đã nhập mã voucher chưa
     if (!form.code.trim()) {
       alert("Vui lòng nhập mã giảm giá.");
       return;
     }
-    if (!form.discountValue || parseFloat(form.discountValue) <= 0) {
+
+    // Bước 2: Kiểm tra giá trị giảm giá (Phải lớn hơn 0)
+    const discountVal = parseFloat(form.discountValue);
+    if (isNaN(discountVal) || discountVal <= 0) {
       alert("Giá trị giảm giá phải lớn hơn 0.");
+      return;
+    }
+
+    // Bước 3: Nếu là giảm theo phần trăm (%), không cho phép quá 100%
+    if (form.discountType === "PERCENTAGE" && discountVal > 100) {
+      alert("Giảm giá theo phần trăm không được vượt quá 100%.");
+      return;
+    }
+
+    // Bước 4: Kiểm tra số tiền giảm tối đa (Không được là số âm)
+    if (form.maxDiscountAmount && parseFloat(form.maxDiscountAmount) < 0) {
+      alert("Số tiền giảm tối đa không được âm.");
+      return;
+    }
+
+    // Bước 5: Kiểm tra hóa đơn tối thiểu (Không được là số âm)
+    if (form.minBookingAmount && parseFloat(form.minBookingAmount) < 0) {
+      alert("Hóa đơn tối thiểu không được âm.");
+      return;
+    }
+
+    // Bước 6: Kiểm tra số lượt sử dụng tối đa (Phải lớn hơn 0)
+    const limit = parseInt(form.usageLimit);
+    if (isNaN(limit) || limit <= 0) {
+      alert("Giới hạn số lần sử dụng phải lớn hơn 0.");
       return;
     }
 
