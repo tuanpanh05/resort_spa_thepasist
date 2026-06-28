@@ -671,6 +671,9 @@ public class RoomBookingService {
 
         // 1. Handle Room Addition
         if (dto.getRoomId() != null) {
+            if (!"CHECKED_IN".equalsIgnoreCase(booking.getStatus())) {
+                throw new RuntimeException("Chỉ hỗ trợ đặt thêm phòng khi khách đã thực hiện Check-in lưu trú.");
+            }
             Room room = roomRepository.findById(dto.getRoomId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng với ID: " + dto.getRoomId()));
             
@@ -700,10 +703,9 @@ public class RoomBookingService {
             }
 
             totalAddedPrice = totalAddedPrice.add(roomPrice);
-            java.math.BigDecimal extraRoomDeposit = roomPrice.multiply(java.math.BigDecimal.valueOf(0.5)); // 50% deposit
+            java.math.BigDecimal extraRoomDeposit = java.math.BigDecimal.ZERO;
             additionalDeposit = additionalDeposit.add(extraRoomDeposit);
             
-            booking.setTotalDeposit(booking.getTotalDeposit().add(extraRoomDeposit));
             messages.add("Đã thêm phòng " + room.getRoomNumber() + " (" + nights + " đêm).");
         }
 

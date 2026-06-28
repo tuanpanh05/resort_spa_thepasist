@@ -532,6 +532,49 @@ export default function ManageBookings({
     }
   };
 
+  // Calculate dynamic totals for Add Extra Services modal
+  const getExtraServicesTotals = () => {
+    if (!showAddExtraModal || !selectedLookupBooking) return { roomTotal: 0, pkgTotal: 0, foodTotal: 0, spaTotal: 0, totalAdded: 0, roomNights: 0 };
+    
+    let roomTotal = 0;
+    let roomNights = 0;
+    if (extraForm.roomId) {
+      const selectedRoom = villas.find(v => String(v.roomId) === String(extraForm.roomId));
+      if (extraForm.checkInDate && extraForm.checkOutDate) {
+        const start = new Date(extraForm.checkInDate);
+        const end = new Date(extraForm.checkOutDate);
+        const diffTime = end - start;
+        roomNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+      if (roomNights <= 0) roomNights = 1;
+      roomTotal = (selectedRoom ? (selectedRoom.basePrice || selectedRoom.basePricePerNight || 0) : 0) * roomNights;
+    }
+
+    let pkgTotal = 0;
+    if (extraForm.packageId) {
+      const selectedPkg = packages.find(p => String(p.packageId) === String(extraForm.packageId));
+      pkgTotal = selectedPkg ? (selectedPkg.price || 0) : 0;
+    }
+
+    let foodTotal = 0;
+    if (extraForm.foodMenuId) {
+      const selectedFood = foodMenu.find(f => String(f.foodId) === String(extraForm.foodMenuId));
+      const qty = parseInt(extraForm.foodQuantity) || 1;
+      foodTotal = (selectedFood ? (selectedFood.price || 0) : 0) * qty;
+    }
+
+    let spaTotal = 0;
+    if (extraForm.spaServiceId) {
+      const selectedSpa = spaServices.find(s => String(s.serviceId) === String(extraForm.spaServiceId));
+      spaTotal = selectedSpa ? (selectedSpa.price || 0) : 0;
+    }
+
+    const totalAdded = roomTotal + pkgTotal + foodTotal + spaTotal;
+    return { roomTotal, pkgTotal, foodTotal, spaTotal, totalAdded, roomNights };
+  };
+
+  const { roomTotal, pkgTotal, foodTotal, spaTotal, totalAdded, roomNights } = getExtraServicesTotals();
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* Header */}
@@ -1450,26 +1493,39 @@ export default function ManageBookings({
                     <span className="text-sage-500">Tiền phòng (Villa):</span>
                     <span className="font-semibold font-mono">{formatCurrency(checkoutInvoice?.roomSubtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sage-500">Trị liệu Spa phát sinh:</span>
-                    <span className="font-semibold font-mono">{formatCurrency((checkoutInvoice?.spaSubtotal || 0) + (checkoutInvoice?.spaChildDiscount || 0))}</span>
-                  </div>
-                  {checkoutInvoice?.spaChildDiscount > 0 && (
-                    <div className="flex justify-between text-emerald-700 font-semibold pl-4">
-                      <span>Giảm giá dịch vụ Trẻ em (Spa):</span>
-                      <span className="font-mono">-{formatCurrency(checkoutInvoice.spaChildDiscount)}</span>
+                  
+                  {/* Grouped Extra Services Total */}
+                  {((checkoutInvoice?.spaSubtotal || 0) + (checkoutInvoice?.foodSubtotal || 0)) > 0 && (
+                    <div className="p-2.5 bg-sage-50/50 border border-primary-100/50 rounded-lg space-y-1.5 my-1">
+                      <div className="flex justify-between text-xs font-bold text-sage-900">
+                        <span>✨ Dịch vụ thêm phát sinh (Spa & Ẩm thực):</span>
+                        <span className="font-mono text-[#cda250]">{formatCurrency((checkoutInvoice?.spaSubtotal || 0) + (checkoutInvoice?.foodSubtotal || 0))}</span>
+                      </div>
+                      <div className="pl-3 space-y-1 text-[11px] text-sage-600">
+                        <div className="flex justify-between">
+                          <span>• Trị liệu Spa phát sinh:</span>
+                          <span className="font-mono">{formatCurrency((checkoutInvoice?.spaSubtotal || 0) + (checkoutInvoice?.spaChildDiscount || 0))}</span>
+                        </div>
+                        {checkoutInvoice?.spaChildDiscount > 0 && (
+                          <div className="flex justify-between text-emerald-700 font-semibold pl-4">
+                            <span>Giảm giá dịch vụ Trẻ em (Spa):</span>
+                            <span className="font-mono">-{formatCurrency(checkoutInvoice.spaChildDiscount)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span>• Dịch vụ ẩm thực F&B phát sinh:</span>
+                          <span className="font-mono">{formatCurrency((checkoutInvoice?.foodSubtotal || 0) + (checkoutInvoice?.foodChildDiscount || 0))}</span>
+                        </div>
+                        {checkoutInvoice?.foodChildDiscount > 0 && (
+                          <div className="flex justify-between text-emerald-700 font-semibold pl-4">
+                            <span>Giảm giá ẩm thực Trẻ em (F&B):</span>
+                            <span className="font-mono">-{formatCurrency(checkoutInvoice.foodChildDiscount)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-sage-500">Dịch vụ ẩm thực F&B phát sinh:</span>
-                    <span className="font-semibold font-mono">{formatCurrency((checkoutInvoice?.foodSubtotal || 0) + (checkoutInvoice?.foodChildDiscount || 0))}</span>
-                  </div>
-                  {checkoutInvoice?.foodChildDiscount > 0 && (
-                    <div className="flex justify-between text-emerald-700 font-semibold pl-4">
-                      <span>Giảm giá ẩm thực Trẻ em (F&B):</span>
-                      <span className="font-mono">-{formatCurrency(checkoutInvoice.foodChildDiscount)}</span>
-                    </div>
-                  )}
+
                   <div className="flex justify-between">
                     <span className="text-sage-500">Thuế VAT & Phí dịch vụ (10%):</span>
                     <span className="font-semibold font-mono">{formatCurrency(checkoutInvoice?.taxAndFees)}</span>
@@ -1744,28 +1800,34 @@ export default function ManageBookings({
             <form onSubmit={handleAddExtraSubmit} className="space-y-4 text-xs text-left">
               
               {/* Option 1: Add Room */}
-              <div className="p-3 bg-sage-50/30 border border-primary-100 rounded-lg space-y-3">
+              <div className={`p-3 border rounded-lg space-y-3 ${selectedLookupBooking.status !== "CHECKED_IN" ? 'bg-gray-50 border-gray-250 opacity-75' : 'bg-sage-50/30 border-primary-100'}`}>
                 <h4 className="font-bold text-sage-800 text-[10px] uppercase tracking-wide flex items-center gap-1">
-                  🛏️ 1. Thêm Phòng/Villa (Tính cọc thêm 50%)
+                  🛏️ 1. Thêm Phòng/Villa (Không yêu cầu đặt cọc)
                 </h4>
-                <div>
-                  <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Chọn Villa</label>
-                  <select
-                    value={extraForm.roomId}
-                    onChange={(e) => setExtraForm({ ...extraForm, roomId: e.target.value })}
-                    className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200"
-                  >
-                    <option value="">-- Không thêm phòng --</option>
-                    {villas
-                      .filter(v => v.status === "AVAILABLE" || v.status === "available")
-                      .map(v => (
-                        <option key={v.roomId} value={v.roomId}>
-                          Phòng {v.roomNumber} - {v.roomTypeName} ({formatCurrency(v.basePrice || v.basePricePerNight)}/đêm)
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                {extraForm.roomId && (
+                {selectedLookupBooking.status !== "CHECKED_IN" ? (
+                  <p className="text-[10px] text-red-650 font-semibold italic bg-red-50 p-2 border border-red-100/50 rounded-md">
+                    ⚠️ Chỉ hỗ trợ đặt thêm phòng khi khách hàng đã thực hiện Check-in lưu trú (Trạng thái hiện tại: {getStatusLabel(selectedLookupBooking.status)}).
+                  </p>
+                ) : (
+                  <div>
+                    <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Chọn Villa</label>
+                    <select
+                      value={extraForm.roomId}
+                      onChange={(e) => setExtraForm({ ...extraForm, roomId: e.target.value })}
+                      className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200"
+                    >
+                      <option value="">-- Không thêm phòng --</option>
+                      {villas
+                        .filter(v => v.status === "AVAILABLE" || v.status === "available")
+                        .map(v => (
+                          <option key={v.roomId} value={v.roomId}>
+                            Phòng {v.roomNumber} - {v.roomTypeName} ({formatCurrency(v.basePrice || v.basePricePerNight)}/đêm)
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+                {selectedLookupBooking.status === "CHECKED_IN" && extraForm.roomId && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Check-in</label>
@@ -1875,7 +1937,49 @@ export default function ManageBookings({
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t border-primary-50">
+            {/* Pricing Summary Card */}
+            {totalAdded > 0 && (
+              <div className="p-3.5 bg-primary-50/50 border border-primary-100 rounded-lg space-y-1.5 text-left text-[11px] text-sage-800 my-2">
+                <h5 className="font-bold text-sage-900 text-[10px] uppercase tracking-wider border-b border-primary-100 pb-1 mb-1">
+                  🛒 TÓM TẮT CHI PHÍ ĐẶT THÊM
+                </h5>
+                {roomTotal > 0 && (
+                  <div className="flex justify-between">
+                    <span>🏨 Tiền phòng thêm ({roomNights} đêm):</span>
+                    <span className="font-semibold font-mono">{formatCurrency(roomTotal)}</span>
+                  </div>
+                )}
+                {pkgTotal > 0 && (
+                  <div className="flex justify-between">
+                    <span>📦 Gói Retreat thêm:</span>
+                    <span className="font-semibold font-mono">{formatCurrency(pkgTotal)}</span>
+                  </div>
+                )}
+                {foodTotal > 0 && (
+                  <div className="flex justify-between">
+                    <span>🍲 Ẩm thực F&B thêm:</span>
+                    <span className="font-semibold font-mono">{formatCurrency(foodTotal)}</span>
+                  </div>
+                )}
+                {spaTotal > 0 && (
+                  <div className="flex justify-between">
+                    <span>💆‍♀️ Trị liệu Spa thêm:</span>
+                    <span className="font-semibold font-mono">{formatCurrency(spaTotal)}</span>
+                  </div>
+                )}
+                <div className="border-t border-dashed border-primary-200 my-1"></div>
+                <div className="flex justify-between font-bold text-sage-950 text-xs">
+                  <span>Tổng tiền phát sinh:</span>
+                  <span className="font-mono text-[#cda250]">{formatCurrency(totalAdded)}</span>
+                </div>
+                <div className="flex justify-between text-[10px] text-emerald-700 font-semibold bg-emerald-50/50 p-1 border border-emerald-100/50 rounded">
+                  <span>Tiền cọc cần thanh toán tại quầy:</span>
+                  <span className="font-mono">0 ₫ (Thanh toán 100% khi Check-out)</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 pt-3 border-t border-primary-50">
                 <button
                   type="button"
                   onClick={() => setShowAddExtraModal(false)}
