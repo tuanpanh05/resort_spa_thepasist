@@ -77,6 +77,7 @@ export default function ManageBookings({
   const [showAddExtraModal, setShowAddExtraModal] = useState(false);
   const [extraLoading, setExtraLoading] = useState(false);
   const [extraError, setExtraError] = useState(null);
+  const [extraItinerary, setExtraItinerary] = useState(null);
   const [extraForm, setExtraForm] = useState({
     roomId: "",
     packageId: "",
@@ -1634,6 +1635,7 @@ export default function ManageBookings({
                         setSelectedLookupBooking(b);
                         setShowAddExtraModal(true);
                         setExtraError(null);
+                        setExtraItinerary(null);
                         setExtraForm({
                           roomId: "",
                           packageId: "",
@@ -1644,6 +1646,9 @@ export default function ManageBookings({
                           spaServiceId: "",
                           spaStartDatetime: ""
                         });
+                        bookingLookupApi.getItinerary(b.bookingId)
+                          .then(itineraryData => setExtraItinerary(itineraryData))
+                          .catch(err => console.error("Lỗi khi tải lịch trình dịch vụ đã đặt: ", err));
                       }}
                       className={`p-3 border rounded-lg cursor-pointer transition-all flex items-center justify-between text-xs hover:border-[#cda250] hover:bg-[#cda250]/5 ${selectedLookupBooking?.bookingId === b.bookingId ? 'border-[#cda250] bg-[#cda250]/5 font-semibold text-sage-950 shadow-sm' : 'border-primary-100 bg-white text-sage-600'}`}
                     >
@@ -1693,6 +1698,49 @@ export default function ManageBookings({
               </div>
             )}
 
+            {/* Already Booked Services Section */}
+            <div className="p-3.5 bg-primary-50/20 border border-primary-100/50 rounded-lg text-left space-y-2.5">
+              <h4 className="font-bold text-sage-900 text-[10px] uppercase tracking-wide flex items-center gap-1.5 border-b border-primary-50 pb-1.5">
+                📋 CÁC DỊCH VỤ KHÁCH ĐÃ ĐẶT TẠI RESORT
+              </h4>
+              
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-sage-700">
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase tracking-wide font-bold text-sage-400">Biệt thự / Villa hiện tại</span>
+                  <strong className="text-sage-900 mt-0.5">
+                    {selectedLookupBooking.roomNumber ? `Phòng ${selectedLookupBooking.roomNumber}` : "Chưa gán phòng"}
+                  </strong>
+                  <span className="text-[10px] text-sage-500 italic mt-0.5">{selectedLookupBooking.roomTypeName || "N/A"}</span>
+                </div>
+                
+                <div className="flex flex-col">
+                  <span className="text-[9px] uppercase tracking-wide font-bold text-sage-400">Gói trị liệu Retreat</span>
+                  <strong className="text-sage-900 mt-0.5">{selectedLookupBooking.packageName || "Không dùng gói"}</strong>
+                </div>
+              </div>
+
+              {/* Other timeline items (Spa, Food) */}
+              <div className="space-y-1.5 pt-2 border-t border-dashed border-primary-100">
+                <span className="text-[9px] uppercase tracking-wide font-bold text-sage-400 block">Danh sách dịch vụ phát sinh (Ẩm thực & Spa)</span>
+                {extraItinerary?.timeline && extraItinerary.timeline.length > 0 ? (
+                  <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
+                    {extraItinerary.timeline.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-[10px] text-sage-600 bg-white p-2 border border-primary-100 rounded-md shadow-xs">
+                        <span className="truncate max-w-[250px] font-medium">
+                          {item.type === "SPA" ? "💆‍♀️ Spa" : item.type === "FOOD" ? "🍲 F&B" : "✨ Dịch vụ"}: {item.title} {item.description ? `(${item.description})` : ""}
+                        </span>
+                        <span className="font-mono text-primary-950 font-bold flex-shrink-0">{item.price ? formatCurrency(item.price) : "Miễn phí"}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : extraItinerary ? (
+                  <div className="text-[10px] text-sage-400 italic pt-1 text-center">Chưa có dịch vụ Spa/Ẩm thực phát sinh.</div>
+                ) : (
+                  <div className="text-[10px] text-sage-400 italic pt-1 text-center animate-pulse">Đang tải danh sách dịch vụ đã đặt...</div>
+                )}
+              </div>
+            </div>
+
             <form onSubmit={handleAddExtraSubmit} className="space-y-4 text-xs text-left">
               
               {/* Option 1: Add Room */}
@@ -1709,10 +1757,10 @@ export default function ManageBookings({
                   >
                     <option value="">-- Không thêm phòng --</option>
                     {villas
-                      .filter(v => v.status === "READY" || v.status === "CLEANING")
+                      .filter(v => v.status === "AVAILABLE" || v.status === "available")
                       .map(v => (
                         <option key={v.roomId} value={v.roomId}>
-                          Phòng {v.roomNumber} - {v.roomTypeName} ({formatCurrency(v.basePricePerNight)}/đêm)
+                          Phòng {v.roomNumber} - {v.roomTypeName} ({formatCurrency(v.basePrice || v.basePricePerNight)}/đêm)
                         </option>
                       ))}
                   </select>
@@ -1776,7 +1824,7 @@ export default function ManageBookings({
                       <option value="">-- Không thêm đồ ăn --</option>
                       {foodMenu.map(f => (
                         <option key={f.foodId} value={f.foodId}>
-                          {f.dishName} ({formatCurrency(f.price)})
+                          {f.name || f.dishName} ({formatCurrency(f.price)})
                         </option>
                       ))}
                     </select>
