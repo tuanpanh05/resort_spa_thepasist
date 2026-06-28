@@ -51,6 +51,7 @@ class InvoiceServiceImplTest {
     private SpaBookingRepository spaBookingRepository;
     private InvoiceServiceImpl service;
     private VNPayProperties vnPayProperties;
+    private fu.se.smms.service.VNPayService vnPayService;
 
     @BeforeEach
     void setUp() {
@@ -74,11 +75,13 @@ class InvoiceServiceImplTest {
         vnPayProperties.setReturnUrl("http://localhost:8080/api/invoices/vnpay-callback");
         vnPayProperties.setTmnCode("TEST");
         vnPayProperties.setHashSecret("test-secret");
+        
+        vnPayService = new fu.se.smms.service.impl.VNPayServiceImpl(vnPayProperties);
 
         service = new InvoiceServiceImpl(
                 invoiceRepository, roomBookingRepository,
                 roomRepository, transactionLogRepository,
-                vnPayProperties, systemConfigurationRepository,
+                vnPayService, systemConfigurationRepository,
                 foodOrderRepository, emailService,
                 spaBookingRepository
         );

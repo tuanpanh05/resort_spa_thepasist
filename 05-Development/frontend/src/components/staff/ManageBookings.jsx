@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, Edit, X, UserCheck, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
-import { staffApi, bookingApi, masterDataApi, paymentApi, bookingLookupApi } from "../../api";
+import { staffApi, bookingApi, masterDataApi, paymentApi, bookingLookupApi, spaApi } from "../../api";
 
 /**
  * UC08: ManageBookings — Arrivals Dashboard & Check-In Management.
@@ -91,11 +91,23 @@ export default function ManageBookings({
   
   const [foodMenu, setFoodMenu] = useState([]);
   const [spaServices, setSpaServices] = useState([]);
+  
+  // Spa scheduling states
+  const [spaDate, setSpaDate] = useState("");
+  const [spaAvailableSlots, setSpaAvailableSlots] = useState([]);
+  const [spaSlotsLoading, setSpaSlotsLoading] = useState(false);
 
   // Load all operational data from API
   useEffect(() => {
     loadAllData();
   }, []);
+
+  // Restore operational data when modal is closed
+  useEffect(() => {
+    if (!showAddExtraModal) {
+      loadAllData();
+    }
+  }, [showAddExtraModal]);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -1688,25 +1700,49 @@ export default function ManageBookings({
                     <div
                       key={b.bookingId}
                       onClick={() => {
+                        if (b.status !== "CHECKED_IN") {
+                          alert("⚠️ Chỉ hỗ trợ đặt thêm dịch vụ cho khách hàng đang lưu trú (Đã thực hiện Check-in).");
+                          return;
+                        }
+                        const checkInDateOnly = b.checkInDate ? b.checkInDate.split("T")[0] : "";
+                        const checkOutDateOnly = b.checkOutDate ? b.checkOutDate.split("T")[0] : "";
+                        
                         setSelectedLookupBooking(b);
                         setShowAddExtraModal(true);
                         setExtraError(null);
                         setExtraItinerary(null);
+                        
+                        // Clear Spa scheduling states
+                        setSpaDate("");
+                        setSpaAvailableSlots([]);
+                        setSpaSlotsLoading(false);
+
                         setExtraForm({
                           roomId: "",
                           packageId: "",
-                          checkInDate: b.checkInDate ? b.checkInDate.split("T")[0] : "",
-                          checkOutDate: b.checkOutDate ? b.checkOutDate.split("T")[0] : "",
+                          checkInDate: checkInDateOnly,
+                          checkOutDate: checkOutDateOnly,
                           foodMenuId: "",
                           foodQuantity: 1,
                           spaServiceId: "",
                           spaStartDatetime: ""
                         });
+
+                        // Fetch available rooms matching the date range of the booking
+                        staffApi.getVillas(checkInDateOnly, checkOutDateOnly)
+                          .then(villasData => setVillas(villasData || []))
+                          .catch(err => console.error("Lỗi khi tải phòng trống: ", err));
+
                         bookingLookupApi.getItinerary(b.bookingId)
                           .then(itineraryData => setExtraItinerary(itineraryData))
                           .catch(err => console.error("Lỗi khi tải lịch trình dịch vụ đã đặt: ", err));
                       }}
-                      className={`p-3 border rounded-lg cursor-pointer transition-all flex items-center justify-between text-xs hover:border-[#cda250] hover:bg-[#cda250]/5 ${selectedLookupBooking?.bookingId === b.bookingId ? 'border-[#cda250] bg-[#cda250]/5 font-semibold text-sage-950 shadow-sm' : 'border-primary-100 bg-white text-sage-600'}`}
+                      className={`p-3 border rounded-lg transition-all flex items-center justify-between text-xs 
+                        ${b.status !== "CHECKED_IN" 
+                          ? 'opacity-60 cursor-not-allowed bg-gray-55 border-gray-200' 
+                          : 'cursor-pointer hover:border-[#cda250] hover:bg-[#cda250]/5 bg-white border-primary-100 text-sage-600'
+                        } 
+                        ${selectedLookupBooking?.bookingId === b.bookingId ? 'border-[#cda250] bg-[#cda250]/5 font-semibold text-sage-950 shadow-sm' : ''}`}
                     >
                       <div>
                         <strong>Mã đặt: #BK-{b.bookingId}</strong>
@@ -1828,25 +1864,11 @@ export default function ManageBookings({
                   </div>
                 )}
                 {selectedLookupBooking.status === "CHECKED_IN" && extraForm.roomId && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Check-in</label>
-                      <input
-                        type="date"
-                        value={extraForm.checkInDate}
-                        onChange={(e) => setExtraForm({ ...extraForm, checkInDate: e.target.value })}
-                        className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Check-out</label>
-                      <input
-                        type="date"
-                        value={extraForm.checkOutDate}
-                        onChange={(e) => setExtraForm({ ...extraForm, checkOutDate: e.target.value })}
-                        className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200"
-                      />
-                    </div>
+                  <div className="p-2.5 bg-sage-50/50 border border-primary-50 rounded text-[11px] text-sage-700 font-semibold space-y-1">
+                    <p>🕒 Thời gian thuê phòng thêm (Theo đơn đặt gốc):</p>
+                    <p className="font-mono text-sage-900">
+                      Check-in: {new Date(selectedLookupBooking.checkInDate).toLocaleDateString()} &mdash; Check-out: {new Date(selectedLookupBooking.checkOutDate).toLocaleDateString()}
+                    </p>
                   </div>
                 )}
               </div>
@@ -1905,7 +1927,7 @@ export default function ManageBookings({
               </div>
 
               {/* Option 4: Add Spa */}
-              <div className="p-3 bg-sage-50/30 border border-primary-100 rounded-lg space-y-2">
+              <div className="p-3 bg-sage-50/30 border border-primary-100 rounded-lg space-y-2.5">
                 <h4 className="font-bold text-sage-800 text-[10px] uppercase tracking-wide flex items-center gap-1">
                   💆‍♀️ 4. Đặt Thêm Dịch Vụ Spa Trị Liệu (Tự Động Ghép Cặp)
                 </h4>
@@ -1914,7 +1936,23 @@ export default function ManageBookings({
                     <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Gói dịch vụ Spa</label>
                     <select
                       value={extraForm.spaServiceId}
-                      onChange={(e) => setExtraForm({ ...extraForm, spaServiceId: e.target.value })}
+                      onChange={async (e) => {
+                        const newServiceId = e.target.value;
+                        setExtraForm(prev => ({ ...prev, spaServiceId: newServiceId, spaStartDatetime: "" }));
+                        setSpaAvailableSlots([]);
+                        
+                        if (newServiceId && spaDate) {
+                          setSpaSlotsLoading(true);
+                          try {
+                            const slots = await spaApi.getAvailableSlots(newServiceId, spaDate);
+                            setSpaAvailableSlots(slots || []);
+                          } catch (err) {
+                            console.error("Lỗi khi tải khung giờ Spa trống: ", err);
+                          } finally {
+                            setSpaSlotsLoading(false);
+                          }
+                        }
+                      }}
                       className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200"
                     >
                       <option value="">-- Không thêm Spa --</option>
@@ -1926,14 +1964,69 @@ export default function ManageBookings({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Thời gian bắt đầu</label>
+                    <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Chọn Ngày làm Spa</label>
                     <input
-                      type="datetime-local"
-                      value={extraForm.spaStartDatetime}
-                      onChange={(e) => setExtraForm({ ...extraForm, spaStartDatetime: e.target.value })}
-                      className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200"
+                      type="date"
+                      min={selectedLookupBooking.checkInDate ? selectedLookupBooking.checkInDate.split("T")[0] : ""}
+                      max={selectedLookupBooking.checkOutDate ? selectedLookupBooking.checkOutDate.split("T")[0] : ""}
+                      value={spaDate}
+                      disabled={!extraForm.spaServiceId}
+                      onChange={async (e) => {
+                        const selectedDate = e.target.value;
+                        setSpaDate(selectedDate);
+                        setSpaAvailableSlots([]);
+                        setExtraForm(prev => ({ ...prev, spaStartDatetime: "" }));
+                        
+                        if (selectedDate && extraForm.spaServiceId) {
+                          setSpaSlotsLoading(true);
+                          try {
+                            const slots = await spaApi.getAvailableSlots(extraForm.spaServiceId, selectedDate);
+                            setSpaAvailableSlots(slots || []);
+                          } catch (err) {
+                            console.error("Lỗi khi tải khung giờ Spa trống: ", err);
+                          } finally {
+                            setSpaSlotsLoading(false);
+                          }
+                        }
+                      }}
+                      className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200 disabled:opacity-50"
                     />
                   </div>
+
+                  {extraForm.spaServiceId && spaDate && (
+                    <div className="col-span-2 mt-1">
+                      <label className="block text-[10px] font-semibold text-sage-500 uppercase mb-1">Chọn Khung giờ còn trống</label>
+                      {spaSlotsLoading ? (
+                        <div className="flex items-center gap-2 text-[10px] text-sage-500 py-2">
+                          <Loader2 className="h-3 w-3 animate-spin text-[#cda250]" />
+                          Đang tìm khung giờ trống...
+                        </div>
+                      ) : spaAvailableSlots.length > 0 ? (
+                        <select
+                          value={extraForm.spaStartDatetime}
+                          onChange={(e) => setExtraForm(prev => ({ ...prev, spaStartDatetime: e.target.value }))}
+                          className="w-full p-2 border border-primary-100 rounded bg-white text-xs focus:outline-primary-200 font-mono"
+                        >
+                          <option value="">-- Chọn giờ trị liệu --</option>
+                          {spaAvailableSlots.map((slot, idx) => (
+                            <option key={idx} value={slot.startDatetime}>
+                              {slot.label} ({slot.therapistName ? `KTV: ${slot.therapistName}` : "Chưa gán KTV"} - {slot.roomName || "Chưa gán phòng"})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-[10px] text-red-655 italic bg-red-50 p-2 border border-red-100/50 rounded">
+                          ⚠️ Hết giờ trị liệu trống cho dịch vụ này vào ngày đã chọn. Vui lòng chọn ngày khác.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {extraForm.spaServiceId && !spaDate && (
+                    <p className="col-span-2 text-[10px] text-sage-500 italic mt-1 bg-sage-50/50 p-2 border border-primary-50 rounded">
+                      💡 Vui lòng chọn ngày làm Spa trong kỳ lưu trú ({new Date(selectedLookupBooking.checkInDate).toLocaleDateString()} - {new Date(selectedLookupBooking.checkOutDate).toLocaleDateString()}) để hiển thị các giờ trống.
+                    </p>
+                  )}
                 </div>
               </div>
 

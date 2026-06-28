@@ -281,8 +281,14 @@ export const staffApi = {
 
   getFoodMenu: () => apiRequest("/chef/menu"),
 
-  /** UC09: GET /v1/villas â€” Láº¥y danh sÃ¡ch phÃ²ng/villa */
-  getVillas: () => apiRequest("/v1/villas"),
+  /** UC09: GET /v1/villas — Lấy danh sách phòng/villa */
+  getVillas: (checkIn = null, checkOut = null) => {
+    let url = "/v1/villas";
+    if (checkIn && checkOut) {
+      url += `?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`;
+    }
+    return apiRequest(url);
+  },
 
   /** POST /v1/villas â€” Táº¡o phÃ²ng má»›i */
   createVilla: (dto) =>

@@ -52,17 +52,42 @@ public class VillaController {
      * @return List of VillaStatusDTO objects.
      */
     @GetMapping
-    public ResponseEntity<List<VillaStatusDTO>> getAllVillas() {
+    public ResponseEntity<List<VillaStatusDTO>> getAllVillas(
+            @RequestParam(value = "checkIn", required = false) String checkInStr,
+            @RequestParam(value = "checkOut", required = false) String checkOutStr) {
         List<Room> rooms = roomRepository.findAllWithRoomType();
         java.time.LocalDate today = java.time.LocalDate.now();
+        
+        java.time.LocalDateTime checkInDt = null;
+        java.time.LocalDateTime checkOutDt = null;
+        if (checkInStr != null && !checkInStr.isBlank() && checkOutStr != null && !checkOutStr.isBlank()) {
+            try {
+                checkInDt = java.time.LocalDate.parse(checkInStr).atTime(14, 0);
+                checkOutDt = java.time.LocalDate.parse(checkOutStr).atTime(12, 0);
+            } catch (Exception e) {
+                // Ignore parse errors, fallback to default behavior
+            }
+        }
+
+        final java.time.LocalDateTime finalCheckIn = checkInDt;
+        final java.time.LocalDateTime finalCheckOut = checkOutDt;
+
         List<VillaStatusDTO> villas = rooms.stream().map(room -> {
             VillaStatusDTO dto = new VillaStatusDTO();
             dto.setRoomId(room.getRoomId());
             dto.setRoomNumber(room.getRoomNumber());
             
             String status = room.getStatus();
-            if ("AVAILABLE".equals(status) && roomBookingRepository.hasConfirmedBookingOnDate(room.getRoomId(), today) > 0) {
-                status = "DEPOSITED";
+            if (finalCheckIn != null && finalCheckOut != null) {
+                // If there's an overlapping booking in this period, mark room as OCCUPIED
+                int overlap = roomBookingRepository.countOverlappingBookings(room.getRoomId(), finalCheckIn, finalCheckOut);
+                if (overlap > 0) {
+                    status = "OCCUPIED";
+                }
+            } else {
+                if ("AVAILABLE".equals(status) && roomBookingRepository.hasConfirmedBookingOnDate(room.getRoomId(), today) > 0) {
+                    status = "DEPOSITED";
+                }
             }
             dto.setStatus(status);
             
