@@ -96,6 +96,7 @@ public class VillaController {
                 dto.setCapacity(room.getRoomType().getMaxOccupancy());
                 dto.setBasePrice(room.getRoomType().getBasePricePerNight());
             }
+            dto.setMaintenanceDescription(room.getMaintenanceDescription());
             
             // Populate guest name if occupied or deposited
             if ("OCCUPIED".equals(status) || "DEPOSITED".equals(status)) {
@@ -145,12 +146,25 @@ public class VillaController {
                         "Không tìm thấy phòng với ID: " + id));
 
         room.setStatus(normalizedStatus);
-        roomRepository.save(room);
+        
+        // Handle maintenance description
+        if ("MAINTENANCE".equals(normalizedStatus)) {
+            if (body.containsKey("description")) {
+                room.setMaintenanceDescription(body.get("description"));
+            } else {
+                room.setMaintenanceDescription(null);
+            }
+        } else {
+            room.setMaintenanceDescription(null);
+        }
+
+        room = roomRepository.save(room);
 
         VillaStatusDTO dto = new VillaStatusDTO();
         dto.setRoomId(room.getRoomId());
         dto.setRoomNumber(room.getRoomNumber());
         dto.setStatus(room.getStatus());
+        dto.setMaintenanceDescription(room.getMaintenanceDescription());
         if (room.getRoomType() != null) {
             dto.setRoomTypeName(room.getRoomType().getTypeName());
             dto.setCapacity(room.getRoomType().getMaxOccupancy());
@@ -176,17 +190,50 @@ public class VillaController {
             throw new BusinessException("VILLA-004", HttpStatus.BAD_REQUEST, "Số phòng không được để trống.");
         }
 
+        BigDecimal priceVal = null;
+        Object priceObj = body.get("price");
+        if (priceObj != null) {
+            String priceStr = priceObj.toString().replaceAll("[^0-9.]", "");
+            if (!priceStr.isEmpty()) {
+                priceVal = new BigDecimal(priceStr);
+            }
+        }
+
+        Integer maxGuestsVal = null;
+        Object maxGuestsObj = body.get("maxGuests");
+        if (maxGuestsObj != null) {
+            String guestsStr = maxGuestsObj.toString().replaceAll("[^0-9]", "");
+            if (!guestsStr.isEmpty()) {
+                maxGuestsVal = Integer.valueOf(guestsStr);
+            }
+        }
+
+        final BigDecimal finalPrice = priceVal;
+        final Integer finalMaxGuests = maxGuestsVal;
         RoomType roomType = roomTypeRepository.findAll().stream()
                 .filter(rt -> rt.getTypeName().equalsIgnoreCase(roomTypeName))
                 .findFirst()
                 .orElseGet(() -> {
                     RoomType rt = new RoomType();
                     rt.setTypeName(roomTypeName != null ? roomTypeName : "Standard");
-                    rt.setBasePricePerNight(new BigDecimal("1800000.00"));
-                    rt.setMaxOccupancy(2);
+                    rt.setBasePricePerNight(finalPrice != null ? finalPrice : new BigDecimal("1800000.00"));
+                    rt.setMaxOccupancy(finalMaxGuests != null ? finalMaxGuests : 2);
                     rt.setAreaSqm(50);
                     return roomTypeRepository.save(rt);
                 });
+
+        boolean needsSave = false;
+        if (priceVal != null && (roomType.getBasePricePerNight() == null || roomType.getBasePricePerNight().compareTo(priceVal) != 0)) {
+            roomType.setBasePricePerNight(priceVal);
+            needsSave = true;
+        }
+        if (maxGuestsVal != null && (roomType.getMaxOccupancy() == null || !roomType.getMaxOccupancy().equals(maxGuestsVal))) {
+            roomType.setMaxOccupancy(maxGuestsVal);
+            needsSave = true;
+        }
+        if (needsSave) {
+            roomTypeRepository.save(roomType);
+        }
 
         Room room = new Room();
         room.setRoomNumber(roomNumber);
@@ -228,18 +275,51 @@ public class VillaController {
             room.setStatus(status.toUpperCase());
         }
 
+        BigDecimal priceVal = null;
+        Object priceObj = body.get("price");
+        if (priceObj != null) {
+            String priceStr = priceObj.toString().replaceAll("[^0-9.]", "");
+            if (!priceStr.isEmpty()) {
+                priceVal = new BigDecimal(priceStr);
+            }
+        }
+
+        Integer maxGuestsVal = null;
+        Object maxGuestsObj = body.get("maxGuests");
+        if (maxGuestsObj != null) {
+            String guestsStr = maxGuestsObj.toString().replaceAll("[^0-9]", "");
+            if (!guestsStr.isEmpty()) {
+                maxGuestsVal = Integer.valueOf(guestsStr);
+            }
+        }
+
         if (roomTypeName != null) {
+            final BigDecimal finalPrice = priceVal;
+            final Integer finalMaxGuests = maxGuestsVal;
             RoomType roomType = roomTypeRepository.findAll().stream()
                     .filter(rt -> rt.getTypeName().equalsIgnoreCase(roomTypeName))
                     .findFirst()
                     .orElseGet(() -> {
                         RoomType rt = new RoomType();
                         rt.setTypeName(roomTypeName);
-                        rt.setBasePricePerNight(new BigDecimal("1800000.00"));
-                        rt.setMaxOccupancy(2);
+                        rt.setBasePricePerNight(finalPrice != null ? finalPrice : new BigDecimal("1800000.00"));
+                        rt.setMaxOccupancy(finalMaxGuests != null ? finalMaxGuests : 2);
                         rt.setAreaSqm(50);
                         return roomTypeRepository.save(rt);
                     });
+
+            boolean needsSave = false;
+            if (priceVal != null && (roomType.getBasePricePerNight() == null || roomType.getBasePricePerNight().compareTo(priceVal) != 0)) {
+                roomType.setBasePricePerNight(priceVal);
+                needsSave = true;
+            }
+            if (maxGuestsVal != null && (roomType.getMaxOccupancy() == null || !roomType.getMaxOccupancy().equals(maxGuestsVal))) {
+                roomType.setMaxOccupancy(maxGuestsVal);
+                needsSave = true;
+            }
+            if (needsSave) {
+                roomTypeRepository.save(roomType);
+            }
             room.setRoomType(roomType);
         }
 
@@ -249,6 +329,7 @@ public class VillaController {
         dto.setRoomId(room.getRoomId());
         dto.setRoomNumber(room.getRoomNumber());
         dto.setStatus(room.getStatus());
+        dto.setMaintenanceDescription(room.getMaintenanceDescription());
         if (room.getRoomType() != null) {
             dto.setRoomTypeName(room.getRoomType().getTypeName());
             dto.setCapacity(room.getRoomType().getMaxOccupancy());

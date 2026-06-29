@@ -64,19 +64,12 @@ export default function AdminDashboard() {
     try {
       const data = await staffApi.getVillas();
       const mapped = data.map((v) => {
-        let mappedStatus = "vacant";
-        if (v.status === "OCCUPIED" || v.status === "DEPOSITED") {
-          mappedStatus = "occupied";
-        } else if (v.status === "MAINTENANCE") {
-          mappedStatus = "maintenance";
-        } else if (v.status === "DIRTY" || v.status === "CLEANING" || v.status === "VACANT_NEEDS_CLEANING") {
-          mappedStatus = "cleaning";
-        }
         return {
+          ...v,
           id: v.roomNumber,
           roomId: v.roomId,
           type: v.roomTypeName || "Standard",
-          status: mappedStatus,
+          status: v.status,
           floor: parseInt(v.roomNumber?.split("-")[1]?.charAt(0)) || 1,
           price: (v.basePrice || 1800000).toLocaleString("vi-VN") + "đ",
           maxGuests: v.capacity || 2,
@@ -192,10 +185,13 @@ export default function AdminDashboard() {
   // Room CRUD handlers
   const handleCreateRoom = async (roomData) => {
     try {
+      const cleanPrice = String(roomData.price).replace(/[^0-9]/g, "");
       const payload = {
         roomNumber: roomData.id,
         roomTypeName: roomData.type,
         status: "AVAILABLE",
+        price: cleanPrice ? parseFloat(cleanPrice) : null,
+        maxGuests: roomData.maxGuests ? parseInt(roomData.maxGuests) : null,
       };
       await staffApi.createVilla(payload);
       await loadRooms();
@@ -208,10 +204,13 @@ export default function AdminDashboard() {
 
   const handleUpdateRoom = async (roomId, roomData) => {
     try {
+      const cleanPrice = String(roomData.price).replace(/[^0-9]/g, "");
       const payload = {
         roomNumber: roomData.id,
         roomTypeName: roomData.type,
-        status: roomData.status === "vacant" ? "AVAILABLE" : roomData.status === "occupied" ? "OCCUPIED" : roomData.status === "cleaning" ? "DIRTY" : "MAINTENANCE",
+        status: roomData.status || "AVAILABLE",
+        price: cleanPrice ? parseFloat(cleanPrice) : null,
+        maxGuests: roomData.maxGuests ? parseInt(roomData.maxGuests) : null,
       };
       await staffApi.updateVilla(roomId, payload);
       await loadRooms();
@@ -239,7 +238,7 @@ export default function AdminDashboard() {
   // Stats calculation
   const totalRoomsCount = rooms.length;
   const occupiedRoomsCount = rooms.filter(
-    (r) => r.status === "occupied",
+    (r) => r.status === "OCCUPIED" || r.status === "DEPOSITED",
   ).length;
   const occupancyRate =
     totalRoomsCount > 0
@@ -347,6 +346,7 @@ export default function AdminDashboard() {
               handleCreateRoom={handleCreateRoom}
               handleUpdateRoom={handleUpdateRoom}
               handleDeleteRoom={handleDeleteRoom}
+              loadRooms={loadRooms}
             />
           )}
 

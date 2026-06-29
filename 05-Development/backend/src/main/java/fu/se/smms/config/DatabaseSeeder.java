@@ -171,6 +171,9 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
+            System.out.println("[DB Seeder] Adding maintenance description column to room table...");
+            try { jdbcTemplate.execute("ALTER TABLE room ADD maintenance_description NVARCHAR(500) NULL"); } catch (Exception e) {}
+            
             System.out.println("[DB Seeder] Adding cancellation columns to bookings tables...");
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_reason NVARCHAR(MAX) NULL"); } catch (Exception e) {}
             try { jdbcTemplate.execute("ALTER TABLE room_booking ADD cancellation_time DATETIME2 NULL"); } catch (Exception e) {}

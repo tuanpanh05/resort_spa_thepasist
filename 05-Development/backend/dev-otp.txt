@@ -4,3 +4,68 @@ Purpose: REGISTER / ACTIVATE ACCOUNT
 OTP Code: 760300
 Time: 2026-06-28T19:47:39.571065300
 ========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-105
+Check-in: 2026-06-29T14:00
+Check-out: 2026-06-30T12:00
+Rooms: Bungalow Gỗ Hướng Suối (Phòng BG-103), Bungalow Gỗ Hướng Suối (Phòng BG-104), Bungalow Gỗ Hướng Suối (Phòng BG-105), Bungalow Gỗ Hướng Suối (Phòng BG-106)
+Total Amount: 19,661,715 VNĐ
+Deposit Paid: 5,898,515 VNĐ
+Amount Due: 13,763,200 VNĐ
+Time Sent: 2026-06-28T23:58:03.648698100
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-106
+Check-in: 2026-06-28T14:00
+Check-out: 2026-06-30T12:00
+Rooms: Biệt Thự Gia Đình Sen Trắng (Phòng BS-102), Biệt Thự Gia Đình Sen Trắng (Phòng BS-103), Biệt Thự Gia Đình Sen Trắng (Phòng BS-104), Biệt Thự Gia Đình Sen Trắng (Phòng BS-105)
+Total Amount: 77,374,000 VNĐ
+Deposit Paid: 23,212,200 VNĐ
+Amount Due: 54,161,800 VNĐ
+Time Sent: 2026-06-28T23:59:52.077287100
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-110
+Check-in: 2026-06-30T14:00
+Check-out: 2026-07-01T12:00
+Rooms: Nhà Chung 50 Thung Lũng Xanh (Phòng NC-101), Nhà Chung 50 Thung Lũng Xanh (Phòng NC-103)
+Total Amount: 27,500,000 VNĐ
+Deposit Paid: 8,250,000 VNĐ
+Amount Due: 19,250,000 VNĐ
+Time Sent: 2026-06-29T21:44:03.075696200
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-111
+Check-in: 2026-06-29T14:00
+Check-out: 2026-07-01T12:00
+Rooms: Nhà Chung 50 Thung Lũng Xanh (Phòng NC-104), Nhà Chung 50 Thung Lũng Xanh (Phòng NC-105)
+Total Amount: 63,888,000 VNĐ
+Deposit Paid: 19,166,400 VNĐ
+Amount Due: 44,721,600 VNĐ
+Time Sent: 2026-06-29T21:46:03.175381200
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-113
+Check-in: 2026-06-29T14:00
+Check-out: 2026-07-01T12:00
+Rooms: Nhà Chung 50 Thung Lũng Xanh (Phòng NC-104)
+Total Amount: 27,500,000 VNĐ
+Deposit Paid: 8,250,000 VNĐ
+Amount Due: 19,250,000 VNĐ
+Time Sent: 2026-06-29T21:55:23.092711200
+========================================

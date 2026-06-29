@@ -311,10 +311,10 @@ export const staffApi = {
     }),
 
   /** UC09: PATCH /v1/villas/:id/status â€” Cáº­p nháº­t tráº¡ng thÃ¡i phÃ²ng */
-  updateVillaStatus: (id, status) =>
+  updateVillaStatus: (id, payload) =>
     apiRequest(`/v1/villas/${id}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: typeof payload === "string" ? JSON.stringify({ status: payload }) : JSON.stringify(payload),
     }),
 
   /** UC10: GET /v1/itineraries/:bookingId â€” Xem lá»‹ch trÃ¬nh khÃ¡ch */

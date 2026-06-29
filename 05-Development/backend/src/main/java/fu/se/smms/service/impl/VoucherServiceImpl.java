@@ -3,6 +3,7 @@ package fu.se.smms.service.impl;
 import fu.se.smms.entity.Voucher;
 import fu.se.smms.exception.BusinessException;
 import fu.se.smms.repository.VoucherRepository;
+import fu.se.smms.repository.InvoiceRepository;
 import fu.se.smms.service.VoucherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,9 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Autowired
     private VoucherRepository voucherRepository;
+
+    @Autowired
+    private InvoiceRepository invoiceRepository;
 
     @Override
     public List<Voucher> getAllVouchers() {
@@ -71,7 +75,14 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional
     public void deleteVoucher(Integer id) {
         Voucher voucher = getVoucherById(id);
-        voucherRepository.delete(voucher);
+        if (invoiceRepository.existsByVoucher_VoucherId(id)) {
+            // Soft delete: set status to DISABLED if already used in invoices
+            voucher.setStatus("DISABLED");
+            voucherRepository.save(voucher);
+        } else {
+            // Hard delete: remove from database if never used
+            voucherRepository.delete(voucher);
+        }
     }
 
     @Override

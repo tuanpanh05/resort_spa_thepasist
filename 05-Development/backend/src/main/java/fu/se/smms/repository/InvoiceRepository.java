@@ -15,6 +15,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     List<Invoice> findByUser_UserId(Integer userId);
     List<Invoice> findByRoomBooking_BookingId(Integer bookingId);
     Optional<Invoice> findFirstByRoomBooking_BookingId(Integer bookingId);
+    boolean existsByVoucher_VoucherId(Integer voucherId);
 
     // ─── Aggregation queries for recalculate() ──────────────────────────────
 

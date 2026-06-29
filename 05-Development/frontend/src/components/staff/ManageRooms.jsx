@@ -60,10 +60,15 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
       return;
     }
     try {
-      await staffApi.updateVillaStatus(parseInt(reportRoomId), "MAINTENANCE");
+      await staffApi.updateVillaStatus(parseInt(reportRoomId), {
+        status: "MAINTENANCE",
+        description: reportIssueDetail,
+      });
       setVillas((prev) =>
         prev.map((r) =>
-          r.roomId === parseInt(reportRoomId) ? { ...r, status: "MAINTENANCE" } : r
+          r.roomId === parseInt(reportRoomId)
+            ? { ...r, status: "MAINTENANCE", maintenanceDescription: reportIssueDetail }
+            : r
         )
       );
       setShowReportRoomModal(false);
@@ -117,7 +122,9 @@ export default function ManageRooms({ rooms: mockRooms, setRooms, setComplaints 
         return (
           <div>
             <span className="text-[10px] text-yellow-600 block font-bold">Đang bảo trì</span>
-            <span className="font-semibold block truncate italic text-yellow-800">Liên hệ kỹ thuật</span>
+            <span className="font-semibold block truncate italic text-yellow-800" title={villa.maintenanceDescription || "Liên hệ kỹ thuật"}>
+              {villa.maintenanceDescription || "Liên hệ kỹ thuật"}
+            </span>
           </div>
         );
       case "CLEANING":
