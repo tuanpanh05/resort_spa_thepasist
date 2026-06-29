@@ -9,8 +9,12 @@ public class AccompanyingGuestDTO {
     private String identityDocument;
     private String relationship;
     private Boolean isChild;
+    private String documentType; // CCCD or PASSPORT
 
     public AccompanyingGuestDTO() {}
+
+    public String getDocumentType() { return documentType; }
+    public void setDocumentType(String documentType) { this.documentType = documentType; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }

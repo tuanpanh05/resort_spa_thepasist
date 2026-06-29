@@ -41,6 +41,8 @@ export default function ManageBookings({
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [checkInBooking, setCheckInBooking] = useState(null);
   const [identityDocument, setIdentityDocument] = useState("");
+  const [confirmIdentityDocument, setConfirmIdentityDocument] = useState("");
+  const [documentType, setDocumentType] = useState("CCCD");
   const [nationality, setNationality] = useState("Vietnam");
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [checkInError, setCheckInError] = useState(null);
@@ -139,6 +141,8 @@ export default function ManageBookings({
   const openCheckInModal = (booking) => {
     setCheckInBooking(booking);
     setIdentityDocument("");
+    setConfirmIdentityDocument("");
+    setDocumentType("CCCD");
     setNationality("Vietnam");
     setCheckInError(null);
 
@@ -147,7 +151,7 @@ export default function ManageBookings({
 
     setAdultCount(accAdultsCount);
     setChildCount(accChildrenCount);
-    setAccompanyingAdults(Array.from({ length: accAdultsCount }, () => ({ fullName: "", identityDocument: "" })));
+    setAccompanyingAdults(Array.from({ length: accAdultsCount }, () => ({ fullName: "", documentType: "CCCD", identityDocument: "", confirmIdentityDocument: "" })));
     setAccompanyingChildren(Array.from({ length: accChildrenCount }, () => ({ fullName: "", relationship: "Con" })));
 
     setShowCheckInModal(true);
@@ -160,7 +164,7 @@ export default function ManageBookings({
       const next = [...prev];
       if (count > prev.length) {
         for (let i = prev.length; i < count; i++) {
-          next.push({ fullName: "", identityDocument: "" });
+          next.push({ fullName: "", documentType: "CCCD", identityDocument: "", confirmIdentityDocument: "" });
         }
       } else if (count < prev.length) {
         next.splice(count);
@@ -189,18 +193,61 @@ export default function ManageBookings({
   const handleCheckInSubmit = async (e) => {
     e.preventDefault();
     if (!identityDocument.trim()) {
-      setCheckInError("Vui lòng nhập số CCCD / Hộ chiếu (bắt buộc theo Luật Cư trú 2020).");
+      setCheckInError("Vui lòng nhập số CCCD / Hộ chiếu.");
       return;
     }
 
-    // Validate that all adult fields are filled
-    for (let i = 0; i < accompanyingAdults.length; i++) {
-      if (!accompanyingAdults[i].fullName.trim() || !accompanyingAdults[i].identityDocument.trim()) {
-        setCheckInError(`Vui lòng nhập đầy đủ Họ tên và CCCD cho Khách đi cùng thứ ${i + 1}.`);
+    // 1. Double Entry matching check for primary guest
+    if (identityDocument.trim() !== confirmIdentityDocument.trim()) {
+      setCheckInError("Xác nhận số CCCD / Hộ chiếu của khách chính không khớp!");
+      return;
+    }
+
+    // 2. Format validation for primary guest
+    if (documentType === "CCCD") {
+      if (!/^0\d{11}$/.test(identityDocument.trim())) {
+        setCheckInError("Số Căn cước công dân (CCCD) phải có đúng 12 chữ số và bắt đầu bằng số 0.");
+        return;
+      }
+    } else if (documentType === "PASSPORT") {
+      if (!/^[A-Z0-9]{1,9}$/.test(identityDocument.trim())) {
+        setCheckInError("Số Hộ chiếu (Passport) chỉ được chứa chữ in hoa và chữ số, độ dài không quá 9 ký tự.");
         return;
       }
     }
-    // Validate child fields
+
+    // 3. Validate accompanying adults fields
+    for (let i = 0; i < accompanyingAdults.length; i++) {
+      const adult = accompanyingAdults[i];
+      if (!adult.fullName.trim()) {
+        setCheckInError(`Vui lòng nhập Họ và tên cho Khách đi cùng thứ ${i + 1}.`);
+        return;
+      }
+      if (!adult.identityDocument.trim()) {
+        setCheckInError(`Vui lòng nhập Số giấy tờ cho Khách đi cùng thứ ${i + 1}.`);
+        return;
+      }
+      // Double Entry check
+      if (adult.identityDocument.trim() !== (adult.confirmIdentityDocument || "").trim()) {
+        setCheckInError(`Xác nhận số giấy tờ của Khách đi cùng thứ ${i + 1} không khớp!`);
+        return;
+      }
+      // Format validation
+      const type = adult.documentType || "CCCD";
+      if (type === "CCCD") {
+        if (!/^0\d{11}$/.test(adult.identityDocument.trim())) {
+          setCheckInError(`Số CCCD của Khách đi cùng thứ ${i + 1} phải có đúng 12 chữ số và bắt đầu bằng số 0.`);
+          return;
+        }
+      } else if (type === "PASSPORT") {
+        if (!/^[A-Z0-9]{1,9}$/.test(adult.identityDocument.trim())) {
+          setCheckInError(`Số Hộ chiếu của Khách đi cùng thứ ${i + 1} chỉ được chứa chữ in hoa và chữ số, độ dài không quá 9 ký tự.`);
+          return;
+        }
+      }
+    }
+
+    // 4. Validate child fields
     for (let i = 0; i < accompanyingChildren.length; i++) {
       if (!accompanyingChildren[i].fullName.trim()) {
         setCheckInError(`Vui lòng nhập Họ và tên cho Trẻ em thứ ${i + 1}.`);
@@ -208,17 +255,41 @@ export default function ManageBookings({
       }
     }
 
+    // 5. Check duplicate document numbers in the form
+    const formDocs = [identityDocument.trim()];
+    for (let i = 0; i < accompanyingAdults.length; i++) {
+      const doc = accompanyingAdults[i].identityDocument.trim();
+      if (formDocs.includes(doc)) {
+        setCheckInError(`Phát hiện số giấy tờ bị trùng lặp trong đoàn check-in: ${doc}`);
+        return;
+      }
+      formDocs.push(doc);
+    }
+
     setCheckInLoading(true);
     setCheckInError(null);
     try {
       const mappedGuests = [
-        ...accompanyingAdults.map(a => ({ fullName: a.fullName.trim(), identityDocument: a.identityDocument.trim(), relationship: "Khách đi cùng", isChild: false })),
-        ...accompanyingChildren.map(c => ({ fullName: c.fullName.trim(), identityDocument: null, relationship: c.relationship.trim(), isChild: true }))
+        ...accompanyingAdults.map(a => ({ 
+          fullName: a.fullName.trim(), 
+          identityDocument: a.identityDocument.trim(), 
+          documentType: a.documentType || "CCCD",
+          relationship: "Khách đi cùng", 
+          isChild: false 
+        })),
+        ...accompanyingChildren.map(c => ({ 
+          fullName: c.fullName.trim(), 
+          identityDocument: null, 
+          documentType: "CCCD",
+          relationship: c.relationship.trim(), 
+          isChild: true 
+        }))
       ];
 
       await staffApi.performCheckIn({
         bookingId: checkInBooking.bookingId,
         identityDocument: identityDocument.trim(),
+        documentType: documentType,
         nationality: nationality.trim(),
         accompanyingGuests: mappedGuests
       });
@@ -1117,41 +1188,70 @@ export default function ManageBookings({
             )}
 
             <form onSubmit={handleCheckInSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                  Số CCCD / Hộ chiếu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={identityDocument}
-                  onChange={(e) => setIdentityDocument(e.target.value)}
-                  placeholder="VD: 012345678901 hoặc B1234567"
-                  className="w-full p-2.5 border border-primary-100 text-xs focus:outline-primary-200"
-                  required
-                  autoFocus
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-sage-500 mb-1">
+                    Loại giấy tờ <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={documentType}
+                    onChange={(e) => setDocumentType(e.target.value)}
+                    className="w-full p-2.5 border border-primary-100 text-xs focus:outline-primary-200 bg-white"
+                  >
+                    <option value="CCCD">Căn cước công dân (CCCD)</option>
+                    <option value="PASSPORT">Hộ chiếu (Passport)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-sage-500 mb-1">
+                    Quốc tịch <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={nationality}
+                    onChange={(e) => setNationality(e.target.value)}
+                    className="w-full p-2.5 border border-primary-100 text-xs focus:outline-primary-200 bg-white"
+                    required
+                  >
+                    <option value="Vietnam">Việt Nam</option>
+                    <option value="China">Trung Quốc</option>
+                    <option value="Japan">Nhật Bản</option>
+                    <option value="South Korea">Hàn Quốc</option>
+                    <option value="USA">Hoa Kỳ</option>
+                    <option value="France">Pháp</option>
+                    <option value="Australia">Úc</option>
+                    <option value="UK">Anh</option>
+                    <option value="Other">Khác</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                  Quốc tịch <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={nationality}
-                  onChange={(e) => setNationality(e.target.value)}
-                  className="w-full p-2.5 border border-primary-100 text-xs focus:outline-primary-200 bg-white"
-                  required
-                >
-                  <option value="Vietnam">Việt Nam</option>
-                  <option value="China">Trung Quốc</option>
-                  <option value="Japan">Nhật Bản</option>
-                  <option value="South Korea">Hàn Quốc</option>
-                  <option value="USA">Hoa Kỳ</option>
-                  <option value="France">Pháp</option>
-                  <option value="Australia">Úc</option>
-                  <option value="UK">Anh</option>
-                  <option value="Other">Khác</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-sage-500 mb-1">
+                    Số {documentType === "CCCD" ? "CCCD" : "Hộ chiếu"} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={identityDocument}
+                    onChange={(e) => setIdentityDocument(e.target.value)}
+                    placeholder={documentType === "CCCD" ? "VD: 001123456789 (12 số)" : "VD: B1234567"}
+                    className="w-full p-2.5 border border-primary-100 text-xs focus:outline-primary-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-sage-500 mb-1">
+                    Xác nhận số {documentType === "CCCD" ? "CCCD" : "Hộ chiếu"} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={confirmIdentityDocument}
+                    onChange={(e) => setConfirmIdentityDocument(e.target.value)}
+                    placeholder="Nhập lại chính xác"
+                    className="w-full p-2.5 border border-primary-100 text-xs focus:outline-primary-200"
+                    required
+                  />
+                </div>
               </div>
 
               {/* Accompanying Guests Config */}
@@ -1189,7 +1289,7 @@ export default function ManageBookings({
 
                 {/* Accompanying Adults list */}
                 {accompanyingAdults.map((adult, index) => (
-                  <div key={`adult-${index}`} className="p-3 bg-sage-50/50 border border-primary-50 rounded space-y-2 text-xs">
+                  <div key={`adult-${index}`} className="p-3 bg-sage-50/50 border border-primary-50 rounded space-y-2.5 text-xs">
                     <span className="font-semibold text-sage-700 text-[10px] block uppercase">
                       Người lớn đi cùng #{index + 1}
                     </span>
@@ -1203,21 +1303,47 @@ export default function ManageBookings({
                           updated[index].fullName = e.target.value;
                           setAccompanyingAdults(updated);
                         }}
-                        className="p-2 border border-primary-100 rounded bg-white text-xs"
+                        className="p-2 border border-primary-100 rounded bg-white text-xs col-span-2"
                         required
                       />
-                      <input
-                        type="text"
-                        placeholder="Số CCCD / Hộ chiếu"
-                        value={adult.identityDocument}
-                        onChange={(e) => {
-                          const updated = [...accompanyingAdults];
-                          updated[index].identityDocument = e.target.value;
-                          setAccompanyingAdults(updated);
-                        }}
-                        className="p-2 border border-primary-100 rounded bg-white text-xs"
-                        required
-                      />
+                      <div className="col-span-2 grid grid-cols-3 gap-2">
+                        <select
+                          value={adult.documentType || "CCCD"}
+                          onChange={(e) => {
+                            const updated = [...accompanyingAdults];
+                            updated[index].documentType = e.target.value;
+                            setAccompanyingAdults(updated);
+                          }}
+                          className="p-2 border border-primary-100 rounded bg-white text-xs"
+                        >
+                          <option value="CCCD">CCCD</option>
+                          <option value="PASSPORT">Passport</option>
+                        </select>
+                        <input
+                          type="text"
+                          placeholder={adult.documentType === "PASSPORT" ? "Số Hộ chiếu" : "Số CCCD"}
+                          value={adult.identityDocument}
+                          onChange={(e) => {
+                            const updated = [...accompanyingAdults];
+                            updated[index].identityDocument = e.target.value;
+                            setAccompanyingAdults(updated);
+                          }}
+                          className="p-2 border border-primary-100 rounded bg-white text-xs"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Xác nhận số"
+                          value={adult.confirmIdentityDocument || ""}
+                          onChange={(e) => {
+                            const updated = [...accompanyingAdults];
+                            updated[index].confirmIdentityDocument = e.target.value;
+                            setAccompanyingAdults(updated);
+                          }}
+                          className="p-2 border border-primary-100 rounded bg-white text-xs"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -11,6 +11,7 @@ import {
   Package,
   Lock,
   ShieldCheck,
+  Shield,
   Clock,
   LogOut,
   Menu,
@@ -43,6 +44,7 @@ import ManagePayments from "../components/admin/ManagePayments";
 import ManageShifts from "../components/admin/ManageShifts";
 import ManageInventory from "../components/admin/ManageInventory";
 import ManageVouchers from "../components/admin/ManageVouchers";
+import ManageGuests from "../components/admin/ManageGuests";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -250,6 +252,7 @@ export default function AdminDashboard() {
     { id: "dashboard", label: "Tổng Quan Vận Hành", icon: LayoutDashboard },
     { id: "users", label: "Quản Lý Tài Khoản", icon: Users },
     { id: "rooms", label: "Quản Lý Phòng Nghỉ", icon: Bed },
+    { id: "guests", label: "Thông Tin Khách Trú", icon: Shield },
     { id: "services", label: "Quản Lý Dịch Vụ", icon: Flower },
     { id: "support", label: "Phản Hồi & Khiếu Nại", icon: MessageSquare },
     { id: "payments", label: "Nhật Ký Hóa Đơn", icon: CreditCard },
@@ -303,6 +306,7 @@ export default function AdminDashboard() {
               {activeTab === "users" &&
                 "2. Quản Lý Tài Khoản (User Management)"}
               {activeTab === "rooms" && "3. Quản Lý Phòng & Loại Phòng Resort"}
+              {activeTab === "guests" && "3b. Tra Cứu Khai Báo & Thông Tin Khách Trú"}
               {activeTab === "services" && "4. Danh Mục Dịch Vụ Resort & Yoga"}
               {activeTab === "support" &&
                 "5. Cổng Tiếp Nhận & Hỗ Trợ Khách Hàng"}
@@ -348,6 +352,10 @@ export default function AdminDashboard() {
               handleDeleteRoom={handleDeleteRoom}
               loadRooms={loadRooms}
             />
+          )}
+
+          {activeTab === "guests" && (
+            <ManageGuests />
           )}
 
           {activeTab === "services" && (

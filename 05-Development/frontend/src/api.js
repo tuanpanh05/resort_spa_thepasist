@@ -263,8 +263,11 @@ export const bookingLookupApi = {
 // STAFF / RECEPTIONIST APIs (UC08, UC09, UC10 â€” Module 2)
 // ============================================================
 export const staffApi = {
-  /** UC08: GET /v1/check-in/arrivals â€” Danh sÃ¡ch khÃ¡ch sáº¯p Ä‘áº¿n */
+  /** UC08: GET /v1/check-in/arrivals — Danh sách khách sắp đến */
   getArrivals: () => apiRequest("/v1/check-in/arrivals"),
+
+  /** GET /v1/check-in/guests — Danh sách khách lưu trú */
+  getGuests: () => apiRequest("/v1/check-in/guests"),
 
   /** UC08: POST /v1/check-in â€” Thá»±c hiá»‡n check-in */
   performCheckIn: (dto) =>
