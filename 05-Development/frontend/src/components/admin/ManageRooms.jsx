@@ -132,6 +132,7 @@ export default function ManageRooms({
       case "CLEANING": return "Dọn phòng";
       case "VACANT_NEEDS_CLEANING": return "Cần dọn dẹp";
       case "DEPOSITED": return "Đã cọc";
+      case "VIEWING": return "Khách đang xem";
       default: return status || "Trống";
     }
   };
@@ -145,6 +146,7 @@ export default function ManageRooms({
       case "VACANT_NEEDS_CLEANING": return "bg-blue-50 text-blue-700 border-blue-200";
       case "MAINTENANCE": return "bg-yellow-50 text-yellow-750 border-yellow-200";
       case "DEPOSITED": return "bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse";
+      case "VIEWING": return "bg-orange-50 text-orange-700 border-orange-200 animate-pulse";
       default: return "bg-gray-50 text-gray-600 border-gray-200";
     }
   };
@@ -155,7 +157,7 @@ export default function ManageRooms({
         return (
           <div>
             <span className="text-[10px] text-red-500 block font-medium">Khách đang ở:</span>
-            <span className="font-bold text-red-950 block truncate">
+            <span className="font-bold text-red-955 block truncate">
               {villa.guestName || "Khách nghỉ dưỡng"}
             </span>
           </div>
@@ -184,6 +186,8 @@ export default function ManageRooms({
             </span>
           </div>
         );
+      case "VIEWING":
+        return <span className="text-orange-750 font-medium italic animate-pulse">Khách online đang xem...</span>;
       default:
         return <span className="text-sage-500 italic">Sẵn sàng đón khách</span>;
     }
@@ -199,6 +203,7 @@ export default function ManageRooms({
       case "VACANT_NEEDS_CLEANING": bgClass = "bg-[#f0f9ff]"; borderClass = "border-sky-200"; break;
       case "MAINTENANCE": bgClass = "bg-[#fffbeb]"; borderClass = "border-amber-200";  break;
       case "DEPOSITED":   bgClass = "bg-[#eef2ff]"; borderClass = "border-indigo-200"; break;
+      case "VIEWING":     bgClass = "bg-[#fff7ed]"; borderClass = "border-orange-300"; break;
       default:            bgClass = "bg-white";     borderClass = "border-slate-200";
     }
     return `p-5 flex flex-col justify-between h-64 text-left rounded-2xl border ${bgClass} ${borderClass} shadow-sm hover:shadow-md transition-shadow relative overflow-hidden`;
@@ -417,6 +422,17 @@ export default function ManageRooms({
                   <span className="w-2 h-2 rounded-full bg-orange-500"></span> Đã cọc
                 </span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeStatusFilter === "VIEWING"}
+                  onChange={() => setActiveStatusFilter(activeStatusFilter === "VIEWING" ? "all" : "VIEWING")}
+                  className="rounded text-sky-500 focus:ring-sky-500 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span> Đang xem
+                </span>
+              </label>
             </div>
           </div>
 
@@ -536,6 +552,7 @@ export default function ManageRooms({
                           <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
                           <option value="DIRTY">Cần dọn (Dirty)</option>
                           <option value="VACANT_NEEDS_CLEANING">Cần dọn dẹp (Needs Cleaning)</option>
+                          <option value="VIEWING">Khách đang xem (Viewing)</option>
                         </select>
                         
                         <button

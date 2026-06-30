@@ -165,11 +165,7 @@ public class RoomBookingService {
 
             List<Room> availableRooms = new ArrayList<>();
             for (Room r : matchingRooms) {
-                String status = r.getStatus();
-                boolean isBookable = "AVAILABLE".equalsIgnoreCase(status)
-                        || "CLEANING".equalsIgnoreCase(status)
-                        || "DIRTY".equalsIgnoreCase(status)
-                        || "VACANT_NEEDS_CLEANING".equalsIgnoreCase(status);
+                boolean isBookable = "AVAILABLE".equalsIgnoreCase(r.getStatus());
                 if (isBookable && roomBookingRepository.countOverlappingBookings(r.getRoomId(), checkIn, checkOut) == 0) {
                     availableRooms.add(r);
                 }
@@ -227,6 +223,21 @@ public class RoomBookingService {
         booking.setDetails(details);
 
         RoomBooking savedBooking = roomBookingRepository.save(booking);
+
+        // Đổi trạng thái phòng sang VIEWING (Khách đang xem / chờ thanh toán)
+        try {
+            if (savedBooking.getDetails() != null) {
+                for (RoomBookingDetail detail : savedBooking.getDetails()) {
+                    Room room = detail.getRoom();
+                    if (room != null && "AVAILABLE".equalsIgnoreCase(room.getStatus())) {
+                        room.setStatus("VIEWING");
+                        roomRepository.save(room);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
 
         // 5. Process Meal Selections
         if (dto.getMealSelections() != null && !dto.getMealSelections().isEmpty()) {
@@ -515,6 +526,21 @@ public class RoomBookingService {
         booking.setRefundAmount(refundAmt);
 
         RoomBooking saved = roomBookingRepository.save(booking);
+
+        // Khôi phục trạng thái phòng từ VIEWING về AVAILABLE
+        try {
+            if (booking.getDetails() != null) {
+                for (RoomBookingDetail detail : booking.getDetails()) {
+                    Room room = detail.getRoom();
+                    if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                        room.setStatus("AVAILABLE");
+                        roomRepository.save(room);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Non-fatal
+        }
 
         // Update the invoice to CANCELLED as the whole booking is cancelled
         try {

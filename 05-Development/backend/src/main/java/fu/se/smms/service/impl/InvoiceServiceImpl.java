@@ -20,6 +20,8 @@ import fu.se.smms.repository.SystemConfigurationRepository;
 import fu.se.smms.repository.TreatmentRoomRepository;
 import fu.se.smms.repository.AccompanyingGuestRepository;
 import fu.se.smms.entity.AccompanyingGuest;
+import fu.se.smms.entity.Room;
+import fu.se.smms.entity.RoomBookingDetail;
 import fu.se.smms.service.EmailService;
 import fu.se.smms.service.InvoiceService;
 import fu.se.smms.entity.Voucher;
@@ -179,6 +181,21 @@ public class InvoiceServiceImpl implements InvoiceService {
             booking.setStatus("CONFIRMED");
             booking.setTotalDeposit(payableAmount);
             roomBookingRepository.save(booking);
+
+            // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE
+            try {
+                if (booking.getDetails() != null) {
+                    for (RoomBookingDetail detail : booking.getDetails()) {
+                        Room room = detail.getRoom();
+                        if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                            room.setStatus("AVAILABLE");
+                            roomRepository.save(room);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Lỗi giải phóng phòng VIEWING khi xác nhận cọc: {}", e.getMessage());
+            }
 
             invoice.setDepositAmount(payableAmount);
             invoice.setAmountDue(invoice.getFinalAmount().subtract(payableAmount));
@@ -344,6 +361,21 @@ public class InvoiceServiceImpl implements InvoiceService {
                 booking.setTotalDeposit(paymentAmount);
                 roomBookingRepository.save(booking);
 
+                // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE
+                try {
+                    if (booking.getDetails() != null) {
+                        for (RoomBookingDetail detail : booking.getDetails()) {
+                            Room room = detail.getRoom();
+                            if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                                room.setStatus("AVAILABLE");
+                                roomRepository.save(room);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Lỗi giải phóng phòng VIEWING khi VNPay xác nhận cọc: {}", e.getMessage());
+                }
+
                 invoice.setDepositAmount(paymentAmount);
                 invoice.setAmountDue(invoice.getFinalAmount().subtract(paymentAmount));
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
@@ -377,6 +409,21 @@ public class InvoiceServiceImpl implements InvoiceService {
                 booking.setCancellationTime(LocalDateTime.now());
                 booking.setRefundAmount(BigDecimal.ZERO);
                 roomBookingRepository.save(booking);
+
+                // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE khi hủy thanh toán cọc
+                try {
+                    if (booking.getDetails() != null) {
+                        for (RoomBookingDetail detail : booking.getDetails()) {
+                            Room room = detail.getRoom();
+                            if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                                room.setStatus("AVAILABLE");
+                                roomRepository.save(room);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Lỗi giải phóng phòng VIEWING khi hủy thanh toán cọc VNPay: {}", e.getMessage());
+                }
 
                 invoice.setStatus("CANCELLED");
 

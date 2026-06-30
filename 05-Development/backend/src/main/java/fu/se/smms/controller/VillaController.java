@@ -44,7 +44,7 @@ public class VillaController {
      * Valid villa/room statuses per database CHECK constraint.
      */
     private static final List<String> VALID_STATUSES = Arrays.asList(
-            "AVAILABLE", "OCCUPIED", "MAINTENANCE", "DIRTY", "CLEANING", "VACANT_NEEDS_CLEANING");
+            "AVAILABLE", "OCCUPIED", "MAINTENANCE", "DIRTY", "CLEANING", "VACANT_NEEDS_CLEANING", "VIEWING");
 
     /**
      * UC09: List all rooms with their current status, type, and capacity info.
