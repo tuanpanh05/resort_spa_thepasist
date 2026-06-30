@@ -18,6 +18,8 @@ import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
 import fu.se.smms.repository.TreatmentRoomRepository;
+import fu.se.smms.repository.AccompanyingGuestRepository;
+import fu.se.smms.entity.AccompanyingGuest;
 import fu.se.smms.service.EmailService;
 import fu.se.smms.service.InvoiceService;
 import fu.se.smms.entity.Voucher;
@@ -66,6 +68,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private VoucherService voucherService;
     @Autowired
     private TreatmentRoomRepository treatmentRoomRepository;
+    @Autowired
+    private AccompanyingGuestRepository accompanyingGuestRepository;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -260,6 +264,9 @@ public class InvoiceServiceImpl implements InvoiceService {
             // Log warning - booking may not have room_booking_detail records but still proceed
         }
 
+        // Xóa thông tin người phụ thuộc / người đi cùng khi trả phòng
+        accompanyingGuestRepository.deleteByBookingId(booking.getBookingId());
+
         return toDto(invoice);
     }
 
@@ -301,6 +308,9 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         // BR-14: Mark associated rooms as DIRTY (Vacant/Needs Cleaning)
         roomRepository.markRoomsAsDirtyAfterCheckout(booking.getBookingId());
+
+        // Xóa thông tin người phụ thuộc / người đi cùng khi trả phòng
+        accompanyingGuestRepository.deleteByBookingId(booking.getBookingId());
 
         return toDto(invoice);
     }

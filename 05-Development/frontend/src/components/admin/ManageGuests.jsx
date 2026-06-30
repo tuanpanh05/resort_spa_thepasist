@@ -116,16 +116,20 @@ export default function ManageGuests() {
 
     return (
       <div className="space-y-6 animate-fade-in text-left">
-        {/* Navigation & Title */}
+        {/* Standalone Back Button Bar */}
+        <div>
+          <button
+            onClick={() => setSelectedBookingId(null)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white text-sage-950 hover:bg-primary-50 text-xs font-bold rounded-lg cursor-pointer transition-colors shadow-md border border-primary-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại danh sách phòng (Xem chủ phòng)
+          </button>
+        </div>
+
+        {/* Title Card */}
         <div className="bg-white border border-primary-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
-            <button
-              onClick={() => setSelectedBookingId(null)}
-              className="text-xs text-primary-700 hover:text-primary-900 flex items-center gap-1.5 font-semibold cursor-pointer mb-2 group"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-              Quay lại danh sách
-            </button>
             <h2 className="font-serif text-lg font-normal text-sage-950 flex items-center gap-2">
               <DoorOpen className="h-5 w-5 text-primary-750" />
               Đoàn Khách Lưu Trú — Phòng {selectedBooking.roomNumber}
