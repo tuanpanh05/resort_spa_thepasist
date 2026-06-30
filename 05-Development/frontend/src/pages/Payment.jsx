@@ -33,14 +33,14 @@ export default function Payment() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
-  // Countdown Timer states (1 minute timeout)
-  const [timeLeft, setTimeLeft] = useState(60);
+  // Countdown Timer states (5 minutes timeout)
+  const [timeLeft, setTimeLeft] = useState(300);
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
   // Reset countdown whenever invoiceId changes
   useEffect(() => {
-    setTimeLeft(60);
+    setTimeLeft(300);
     setShowTimeoutModal(false);
   }, [invoiceId]);
 
@@ -118,7 +118,7 @@ export default function Payment() {
       // Nếu thực sự chưa thanh toán, tiến hành hủy phòng
       const bookingId = invoice?.bookingId;
       if (bookingId) {
-        await bookingLookupApi.cancel(bookingId, "Hết hạn thời gian thanh toán cọc (1 phút)");
+        await bookingLookupApi.cancel(bookingId, "Hết hạn thời gian thanh toán cọc (5 phút)");
       }
       setShowTimeoutModal(true);
     } catch (err) {
@@ -912,7 +912,7 @@ export default function Payment() {
             </div>
             <h3 className="font-serif text-xl font-bold text-sage-900 mb-2">Hết Thời Gian Thanh Toán!</h3>
             <p className="text-xs text-sage-600 font-light leading-relaxed mb-6">
-              Đơn đặt phòng của quý khách đã tự động bị hủy trên hệ thống do không hoàn tất đặt cọc đúng hạn (1 phút). Phòng đã được giải phóng cho khách hàng khác. Quý khách vui lòng thực hiện đặt lịch lại.
+              Đơn đặt phòng của quý khách đã tự động bị hủy trên hệ thống do không hoàn tất đặt cọc đúng hạn (5 phút). Phòng đã được giải phóng cho khách hàng khác. Quý khách vui lòng thực hiện đặt lịch lại.
             </p>
             <button
               type="button"
