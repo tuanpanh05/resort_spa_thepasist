@@ -15,11 +15,12 @@ public class UserProfileDTO {
     private String googleCalendarId;
     private Boolean calendarRemindersEnabled;
     private Integer reminderLeadTimeMins;
+    private String specialty;
 
     public UserProfileDTO() {}
 
     public UserProfileDTO(Integer userId, String email, String fullName, String phone, String idPassport, String role, String status, LocalDateTime createdAt,
-                          Boolean googleCalendarSyncEnabled, String googleCalendarId, Boolean calendarRemindersEnabled, Integer reminderLeadTimeMins) {
+                          Boolean googleCalendarSyncEnabled, String googleCalendarId, Boolean calendarRemindersEnabled, Integer reminderLeadTimeMins, String specialty) {
         this.userId = userId;
         this.email = email;
         this.fullName = fullName;
@@ -32,6 +33,13 @@ public class UserProfileDTO {
         this.googleCalendarId = googleCalendarId;
         this.calendarRemindersEnabled = calendarRemindersEnabled;
         this.reminderLeadTimeMins = reminderLeadTimeMins;
+        this.specialty = specialty;
+    }
+
+    public UserProfileDTO(Integer userId, String email, String fullName, String phone, String idPassport, String role, String status, LocalDateTime createdAt,
+                          Boolean googleCalendarSyncEnabled, String googleCalendarId, Boolean calendarRemindersEnabled, Integer reminderLeadTimeMins) {
+        this(userId, email, fullName, phone, idPassport, role, status, createdAt,
+             googleCalendarSyncEnabled, googleCalendarId, calendarRemindersEnabled, reminderLeadTimeMins, null);
     }
 
     public static Builder builder() {
@@ -51,6 +59,7 @@ public class UserProfileDTO {
         private String googleCalendarId;
         private Boolean calendarRemindersEnabled;
         private Integer reminderLeadTimeMins;
+        private String specialty;
 
         public Builder userId(Integer userId) {
             this.userId = userId;
@@ -112,9 +121,14 @@ public class UserProfileDTO {
             return this;
         }
 
+        public Builder specialty(String specialty) {
+            this.specialty = specialty;
+            return this;
+        }
+
         public UserProfileDTO build() {
             return new UserProfileDTO(userId, email, fullName, phone, idPassport, role, status, createdAt,
-                    googleCalendarSyncEnabled, googleCalendarId, calendarRemindersEnabled, reminderLeadTimeMins);
+                    googleCalendarSyncEnabled, googleCalendarId, calendarRemindersEnabled, reminderLeadTimeMins, specialty);
         }
     }
 
@@ -213,5 +227,13 @@ public class UserProfileDTO {
 
     public void setReminderLeadTimeMins(Integer reminderLeadTimeMins) {
         this.reminderLeadTimeMins = reminderLeadTimeMins;
+    }
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 }

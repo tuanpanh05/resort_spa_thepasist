@@ -113,6 +113,70 @@ IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff6@nguson.vn')
     INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
     VALUES ('staff6@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Thị Yến - Phục Vụ Khu Spa', '0912347018', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
 
+-- Technical Staff (10 accounts)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech1@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech1@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Văn Hùng - Kỹ Thuật & Điện Nước', '0912347101', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Anh Tuấn - Kỹ Thuật Điện Lạnh', '0912347102', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Minh Hoàng - Bảo Trì Thiết Bị', '0912347103', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech4@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech4@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Hoàng Long - Kỹ Thuật Viên Hạ Tầng', '0912347104', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech5@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech5@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Tiến Đạt - Kỹ Thuật Hồ Bơi', '0912347105', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech6@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech6@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Vũ Anh Đức - Bảo Trì Hệ Thống', '0912347106', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech7@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech7@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Đặng Văn Sơn - Kỹ Thuật Âm Thanh Ánh Sáng', '0912347107', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech8@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech8@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Quốc Việt - Sửa Chữa Đồ Gỗ', '0912347108', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech9@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech9@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Duy Anh - Kỹ Thuật Mạng & Viễn Thông', '0912347109', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_tech10@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_tech10@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Bùi Thanh Tùng - Kỹ Thuật Tổng Hợp', '0912347110', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+
+-- Cleaning Staff (10 accounts)
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean1@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean1@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thị Hoa - Buồng Phòng Ca Sáng', '0912347201', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean2@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean2@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Lê Thị Mai - Dọn Dẹp Villa', '0912347202', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean3@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean3@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Trần Thị Đào - Dọn Dẹp Khu Vực Chung', '0912347203', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean4@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean4@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Phạm Thị Cúc - Buồng Phòng Ca Chiều', '0912347204', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean5@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean5@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thị Lan - Giặt Ủi & Vệ Sinh', '0912347205', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean6@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean6@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Vũ Thị Hồng - Dọn Dẹp Khu Spa', '0912347206', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean7@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean7@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Hoàng Thị Tuyết - Vệ Sinh Ngoại Cảnh', '0912347207', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean8@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean8@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Đỗ Thị Thảo - Buồng Phòng Deluxe', '0912347208', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean9@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean9@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Bùi Thị Dung - Dọn Dẹp Khu Nhà Hàng', '0912347209', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'staff_clean10@nguson.vn')
+    INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
+    VALUES ('staff_clean10@nguson.vn', '$2a$10$X8k2UvT4t0WqI9Z3mC7tOe/qRk1rN4y9qEwXp4e5o6b7c8d9e0f1a', N'Nguyễn Thị Kim - Buồng Phòng Ca Tối', '0912347210', NULL, N'Vietnam', NULL, NULL, 'STAFF', 'ACTIVE', NULL);
+
 -- Manager: +1 (tong 2 quan ly)
 IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = 'manager2@nguson.vn')
     INSERT INTO dbo.users (email, password_hash, full_name, phone, id_passport_encrypted, nationality, visa_number, entry_date, role, status, specialty)
@@ -482,4 +546,39 @@ IF NOT EXISTS (SELECT 1 FROM dbo.retreat_packages WHERE package_id = 25)
     VALUES (25, N'Vé Khu Vui Chơi Trẻ Em', N'Bao gồm công viên nước và tất cả các trò chơi trẻ em hay chơi với trị giá là 500k.', 1, 400000.00, N'Vé vào cổng công viên nước;Trò chơi trẻ em đa dạng;Đảm bảo an toàn cho bé', 'ACTIVE', GETDATE(), N'Kids Playground Ticket', 400000.00, N'1 ngày', 'KID', 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=800&q=80');
 
 SET IDENTITY_INSERT dbo.retreat_packages OFF;
+GO
+
+-- Refactor guest room numbers to start with '#'
+IF OBJECT_ID('dbo.room', 'U') IS NOT NULL
+BEGIN
+    UPDATE dbo.room SET room_number = REPLACE(room_number, 'BG-', '#S') WHERE room_number LIKE 'BG-%';
+    UPDATE dbo.room SET room_number = REPLACE(room_number, 'BD-', '#V') WHERE room_number LIKE 'BD-%';
+    UPDATE dbo.room SET room_number = REPLACE(room_number, 'BT-', '#P') WHERE room_number LIKE 'BT-%';
+    UPDATE dbo.room SET room_number = REPLACE(room_number, 'BS-', '#F') WHERE room_number LIKE 'BS-%';
+    UPDATE dbo.room SET room_number = REPLACE(room_number, 'NS-', '#NS') WHERE room_number LIKE 'NS-%';
+    UPDATE dbo.room SET room_number = REPLACE(room_number, 'NC-', '#NC') WHERE room_number LIKE 'NC-%';
+END
+GO
+
+IF OBJECT_ID('dbo.complaints', 'U') IS NOT NULL
+BEGIN
+    UPDATE dbo.complaints SET room_number = REPLACE(room_number, 'BG-', '#S') WHERE room_number LIKE 'BG-%';
+    UPDATE dbo.complaints SET room_number = REPLACE(room_number, 'BD-', '#V') WHERE room_number LIKE 'BD-%';
+    UPDATE dbo.complaints SET room_number = REPLACE(room_number, 'BT-', '#P') WHERE room_number LIKE 'BT-%';
+    UPDATE dbo.complaints SET room_number = REPLACE(room_number, 'BS-', '#F') WHERE room_number LIKE 'BS-%';
+    UPDATE dbo.complaints SET room_number = REPLACE(room_number, 'NS-', '#NS') WHERE room_number LIKE 'NS-%';
+    UPDATE dbo.complaints SET room_number = REPLACE(room_number, 'NC-', '#NC') WHERE room_number LIKE 'NC-%';
+END
+GO
+
+IF OBJECT_ID('dbo.incurred_services', 'U') IS NOT NULL
+BEGIN
+    UPDATE dbo.incurred_services SET room_number = REPLACE(room_number, 'BG-', '#S') WHERE room_number LIKE 'BG-%';
+    UPDATE dbo.incurred_services SET room_number = REPLACE(room_number, 'BD-', '#V') WHERE room_number LIKE 'BD-%';
+    UPDATE dbo.incurred_services SET room_number = REPLACE(room_number, 'BT-', '#P') WHERE room_number LIKE 'BT-%';
+    UPDATE dbo.incurred_services SET room_number = REPLACE(room_number, 'BS-', '#F') WHERE room_number LIKE 'BS-%';
+    UPDATE dbo.incurred_services SET room_number = REPLACE(room_number, 'NS-', '#NS') WHERE room_number LIKE 'NS-%';
+    UPDATE dbo.incurred_services SET room_number = REPLACE(room_number, 'NC-', '#NC') WHERE room_number LIKE 'NC-%';
+END
+GO
 

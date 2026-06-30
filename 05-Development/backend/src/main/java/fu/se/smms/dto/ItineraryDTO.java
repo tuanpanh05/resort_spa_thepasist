@@ -129,6 +129,8 @@ public class ItineraryDTO {
         private LocalDateTime endTime;
         private String status;
         private BigDecimal price;
+        private String therapistName;
+        private String roomName;
 
         public TimelineEvent() {}
 
@@ -152,5 +154,11 @@ public class ItineraryDTO {
 
         public BigDecimal getPrice() { return price; }
         public void setPrice(BigDecimal price) { this.price = price; }
+
+        public String getTherapistName() { return therapistName; }
+        public void setTherapistName(String therapistName) { this.therapistName = therapistName; }
+
+        public String getRoomName() { return roomName; }
+        public void setRoomName(String roomName) { this.roomName = roomName; }
     }
 }

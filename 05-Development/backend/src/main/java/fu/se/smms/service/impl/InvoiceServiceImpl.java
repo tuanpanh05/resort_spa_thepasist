@@ -115,7 +115,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public InvoiceDTO createInvoice(Integer bookingId) {
         Invoice invoice = invoiceRepository.findFirstByRoomBooking_BookingId(bookingId)
                 .orElseGet(() -> buildInvoiceForBooking(bookingId));
@@ -509,6 +509,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         BigDecimal roomSubtotal = defaultZero(invoiceRepository.sumRoomSubtotal(bookingId));
         BigDecimal spaSubtotal = defaultZero(invoiceRepository.sumSpaSubtotal(bookingId));
         BigDecimal foodSubtotal = defaultZero(invoiceRepository.sumFoodSubtotal(bookingId));
+        BigDecimal serviceSubtotal = defaultZero(invoiceRepository.sumServiceSubtotal(bookingId));
 
         RoomBooking booking = invoice.getRoomBooking();
         BigDecimal childDiscount = BigDecimal.ZERO;
@@ -520,7 +521,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             }
         }
 
-        BigDecimal taxableBase = roomSubtotal.add(spaSubtotal).add(foodSubtotal);
+        BigDecimal taxableBase = roomSubtotal.add(spaSubtotal).add(foodSubtotal).add(serviceSubtotal);
         BigDecimal taxAndFees = taxableBase.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
         BigDecimal grandTotal = taxableBase.add(taxAndFees);
 
@@ -547,13 +548,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         BigDecimal depositAmount = defaultZero(invoice.getRoomBooking().getTotalDeposit());
         BigDecimal amountDue = finalAmount.subtract(depositAmount);
         
-        if (amountDue.signum() < 0) {
-            throw conflict("Booking deposit cannot exceed invoice final amount");
+        if (amountDue.compareTo(BigDecimal.ZERO) < 0) {
+            amountDue = BigDecimal.ZERO;
         }
 
         invoice.setRoomSubtotal(roomSubtotal);
         invoice.setSpaSubtotal(spaSubtotal);
         invoice.setFoodSubtotal(foodSubtotal);
+        invoice.setServiceSubtotal(serviceSubtotal);
         invoice.setTaxAndFees(taxAndFees);
         invoice.setFinalAmount(finalAmount);
         invoice.setDepositAmount(depositAmount);
@@ -616,6 +618,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         dto.setRoomSubtotal(invoice.getRoomSubtotal());
         dto.setSpaSubtotal(invoice.getSpaSubtotal());
         dto.setFoodSubtotal(invoice.getFoodSubtotal());
+        dto.setServiceSubtotal(invoice.getServiceSubtotal());
         dto.setTaxAndFees(invoice.getTaxAndFees());
         dto.setFinalAmount(invoice.getFinalAmount());
         dto.setDepositAmount(invoice.getDepositAmount());

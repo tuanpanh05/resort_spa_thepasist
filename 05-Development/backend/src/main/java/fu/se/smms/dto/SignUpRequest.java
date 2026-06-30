@@ -21,6 +21,16 @@ public class SignUpRequest {
 
     private String idPassport;
 
+    private String specialty;
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
+    }
+
     public String getEmail() {
         return email;
     }

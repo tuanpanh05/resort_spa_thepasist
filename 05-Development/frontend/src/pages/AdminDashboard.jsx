@@ -97,6 +97,7 @@ export default function AdminDashboard() {
     try {
       const data = await complaintsApi.getAllComplaints();
       const mapped = data.map((c) => ({
+        ...c,
         id: c.id,
         roomId: c.roomNumber,
         customerName: c.guestName,

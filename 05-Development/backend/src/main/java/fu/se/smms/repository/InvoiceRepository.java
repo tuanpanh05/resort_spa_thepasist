@@ -78,6 +78,14 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             """, nativeQuery = true)
     BigDecimal sumFoodSubtotal(@Param("bookingId") Integer bookingId);
 
+    @Query(value = """
+            SELECT COALESCE(SUM(price), 0)
+            FROM dbo.incurred_services
+            WHERE room_booking_id = :bookingId
+              AND status = 'Completed'
+            """, nativeQuery = true)
+    BigDecimal sumServiceSubtotal(@Param("bookingId") Integer bookingId);
+
     // ─── Checkout lock guard - BR-15: block checkout if pending orders exist ──
 
     /**

@@ -19,7 +19,7 @@ public interface UserService {
 
     // Admin methods (UC03)
     List<UserProfileDTO> getAllStaffUsers();
-    UserProfileDTO updateUserRoleAndStatus(Integer userId, String role, String status);
+    UserProfileDTO updateUserRoleAndStatus(Integer userId, String role, String status, String specialty);
     void deleteUser(Integer userId);
     UserProfileDTO createStaffAccount(SignUpRequest request, String role);
 

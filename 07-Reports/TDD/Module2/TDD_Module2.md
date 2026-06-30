@@ -51,18 +51,18 @@
 
 ## 1. Thông tin Module
 
-| Field | Value |
-| :--- | :--- |
-| **Feature / Gap ID** | GAP-M2-001 |
-| **Module** | Module 2: Retreat Package & Accommodation Booking |
-| **Spec gốc** | DE_BAI_MODULE/Module_2.md |
-| **Priority** | 🔴 P0 |
-| **Sprint** | Sprint 2 (2026-06-15 &rarr; 2026-06-29) |
-| **Milestone** | M3 Alpha — 2026-07-11 |
-| **Data Classification** | Sensitive-PII (CCCD, Số Hộ chiếu, Lịch trình sức khỏe) |
-| **Compliance Scope** | Luật Cư trú Việt Nam 2020 |
-| **Upstream Dependencies** | Core System / Auth Module |
-| **Downstream Consumers** | Module 3 (Spa Schedule), Module 4 (Dining/Restaurant), Module 5 (Check-out) |
+| Field                     | Value　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| :--------------------------| :----------------------------------------------------------------------------|
+| **Feature / Gap ID**      | GAP-M2-001　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　|
+| **Module**                | Module 2: Retreat Package & Accommodation Booking　　　　　　　　　　　　　 |
+| **Spec gốc**              | DE_BAI_MODULE/Module_2.md　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Priority**              | 🔴 P0　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Sprint**                | Sprint 2 (2026-06-15 &rarr; 2026-06-29)　　　　　　　　　　　　　　　　　　 |
+| **Milestone**             | M3 Alpha — 2026-07-11　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Data Classification**   | Sensitive-PII (CCCD, Số Hộ chiếu, Lịch trình sức khỏe)　　　　　　　　　　　|
+| **Compliance Scope**      | Luật Cư trú Việt Nam 2020　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Upstream Dependencies** | Core System / Auth Module　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Downstream Consumers**  | Module 3 (Spa Schedule), Module 4 (Dining/Restaurant), Module 5 (Check-out) |
 
 ---
 

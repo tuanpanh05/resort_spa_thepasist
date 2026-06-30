@@ -26,6 +26,8 @@ public class Invoice {
     private BigDecimal spaSubtotal;
     @Column(name = "food_subtotal")
     private BigDecimal foodSubtotal;
+    @Column(name = "service_subtotal")
+    private BigDecimal serviceSubtotal = BigDecimal.ZERO;
     @Column(name = "tax_and_fees")
     private BigDecimal taxAndFees;
     @Column(name = "final_amount")
@@ -94,6 +96,14 @@ public class Invoice {
 
     public void setFoodSubtotal(BigDecimal foodSubtotal) {
         this.foodSubtotal = foodSubtotal;
+    }
+
+    public BigDecimal getServiceSubtotal() {
+        return serviceSubtotal;
+    }
+
+    public void setServiceSubtotal(BigDecimal serviceSubtotal) {
+        this.serviceSubtotal = serviceSubtotal;
     }
 
     public BigDecimal getTaxAndFees() {

@@ -37,6 +37,26 @@ export async function apiRequest(path, options = {}) {
   return data;
 }
 
+/**
+ * Generic API request wrapper for downloading binary files (blobs) with auth.
+ */
+export async function apiRequestBlob(path, options = {}) {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...(options.headers || {}),
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || `Lỗi ${response.status}: ${response.statusText}`);
+  }
+
+  return response.blob();
+}
+
 // ============================================================
 // AUTH APIs (UC01)
 // ============================================================
@@ -125,6 +145,9 @@ export const userApi = {
 
   /** GET /users/me/spa-bookings — Lịch hẹn Spa */
   getMySpaBookings: () => apiRequest("/users/me/spa-bookings"),
+
+  /** GET /users/staff — Lấy danh sách nhân sự (để phân công hỗ trợ) */
+  getStaffList: () => apiRequest("/users/staff"),
 };
 
 
@@ -140,10 +163,10 @@ export const adminApi = {
       body: JSON.stringify(userData),
     }),
 
-  updateUser: (userId, role, status) =>
+  updateUser: (userId, role, status, specialty) =>
     apiRequest(`/admin/users/${userId}`, {
       method: "PUT",
-      body: JSON.stringify({ role, status }),
+      body: JSON.stringify({ role, status, specialty }),
     }),
 
   deleteUser: (userId) =>
@@ -271,4 +294,16 @@ export const paymentApi = {
 
   getOccupancyReport: (year) => 
     apiRequest(`/revenue/occupancy-report?year=${year}`),
+
+  exportRevenuePdf: (year, month = null) => {
+    let url = `/revenue/export-pdf?year=${year}`;
+    if (month) url += `&month=${month}`;
+    return apiRequestBlob(url);
+  },
+
+  exportRevenueExcel: (year, month = null) => {
+    let url = `/revenue/export-excel?year=${year}`;
+    if (month) url += `&month=${month}`;
+    return apiRequestBlob(url);
+  },
 };

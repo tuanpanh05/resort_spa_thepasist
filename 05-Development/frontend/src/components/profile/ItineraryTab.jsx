@@ -315,6 +315,24 @@ export default function ItineraryTab() {
                                 {event.description && (
                                   <p className="text-[11px] text-sage-600 mt-1 leading-relaxed font-light whitespace-pre-wrap">{event.description}</p>
                                 )}
+                                {event.type === "SPA" && (
+                                  <div className="mt-3.5 space-y-1.5 border-t border-dashed border-primary-100 pt-2.5 text-[11px]">
+                                    {event.therapistName && (
+                                      <p className="flex items-center gap-1.5 text-sage-600">
+                                        <User className="h-3.5 w-3.5 text-primary-500 shrink-0" />
+                                        <span>{t("profile.therapistLabel") || "Chuyên gia"}: </span>
+                                        <span className="font-semibold text-sage-900">{event.therapistName}</span>
+                                      </p>
+                                    )}
+                                    {event.roomName && (
+                                      <p className="flex items-center gap-1.5 text-sage-600">
+                                        <MapPin className="h-3.5 w-3.5 text-primary-500 shrink-0" />
+                                        <span>{t("profile.roomNo") || "Phòng"}: </span>
+                                        <span className="font-semibold text-sage-900">{event.roomName}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               {event.status && (
                                 <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(event.status)} flex-shrink-0`}>

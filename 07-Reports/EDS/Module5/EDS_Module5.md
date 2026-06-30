@@ -2,19 +2,19 @@
 
 ## Specification for Consolidated Checkout & Analytics
 
-| Field                    | Value                              |
-| :----------------------- | :--------------------------------- |
-| **Document ID**          | SMMS-PAY-IMP-005                   |
-| **Version**              | 1.0                                |
-| **Date**                 | 2026-06-26                         |
-| **Status**               | Approved                           |
-| **Document Owner**       | Student 5 — Full-stack Engineer    |
-| **Author**               | Student 5 — Full-stack Engineer    |
-| **Reviewed by**          | Tech Lead — Approved               |
-| **DPO Sign-off**         | Approved — 2026-06-26 — DPO Team   |
-| **Approved by**          | Principal Architect                |
-| **Last Review**          | 2026-06-26                         |
-| **Based on EDS**         | v2.0                               |
+| Field              | Value                            |
+| :-------------------| :---------------------------------|
+| **Document ID**    | SMMS-PAY-IMP-005                 |
+| **Version**        | 1.0                              |
+| **Date**           | 2026-06-26                       |
+| **Status**         | Approved                         |
+| **Document Owner** | Pham Anh Tuan                    |
+| **Author**         | Pham Anh Tuan                    |
+| **Reviewed by**    | All Team                         |
+| **DPO Sign-off**   | Approved — 2026-06-26 — All Team |
+| **Approved by**    | Hoang Tuan Anh                   |
+| **Last Review**    | 2026-06-26                       |
+| **Based on EDS**   | v2.0                             |
 
 ---
 

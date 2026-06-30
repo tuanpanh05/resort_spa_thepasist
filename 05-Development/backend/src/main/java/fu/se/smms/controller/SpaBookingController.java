@@ -164,8 +164,9 @@ public class SpaBookingController {
     @GetMapping("/available-slots")
     public ResponseEntity<List<TimeSlotDTO>> getAvailableSlots(
             @RequestParam("spaServiceId") Integer spaServiceId,
-            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        List<TimeSlotDTO> slots = spaBookingService.getAvailableSlots(spaServiceId, date);
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "guestsCount", required = false) Integer guestsCount) {
+        List<TimeSlotDTO> slots = spaBookingService.getAvailableSlots(spaServiceId, date, guestsCount);
         return ResponseEntity.ok(slots);
     }
 

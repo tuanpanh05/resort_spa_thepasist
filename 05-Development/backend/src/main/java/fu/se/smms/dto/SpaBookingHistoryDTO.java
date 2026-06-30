@@ -16,6 +16,8 @@ public class SpaBookingHistoryDTO {
     private String status;
     private BigDecimal priceAtBooking;
     private Boolean isPackageIncluded;
+    private String therapistName;
+    private String roomName;
 
     public SpaBookingHistoryDTO() {}
 
@@ -33,6 +35,8 @@ public class SpaBookingHistoryDTO {
         private String status;
         private BigDecimal priceAtBooking;
         private Boolean isPackageIncluded;
+        private String therapistName;
+        private String roomName;
 
         public Builder spaBookingId(Integer spaBookingId) { this.spaBookingId = spaBookingId; return this; }
         public Builder serviceName(String serviceName) { this.serviceName = serviceName; return this; }
@@ -42,6 +46,8 @@ public class SpaBookingHistoryDTO {
         public Builder status(String status) { this.status = status; return this; }
         public Builder priceAtBooking(BigDecimal priceAtBooking) { this.priceAtBooking = priceAtBooking; return this; }
         public Builder isPackageIncluded(Boolean isPackageIncluded) { this.isPackageIncluded = isPackageIncluded; return this; }
+        public Builder therapistName(String therapistName) { this.therapistName = therapistName; return this; }
+        public Builder roomName(String roomName) { this.roomName = roomName; return this; }
 
         public SpaBookingHistoryDTO build() {
             SpaBookingHistoryDTO dto = new SpaBookingHistoryDTO();
@@ -53,6 +59,8 @@ public class SpaBookingHistoryDTO {
             dto.status = status;
             dto.priceAtBooking = priceAtBooking;
             dto.isPackageIncluded = isPackageIncluded;
+            dto.therapistName = therapistName;
+            dto.roomName = roomName;
             return dto;
         }
     }
@@ -83,4 +91,10 @@ public class SpaBookingHistoryDTO {
 
     public Boolean getIsPackageIncluded() { return isPackageIncluded; }
     public void setIsPackageIncluded(Boolean isPackageIncluded) { this.isPackageIncluded = isPackageIncluded; }
+
+    public String getTherapistName() { return therapistName; }
+    public void setTherapistName(String therapistName) { this.therapistName = therapistName; }
+
+    public String getRoomName() { return roomName; }
+    public void setRoomName(String roomName) { this.roomName = roomName; }
 }

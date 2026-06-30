@@ -17,6 +17,6 @@ public interface SpaBookingService {
 
     SpaBookingResponseDTO updateSessionStatus(Integer spaBookingId, String status, Integer therapistId);
 
-    List<TimeSlotDTO> getAvailableSlots(Integer spaServiceId, LocalDate date);
+    List<TimeSlotDTO> getAvailableSlots(Integer spaServiceId, LocalDate date, Integer guestsCount);
     SpaBookingResponseDTO cancelSpaBooking(Integer spaBookingId, String reason);
 }

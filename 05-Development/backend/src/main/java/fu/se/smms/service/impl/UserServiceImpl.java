@@ -192,6 +192,7 @@ public class UserServiceImpl implements UserService {
                 .googleCalendarId(user.getGoogleCalendarId())
                 .calendarRemindersEnabled(user.getCalendarRemindersEnabled())
                 .reminderLeadTimeMins(user.getReminderLeadTimeMins())
+                .specialty(user.getSpecialty())
                 .build();
     }
 
@@ -206,7 +207,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserProfileDTO updateUserRoleAndStatus(Integer userId, String role, String status) {
+    public UserProfileDTO updateUserRoleAndStatus(Integer userId, String role, String status, String specialty) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại với ID: " + userId));
         if (role != null && !role.isBlank()) {
@@ -214,6 +215,9 @@ public class UserServiceImpl implements UserService {
         }
         if (status != null && !status.isBlank()) {
             user.setStatus(status);
+        }
+        if (specialty != null) {
+            user.setSpecialty(specialty.isBlank() ? null : specialty);
         }
         return mapToProfileDTO(userRepository.save(user));
     }
@@ -238,6 +242,7 @@ public class UserServiceImpl implements UserService {
                 .phone(request.getPhone())
                 .idPassportEncrypted(request.getIdPassport())
                 .role(role != null ? role.toUpperCase() : "STAFF")
+                .specialty(request.getSpecialty())
                 .status("ACTIVE")
                 .build();
         return mapToProfileDTO(userRepository.save(user));
@@ -322,6 +327,8 @@ public class UserServiceImpl implements UserService {
                 .status(sb.getStatus())
                 .priceAtBooking(sb.getPriceAtBooking())
                 .isPackageIncluded(sb.getIsPackageIncluded())
+                .therapistName(sb.getTherapist() != null ? sb.getTherapist().getFullName() : "N/A")
+                .roomName(sb.getTreatmentRoom() != null ? sb.getTreatmentRoom().getRoomName() : "N/A")
                 .build();
     }
 

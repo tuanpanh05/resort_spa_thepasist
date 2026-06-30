@@ -1,6 +1,8 @@
 package fu.se.smms.dto;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * One bookable time slot for a spa service on a given day.
@@ -18,6 +20,11 @@ public class TimeSlotDTO {
     private Integer treatmentRoomId;
     private String roomName;
 
+    private List<Integer> therapistIds = new ArrayList<>();
+    private List<String> therapistNames = new ArrayList<>();
+    private List<Integer> treatmentRoomIds = new ArrayList<>();
+    private List<String> roomNames = new ArrayList<>();
+
     public TimeSlotDTO() {}
 
     public TimeSlotDTO(LocalDateTime startDatetime, LocalDateTime endDatetime, String label,
@@ -30,6 +37,11 @@ public class TimeSlotDTO {
         this.therapistName = therapistName;
         this.treatmentRoomId = treatmentRoomId;
         this.roomName = roomName;
+        
+        this.therapistIds.add(therapistId);
+        this.therapistNames.add(therapistName);
+        this.treatmentRoomIds.add(treatmentRoomId);
+        this.roomNames.add(roomName);
     }
 
     public LocalDateTime getStartDatetime() { return startDatetime; }
@@ -52,4 +64,16 @@ public class TimeSlotDTO {
 
     public String getRoomName() { return roomName; }
     public void setRoomName(String roomName) { this.roomName = roomName; }
+
+    public List<Integer> getTherapistIds() { return therapistIds; }
+    public void setTherapistIds(List<Integer> therapistIds) { this.therapistIds = therapistIds; }
+
+    public List<String> getTherapistNames() { return therapistNames; }
+    public void setTherapistNames(List<String> therapistNames) { this.therapistNames = therapistNames; }
+
+    public List<Integer> getTreatmentRoomIds() { return treatmentRoomIds; }
+    public void setTreatmentRoomIds(List<Integer> treatmentRoomIds) { this.treatmentRoomIds = treatmentRoomIds; }
+
+    public List<String> getRoomNames() { return roomNames; }
+    public void setRoomNames(List<String> roomNames) { this.roomNames = roomNames; }
 }

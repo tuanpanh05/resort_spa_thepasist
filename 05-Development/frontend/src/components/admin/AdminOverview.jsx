@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   AlertTriangle,
+  FileSpreadsheet,
+  FileText,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import AdminStats from "./AdminStats";
 import { adminApi, paymentApi } from "../../api";
@@ -40,6 +44,13 @@ export default function AdminOverview({
   const [revenueLoading, setRevenueLoading] = useState(true);
   const [hoveredMonth, setHoveredMonth] = useState(null);
 
+  // AI Forecast state variables
+  const [dashboardMode, setDashboardMode] = useState("historical"); // "historical" or "forecast"
+  const [forecastMonths, setForecastMonths] = useState(3);
+  const [forecastData, setForecastData] = useState(null);
+  const [forecastLoading, setForecastLoading] = useState(false);
+  const [hoveredForecastMonth, setHoveredForecastMonth] = useState(null);
+
   useEffect(() => {
     adminApi.getAllUsers()
       .then((users) => {
@@ -65,6 +76,53 @@ export default function AdminOverview({
         setRevenueLoading(false);
       });
   }, [selectedYear]);
+
+  useEffect(() => {
+    if (dashboardMode === "forecast") {
+      setForecastLoading(true);
+      paymentApi.getRevenueForecast(forecastMonths)
+        .then((data) => {
+          setForecastData(data);
+          setForecastLoading(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching revenue forecast:", err);
+          setForecastLoading(false);
+        });
+    }
+  }, [dashboardMode, forecastMonths]);
+
+  const handleExportExcel = async () => {
+    try {
+      const blob = await paymentApi.exportRevenueExcel(selectedYear);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `BaoCaoVanHanh_${selectedYear}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Lỗi khi xuất Excel: " + err.message);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      const blob = await paymentApi.exportRevenuePdf(selectedYear);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `BaoCaoVanHanh_${selectedYear}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Lỗi khi xuất PDF: " + err.message);
+    }
+  };
 
 
 
@@ -129,34 +187,82 @@ export default function AdminOverview({
       {/* Revenue Analytics Section */}
       <div className="bg-white border border-primary-100 p-6 space-y-6">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-primary-50">
-          <div className="text-left">
-            <h3 className="font-serif text-base font-bold text-sage-950 uppercase tracking-wider">
-              Biểu Đồ Phân Tích Doanh Thu
-            </h3>
-            <p className="text-[10px] text-sage-400 mt-1 uppercase font-mono tracking-wider">
-              Theo Gói Dịch Vụ, Spa và Thực Phẩm
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">Năm thống kê:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="text-xs bg-[#f5f5f0] border border-primary-200 px-2 py-1.5 focus:outline-none font-bold text-sage-950 uppercase tracking-wide cursor-pointer"
+          <div className="flex items-center space-x-6">
+            <button
+              onClick={() => setDashboardMode("historical")}
+              className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 cursor-pointer transition-all duration-150 ${
+                dashboardMode === "historical"
+                  ? "border-[#5c6d50] text-sage-950"
+                  : "border-transparent text-sage-400 hover:text-sage-600"
+              }`}
             >
-              <option value={2025}>Năm 2025</option>
-              <option value={2026}>Năm 2026</option>
-              <option value={2027}>Năm 2027</option>
-            </select>
+              Phân Tích Lịch Sử
+            </button>
+            <button
+              onClick={() => setDashboardMode("forecast")}
+              className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 cursor-pointer transition-all duration-150 ${
+                dashboardMode === "forecast"
+                  ? "border-[#5c6d50] text-sage-950"
+                  : "border-transparent text-sage-400 hover:text-sage-600"
+              }`}
+            >
+              ✨ AI Dự Báo Doanh Thu
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {dashboardMode === "historical" ? (
+              <>
+                <button
+                  onClick={handleExportExcel}
+                  className="flex items-center space-x-1 text-[10px] bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 font-bold uppercase tracking-wide cursor-pointer shadow-sm transition-all duration-150 border border-emerald-600"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  <span>Xuất Excel</span>
+                </button>
+                <button
+                  onClick={handleExportPdf}
+                  className="flex items-center space-x-1 text-[10px] bg-red-700 hover:bg-red-800 text-white px-3 py-1.5 font-bold uppercase tracking-wide cursor-pointer shadow-sm transition-all duration-150 border border-red-600"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Xuất PDF</span>
+                </button>
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">Năm thống kê:</span>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    className="text-xs bg-[#f5f5f0] border border-primary-200 px-2 py-1.5 focus:outline-none font-bold text-sage-950 uppercase tracking-wide cursor-pointer"
+                  >
+                    <option value={2025}>Năm 2025</option>
+                    <option value={2026}>Năm 2026</option>
+                    <option value={2027}>Năm 2027</option>
+                  </select>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] text-sage-400 font-bold uppercase tracking-wider">Thời gian dự báo:</span>
+                <select
+                  value={forecastMonths}
+                  onChange={(e) => setForecastMonths(parseInt(e.target.value))}
+                  className="text-xs bg-[#f5f5f0] border border-primary-200 px-2 py-1.5 focus:outline-none font-bold text-sage-950 uppercase tracking-wide cursor-pointer"
+                >
+                  <option value={3}>3 Tháng tới</option>
+                  <option value={6}>6 Tháng tới</option>
+                  <option value={12}>12 Tháng tới</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
-        {revenueLoading ? (
-          <div className="h-64 flex items-center justify-center text-sage-500 font-light text-xs">
-            Đang tải dữ liệu doanh thu...
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {dashboardMode === "historical" ? (
+          revenueLoading ? (
+            <div className="h-64 flex items-center justify-center text-sage-500 font-light text-xs">
+              Đang tải dữ liệu doanh thu...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Donut Chart - Breakdown */}
             <div className="flex flex-col items-center justify-center p-6 border border-primary-100 bg-[#f5f5f0]/30">
               <h4 className="text-xs font-bold text-sage-900 uppercase tracking-wider mb-6 text-center">
@@ -374,8 +480,164 @@ export default function AdminOverview({
               </div>
             </div>
           </div>
-        )}
-      </div>
+        )
+      ) : (
+        forecastLoading ? (
+          <div className="h-64 flex items-center justify-center text-sage-500 font-light text-xs">
+            Đang phân tích và dự báo doanh thu bằng AI...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left side: Forecast Chart (Col span 2) */}
+            <div className="lg:col-span-2 flex flex-col p-6 border border-primary-100 bg-[#f5f5f0]/30 relative">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-xs font-bold text-sage-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <TrendingUp className="h-4 w-4 text-[#5c6d50]" />
+                  Doanh Thu Dự Báo Tương Lai
+                </h4>
+                <div className="flex items-center space-x-4 text-[9px] text-sage-400 font-bold uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 bg-[#5c6d50]/70 border border-[#5c6d50] border-dashed block shrink-0" />
+                    <span>Dự báo Phòng</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 bg-[#7fa192]/70 border border-[#7fa192] border-dashed block shrink-0" />
+                    <span>Dự báo Spa</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 bg-[#dcae68]/70 border border-[#dcae68] border-dashed block shrink-0" />
+                    <span>Dự báo Ẩm thực</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-44 w-full flex items-end justify-around px-4 border-b border-primary-150 pb-2 relative">
+                {!forecastData || !forecastData.forecastData || forecastData.forecastData.length === 0 ? (
+                  <div className="absolute inset-0 flex items-center justify-center text-sage-500 font-light text-xs">
+                    Chưa có dữ liệu dự báo.
+                  </div>
+                ) : (
+                  (() => {
+                    const fData = forecastData.forecastData;
+                    const maxForecastTotal = fData.reduce((max, item) => {
+                      const val = (item.roomRevenue || 0) + (item.spaRevenue || 0) + (item.foodRevenue || 0);
+                      return val > max ? val : max;
+                    }, 0) || 1;
+
+                    return fData.map((item, idx) => {
+                      const r = item.roomRevenue || 0;
+                      const s = item.spaRevenue || 0;
+                      const f = item.foodRevenue || 0;
+                      const tot = r + s + f;
+                      const heightPercent = (tot / maxForecastTotal) * 100;
+                      const isHovered = hoveredForecastMonth === idx;
+
+                      return (
+                        <div
+                          key={idx}
+                          className="flex flex-col items-center justify-end h-full z-10 w-[12%] group relative cursor-pointer"
+                          onMouseEnter={() => setHoveredForecastMonth(idx)}
+                          onMouseLeave={() => setHoveredForecastMonth(null)}
+                        >
+                          {/* Stacked Bar with dashed border to signify prediction */}
+                          <div
+                            className="w-full flex flex-col justify-end bg-transparent transition-all duration-300 relative border border-dashed border-[#5c6d50]/40"
+                            style={{ height: `${Math.max(heightPercent, 2)}%`, minHeight: "6px" }}
+                          >
+                            {tot > 0 ? (
+                              <>
+                                <div
+                                  style={{ height: `${(f / tot) * 100}%` }}
+                                  className="w-full bg-[#dcae68]/70 border-b border-dashed border-white/20"
+                                />
+                                <div
+                                  style={{ height: `${(s / tot) * 100}%` }}
+                                  className="w-full bg-[#7fa192]/70 border-b border-dashed border-white/20"
+                                />
+                                <div
+                                  style={{ height: `${(r / tot) * 100}%` }}
+                                  className="w-full bg-[#5c6d50]/70"
+                                />
+                              </>
+                            ) : (
+                              <div className="w-full h-1 bg-sage-200" />
+                            )}
+                          </div>
+                          {/* Label */}
+                          <span className="text-[9px] text-sage-500 font-bold mt-1.5 uppercase font-mono tracking-tight whitespace-nowrap">
+                            {item.label?.split(" ")[1] || item.label}
+                          </span>
+
+                          {/* Hover Tooltip */}
+                          {isHovered && tot > 0 && (
+                            <div className="absolute bottom-full mb-2 bg-sage-950 text-white p-3 shadow-xl z-50 text-[10px] w-48 pointer-events-none border border-primary-800 text-left">
+                              <p className="font-bold border-b border-white/20 pb-1 mb-1.5 uppercase font-serif tracking-wider flex items-center gap-1">
+                                <Sparkles className="h-3 w-3 text-amber-300" />
+                                {item.label} (Dự kiến)
+                              </p>
+                              <div className="space-y-1 font-light">
+                                <div className="flex justify-between">
+                                  <span className="opacity-80">Gói Villa:</span>
+                                  <span className="font-bold text-[#b4cfa9]">{r.toLocaleString("vi-VN")} đ</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="opacity-80">Spa:</span>
+                                  <span className="font-bold text-[#a0cfbc]">{s.toLocaleString("vi-VN")} đ</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="opacity-80">Ẩm thực:</span>
+                                  <span className="font-bold text-[#ffd79d]">{f.toLocaleString("vi-VN")} đ</span>
+                                </div>
+                                <div className="flex justify-between border-t border-white/20 pt-1 mt-1 font-bold text-amber-300">
+                                  <span>Tổng dự kiến:</span>
+                                  <span>{tot.toLocaleString("vi-VN")} đ</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()
+                )}
+              </div>
+              
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-[9px] bg-primary-100/70 border border-primary-200 text-[#5c6d50] px-2 py-0.5 font-semibold font-mono tracking-wide uppercase">
+                  Phương pháp: {forecastData?.methodUsed || "AI Engine"}
+                </span>
+                <span className="text-[9px] text-sage-400 italic">
+                  * Thể hiện dưới dạng cột đứt nét để phân biệt với dữ liệu thực tế
+                </span>
+              </div>
+            </div>
+
+            {/* Right side: AI Analysis */}
+            <div className="flex flex-col p-6 border border-sage-200/60 bg-[#5c6d50]/5 relative justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-sage-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-[#5c6d50]" />
+                  Đánh Giá Xu Hướng AI
+                </h4>
+                <div className="text-xs text-sage-800 leading-relaxed font-light text-left overflow-y-auto max-h-48 pr-1 custom-scrollbar">
+                  {forecastData?.aiAnalysis ? (
+                    <p className="whitespace-pre-line italic">
+                      "{forecastData.aiAnalysis}"
+                    </p>
+                  ) : (
+                    <p className="text-sage-400 italic">
+                      Không có phân tích từ AI khả dụng.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-sage-200/40 text-[9px] text-sage-450 uppercase font-mono tracking-wider text-left">
+                Hệ thống phân tích Ngũ Sơn
+              </div>
+            </div>
+          </div>
+        )
+      )}</div>
 
       {/* Active alerts log feed */}
       <div className="bg-white border border-primary-100 p-6 space-y-4">

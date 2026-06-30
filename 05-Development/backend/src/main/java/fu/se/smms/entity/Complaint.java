@@ -35,6 +35,18 @@ public class Complaint {
     @Column(name = "feedback", columnDefinition = "NVARCHAR(MAX)")
     private String feedback;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_staff_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private User assignedStaff;
+
+    @Column(name = "assigned_staff_name", columnDefinition = "NVARCHAR(255)")
+    private String assignedStaffName;
+
+    @Column(name = "assigned_staff_phone", length = 50)
+    private String assignedStaffPhone;
+
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -107,5 +119,39 @@ public class Complaint {
 
     public void setFeedback(String feedback) {
         this.feedback = feedback;
+    }
+
+    public User getAssignedStaff() {
+        return assignedStaff;
+    }
+
+    public void setAssignedStaff(User assignedStaff) {
+        this.assignedStaff = assignedStaff;
+    }
+
+    public String getAssignedStaffName() {
+        return assignedStaffName;
+    }
+
+    public void setAssignedStaffName(String assignedStaffName) {
+        this.assignedStaffName = assignedStaffName;
+    }
+
+    public String getAssignedStaffPhone() {
+        return assignedStaffPhone;
+    }
+
+    public void setAssignedStaffPhone(String assignedStaffPhone) {
+        this.assignedStaffPhone = assignedStaffPhone;
+    }
+
+    @Transient
+    public Integer getUserId() {
+        return user != null ? user.getUserId() : null;
+    }
+
+    @Transient
+    public Integer getAssignedStaffId() {
+        return assignedStaff != null ? assignedStaff.getUserId() : null;
     }
 }

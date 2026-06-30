@@ -511,61 +511,60 @@ VALUES
     (N'Nhà Sàn Cộng Đồng Đông Sơn',  9000000.00, 25, 250);
 GO
 
--- 4.4 Rooms
 -- Type 1: Bungalow Gỗ Hướng Suối (10 rooms)
 INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
-(1, 'BG-101', 'AVAILABLE'),
-(1, 'BG-102', 'AVAILABLE'),
-(1, 'BG-103', 'AVAILABLE'),
-(1, 'BG-104', 'AVAILABLE'),
-(1, 'BG-105', 'AVAILABLE'),
-(1, 'BG-106', 'AVAILABLE'),
-(1, 'BG-107', 'AVAILABLE'),
-(1, 'BG-108', 'AVAILABLE'),
-(1, 'BG-109', 'AVAILABLE'),
-(1, 'BG-110', 'AVAILABLE');
+(1, '#S101', 'AVAILABLE'),
+(1, '#S102', 'AVAILABLE'),
+(1, '#S103', 'AVAILABLE'),
+(1, '#S104', 'AVAILABLE'),
+(1, '#S105', 'AVAILABLE'),
+(1, '#S106', 'AVAILABLE'),
+(1, '#S107', 'AVAILABLE'),
+(1, '#S108', 'AVAILABLE'),
+(1, '#S109', 'AVAILABLE'),
+(1, '#S110', 'AVAILABLE');
 
 -- Type 2: Bungalow Đá Cuội Bên Rừng (10 rooms)
 INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
-(2, 'BD-101', 'AVAILABLE'),
-(2, 'BD-102', 'AVAILABLE'),
-(2, 'BD-103', 'AVAILABLE'),
-(2, 'BD-104', 'AVAILABLE'),
-(2, 'BD-105', 'AVAILABLE'),
-(2, 'BD-106', 'AVAILABLE'),
-(2, 'BD-107', 'AVAILABLE'),
-(2, 'BD-108', 'AVAILABLE'),
-(2, 'BD-109', 'AVAILABLE'),
-(2, 'BD-110', 'AVAILABLE');
+(2, '#V101', 'AVAILABLE'),
+(2, '#V102', 'AVAILABLE'),
+(2, '#V103', 'AVAILABLE'),
+(2, '#V104', 'AVAILABLE'),
+(2, '#V105', 'AVAILABLE'),
+(2, '#V106', 'AVAILABLE'),
+(2, '#V107', 'AVAILABLE'),
+(2, '#V108', 'AVAILABLE'),
+(2, '#V109', 'AVAILABLE'),
+(2, '#V110', 'AVAILABLE');
 
 -- Type 3: Biệt Thự Đồi Trà Thiền Định (10 rooms)
 INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
-(3, 'BT-101', 'AVAILABLE'),
-(3, 'BT-102', 'AVAILABLE'),
-(3, 'BT-103', 'AVAILABLE'),
-(3, 'BT-104', 'AVAILABLE'),
-(3, 'BT-105', 'AVAILABLE'),
-(3, 'BT-106', 'AVAILABLE'),
-(3, 'BT-107', 'AVAILABLE'),
-(3, 'BT-108', 'AVAILABLE'),
-(3, 'BT-109', 'AVAILABLE'),
-(3, 'BT-110', 'AVAILABLE');
+(3, '#P101', 'AVAILABLE'),
+(3, '#P102', 'AVAILABLE'),
+(3, '#P103', 'AVAILABLE'),
+(3, '#P104', 'AVAILABLE'),
+(3, '#P105', 'AVAILABLE'),
+(3, '#P106', 'AVAILABLE'),
+(3, '#P107', 'AVAILABLE'),
+(3, '#P108', 'AVAILABLE'),
+(3, '#P109', 'AVAILABLE'),
+(3, '#P110', 'AVAILABLE');
 
 -- Type 4: Biệt Thự Gia Đình Sen Trắng (5 rooms)
 INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
-(4, 'BS-101', 'AVAILABLE'),
-(4, 'BS-102', 'AVAILABLE'),
-(4, 'BS-103', 'AVAILABLE'),
-(4, 'BS-104', 'AVAILABLE'),
-(4, 'BS-105', 'AVAILABLE');
+(4, '#F101', 'AVAILABLE'),
+(4, '#F102', 'AVAILABLE'),
+(4, '#F103', 'AVAILABLE'),
+(4, '#F104', 'AVAILABLE'),
+(4, '#F105', 'AVAILABLE');
 
 -- Type 5: Nhà Sàn Cộng Đồng Đông Sơn (5 rooms)
 INSERT INTO dbo.room (room_type_id, room_number, status) VALUES
-(5, 'NS-101', 'AVAILABLE'),
-(5, 'NS-102', 'AVAILABLE'),
-(5, 'NS-103', 'AVAILABLE'),
-(5, 'NS-104', 'AVAILABLE'),
-(5, 'NS-105', 'AVAILABLE');
+(5, '#NS101', 'AVAILABLE'),
+(5, '#NS102', 'AVAILABLE'),
+(5, '#NS103', 'AVAILABLE'),
+(5, '#NS104', 'AVAILABLE'),
+(5, '#NS105', 'AVAILABLE');
 GO
 
 -- 4.5 Room Bookings
@@ -578,8 +577,8 @@ GO
 -- 4.6 Booking Details
 INSERT INTO dbo.room_booking_detail (booking_id, room_id, price_at_booking)
 VALUES
-    (1, (SELECT room_id FROM dbo.room WHERE room_number = 'BG-101'), 3200000.00),
-    (2, (SELECT room_id FROM dbo.room WHERE room_number = 'BG-102'), 3200000.00);
+    (1, (SELECT room_id FROM dbo.room WHERE room_number = '#S101'), 3200000.00),
+    (2, (SELECT room_id FROM dbo.room WHERE room_number = '#S102'), 3200000.00);
 GO
 
 -- 4.7 Spa Services

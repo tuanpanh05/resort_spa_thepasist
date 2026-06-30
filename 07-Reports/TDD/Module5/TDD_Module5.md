@@ -2,16 +2,19 @@
 
 ## Đặc tả Kiểm thử Hướng Phát triển: Consolidated Checkout & Analytics
 
-* **Document ID**: SMMS-PAY-TDD-005
-* **Version**: 1.0
-* **Date**: 2026-06-26
-* **Status**: Approved
-* **Standard**: ISO/IEC/IEEE 29119-3:2021 aligned
-* **Author**: Student 5 — Full-stack Engineer
-* **Reviewed by**: Tech Lead — Approved
-* **DPO Sign-off**: Approved — 2026-06-26 — DPO Team
-* **Approved by**: Principal Architect
-* **Classification**: Internal — Confidential
+| Field              | Value                            |
+| :-------------------| :---------------------------------|
+| **Document ID**    | SMMS-PAY-IMP-005                 |
+| **Version**        | 1.0                              |
+| **Date**           | 2026-06-26                       |
+| **Status**         | Approved                         |
+| **Document Owner** | Pham Anh Tuan                    |
+| **Author**         | Pham Anh Tuan                    |
+| **Reviewed by**    | All Team                         |
+| **DPO Sign-off**   | Approved — 2026-06-26 — All Team |
+| **Approved by**    | Hoang Tuan Anh                   |
+| **Last Review**    | 2026-06-26                       |
+| **Based on EDS**   | v2.0                             |
 
 ---
 

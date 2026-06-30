@@ -1,6 +1,6 @@
 ========================================
-Email: hoanganh@imail.edu.vn
+Email: anhpham@imail.edu.vn
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 726265
-Time: 2026-06-27T12:45:05.282956500
+OTP Code: 964927
+Time: 2026-06-29T12:09:43.990880100
 ========================================

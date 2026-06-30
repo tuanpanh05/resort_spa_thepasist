@@ -121,5 +121,11 @@ public class UserController {
         String message = String.format("Đồng bộ lịch thành công! Đã cập nhật %d lịch trình lên tài khoản Google Calendar (%s).", syncedCount, calendarId);
         return ResponseEntity.ok(Map.of("message", message, "syncedCount", String.valueOf(syncedCount)));
     }
+
+    /** GET /users/staff — Lấy danh sách nhân sự (để phân công hỗ trợ) */
+    @GetMapping("/staff")
+    public ResponseEntity<List<UserProfileDTO>> getStaffList() {
+        return ResponseEntity.ok(userService.getAllStaffUsers());
+    }
 }
 

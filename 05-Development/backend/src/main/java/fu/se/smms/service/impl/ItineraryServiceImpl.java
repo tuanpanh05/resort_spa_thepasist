@@ -166,6 +166,12 @@ public class ItineraryServiceImpl {
                 spaEvent.setEndTime(spa.getEndDatetime());
                 spaEvent.setStatus(spa.getStatus());
                 spaEvent.setPrice(spa.getPriceAtBooking());
+                if (spa.getTherapist() != null) {
+                    spaEvent.setTherapistName(spa.getTherapist().getFullName());
+                }
+                if (spa.getTreatmentRoom() != null) {
+                    spaEvent.setRoomName(spa.getTreatmentRoom().getRoomName());
+                }
                 timeline.add(spaEvent);
             }
         } catch (Exception e) {

@@ -29,4 +29,13 @@ public interface RevenueService {
      * @return      RevenueDashboardDTO with utilization data populated
      */
     RevenueDashboardDTO getOccupancyReport(Integer year, Integer month);
+
+    /**
+     * Generate AI-assisted or statistical revenue forecast for N future months.
+     *
+     * @param months Number of future months to forecast
+     * @return       RevenueForecastDTO with predicted values and AI insights
+     */
+    fu.se.smms.dto.RevenueForecastDTO getRevenueForecast(Integer months);
 }
+

@@ -13,7 +13,7 @@ import {
   staffInitialPayments as initialPayments,
   staffInitialChatMessages
 } from '../mockData';
-import { complaintsApi, shiftApi, userApi } from '../api';
+import { complaintsApi, shiftApi, userApi, staffApi, incurredServicesApi } from '../api';
 
 // Import sub-components
 import OperationLayout from '../layouts/OperationLayout';
@@ -90,6 +90,29 @@ export default function StaffDashboard() {
     complaintsApi.getAllComplaints()
       .then(list => setComplaints(list || []))
       .catch(err => console.error("Lỗi khi tải khiếu nại:", err));
+  }, []);
+
+  // Load incurred services from backend database
+  useEffect(() => {
+    incurredServicesApi.getAllServices()
+      .then(list => setServices(list || []))
+      .catch(err => console.error("Lỗi khi tải dịch vụ phát sinh:", err));
+  }, []);
+
+  // Load rooms from backend database and map to frontend format
+  useEffect(() => {
+    staffApi.getVillas()
+      .then(list => {
+        const mapped = (list || []).map(r => ({
+          id: r.roomNumber,
+          roomNumber: r.roomNumber,
+          roomId: r.roomId,
+          status: (r.status || "").toLowerCase(),
+          type: r.roomType?.typeName || "Villa",
+        }));
+        setRooms(mapped);
+      })
+      .catch(err => console.error("Lỗi khi tải danh sách phòng:", err));
   }, []);
 
   // Master React States for entities

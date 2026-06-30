@@ -1,4 +1,4 @@
-﻿/**
+/**
  * API utility for making authenticated requests to the backend.
  * Base URL: http://localhost:8080/api
  */
@@ -31,10 +31,30 @@ export async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || `Lá»—i ${response.status}: ${response.statusText}`);
+    throw new Error(data.message || `Lỗi ${response.status}: ${response.statusText}`);
   }
 
   return data;
+}
+
+/**
+ * Generic API request wrapper for downloading binary files (blobs) with auth.
+ */
+export async function apiRequestBlob(path, options = {}) {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...(options.headers || {}),
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || `Lỗi ${response.status}: ${response.statusText}`);
+  }
+
+  return response.blob();
 }
 
 // ============================================================
@@ -120,17 +140,20 @@ export const userApi = {
       body: JSON.stringify({ currentPassword, newPassword }),
     }),
 
-  /** GET /users/me/bookings â€” Lá»‹ch sá»­ Ä‘áº·t phÃ²ng */
+  /** GET /users/me/bookings — Lịch sử đặt phòng */
   getMyBookings: () => apiRequest("/users/me/bookings"),
 
-  /** GET /users/me/spa-bookings â€” Lá»‹ch háº¹n Spa */
+  /** GET /users/me/spa-bookings — Lịch hẹn Spa */
   getMySpaBookings: () => apiRequest("/users/me/spa-bookings"),
 
-  /** POST /users/me/sync-calendar â€” KÃ­ch hoáº¡t Ä‘á»“ng bá»™ hÃ³a lá»‹ch thá»§ cÃ´ng */
+  /** POST /users/me/sync-calendar — Kích hoạt đồng bộ hóa lịch thủ công */
   syncCalendar: () =>
     apiRequest("/users/me/sync-calendar", {
       method: "POST",
     }),
+
+  /** GET /users/staff — Lấy danh sách nhân sự (để phân công hỗ trợ) */
+  getStaffList: () => apiRequest("/users/staff"),
 };
 
 
@@ -146,10 +169,10 @@ export const adminApi = {
       body: JSON.stringify(userData),
     }),
 
-  updateUser: (userId, role, status) =>
+  updateUser: (userId, role, status, specialty) =>
     apiRequest(`/admin/users/${userId}`, {
       method: "PUT",
-      body: JSON.stringify({ role, status }),
+      body: JSON.stringify({ role, status, specialty }),
     }),
 
   deleteUser: (userId) =>
@@ -379,8 +402,25 @@ export const paymentApi = {
     return apiRequest(url);
   },
 
+  getRevenueForecast: (months = 3) => {
+    return apiRequest(`/revenue/forecast?months=${months}`);
+  },
+
   getOccupancyReport: (year) => 
+
     apiRequest(`/revenue/occupancy-report?year=${year}`),
+
+  exportRevenuePdf: (year, month = null) => {
+    let url = `/revenue/export-pdf?year=${year}`;
+    if (month) url += `&month=${month}`;
+    return apiRequestBlob(url);
+  },
+
+  exportRevenueExcel: (year, month = null) => {
+    let url = `/revenue/export-excel?year=${year}`;
+    if (month) url += `&month=${month}`;
+    return apiRequestBlob(url);
+  },
 
   // Manager Feedback Moderation
   getAllFeedbacks: (includeToxic = false) =>
@@ -414,8 +454,8 @@ export const spaApi = {
   },
 
   /** GET /v1/spa-bookings/available-slots - khung gio trong (KTV + phong da san sang) */
-  getAvailableSlots: (spaServiceId, date) =>
-    apiRequest(`/v1/spa-bookings/available-slots?spaServiceId=${spaServiceId}&date=${date}`),
+  getAvailableSlots: (spaServiceId, date, guestsCount = 1) =>
+    apiRequest(`/v1/spa-bookings/available-slots?spaServiceId=${spaServiceId}&date=${date}&guestsCount=${guestsCount}`),
 };
 
 export const specialistApi = {
@@ -463,7 +503,23 @@ export const complaintsApi = {
       method: "PUT",
       body: JSON.stringify({ feedback }),
     }),
+
+  getComplaintMessages: (id) =>
+    apiRequest(`/complaints/${id}/messages`),
+
+  sendComplaintMessage: (id, content, senderName, senderRole, senderId = null) =>
+    apiRequest(`/complaints/${id}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ content, senderName, senderRole, senderId }),
+    }),
+
+  assignComplaintStaff: (id, staffId, staffName = null, staffPhone = null) =>
+    apiRequest(`/complaints/${id}/assign`, {
+      method: "PUT",
+      body: JSON.stringify({ staffId, staffName, staffPhone }),
+    }),
 };
+
 
 // ============================================================
 // SHIFTS & SWAP REQUESTS APIs
@@ -494,6 +550,23 @@ export const inventoryApi = {
   updateStock: (id, delta) =>
     apiRequest(`/inventory/${id}/stock?delta=${delta}`, {
       method: "PATCH",
+    }),
+};
+
+// ============================================================
+// INCURRED SERVICES APIs
+// ============================================================
+export const incurredServicesApi = {
+  getAllServices: () => apiRequest("/v1/incurred-services"),
+  createServiceOrder: (dto) =>
+    apiRequest("/v1/incurred-services", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+  updateServiceStatus: (id, status) =>
+    apiRequest(`/v1/incurred-services/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
     }),
 };
 

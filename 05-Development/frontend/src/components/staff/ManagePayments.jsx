@@ -448,6 +448,16 @@ export default function ManagePayments() {
                         {formatCurrency(selectedInvoice.foodSubtotal)}
                       </td>
                     </tr>
+                    {selectedInvoice.serviceSubtotal > 0 && (
+                      <tr>
+                        <td className="py-3 font-semibold text-sage-900">
+                          Chi phí Dịch vụ phát sinh khác (Giặt là, Tour,...)
+                        </td>
+                        <td className="py-3 text-right font-bold text-sage-950">
+                          {formatCurrency(selectedInvoice.serviceSubtotal)}
+                        </td>
+                      </tr>
+                    )}
                     <tr>
                       <td className="py-3 text-sage-500 italic">
                         Thuế GTGT & Phí dịch vụ (10%)
@@ -462,7 +472,13 @@ export default function ManagePayments() {
                           Tổng tiền tạm tính (trước giảm)
                         </td>
                         <td className="py-3 px-2 text-right text-sage-600">
-                          {formatCurrency((selectedInvoice.roomSubtotal || 0) + (selectedInvoice.spaSubtotal || 0) + (selectedInvoice.foodSubtotal || 0) + (selectedInvoice.taxAndFees || 0))}
+                          {formatCurrency(
+                            (selectedInvoice.roomSubtotal || 0) +
+                              (selectedInvoice.spaSubtotal || 0) +
+                              (selectedInvoice.foodSubtotal || 0) +
+                              (selectedInvoice.serviceSubtotal || 0) +
+                              (selectedInvoice.taxAndFees || 0)
+                          )}
                         </td>
                       </tr>
                     )}

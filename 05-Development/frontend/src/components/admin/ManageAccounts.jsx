@@ -4,17 +4,31 @@ import SectionHeader from "../ui/SectionHeader";
 import Button from "../ui/Button";
 import { adminApi } from "../../api";
 
-const ROLE_OPTIONS = ["ADMIN", "STAFF", "THERAPIST", "CHEF", "RECEPTIONIST", "MANAGER"];
+const ROLE_OPTIONS = ["ADMIN", "STAFF", "STAFF_TECH", "STAFF_CLEAN", "THERAPIST", "CHEF", "RECEPTIONIST", "MANAGER"];
 const STATUS_OPTIONS = ["ACTIVE", "INACTIVE", "BANNED"];
 
 const ROLE_BADGE = {
   ADMIN: "bg-purple-100 text-purple-800",
   STAFF: "bg-blue-100 text-blue-800",
+  STAFF_TECH: "bg-cyan-100 text-cyan-800",
+  STAFF_CLEAN: "bg-emerald-100 text-emerald-800",
   THERAPIST: "bg-teal-100 text-teal-800",
   CHEF: "bg-orange-100 text-orange-800",
   RECEPTIONIST: "bg-sky-100 text-sky-800",
   MANAGER: "bg-indigo-100 text-indigo-800",
   GUEST: "bg-gray-100 text-gray-600",
+};
+
+const ROLE_DISPLAY = {
+  ADMIN: "Quản trị viên (ADMIN)",
+  STAFF: "Nhân viên vận hành (STAFF)",
+  STAFF_TECH: "Nhân viên kỹ thuật",
+  STAFF_CLEAN: "Nhân viên dọn dẹp",
+  THERAPIST: "Spa trị liệu (THERAPIST)",
+  CHEF: "Đầu bếp (CHEF)",
+  RECEPTIONIST: "Lễ tân (RECEPTIONIST)",
+  MANAGER: "Quản lý (MANAGER)",
+  GUEST: "Khách (GUEST)",
 };
 
 const STATUS_BADGE = {
@@ -56,7 +70,17 @@ export default function ManageAccounts() {
     setError("");
     try {
       const data = await adminApi.getAllUsers();
-      setUsers(data);
+      const mappedUsers = data.map(user => {
+        if (user.role === "STAFF") {
+          if (user.specialty === "TECHNICAL") {
+            return { ...user, role: "STAFF_TECH" };
+          } else if (user.specialty === "CLEANING") {
+            return { ...user, role: "STAFF_CLEAN" };
+          }
+        }
+        return user;
+      });
+      setUsers(mappedUsers);
     } catch (err) {
       setError("Không thể tải danh sách tài khoản: " + err.message);
     } finally {
@@ -80,10 +104,21 @@ export default function ManageAccounts() {
     e.preventDefault();
     setSaving(true);
     setError("");
+
+    let apiRole = formData.role;
+    let apiSpecialty = null;
+    if (formData.role === "STAFF_TECH") {
+      apiRole = "STAFF";
+      apiSpecialty = "TECHNICAL";
+    } else if (formData.role === "STAFF_CLEAN") {
+      apiRole = "STAFF";
+      apiSpecialty = "CLEANING";
+    }
+
     try {
       if (editingUser) {
         // UC03: Update role and status
-        await adminApi.updateUser(editingUser.userId, formData.role, formData.status);
+        await adminApi.updateUser(editingUser.userId, apiRole, formData.status, apiSpecialty);
       } else {
         // UC03: Create new staff account
         if (!formData.password || formData.password.length < 6) {
@@ -96,7 +131,8 @@ export default function ManageAccounts() {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-        }, formData.role);
+          specialty: apiSpecialty,
+        }, apiRole);
       }
       setShowModal(false);
       await fetchUsers();
@@ -111,8 +147,19 @@ export default function ManageAccounts() {
     const newStatus = user.status === "ACTIVE" ? "BANNED" : "ACTIVE";
     const action = newStatus === "BANNED" ? "khóa" : "mở khóa";
     if (!window.confirm(`Bạn có chắc chắn muốn ${action} tài khoản ${user.fullName}?`)) return;
+
+    let apiRole = user.role;
+    let apiSpecialty = null;
+    if (user.role === "STAFF_TECH") {
+      apiRole = "STAFF";
+      apiSpecialty = "TECHNICAL";
+    } else if (user.role === "STAFF_CLEAN") {
+      apiRole = "STAFF";
+      apiSpecialty = "CLEANING";
+    }
+
     try {
-      await adminApi.updateUser(user.userId, user.role, newStatus);
+      await adminApi.updateUser(user.userId, apiRole, newStatus, apiSpecialty);
       await fetchUsers();
     } catch (err) {
       setError(err.message);
@@ -206,7 +253,7 @@ export default function ManageAccounts() {
           >
             <option value="ALL">Tất cả vai trò</option>
             {ROLE_OPTIONS.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{ROLE_DISPLAY[r] || r}</option>
             ))}
           </select>
 
@@ -266,7 +313,7 @@ export default function ManageAccounts() {
                       <td className="py-3 px-4 text-sage-600">{user.email}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${ROLE_BADGE[user.role] || "bg-gray-100 text-gray-600"}`}>
-                          {user.role}
+                          {ROLE_DISPLAY[user.role] || user.role}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -379,7 +426,7 @@ export default function ManageAccounts() {
                   className="w-full px-3 py-2.5 rounded-xl border border-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-800 bg-white"
                 >
                   {ROLE_OPTIONS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
+                    <option key={r} value={r}>{ROLE_DISPLAY[r] || r}</option>
                   ))}
                 </select>
                 <p className="text-xs text-sage-500 mt-1">

@@ -10,6 +10,7 @@ public class InvoiceDTO {
     private BigDecimal roomSubtotal;
     private BigDecimal spaSubtotal;
     private BigDecimal foodSubtotal;
+    private BigDecimal serviceSubtotal;
     private BigDecimal taxAndFees;
     private BigDecimal finalAmount;
     private BigDecimal depositAmount;
@@ -65,6 +66,14 @@ public class InvoiceDTO {
 
     public void setFoodSubtotal(BigDecimal foodSubtotal) {
         this.foodSubtotal = foodSubtotal;
+    }
+
+    public BigDecimal getServiceSubtotal() {
+        return serviceSubtotal;
+    }
+
+    public void setServiceSubtotal(BigDecimal serviceSubtotal) {
+        this.serviceSubtotal = serviceSubtotal;
     }
 
     public BigDecimal getTaxAndFees() {

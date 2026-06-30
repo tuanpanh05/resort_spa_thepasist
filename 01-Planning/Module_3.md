@@ -10,13 +10,13 @@ Module 3 là trái tim vận hành trải nghiệm sức khỏe của resort, ch
 
 ## 2. Chi tiết Yêu cầu Chức năng (Use Cases)
 
-| Mã UC (Đề bài) | Mã UC (SRS Nhóm 3) | Tên Use Case | Mô tả chi tiết hành vi |
-| :--- | :--- | :--- | :--- |
-| **UC11** | UC-12 | Đặt lịch trị liệu trong gói (Schedule Spa/Therapy Session) | Khách hàng đã đặt gói trị liệu tiến hành chọn ngày, giờ để thực hiện các buổi Spa/Therapy có sẵn trong gói của mình. |
-| **UC12** | UC-12 (Hệ thống) | Tự động ghép lịch thông minh (Auto-match Therapist & Room) | Hệ thống tự động truy vấn DB và đề xuất khung giờ khả thi bằng cách ghép cặp đồng thời một Chuyên gia trị liệu trống lịch và một Phòng trị liệu còn trống. |
-| **UC13** | UC-18 | Xem lịch làm việc & Hồ sơ trị liệu (View Daily Schedule & Guest Notes) | Kỹ thuật viên (Therapist) xem lịch làm việc hàng ngày của mình và đọc ghi chú sức khỏe vật lý nhạy cảm (đau cột sống, chấn thương...) của khách hàng mình phụ trách. |
-| **UC14** | UC-19 | Cập nhật trạng thái buổi trị liệu (Update Session Status) | Kỹ thuật viên cập nhật tiến độ của buổi trị liệu (Đã đặt lịch - Scheduled, Đang tiến hành - In Progress, Đã hoàn thành - Completed, Khách không đến - No Show). |
-| **UC15** | UC-08 | Lễ tân đặt thêm dịch vụ Spa ngoài gói (Book Extra Spa Service) | Lễ tân (hoặc chính khách hàng) đặt thêm các dịch vụ Spa trả phí ngoài gói trị liệu chính. Chi phí này tự động đẩy vào hóa đơn tổng (Folio) của Villa khách đang ở. |
+| Mã UC (Đề bài) | Mã UC (SRS Nhóm 3) | Tên Use Case                                                           | Mô tả chi tiết hành vi                                                                                                                                               |
+| :---------------| :-------------------| :-----------------------------------------------------------------------| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **UC11**       | UC-12              | Đặt lịch trị liệu trong gói (Schedule Spa/Therapy Session)             | Khách hàng đã đặt gói trị liệu tiến hành chọn ngày, giờ để thực hiện các buổi Spa/Therapy có sẵn trong gói của mình.                                                 |
+| **UC12**       | UC-12 (Hệ thống)   | Tự động ghép lịch thông minh (Auto-match Therapist & Room)             | Hệ thống tự động truy vấn DB và đề xuất khung giờ khả thi bằng cách ghép cặp đồng thời một Chuyên gia trị liệu trống lịch và một Phòng trị liệu còn trống.           |
+| **UC13**       | UC-18              | Xem lịch làm việc & Hồ sơ trị liệu (View Daily Schedule & Guest Notes) | Kỹ thuật viên (Therapist) xem lịch làm việc hàng ngày của mình và đọc ghi chú sức khỏe vật lý nhạy cảm (đau cột sống, chấn thương...) của khách hàng mình phụ trách. |
+| **UC14**       | UC-19              | Cập nhật trạng thái buổi trị liệu (Update Session Status)              | Kỹ thuật viên cập nhật tiến độ của buổi trị liệu (Đã đặt lịch - Scheduled, Đang tiến hành - In Progress, Đã hoàn thành - Completed, Khách không đến - No Show).      |
+| **UC15**       | UC-08              | Lễ tân đặt thêm dịch vụ Spa ngoài gói (Book Extra Spa Service)         | Lễ tân (hoặc chính khách hàng) đặt thêm các dịch vụ Spa trả phí ngoài gói trị liệu chính. Chi phí này tự động đẩy vào hóa đơn tổng (Folio) của Villa khách đang ở.   |
 
 ---
 

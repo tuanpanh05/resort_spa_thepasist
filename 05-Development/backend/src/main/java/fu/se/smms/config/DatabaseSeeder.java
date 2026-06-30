@@ -67,9 +67,46 @@ public class DatabaseSeeder implements CommandLineRunner {
                     );
                 END
                 """);
+
+            // Migration: Add columns to complaints if they don't exist
+            jdbcTemplate.execute("""
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.complaints') AND name = 'assigned_staff_id')
+                BEGIN
+                    ALTER TABLE dbo.complaints ADD assigned_staff_id INT NULL REFERENCES dbo.users(user_id);
+                END
+                """);
+            jdbcTemplate.execute("""
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.complaints') AND name = 'assigned_staff_name')
+                BEGIN
+                    ALTER TABLE dbo.complaints ADD assigned_staff_name NVARCHAR(255) NULL;
+                END
+                """);
+            jdbcTemplate.execute("""
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.complaints') AND name = 'assigned_staff_phone')
+                BEGIN
+                    ALTER TABLE dbo.complaints ADD assigned_staff_phone VARCHAR(50) NULL;
+                END
+                """);
+
+            System.out.println("[DB Seeder] Creating complaint_messages table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.complaint_messages', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.complaint_messages (
+                        id           INT           IDENTITY(1,1) PRIMARY KEY,
+                        complaint_id INT           NOT NULL REFERENCES dbo.complaints(id) ON DELETE CASCADE,
+                        sender_id    INT           NULL REFERENCES dbo.users(user_id) ON DELETE SET NULL,
+                        sender_name  NVARCHAR(255) NOT NULL,
+                        sender_role  VARCHAR(50)   NOT NULL,
+                        content      NVARCHAR(MAX) NOT NULL,
+                        created_at   DATETIME2     NOT NULL DEFAULT GETDATE()
+                    );
+                END
+                """);
         } catch (Exception e) {
-            System.err.println("[DB Seeder] Warning: Could not create complaints table: " + e.getMessage());
+            System.err.println("[DB Seeder] Warning: Could not handle complaints database setup: " + e.getMessage());
         }
+
 
         try {
             System.out.println("[DB Seeder] Creating restaurant_table if not exists...");
@@ -235,6 +272,30 @@ public class DatabaseSeeder implements CommandLineRunner {
         seedUser("yoga@nguson.com", "HLV Yoga Bờ Biển", "0900000005", "THERAPIST", "YOGA");
         seedUser("physio@nguson.com", "BS Vật Lý Trị Liệu", "0900000006", "THERAPIST", "PHYSIO");
 
+        // Technical Staff (10 accounts)
+        seedUser("staff_tech1@nguson.vn", "Nguyễn Văn Hùng - Kỹ Thuật & Điện Nước", "0912347101", "STAFF", "TECHNICAL");
+        seedUser("staff_tech2@nguson.vn", "Trần Anh Tuấn - Kỹ Thuật Điện Lạnh", "0912347102", "STAFF", "TECHNICAL");
+        seedUser("staff_tech3@nguson.vn", "Phạm Minh Hoàng - Bảo Trì Thiết Bị", "0912347103", "STAFF", "TECHNICAL");
+        seedUser("staff_tech4@nguson.vn", "Lê Hoàng Long - Kỹ Thuật Viên Hạ Tầng", "0912347104", "STAFF", "TECHNICAL");
+        seedUser("staff_tech5@nguson.vn", "Nguyễn Tiến Đạt - Kỹ Thuật Hồ Bơi", "0912347105", "STAFF", "TECHNICAL");
+        seedUser("staff_tech6@nguson.vn", "Vũ Anh Đức - Bảo Trì Hệ Thống", "0912347106", "STAFF", "TECHNICAL");
+        seedUser("staff_tech7@nguson.vn", "Đặng Văn Sơn - Kỹ Thuật Âm Thanh Ánh Sáng", "0912347107", "STAFF", "TECHNICAL");
+        seedUser("staff_tech8@nguson.vn", "Hoàng Quốc Việt - Sửa Chữa Đồ Gỗ", "0912347108", "STAFF", "TECHNICAL");
+        seedUser("staff_tech9@nguson.vn", "Nguyễn Duy Anh - Kỹ Thuật Mạng & Viễn Thông", "0912347109", "STAFF", "TECHNICAL");
+        seedUser("staff_tech10@nguson.vn", "Bùi Thanh Tùng - Kỹ Thuật Tổng Hợp", "0912347110", "STAFF", "TECHNICAL");
+
+        // Cleaning Staff (10 accounts)
+        seedUser("staff_clean1@nguson.vn", "Nguyễn Thị Hoa - Buồng Phòng Ca Sáng", "0912347201", "STAFF", "CLEANING");
+        seedUser("staff_clean2@nguson.vn", "Lê Thị Mai - Dọn Dẹp Villa", "0912347202", "STAFF", "CLEANING");
+        seedUser("staff_clean3@nguson.vn", "Trần Thị Đào - Dọn Dẹp Khu Vực Chung", "0912347203", "STAFF", "CLEANING");
+        seedUser("staff_clean4@nguson.vn", "Phạm Thị Cúc - Buồng Phòng Ca Chiều", "0912347204", "STAFF", "CLEANING");
+        seedUser("staff_clean5@nguson.vn", "Nguyễn Thị Lan - Giặt Ủi & Vệ Sinh", "0912347205", "STAFF", "CLEANING");
+        seedUser("staff_clean6@nguson.vn", "Vũ Thị Hồng - Dọn Dẹp Khu Spa", "0912347206", "STAFF", "CLEANING");
+        seedUser("staff_clean7@nguson.vn", "Hoàng Thị Tuyết - Vệ Sinh Ngoại Cảnh", "0912347207", "STAFF", "CLEANING");
+        seedUser("staff_clean8@nguson.vn", "Đỗ Thị Thảo - Buồng Phòng Deluxe", "0912347208", "STAFF", "CLEANING");
+        seedUser("staff_clean9@nguson.vn", "Bùi Thị Dung - Dọn Dẹp Khu Nhà Hàng", "0912347209", "STAFF", "CLEANING");
+        seedUser("staff_clean10@nguson.vn", "Nguyễn Thị Kim - Buồng Phòng Ca Tối", "0912347210", "STAFF", "CLEANING");
+
         try {
             // Check if database is already seeded to avoid losing user data
             Integer existingRooms = 0;
@@ -288,32 +349,27 @@ public class DatabaseSeeder implements CommandLineRunner {
 
             if (woodBungId != null && pebbleBungId != null && teaVillaId != null && lotusVillaId != null && donSanId != null && valley50Id != null) {
                 for (int i = 1; i <= 10; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", woodBungId, String.format("BG-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", woodBungId, String.format("#S%03d", 100 + i));
                 }
 
-                // 10 Bungalow ÄÃ¡ Cuá»™i BÃªn Rá»«ng (BD-101 to BD-110)
                 for (int i = 1; i <= 10; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", pebbleBungId, String.format("BD-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", pebbleBungId, String.format("#V%03d", 100 + i));
                 }
 
-                // 10 Biá»‡t Thá»± Äá»“i TrÃ  Thiá»n Äá»‹nh (BT-101 to BT-110)
                 for (int i = 1; i <= 10; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", teaVillaId, String.format("BT-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", teaVillaId, String.format("#P%03d", 100 + i));
                 }
 
-                // 5 Biá»‡t Thá»± Gia ÄÃ¬nh Sen Tráº¯ng (BS-101 to BS-105)
                 for (int i = 1; i <= 5; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", lotusVillaId, String.format("BS-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", lotusVillaId, String.format("#F%03d", 100 + i));
                 }
 
-                // 5 NhÃ  SÃ n Cá»™ng Äá»“ng ÄÃ´ng SÆ¡n (NS-101 to NS-105)
                 for (int i = 1; i <= 5; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", donSanId, String.format("NS-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", donSanId, String.format("#NS%03d", 100 + i));
                 }
 
-                // 5 NhÃ  Chung 50 Thung LÅ©ng Xanh (NC-101 to NC-105)
                 for (int i = 1; i <= 5; i++) {
-                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", valley50Id, String.format("NC-%03d", 100 + i));
+                    jdbcTemplate.update("INSERT INTO room (room_type_id, room_number, status) VALUES (?, ?, 'AVAILABLE')", valley50Id, String.format("#NC%03d", 100 + i));
                 }
 
                 // Re-seed default bookings so the staff page isn't empty
@@ -323,24 +379,17 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Re-seed default booking details
                 Integer booking1 = jdbcTemplate.queryForObject("SELECT TOP 1 booking_id FROM room_booking ORDER BY booking_id ASC", Integer.class);
                 Integer booking2 = jdbcTemplate.queryForObject("SELECT TOP 1 booking_id FROM room_booking ORDER BY booking_id DESC", Integer.class);
-                Integer room1Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'BG-101'", Integer.class);
-                Integer room2Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = 'BG-102'", Integer.class);
+                Integer room1Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = '#S101'", Integer.class);
+                Integer room2Id = jdbcTemplate.queryForObject("SELECT room_id FROM room WHERE room_number = '#S102'", Integer.class);
 
                 if (booking1 != null && room1Id != null) {
                     jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 3200000.00)", booking1, room1Id);
                     jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (5, ?, 16000000.00, 0.00, 0.00, 1600000.00, 17600000.00, 3750000.00, 13850000.00, 'UNPAID')", booking1);
                 }
-                if (booking2 != null && room2Id != null && !booking2.equals(booking1)) {
-                    jdbcTemplate.update("INSERT INTO room_booking_detail (booking_id, room_id, price_at_booking) VALUES (?, ?, 3200000.00)", booking2, room2Id);
-                    jdbcTemplate.update("INSERT INTO invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status) VALUES (6, ?, 6400000.00, 0.00, 0.00, 640000.00, 7040000.00, 2700000.00, 4340000.00, 'UNPAID')", booking2);
-                }
 
-                // Seed default complaints
                 try {
-                    jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -3, GETDATE()), ?)",
-                            5, "Tráº§n KhÃ¡ch HÃ ng", "BG-101", "Gá»‘i hÆ¡i cao, cáº§n Ä‘á»•i 2 gá»‘i lÃ´ng vÅ© má»m hÆ¡n.", "Resolved", "ÄÃ£ giao gá»‘i má»›i lÃºc 15:00");
                     jdbcTemplate.update("INSERT INTO complaints (user_id, guest_name, room_number, content, status, created_at, feedback) VALUES (?, ?, ?, ?, ?, DATEADD(hour, -1, GETDATE()), NULL)",
-                            6, "LÃª Minh ChÃ¢u", "BG-102", "Wifi trong gÃ³c phÃ²ng hÆ¡i yáº¿u, thá»‰nh thoáº£ng máº¥t káº¿t ná»‘i.", "Open");
+                            6, "Lê Minh Châu", "#S102", "Wifi trong góc phòng hơi yếu, thỉnh thoảng mất kết nối.", "Open");
                     System.out.println("[DB Seeder] Seeded default complaints successfully.");
                 } catch (Exception e) {
                     System.err.println("[DB Seeder] Warning: Complaints seeding failed: " + e.getMessage());
@@ -350,56 +399,131 @@ public class DatabaseSeeder implements CommandLineRunner {
             try {
                 System.out.println("[DB Seeder] Running data correction patch for overlapping room bookings...");
                 jdbcTemplate.execute("""
-                    -- Fix room assignment for Invoice 44 (assign BG-102, BG-103)
+                    -- Fix room assignment for Invoice 44 (assign #S102, #S103)
                     DECLARE @booking44 INT;
                     SELECT @booking44 = room_booking_id FROM invoice WHERE invoice_id = 44;
     
                     DECLARE @room2Id INT, @room3Id INT;
-                    SELECT @room2Id = room_id FROM room WHERE room_number = 'BG-102';
-                    SELECT @room3Id = room_id FROM room WHERE room_number = 'BG-103';
+                    SELECT @room2Id = room_id FROM room WHERE room_number = '#S102';
+                    SELECT @room3Id = room_id FROM room WHERE room_number = '#S103';
     
                     IF @booking44 IS NOT NULL AND @room2Id IS NOT NULL AND @room3Id IS NOT NULL
                     BEGIN
-                        -- Update detail that was BG-101 to BG-102
+                        -- Update detail that was #S101 to #S102
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room2Id
-                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-101');
+                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = '#S101');
     
-                        -- Update detail that was BG-102 to BG-103
+                        -- Update detail that was #S102 to #S103
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room3Id
-                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-102');
+                        WHERE booking_id = @booking44 AND room_id = (SELECT room_id FROM room WHERE room_number = '#S102');
                     END
     
-                    -- Fix room assignment for Invoice 45 (assign BG-104, BG-105)
+                    -- Fix room assignment for Invoice 45 (assign #S104, #S105)
                     DECLARE @booking45 INT;
                     SELECT @booking45 = room_booking_id FROM invoice WHERE invoice_id = 45;
     
                     DECLARE @room4Id INT, @room5Id INT;
-                    SELECT @room4Id = room_id FROM room WHERE room_number = 'BG-104';
-                    SELECT @room5Id = room_id FROM room WHERE room_number = 'BG-105';
+                    SELECT @room4Id = room_id FROM room WHERE room_number = '#S104';
+                    SELECT @room5Id = room_id FROM room WHERE room_number = '#S105';
     
                     IF @booking45 IS NOT NULL AND @room4Id IS NOT NULL AND @room5Id IS NOT NULL
                     BEGIN
-                        -- Update detail that was BG-101 to BG-104
+                        -- Update detail that was #S101 to #S104
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room4Id
-                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-101');
+                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = '#S101');
     
-                        -- Update detail that was BG-102 to BG-105
+                        -- Update detail that was #S102 to #S105
                         UPDATE TOP (1) room_booking_detail
                         SET room_id = @room5Id
-                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = 'BG-102');
+                        WHERE booking_id = @booking45 AND room_id = (SELECT room_id FROM room WHERE room_number = '#S102');
                     END
                     """);
                 System.out.println("[DB Seeder] Overlapping room bookings corrected successfully.");
             } catch (Exception e) {
                 System.err.println("[DB Seeder] Warning: Could not run overlapping room booking patch: " + e.getMessage());
             }
-
+ 
             System.out.println("[DB Seeder] Exactly 45 rooms configured successfully.");
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Room types / rooms seeding failed: " + e.getMessage());
+        }
+ 
+        // Incurred Services Setup
+        try {
+            System.out.println("[DB Seeder] Creating incurred_services table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.incurred_services', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.incurred_services (
+                        id INT IDENTITY(1,1) PRIMARY KEY,
+                        room_booking_id INT NULL REFERENCES dbo.room_booking(booking_id) ON DELETE SET NULL,
+                        room_number VARCHAR(50) NOT NULL,
+                        category VARCHAR(100) NOT NULL,
+                        detail NVARCHAR(MAX) NOT NULL,
+                        price DECIMAL(12, 2) NOT NULL,
+                        status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                        created_at DATETIME2 NOT NULL DEFAULT GETDATE()
+                    );
+                END
+                """);
+ 
+            System.out.println("[DB Seeder] Adding service_subtotal to invoice if not exists...");
+            jdbcTemplate.execute("""
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.invoice') AND name = 'service_subtotal')
+                BEGIN
+                    ALTER TABLE dbo.invoice ADD service_subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0.00;
+                END
+                """);
+ 
+            Integer serviceCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM dbo.incurred_services", Integer.class);
+            if (serviceCount != null && serviceCount == 0) {
+                System.out.println("[DB Seeder] Seeding initial incurred services...");
+                
+                Integer bookingBG101 = null;
+                Integer bookingBG102 = null;
+                try {
+                    bookingBG101 = jdbcTemplate.queryForObject(
+                        "SELECT TOP 1 rb.booking_id FROM dbo.room_booking rb JOIN dbo.room_booking_detail d ON rb.booking_id = d.booking_id JOIN dbo.room r ON d.room_id = r.room_id WHERE r.room_number = '#S101' AND rb.status IN ('CONFIRMED', 'CHECKED_IN') ORDER BY rb.check_in_date DESC",
+                        Integer.class
+                    );
+                } catch (Exception e) {}
+ 
+                try {
+                    bookingBG102 = jdbcTemplate.queryForObject(
+                        "SELECT TOP 1 rb.booking_id FROM dbo.room_booking rb JOIN dbo.room_booking_detail d ON rb.booking_id = d.booking_id JOIN dbo.room r ON d.room_id = r.room_id WHERE r.room_number = '#S102' AND rb.status IN ('CONFIRMED', 'CHECKED_IN') ORDER BY rb.check_in_date DESC",
+                        Integer.class
+                    );
+                } catch (Exception e) {}
+ 
+                jdbcTemplate.update("INSERT INTO dbo.incurred_services (room_booking_id, room_number, category, detail, price, status) VALUES (?, '#S101', 'Spa booking', N'Massage Đá nóng thảo dược (90 phút)', 1200000.00, 'In Progress')", bookingBG101);
+                jdbcTemplate.update("INSERT INTO dbo.incurred_services (room_booking_id, room_number, category, detail, price, status) VALUES (?, '#S102', 'Restaurant order', N'Súp sâm yến mạch thực dưỡng & trà sen', 450000.00, 'Pending')", bookingBG102);
+                jdbcTemplate.update("INSERT INTO dbo.incurred_services (room_booking_id, room_number, category, detail, price, status) VALUES (?, '#S102', 'Room service', N'Ăn tối tại phòng: Cơm lứt muối mè & Nước ép hữu cơ', 320000.00, 'Completed')", bookingBG102);
+                jdbcTemplate.update("INSERT INTO dbo.incurred_services (room_booking_id, room_number, category, detail, price, status) VALUES (?, '#S101', 'Laundry', N'Giặt khô đầm lụa tơ tằm', 180000.00, 'Pending')", bookingBG101);
+                jdbcTemplate.update("INSERT INTO dbo.incurred_services (room_booking_id, room_number, category, detail, price, status) VALUES (?, '#S102', 'Tour booking', N'Tour ngắm hoàng hôn bán đảo Sơn Trà', 1500000.00, 'Completed')", bookingBG102);
+                
+                System.out.println("[DB Seeder] Successfully seeded initial incurred services.");
+
+                // Trigger invoice recalculation for the seeded bookings if they exist
+                if (bookingBG101 != null) {
+                    jdbcTemplate.update("""
+                        UPDATE dbo.invoice 
+                        SET service_subtotal = (SELECT SUM(price) FROM dbo.incurred_services WHERE room_booking_id = ? AND status = 'Completed')
+                        WHERE room_booking_id = ?
+                        """, bookingBG101, bookingBG101);
+                }
+                if (bookingBG102 != null) {
+                    jdbcTemplate.update("""
+                        UPDATE dbo.invoice 
+                        SET service_subtotal = (SELECT SUM(price) FROM dbo.incurred_services WHERE room_booking_id = ? AND status = 'Completed')
+                        WHERE room_booking_id = ?
+                        """, bookingBG102, bookingBG102);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Incurred services setup / seeding failed: " + e.getMessage());
         }
     }
 

@@ -134,6 +134,9 @@ public class InvoicePdfService {
             if (positive(invoice.getFoodSubtotal())) {
                 itemRow(t, regular, "Am thuc (F&B)", money(invoice.getFoodSubtotal()));
             }
+            if (positive(invoice.getServiceSubtotal())) {
+                itemRow(t, regular, "Dich vu khac (Giat la, Tour, ...)", money(invoice.getServiceSubtotal()));
+            }
             itemRow(t, regular, "Thue & phi dich vu (10%)", money(invoice.getTaxAndFees()));
             if (positive(invoice.getDepositAmount())) {
                 itemRow(t, regular, "Da dat coc", "- " + money(invoice.getDepositAmount()));

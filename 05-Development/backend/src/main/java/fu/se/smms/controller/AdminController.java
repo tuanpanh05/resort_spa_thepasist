@@ -60,7 +60,7 @@ public class AdminController {
             @RequestBody AdminUpdateUserRequest request) {
         try {
             UserProfileDTO updated = userService.updateUserRoleAndStatus(
-                    userId, request.getRole(), request.getStatus());
+                    userId, request.getRole(), request.getStatus(), request.getSpecialty());
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

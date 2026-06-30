@@ -101,7 +101,8 @@ public class SpaBookingServiceImpl implements SpaBookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TimeSlotDTO> getAvailableSlots(Integer spaServiceId, LocalDate date) {
+    public List<TimeSlotDTO> getAvailableSlots(Integer spaServiceId, LocalDate date, Integer guestsCount) {
+        int reqGuests = guestsCount != null ? guestsCount : 1;
         SpaService service = spaServiceRepository.findById(spaServiceId)
                 .orElseThrow(() -> new BusinessException("SPA-001", HttpStatus.NOT_FOUND, "Khong tim thay dich vu Spa."));
 
@@ -126,7 +127,7 @@ public class SpaBookingServiceImpl implements SpaBookingService {
             if (therapists.isEmpty()) {
                 therapists = spaBookingRepository.findAvailableTherapists(slotStart, slotEnd);
             }
-            if (therapists.isEmpty()) {
+            if (therapists.size() < reqGuests) {
                 continue;
             }
 
@@ -134,16 +135,38 @@ public class SpaBookingServiceImpl implements SpaBookingService {
             if (rooms.isEmpty()) {
                 rooms = spaBookingRepository.findAvailableRooms(slotStart, slotEnd);
             }
-            if (rooms.isEmpty()) {
+            if (rooms.size() < reqGuests) {
                 continue;
             }
 
             User therapist = therapists.get(0);
             TreatmentRoom room = rooms.get(0);
             String label = String.format("%02d:%02d", slotStart.getHour(), slotStart.getMinute());
-            slots.add(new TimeSlotDTO(slotStart, slotEnd, label,
+            
+            TimeSlotDTO slotDto = new TimeSlotDTO(slotStart, slotEnd, label,
                     therapist.getUserId(), therapist.getFullName(),
-                    room.getTreatmentRoomId(), room.getRoomName()));
+                    room.getTreatmentRoomId(), room.getRoomName());
+
+            List<Integer> therapistIds = new ArrayList<>();
+            List<String> therapistNames = new ArrayList<>();
+            List<Integer> roomIds = new ArrayList<>();
+            List<String> roomNames = new ArrayList<>();
+
+            for (int i = 0; i < reqGuests; i++) {
+                User t = therapists.get(i);
+                TreatmentRoom r = rooms.get(i);
+                therapistIds.add(t.getUserId());
+                therapistNames.add(t.getFullName());
+                roomIds.add(r.getTreatmentRoomId());
+                roomNames.add(r.getRoomName());
+            }
+
+            slotDto.setTherapistIds(therapistIds);
+            slotDto.setTherapistNames(therapistNames);
+            slotDto.setTreatmentRoomIds(roomIds);
+            slotDto.setRoomNames(roomNames);
+
+            slots.add(slotDto);
         }
 
         return slots;
@@ -395,31 +418,43 @@ public class SpaBookingServiceImpl implements SpaBookingService {
                 .orElseThrow(() -> new BusinessException("SPA-007", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y buá»•i trá»‹ liá»‡u chá»‰ Ä‘á»‹nh."));
 
         if (!booking.getTherapist().getUserId().equals(therapistId)) {
-            throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "Báº¡n khÃ´ng cÃ³ quyá»n cáº­p nháº­t tráº¡ng thÃ¡i lá»‹ch háº¹n cá»§a ká»¹ thuáº­t viÃªn khÃ¡c.");
+            throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "Báº¡n khÃ´ng cÃ³ quyá» n cáº­p nháº­t tráº¡ng thÃ¡i lá»‹ch háº¹n cá»§a ká»¹ thuáº­t viÃªn khÃ¡c.");
         }
 
         String normalizedStatus = status != null ? status.toUpperCase() : "";
         if ("IN_PROGRESS".equals(normalizedStatus) || "IN PROGRESS".equals(normalizedStatus)) {
             booking.setStatus("IN_PROGRESS");
-            booking.getTreatmentRoom().setStatus("OCCUPIED");
+            if (booking.getTreatmentRoom() != null) {
+                booking.getTreatmentRoom().setStatus("OCCUPIED");
+            }
         } else if ("COMPLETED".equals(normalizedStatus)) {
             booking.setStatus("COMPLETED");
-            booking.getTreatmentRoom().setStatus("AVAILABLE");
+            if (booking.getTreatmentRoom() != null) {
+                booking.getTreatmentRoom().setStatus("AVAILABLE");
+            }
         } else if ("CANCELLED".equals(normalizedStatus)) {
             booking.setStatus("CANCELLED");
-            booking.getTreatmentRoom().setStatus("AVAILABLE");
+            if (booking.getTreatmentRoom() != null) {
+                booking.getTreatmentRoom().setStatus("AVAILABLE");
+            }
         } else if ("NOSHOW".equals(normalizedStatus) || "NO_SHOW".equals(normalizedStatus)) {
             booking.setStatus("NO_SHOW");
-            booking.getTreatmentRoom().setStatus("AVAILABLE");
+            if (booking.getTreatmentRoom() != null) {
+                booking.getTreatmentRoom().setStatus("AVAILABLE");
+            }
         } else if ("CONFIRMED".equals(normalizedStatus)) {
             booking.setStatus("CONFIRMED");
-            booking.getTreatmentRoom().setStatus("AVAILABLE");
+            if (booking.getTreatmentRoom() != null) {
+                booking.getTreatmentRoom().setStatus("AVAILABLE");
+            }
         } else {
             throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Tráº¡ng thÃ¡i buá»•i trá»‹ liá»‡u khÃ´ng há»£p lá»‡: " + status);
         }
 
         SpaBooking savedBooking = spaBookingRepository.save(booking);
-        treatmentRoomRepository.save(booking.getTreatmentRoom());
+        if (booking.getTreatmentRoom() != null) {
+            treatmentRoomRepository.save(booking.getTreatmentRoom());
+        }
 
         // Async Google Calendar sync update
         CompletableFuture.runAsync(() -> {

@@ -1,18 +1,38 @@
 import React, { useState } from "react";
 import { PlusCircle, X } from "lucide-react";
+import { incurredServicesApi } from "../../api";
 
 export default function ManageServices({ services, setServices, rooms }) {
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [serviceOrderForm, setServiceOrderForm] = useState({
-    room: "101",
+    room: "",
     category: "Spa booking",
     detail: "",
     price: "",
   });
 
+  const formatPrice = (val) => {
+    if (!val) return "0đ";
+    if (typeof val === "string" && val.endsWith("đ")) return val;
+    const num = Number(val);
+    return isNaN(num) ? val : num.toLocaleString("vi-VN") + "đ";
+  };
+
+  const formatTime = (timeStr, createdAt) => {
+    if (timeStr) return timeStr;
+    if (!createdAt) return "";
+    const date = new Date(createdAt);
+    return date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const triggerAddModal = () => {
+    // Find first occupied room or fallback to first room
+    const occupiedRoom = rooms.find(r => r.status === "occupied");
     setServiceOrderForm({
-      room: rooms[0]?.id || "101",
+      room: occupiedRoom?.id || rooms[0]?.id || "",
       category: "Spa booking",
       detail: "",
       price: "",
@@ -20,38 +40,45 @@ export default function ManageServices({ services, setServices, rooms }) {
     setShowAddServiceModal(true);
   };
 
-  const handleCreateServiceOrder = (e) => {
+  const handleCreateServiceOrder = async (e) => {
     e.preventDefault();
     if (!serviceOrderForm.detail || !serviceOrderForm.price) {
       alert("Vui lòng điền mô tả dịch vụ và đơn giá.");
       return;
     }
-    const newOrder = {
-      id: `SO-${Math.floor(100 + Math.random() * 900)}`,
-      ...serviceOrderForm,
-      status: "Pending",
-      time: new Date().toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-    setServices((prev) => [newOrder, ...prev]);
-    setShowAddServiceModal(false);
-    setServiceOrderForm({
-      room: rooms[0]?.id || "101",
-      category: "Spa booking",
-      detail: "",
-      price: "",
-    });
-    alert(
-      `Đã khởi tạo yêu cầu dịch vụ ${newOrder.id} cho phòng ${newOrder.room}.`,
-    );
+    try {
+      const saved = await incurredServicesApi.createServiceOrder({
+        room: serviceOrderForm.room,
+        category: serviceOrderForm.category,
+        detail: serviceOrderForm.detail,
+        price: serviceOrderForm.price,
+      });
+      setServices((prev) => [saved, ...prev]);
+      setShowAddServiceModal(false);
+      setServiceOrderForm({
+        room: rooms.find(r => r.status === "occupied")?.id || rooms[0]?.id || "",
+        category: "Spa booking",
+        detail: "",
+        price: "",
+      });
+      alert(
+        `Đã khởi tạo yêu cầu dịch vụ SO-${saved.id} cho phòng ${saved.roomNumber}.`,
+      );
+    } catch (err) {
+      alert("Lỗi khi ghi nhận dịch vụ: " + err.message);
+    }
   };
 
-  const handleUpdateServiceStatus = (id, newStatus) => {
-    setServices((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s)),
-    );
+  const handleUpdateServiceStatus = async (id, newStatus) => {
+    try {
+      const updated = await incurredServicesApi.updateServiceStatus(id, newStatus);
+      setServices((prev) =>
+        prev.map((s) => (s.id === id ? updated : s)),
+      );
+      alert(`Đã cập nhật tiến độ dịch vụ thành "${newStatus === 'Completed' ? 'Hoàn thành' : 'Đang làm'}".`);
+    } catch (err) {
+      alert("Lỗi khi cập nhật tiến độ: " + err.message);
+    }
   };
 
   return (
@@ -85,7 +112,7 @@ export default function ManageServices({ services, setServices, rooms }) {
                 <th className="p-4">Phân Loại Dịch Vụ</th>
                 <th className="p-4">Chi Tiết Cụ Thể</th>
                 <th className="p-4">Thời gian</th>
-                <th className="p-4">Đơn giá thu</th>
+                <th className="p-4">Đơn giá dịch vụ</th>
                 <th className="p-4">Trạng thái xử lý</th>
                 <th className="p-4 text-center">Tiến độ thực hiện</th>
               </tr>
@@ -93,9 +120,11 @@ export default function ManageServices({ services, setServices, rooms }) {
             <tbody className="divide-y divide-primary-50/50">
               {services.map((s) => (
                 <tr key={s.id} className="hover:bg-primary-50/10">
-                  <td className="p-4 font-bold text-primary-950">{s.id}</td>
+                  <td className="p-4 font-bold text-primary-950">
+                    {s.id?.toString().startsWith("SO-") ? s.id : `SO-${s.id}`}
+                  </td>
                   <td className="p-4 font-bold text-sage-950">
-                    Phòng {s.room}
+                    Phòng {s.roomNumber || s.room}
                   </td>
                   <td className="p-4">
                     <span className="px-2 py-0.5 rounded-none text-[10px] font-bold bg-primary-100 text-primary-900 uppercase">
@@ -103,8 +132,8 @@ export default function ManageServices({ services, setServices, rooms }) {
                     </span>
                   </td>
                   <td className="p-4 text-sage-700 max-w-xs">{s.detail}</td>
-                  <td className="p-4 text-sage-500 font-mono">{s.time}</td>
-                  <td className="p-4 font-bold text-sage-950">{s.price}</td>
+                  <td className="p-4 text-sage-500 font-mono">{formatTime(s.time, s.createdAt)}</td>
+                  <td className="p-4 font-bold text-sage-950">{formatPrice(s.price)}</td>
                   <td className="p-4">
                     <span
                       className={`px-2 py-0.5 rounded-none text-[10px] font-semibold uppercase tracking-wider ${
