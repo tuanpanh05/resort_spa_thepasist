@@ -55,7 +55,7 @@ class CheckInServiceImplTest {
 
         // Act & Assert
         BusinessException exception = assertThrows(BusinessException.class, () ->
-                checkInService.performCheckIn(202, null, "Vietnamese")
+                checkInService.performCheckIn(202, null, "Vietnamese", java.util.Collections.emptyList())
         );
 
         assertEquals("CHECKIN-002", exception.getCode());
@@ -75,7 +75,7 @@ class CheckInServiceImplTest {
 
         // Act & Assert
         BusinessException exception = assertThrows(BusinessException.class, () ->
-                checkInService.performCheckIn(203, "   ", "Vietnamese")
+                checkInService.performCheckIn(203, "   ", "Vietnamese", java.util.Collections.emptyList())
         );
 
         assertEquals("CHECKIN-002", exception.getCode());
@@ -104,7 +104,7 @@ class CheckInServiceImplTest {
         when(roomRepository.save(any(Room.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        checkInService.performCheckIn(202, "CCCD123456789", "Vietnamese");
+        checkInService.performCheckIn(202, "CCCD123456789", "Vietnamese", java.util.Collections.emptyList());
 
         // Assert
         assertEquals("CHECKED_IN", booking.getStatus(),

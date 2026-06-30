@@ -46,9 +46,8 @@ function ScrollReveal({ children, delay = 0 }) {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-[1200ms] cubic-bezier(0.16, 1, 0.3, 1) transform ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-      }`}
+      className={`transition-all duration-[1200ms] cubic-bezier(0.16, 1, 0.3, 1) transform ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+        }`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
@@ -158,7 +157,7 @@ function ConsultationModal({ isOpen, onClose }) {
                 Đăng Ký Tư Vấn Trị Liệu
               </h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-[#375a43]">
@@ -170,9 +169,8 @@ function ConsultationModal({ isOpen, onClose }) {
                   placeholder="Nguyễn Văn A"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${
-                    errors.fullName ? "border-red-400" : ""
-                  }`}
+                  className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${errors.fullName ? "border-red-400" : ""
+                    }`}
                 />
                 {errors.fullName && (
                   <span className="text-xs text-red-600 block">{errors.fullName}</span>
@@ -190,9 +188,8 @@ function ConsultationModal({ isOpen, onClose }) {
                     placeholder="0901234567"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${
-                      errors.phone ? "border-red-400" : ""
-                    }`}
+                    className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${errors.phone ? "border-red-400" : ""
+                      }`}
                   />
                   {errors.phone && (
                     <span className="text-xs text-red-600 block">{errors.phone}</span>
@@ -209,9 +206,8 @@ function ConsultationModal({ isOpen, onClose }) {
                     placeholder="khach@gmail.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${
-                      errors.email ? "border-red-400" : ""
-                    }`}
+                    className={`w-full px-4 py-3 bg-white border border-[#2d5a3b]/25 rounded-lg text-[#14291c] placeholder-sage-400 focus:outline-none focus:ring-1 focus:ring-[#2d5a3b] transition-colors text-sm ${errors.email ? "border-red-400" : ""
+                      }`}
                   />
                   {errors.email && (
                     <span className="text-xs text-red-600 block">{errors.email}</span>
@@ -393,16 +389,16 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-[#d5e5d3] via-[#e2ebe0] to-[#cbdcc9] text-[#14291c] min-h-screen font-sans overflow-x-hidden selection:bg-[#2d5a3b]/20 selection:text-[#2d5a3b]">
-      
+
       {/* 1. Cinematic Hero Banner */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-32 border-b border-[#2d5a3b]/10">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center opacity-30 transition-transform duration-[12000ms] scale-105"
           style={{ backgroundImage: `url(${resortHeroBg})` }}
         />
         {/* Soft Natural Sage Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#d5e5d3]/15 via-[#e2ebe0]/80 to-[#d5e5d3]" />
-        
+
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8">
           <ScrollReveal>
             <span className="inline-flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.3em] text-[#2d5a3b] bg-white/90 border border-[#2d5a3b]/20 px-6 py-3 rounded-full shadow-sm shadow-[#2d5a3b]/5">
@@ -413,7 +409,7 @@ export default function Home() {
 
           <ScrollReveal delay={150}>
             <h1 className="font-serif text-4xl sm:text-6xl md:text-8xl font-light tracking-wide text-[#14291c] leading-tight">
-              NƠI TRẢI NGHIỆM <br/>
+              NƠI TRẢI NGHIỆM <br />
               <span className="italic font-serif text-[#2d5a3b] font-normal">Trị Liệu Tự Nhiên</span>
             </h1>
           </ScrollReveal>
@@ -440,7 +436,7 @@ export default function Home() {
                 onClick={() => setIsModalOpen(true)}
                 className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest border border-[#2d5a3b]/30 text-[#2d5a3b] hover:bg-[#2d5a3b]/10 hover:text-[#14291c] transition-all duration-300 uppercase cursor-pointer bg-white/40 backdrop-blur-sm shadow-sm rounded-full"
               >
-                Nhận tư vấn y khoa
+                Nhận tư vấn Trị Liệu
               </button>
             </div>
           </ScrollReveal>
@@ -450,7 +446,7 @@ export default function Home() {
       {/* 2. Philosophy Section (Triết Lý Sống Chậm) */}
       <div className="py-32 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          
+
           <ScrollReveal>
             <div className="text-center max-w-2xl mx-auto mb-24 space-y-4">
               <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
@@ -471,7 +467,7 @@ export default function Home() {
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
-            
+
             {/* Thân */}
             <ScrollReveal delay={100}>
               <div className="bg-white/70 backdrop-blur-md border border-[#2d5a3b]/10 p-8 sm:p-10 rounded-3xl relative shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:border-[#2d5a3b]/30 hover:shadow-[0_25px_60px_rgba(45,90,59,0.07)] hover:-translate-y-2 transition-all duration-550 group flex flex-col justify-between min-h-[380px]">
@@ -536,7 +532,7 @@ export default function Home() {
       {/* 3. Wellness Experiences (Trải Nghiệm Trị Liệu) */}
       <div className="py-16 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <ScrollReveal>
             <div className="max-w-2xl mb-12 space-y-4 text-left">
               <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
@@ -559,7 +555,7 @@ export default function Home() {
               return (
                 <ScrollReveal key={exp.id}>
                   <div className={`flex flex-col lg:flex-row items-stretch ${isEven ? "" : "lg:flex-row-reverse"} relative`}>
-                    
+
                     {/* Serif Numbering background */}
                     <span className="hidden lg:block absolute -top-16 left-1/2 -translate-x-1/2 font-serif text-[180px] font-bold text-[#2d5a3b]/6 select-none pointer-events-none z-0">
                       {formattedNumber}
@@ -574,22 +570,21 @@ export default function Home() {
                       />
                       {/* Light Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#ebf2ea]/85 via-transparent to-transparent pointer-events-none" />
-                      
+
                       <span className="absolute top-6 left-6 text-xs font-semibold uppercase tracking-[0.2em] bg-white/95 backdrop-blur-md text-[#2d5a3b] border border-[#2d5a3b]/15 px-5 py-2.5 rounded-full shadow-sm">
                         Ngũ Sơn Retreat
                       </span>
                     </div>
 
                     {/* Overlapping Details Card */}
-                    <div className={`w-full lg:w-[46%] bg-white/80 backdrop-blur-md border border-white/60 p-8 sm:p-12 shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:shadow-[0_30px_70px_rgba(45,90,59,0.07)] rounded-3xl z-10 flex flex-col justify-between space-y-6 lg:self-center transition-all duration-500 ${
-                      isEven ? "lg:-ml-24" : "lg:-mr-24"
-                    }`}>
+                    <div className={`w-full lg:w-[46%] bg-white/80 backdrop-blur-md border border-white/60 p-8 sm:p-12 shadow-[0_20px_50px_rgba(45,90,59,0.03)] hover:shadow-[0_30px_70px_rgba(45,90,59,0.07)] rounded-3xl z-10 flex flex-col justify-between space-y-6 lg:self-center transition-all duration-500 ${isEven ? "lg:-ml-24" : "lg:-mr-24"
+                      }`}>
                       <div className="space-y-4">
                         <span className="text-xs font-bold text-[#2d5a3b] uppercase tracking-[0.2em] bg-[#eef4ed] border border-[#2d5a3b]/15 px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5">
                           <Crown className="h-3.5 w-3.5 text-[#2d5a3b]" />
                           {exp.tag}
                         </span>
-                        
+
                         <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#14291c] tracking-wide leading-tight border-b border-[#2d5a3b]/10 pb-4">
                           {exp.title}
                         </h3>
@@ -606,7 +601,7 @@ export default function Home() {
                         </span>
                         <ul className="space-y-2 text-xs text-[#2b4d37] font-light pl-2">
                           {exp.benefits.map((benefit, bIdx) => (
-                             <li key={bIdx} className="flex items-center gap-2.5 text-left">
+                            <li key={bIdx} className="flex items-center gap-2.5 text-left">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#2d5a3b]" />
                               <span>{benefit}</span>
                             </li>
@@ -637,7 +632,7 @@ export default function Home() {
       {/* 4. Rooms Showcase Section */}
       <div className="py-16 bg-gradient-to-b from-transparent via-[#dce8db]/25 to-transparent border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <ScrollReveal>
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 text-left">
               <div className="max-w-xl">
@@ -661,7 +656,7 @@ export default function Home() {
               return (
                 <ScrollReveal key={index} delay={index * 150}>
                   <div className="group relative flex flex-col justify-between h-full bg-white/80 backdrop-blur-md border border-[#2d5a3b]/10 hover:border-[#2d5a3b]/25 rounded-3xl overflow-hidden transition-all duration-500 shadow-[0_15px_45px_rgba(45,90,59,0.03)] hover:shadow-[0_25px_60px_rgba(45,90,59,0.08)]">
-                    
+
                     {/* Number Overlay */}
                     <span className="absolute top-4 right-6 font-serif text-6xl font-bold text-[#2d5a3b]/10 select-none pointer-events-none group-hover:text-[#2d5a3b]/15 transition-colors duration-500 z-10">
                       {formattedNumber}
@@ -712,7 +707,7 @@ export default function Home() {
                           <span className="text-[8px] text-[#2d5a3b] font-bold uppercase tracking-wider block">Giá tham khảo</span>
                           <span className="font-serif text-lg text-[#1a2f23] font-light mt-0.5 block">{room.price} <span className="text-[10px] text-sage-400">/ đêm</span></span>
                         </div>
-                        
+
                         <Link
                           to="/phong-o"
                           className="px-6 py-3 bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] text-[10px] font-bold uppercase tracking-widest text-center transition-all duration-300 shadow-md hover:-translate-y-0.5 rounded-full"
@@ -746,7 +741,7 @@ export default function Home() {
       {/* 5. A Day at Ngu Son Timeline Section */}
       <div className="py-16 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <ScrollReveal>
             <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
               <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
@@ -771,7 +766,7 @@ export default function Home() {
             {schedule.map((item, idx) => (
               <ScrollReveal key={idx} delay={idx * 100}>
                 <div className="relative group text-left">
-                  
+
                   {/* Bullet */}
                   <span className="absolute -left-[45px] sm:-left-[69px] top-1.5 h-8 w-8 rounded-full bg-[#eef4ed] border border-[#2d5a3b]/20 flex items-center justify-center text-xs font-mono font-bold text-[#2d5a3b] group-hover:bg-[#2d5a3b] group-hover:text-white group-hover:border-[#2d5a3b] transition-colors duration-300 shadow-md">
                     {String(idx + 1).padStart(2, "0")}
@@ -808,7 +803,7 @@ export default function Home() {
       {/* 6. Guest Stories Section (Thư Tay Trải Nghiệm) */}
       <div className="py-16 bg-transparent relative border-b border-[#2d5a3b]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <ScrollReveal>
             <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
               <span className="text-xs font-bold tracking-[0.25em] text-[#2d5a3b] uppercase block">
@@ -882,9 +877,9 @@ export default function Home() {
                   <Crown className="h-3.5 w-3.5 text-[#2d5a3b]" />
                   Royal Invitation
                 </span>
-                
+
                 <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-light text-[#14291c] leading-tight">
-                  Khởi Đầu Hành Trình <br/>
+                  Khởi Đầu Hành Trình <br />
                   <span className="italic font-serif text-[#2d5a3b] font-normal">Tái Sinh Sức Khỏe</span>
                 </h2>
 

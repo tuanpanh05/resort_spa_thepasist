@@ -31,10 +31,10 @@ public class InventoryController {
     }
 
     @PatchMapping("/{id}/stock")
-    public ResponseEntity<Inventory> updateStock(@PathVariable String id, @RequestParam Integer delta) {
+    public ResponseEntity<Inventory> updateStock(@PathVariable String id, @RequestParam Double delta) {
         return inventoryRepository.findById(id)
                 .map(item -> {
-                    int newStock = Math.max(0, item.getStock() + delta);
+                    Double newStock = Math.max(0.0, item.getStock() + delta);
                     item.setStock(newStock);
                     return ResponseEntity.ok(inventoryRepository.save(item));
                 })

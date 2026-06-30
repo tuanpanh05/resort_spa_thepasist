@@ -25,6 +25,9 @@ public class Room {
     @JoinColumn(name = "room_type_id", referencedColumnName = "room_type_id")
     private RoomType roomType;
 
+    @Column(name = "maintenance_description", length = 500)
+    private String maintenanceDescription;
+
     public Room() {}
 
     public Integer getRoomId() { return roomId; }
@@ -38,4 +41,7 @@ public class Room {
 
     public RoomType getRoomType() { return roomType; }
     public void setRoomType(RoomType roomType) { this.roomType = roomType; }
+
+    public String getMaintenanceDescription() { return maintenanceDescription; }
+    public void setMaintenanceDescription(String maintenanceDescription) { this.maintenanceDescription = maintenanceDescription; }
 }

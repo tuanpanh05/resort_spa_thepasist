@@ -15,6 +15,7 @@ public class VillaStatusDTO {
     private Integer capacity;
     private BigDecimal basePrice;
     private String guestName; // Current guest name if OCCUPIED
+    private String maintenanceDescription;
 
     public VillaStatusDTO() {}
 
@@ -39,4 +40,7 @@ public class VillaStatusDTO {
 
     public String getGuestName() { return guestName; }
     public void setGuestName(String guestName) { this.guestName = guestName; }
+
+    public String getMaintenanceDescription() { return maintenanceDescription; }
+    public void setMaintenanceDescription(String maintenanceDescription) { this.maintenanceDescription = maintenanceDescription; }
 }

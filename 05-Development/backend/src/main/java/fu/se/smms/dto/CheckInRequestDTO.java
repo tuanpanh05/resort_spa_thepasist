@@ -19,7 +19,14 @@ public class CheckInRequestDTO {
     @NotBlank(message = "Quốc tịch là bắt buộc.")
     private String nationality;
 
+    private String documentType; // CCCD or PASSPORT
+
+    private java.util.List<AccompanyingGuestDTO> accompanyingGuests;
+
     public CheckInRequestDTO() {}
+
+    public String getDocumentType() { return documentType; }
+    public void setDocumentType(String documentType) { this.documentType = documentType; }
 
     public Integer getBookingId() { return bookingId; }
     public void setBookingId(Integer bookingId) { this.bookingId = bookingId; }
@@ -29,4 +36,7 @@ public class CheckInRequestDTO {
 
     public String getNationality() { return nationality; }
     public void setNationality(String nationality) { this.nationality = nationality; }
+
+    public java.util.List<AccompanyingGuestDTO> getAccompanyingGuests() { return accompanyingGuests; }
+    public void setAccompanyingGuests(java.util.List<AccompanyingGuestDTO> accompanyingGuests) { this.accompanyingGuests = accompanyingGuests; }
 }

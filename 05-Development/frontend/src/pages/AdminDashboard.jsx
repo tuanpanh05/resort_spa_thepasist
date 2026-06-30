@@ -11,6 +11,7 @@ import {
   Package,
   Lock,
   ShieldCheck,
+  Shield,
   Clock,
   LogOut,
   Menu,
@@ -43,6 +44,7 @@ import ManagePayments from "../components/admin/ManagePayments";
 import ManageShifts from "../components/admin/ManageShifts";
 import ManageInventory from "../components/admin/ManageInventory";
 import ManageVouchers from "../components/admin/ManageVouchers";
+import ManageGuests from "../components/admin/ManageGuests";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -64,19 +66,12 @@ export default function AdminDashboard() {
     try {
       const data = await staffApi.getVillas();
       const mapped = data.map((v) => {
-        let mappedStatus = "vacant";
-        if (v.status === "OCCUPIED" || v.status === "DEPOSITED") {
-          mappedStatus = "occupied";
-        } else if (v.status === "MAINTENANCE") {
-          mappedStatus = "maintenance";
-        } else if (v.status === "DIRTY" || v.status === "CLEANING" || v.status === "VACANT_NEEDS_CLEANING") {
-          mappedStatus = "cleaning";
-        }
         return {
+          ...v,
           id: v.roomNumber,
           roomId: v.roomId,
           type: v.roomTypeName || "Standard",
-          status: mappedStatus,
+          status: v.status,
           floor: parseInt(v.roomNumber?.split("-")[1]?.charAt(0)) || 1,
           price: (v.basePrice || 1800000).toLocaleString("vi-VN") + "đ",
           maxGuests: v.capacity || 2,
@@ -193,10 +188,13 @@ export default function AdminDashboard() {
   // Room CRUD handlers
   const handleCreateRoom = async (roomData) => {
     try {
+      const cleanPrice = String(roomData.price).replace(/[^0-9]/g, "");
       const payload = {
         roomNumber: roomData.id,
         roomTypeName: roomData.type,
         status: "AVAILABLE",
+        price: cleanPrice ? parseFloat(cleanPrice) : null,
+        maxGuests: roomData.maxGuests ? parseInt(roomData.maxGuests) : null,
       };
       await staffApi.createVilla(payload);
       await loadRooms();
@@ -209,10 +207,13 @@ export default function AdminDashboard() {
 
   const handleUpdateRoom = async (roomId, roomData) => {
     try {
+      const cleanPrice = String(roomData.price).replace(/[^0-9]/g, "");
       const payload = {
         roomNumber: roomData.id,
         roomTypeName: roomData.type,
-        status: roomData.status === "vacant" ? "AVAILABLE" : roomData.status === "occupied" ? "OCCUPIED" : roomData.status === "cleaning" ? "DIRTY" : "MAINTENANCE",
+        status: roomData.status || "AVAILABLE",
+        price: cleanPrice ? parseFloat(cleanPrice) : null,
+        maxGuests: roomData.maxGuests ? parseInt(roomData.maxGuests) : null,
       };
       await staffApi.updateVilla(roomId, payload);
       await loadRooms();
@@ -240,7 +241,7 @@ export default function AdminDashboard() {
   // Stats calculation
   const totalRoomsCount = rooms.length;
   const occupiedRoomsCount = rooms.filter(
-    (r) => r.status === "occupied",
+    (r) => r.status === "OCCUPIED" || r.status === "DEPOSITED",
   ).length;
   const occupancyRate =
     totalRoomsCount > 0
@@ -252,6 +253,7 @@ export default function AdminDashboard() {
     { id: "dashboard", label: "Tổng Quan Vận Hành", icon: LayoutDashboard },
     { id: "users", label: "Quản Lý Tài Khoản", icon: Users },
     { id: "rooms", label: "Quản Lý Phòng Nghỉ", icon: Bed },
+    { id: "guests", label: "Thông Tin Khách Trú", icon: Shield },
     { id: "services", label: "Quản Lý Dịch Vụ", icon: Flower },
     { id: "support", label: "Phản Hồi & Khiếu Nại", icon: MessageSquare },
     { id: "payments", label: "Nhật Ký Hóa Đơn", icon: CreditCard },
@@ -305,6 +307,7 @@ export default function AdminDashboard() {
               {activeTab === "users" &&
                 "2. Quản Lý Tài Khoản (User Management)"}
               {activeTab === "rooms" && "3. Quản Lý Phòng & Loại Phòng Resort"}
+              {activeTab === "guests" && "3b. Tra Cứu Khai Báo & Thông Tin Khách Trú"}
               {activeTab === "services" && "4. Danh Mục Dịch Vụ Resort & Yoga"}
               {activeTab === "support" &&
                 "5. Cổng Tiếp Nhận & Hỗ Trợ Khách Hàng"}
@@ -348,7 +351,12 @@ export default function AdminDashboard() {
               handleCreateRoom={handleCreateRoom}
               handleUpdateRoom={handleUpdateRoom}
               handleDeleteRoom={handleDeleteRoom}
+              loadRooms={loadRooms}
             />
+          )}
+
+          {activeTab === "guests" && (
+            <ManageGuests />
           )}
 
           {activeTab === "services" && (

@@ -4,8 +4,8 @@ import { DIET_OPTIONS, ALLERGY_OPTIONS } from "../../constants/booking";
 
 export default function HealthProfileStep({
   formErrors,
-  dietaryPreference,
-  setDietaryPreference,
+  dietaryPreferences,
+  toggleDietaryPreference,
   selectedAllergies,
   toggleAllergy,
   otherAllergy,
@@ -46,25 +46,27 @@ export default function HealthProfileStep({
             Chế Độ Ăn Uống
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {DIET_OPTIONS.map((opt) => (
-              <label
-                key={opt.key}
-                className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
-                  dietaryPreference === opt.key
-                    ? "border-[#cda250] bg-[#cda250]/10 text-[#1a2f23] shadow-sm"
-                    : "border-[#cda250]/15 bg-white text-sage-600 hover:border-[#cda250]/40"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="dietaryPreference"
-                  checked={dietaryPreference === opt.key}
-                  onChange={() => setDietaryPreference(opt.key)}
-                  className="w-4 h-4 accent-[#cda250] cursor-pointer"
-                />
-                {opt.label}
-              </label>
-            ))}
+            {DIET_OPTIONS.map((opt) => {
+              const isSelected = dietaryPreferences && dietaryPreferences.includes(opt.key);
+              return (
+                <label
+                  key={opt.key}
+                  className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
+                    isSelected
+                      ? "border-[#cda250] bg-[#cda250]/10 text-[#1a2f23] shadow-sm"
+                      : "border-[#cda250]/15 bg-white text-sage-600 hover:border-[#cda250]/40"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleDietaryPreference(opt.key)}
+                    className="w-4 h-4 accent-[#cda250] rounded cursor-pointer"
+                  />
+                  {opt.label}
+                </label>
+              );
+            })}
           </div>
         </div>
 

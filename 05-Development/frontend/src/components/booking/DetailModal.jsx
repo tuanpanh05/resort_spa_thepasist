@@ -91,13 +91,13 @@ export default function DetailModal({
             {/* Child Discounts */}
             {childDiscountUnder5 > 0 && (
               <div className="flex justify-between text-emerald-700 font-semibold text-xs pt-1">
-                <span>👶 Giảm giá trẻ dưới 5t (100%):</span>
+                <span>👶 Giảm giá trẻ dưới 5t (100% DV & ẩm thực):</span>
                 <span className="font-mono">-{formatCurrency(childDiscountUnder5)}</span>
               </div>
             )}
             {childDiscount5to12 > 0 && (
               <div className="flex justify-between text-emerald-700 font-semibold text-xs pt-1">
-                <span>🧒 Giảm giá trẻ 5-12t (30%):</span>
+                <span>🧒 Giảm giá trẻ 5-12t (30% DV & ẩm thực):</span>
                 <span className="font-mono">-{formatCurrency(childDiscount5to12)}</span>
               </div>
             )}

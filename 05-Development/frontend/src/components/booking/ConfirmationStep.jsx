@@ -223,10 +223,10 @@ export default function ConfirmationStep({
               <div className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10 text-emerald-700 font-semibold">
                 <div>
                   <span className="font-serif text-sm block">
-                    👶 Giảm giá Trẻ em dưới 5 tuổi (100% dịch vụ)
+                    👶 Giảm giá Trẻ em dưới 5 tuổi (100% dịch vụ & ẩm thực)
                   </span>
                   <span className="text-[10px] text-emerald-600/80 font-light block mt-0.5">
-                    Miễn phí dịch vụ cho {guestInfo.childrenUnder5} trẻ
+                    Miễn phí toàn bộ dịch vụ & ẩm thực cho {guestInfo.childrenUnder5} trẻ
                   </span>
                 </div>
                 <span>-{formatCurrency(childDiscountUnder5)}</span>
@@ -237,10 +237,10 @@ export default function ConfirmationStep({
               <div className="flex justify-between items-start gap-4 pt-3 border-t border-[#cda250]/10 text-emerald-700 font-semibold">
                 <div>
                   <span className="font-serif text-sm block">
-                    🧒 Giảm giá Trẻ em 5-12 tuổi (30% dịch vụ)
+                    🧒 Giảm giá Trẻ em 5-12 tuổi (30% dịch vụ & ẩm thực)
                   </span>
                   <span className="text-[10px] text-emerald-600/80 font-light block mt-0.5">
-                    Giảm 30% dịch vụ cho {guestInfo.children5to12} trẻ
+                    Giảm 30% dịch vụ & ẩm thực cho {guestInfo.children5to12} trẻ
                   </span>
                 </div>
                 <span>-{formatCurrency(childDiscount5to12)}</span>

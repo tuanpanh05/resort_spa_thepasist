@@ -98,6 +98,17 @@ public class RoomBookingController {
         }
     }
 
+    @PostMapping("/{bookingId}/add-extra")
+    public ResponseEntity<?> addExtraServices(@PathVariable Integer bookingId,
+                                               @RequestBody fu.se.smms.dto.AddExtraServicesDTO request) {
+        try {
+            Map<String, Object> response = roomBookingService.addExtraServices(bookingId, request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/{bookingId}/cancel")
     public ResponseEntity<?> cancelBooking(@PathVariable Integer bookingId,
                                             @RequestBody Map<String, String> request) {

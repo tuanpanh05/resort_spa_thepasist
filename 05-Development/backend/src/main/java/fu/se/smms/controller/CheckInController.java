@@ -39,10 +39,7 @@ public class CheckInController {
     @PostMapping
     public ResponseEntity<Map<String, String>> performCheckIn(
             @Valid @RequestBody CheckInRequestDTO request) {
-        checkInService.performCheckIn(
-                request.getBookingId(),
-                request.getIdentityDocument(),
-                request.getNationality());
+        checkInService.performCheckIn(request);
         return ResponseEntity.ok(Map.of(
                 "message", "Check-in thành công! Phòng đã được cập nhật trạng thái OCCUPIED.",
                 "bookingId", String.valueOf(request.getBookingId())));
@@ -58,5 +55,11 @@ public class CheckInController {
     public ResponseEntity<List<ArrivalDTO>> getArrivals() {
         List<ArrivalDTO> arrivals = checkInService.getArrivals();
         return ResponseEntity.ok(arrivals);
+    }
+
+    @GetMapping("/guests")
+    public ResponseEntity<List<fu.se.smms.dto.GuestResidencyDTO>> getGuests() {
+        List<fu.se.smms.dto.GuestResidencyDTO> guests = checkInService.getAllGuests();
+        return ResponseEntity.ok(guests);
     }
 }

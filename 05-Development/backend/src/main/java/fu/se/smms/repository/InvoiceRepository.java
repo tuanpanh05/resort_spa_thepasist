@@ -15,6 +15,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     List<Invoice> findByUser_UserId(Integer userId);
     List<Invoice> findByRoomBooking_BookingId(Integer bookingId);
     Optional<Invoice> findFirstByRoomBooking_BookingId(Integer bookingId);
+    boolean existsByVoucher_VoucherId(Integer voucherId);
 
     // ─── Aggregation queries for recalculate() ──────────────────────────────
 
@@ -50,6 +51,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
                  FROM dbo.booking_packages bp
                  INNER JOIN dbo.retreat_packages p ON p.package_id = bp.package_id
                  WHERE bp.booking_id = :bookingId),
+                0
+            ) + COALESCE(
                 (SELECT p.price FROM dbo.retreat_packages p 
                  INNER JOIN dbo.room_booking rb ON rb.package_id = p.package_id
                  WHERE rb.booking_id = :bookingId),
@@ -65,7 +68,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
                  INNER JOIN dbo.food_order o ON o.order_id = d.order_id
                  WHERE o.room_booking_id = :bookingId
                    AND d.is_package_included = 0
-                   AND o.status IN ('READY', 'DELIVERED')),
+                   AND o.status IN ('PENDING', 'PREPARING', 'READY', 'DELIVERED')),
                 0
             ) + COALESCE(
                 (SELECT SUM(o.total_amount - o.refund_amount)

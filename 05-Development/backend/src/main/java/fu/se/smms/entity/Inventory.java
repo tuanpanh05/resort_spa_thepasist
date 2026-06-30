@@ -17,10 +17,10 @@ public class Inventory {
     private String category;
 
     @Column(name = "stock", nullable = false)
-    private Integer stock;
+    private Double stock;
 
     @Column(name = "min_qty", nullable = false)
-    private Integer minQty;
+    private Double minQty;
 
     @Column(name = "unit", nullable = false, length = 50)
     private String unit;
@@ -36,11 +36,11 @@ public class Inventory {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
-    public Integer getStock() { return stock; }
-    public void setStock(Integer stock) { this.stock = stock; }
+    public Double getStock() { return stock; }
+    public void setStock(Double stock) { this.stock = stock; }
 
-    public Integer getMinQty() { return minQty; }
-    public void setMinQty(Integer minQty) { this.minQty = minQty; }
+    public Double getMinQty() { return minQty; }
+    public void setMinQty(Double minQty) { this.minQty = minQty; }
 
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }

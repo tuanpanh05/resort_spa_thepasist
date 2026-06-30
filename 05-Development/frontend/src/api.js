@@ -269,9 +269,16 @@ export const bookingLookupApi = {
   getGuestProfile: (email) =>
     apiRequest(`/guest/profile?email=${encodeURIComponent(email)}`),
 
-  /** GET /bookings/:id/itinerary â€” Lá»‹ch trÃ¬nh khÃ¡ch hÃ ng */
+  /** GET /bookings/:id/itinerary — Lịch trình khách hàng */
   getItinerary: (bookingId) =>
     apiRequest(`/bookings/${bookingId}/itinerary`),
+
+  /** POST /bookings/:id/cancel — Hủy đặt phòng */
+  cancel: (bookingId, reason) =>
+    apiRequest(`/bookings/${bookingId}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
 };
 
 
@@ -279,8 +286,11 @@ export const bookingLookupApi = {
 // STAFF / RECEPTIONIST APIs (UC08, UC09, UC10 â€” Module 2)
 // ============================================================
 export const staffApi = {
-  /** UC08: GET /v1/check-in/arrivals â€” Danh sÃ¡ch khÃ¡ch sáº¯p Ä‘áº¿n */
+  /** UC08: GET /v1/check-in/arrivals — Danh sách khách sắp đến */
   getArrivals: () => apiRequest("/v1/check-in/arrivals"),
+
+  /** GET /v1/check-in/guests — Danh sách khách lưu trú */
+  getGuests: () => apiRequest("/v1/check-in/guests"),
 
   /** UC08: POST /v1/check-in â€” Thá»±c hiá»‡n check-in */
   performCheckIn: (dto) =>
@@ -289,8 +299,22 @@ export const staffApi = {
       body: JSON.stringify(dto),
     }),
 
-  /** UC09: GET /v1/villas â€” Láº¥y danh sÃ¡ch phÃ²ng/villa */
-  getVillas: () => apiRequest("/v1/villas"),
+  addExtraServices: (bookingId, dto) =>
+    apiRequest(`/bookings/${bookingId}/add-extra`, {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
+
+  getFoodMenu: () => apiRequest("/chef/menu"),
+
+  /** UC09: GET /v1/villas — Lấy danh sách phòng/villa */
+  getVillas: (checkIn = null, checkOut = null) => {
+    let url = "/v1/villas";
+    if (checkIn && checkOut) {
+      url += `?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}`;
+    }
+    return apiRequest(url);
+  },
 
   /** POST /v1/villas â€” Táº¡o phÃ²ng má»›i */
   createVilla: (dto) =>
@@ -313,10 +337,10 @@ export const staffApi = {
     }),
 
   /** UC09: PATCH /v1/villas/:id/status â€” Cáº­p nháº­t tráº¡ng thÃ¡i phÃ²ng */
-  updateVillaStatus: (id, status) =>
+  updateVillaStatus: (id, payload) =>
     apiRequest(`/v1/villas/${id}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: typeof payload === "string" ? JSON.stringify({ status: payload }) : JSON.stringify(payload),
     }),
 
   /** UC10: GET /v1/itineraries/:bookingId â€” Xem lá»‹ch trÃ¬nh khÃ¡ch */

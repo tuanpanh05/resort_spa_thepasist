@@ -18,6 +18,10 @@ import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
 import fu.se.smms.repository.SystemConfigurationRepository;
 import fu.se.smms.repository.TreatmentRoomRepository;
+import fu.se.smms.repository.AccompanyingGuestRepository;
+import fu.se.smms.entity.AccompanyingGuest;
+import fu.se.smms.entity.Room;
+import fu.se.smms.entity.RoomBookingDetail;
 import fu.se.smms.service.EmailService;
 import fu.se.smms.service.InvoiceService;
 import fu.se.smms.entity.Voucher;
@@ -66,6 +70,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private VoucherService voucherService;
     @Autowired
     private TreatmentRoomRepository treatmentRoomRepository;
+    @Autowired
+    private AccompanyingGuestRepository accompanyingGuestRepository;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -176,6 +182,21 @@ public class InvoiceServiceImpl implements InvoiceService {
             booking.setTotalDeposit(payableAmount);
             roomBookingRepository.save(booking);
 
+            // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE
+            try {
+                if (booking.getDetails() != null) {
+                    for (RoomBookingDetail detail : booking.getDetails()) {
+                        Room room = detail.getRoom();
+                        if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                            room.setStatus("AVAILABLE");
+                            roomRepository.save(room);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Lỗi giải phóng phòng VIEWING khi xác nhận cọc: {}", e.getMessage());
+            }
+
             invoice.setDepositAmount(payableAmount);
             invoice.setAmountDue(invoice.getFinalAmount().subtract(payableAmount));
             invoice.setPaymentTime(LocalDateTime.now());
@@ -189,6 +210,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         } else {
             // Final check-out payment flow
             invoice.setStatus("PAID");
+            invoice.setDepositAmount(invoice.getFinalAmount());
             invoice.setAmountDue(BigDecimal.ZERO);
             invoice.setPaymentTime(LocalDateTime.now());
             invoice.setVnpayTranId(null);
@@ -259,6 +281,9 @@ public class InvoiceServiceImpl implements InvoiceService {
             // Log warning - booking may not have room_booking_detail records but still proceed
         }
 
+        // Xóa thông tin người phụ thuộc / người đi cùng khi trả phòng
+        accompanyingGuestRepository.deleteByBookingId(booking.getBookingId());
+
         return toDto(invoice);
     }
 
@@ -301,6 +326,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         // BR-14: Mark associated rooms as DIRTY (Vacant/Needs Cleaning)
         roomRepository.markRoomsAsDirtyAfterCheckout(booking.getBookingId());
 
+        // Xóa thông tin người phụ thuộc / người đi cùng khi trả phòng
+        accompanyingGuestRepository.deleteByBookingId(booking.getBookingId());
+
         return toDto(invoice);
     }
 
@@ -333,6 +361,21 @@ public class InvoiceServiceImpl implements InvoiceService {
                 booking.setTotalDeposit(paymentAmount);
                 roomBookingRepository.save(booking);
 
+                // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE
+                try {
+                    if (booking.getDetails() != null) {
+                        for (RoomBookingDetail detail : booking.getDetails()) {
+                            Room room = detail.getRoom();
+                            if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                                room.setStatus("AVAILABLE");
+                                roomRepository.save(room);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Lỗi giải phóng phòng VIEWING khi VNPay xác nhận cọc: {}", e.getMessage());
+                }
+
                 invoice.setDepositAmount(paymentAmount);
                 invoice.setAmountDue(invoice.getFinalAmount().subtract(paymentAmount));
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
@@ -342,12 +385,21 @@ public class InvoiceServiceImpl implements InvoiceService {
                 incrementVoucherUsage(invoice);
             } else {
                 invoice.setStatus("PAID");
+                invoice.setDepositAmount(invoice.getFinalAmount());
                 invoice.setAmountDue(BigDecimal.ZERO);
                 invoice.setVnpayTranId(paymentResult.getTransactionNo());
                 invoice.setPaymentTime(LocalDateTime.now());
 
                 if (invoice.getDepositAmount() == null || invoice.getDepositAmount().compareTo(BigDecimal.ZERO) == 0) {
                     incrementVoucherUsage(invoice);
+                }
+
+                // Auto check-out when remaining amount is paid successfully via VNPay for CHECKED_IN bookings
+                if (booking != null && "CHECKED_IN".equalsIgnoreCase(booking.getStatus())) {
+                    booking.setStatus("CHECKED_OUT");
+                    roomBookingRepository.save(booking);
+                    roomRepository.markRoomsAsDirtyAfterCheckout(booking.getBookingId());
+                    log.info("[VNPay Auto-Checkout] Successfully checked-out bookingId={} and marked rooms as DIRTY", booking.getBookingId());
                 }
             }
         } else {
@@ -357,6 +409,21 @@ public class InvoiceServiceImpl implements InvoiceService {
                 booking.setCancellationTime(LocalDateTime.now());
                 booking.setRefundAmount(BigDecimal.ZERO);
                 roomBookingRepository.save(booking);
+
+                // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE khi hủy thanh toán cọc
+                try {
+                    if (booking.getDetails() != null) {
+                        for (RoomBookingDetail detail : booking.getDetails()) {
+                            Room room = detail.getRoom();
+                            if (room != null && "VIEWING".equalsIgnoreCase(room.getStatus())) {
+                                room.setStatus("AVAILABLE");
+                                roomRepository.save(room);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Lỗi giải phóng phòng VIEWING khi hủy thanh toán cọc VNPay: {}", e.getMessage());
+                }
 
                 invoice.setStatus("CANCELLED");
 
@@ -512,12 +579,23 @@ public class InvoiceServiceImpl implements InvoiceService {
         BigDecimal serviceSubtotal = defaultZero(invoiceRepository.sumServiceSubtotal(bookingId));
 
         RoomBooking booking = invoice.getRoomBooking();
-        BigDecimal childDiscount = BigDecimal.ZERO;
+        BigDecimal spaChildDiscount = BigDecimal.ZERO;
+        BigDecimal foodChildDiscount = BigDecimal.ZERO;
         if (booking != null) {
-            childDiscount = calculateSpaChildDiscount(booking);
-            spaSubtotal = spaSubtotal.subtract(childDiscount);
+            // BR-CHILD: Giảm giá Spa cho trẻ em
+            spaChildDiscount = calculateSpaChildDiscount(booking);
+            spaSubtotal = spaSubtotal.subtract(spaChildDiscount);
             if (spaSubtotal.signum() < 0) {
                 spaSubtotal = BigDecimal.ZERO;
+            }
+
+            // BR-CHILD: Giảm giá Food cho trẻ em
+            // Trẻ dưới 5: miễn phí 100% phần food tương ứng
+            // Trẻ 5-12: giảm 30% phần food tương ứng
+            foodChildDiscount = calculateFoodChildDiscount(booking, foodSubtotal);
+            foodSubtotal = foodSubtotal.subtract(foodChildDiscount);
+            if (foodSubtotal.signum() < 0) {
+                foodSubtotal = BigDecimal.ZERO;
             }
         }
 
@@ -610,6 +688,41 @@ public class InvoiceServiceImpl implements InvoiceService {
         return discountUnder5.add(discount5to12).setScale(0, RoundingMode.HALF_UP);
     }
 
+    /**
+     * BR-CHILD: Tính giảm giá Food cho trẻ em.
+     * - Trẻ dưới 5 tuổi: miễn phí 100% phần food tương ứng (theo tỷ lệ)
+     * - Trẻ 5-12 tuổi: giảm 30% phần food tương ứng (theo tỷ lệ)
+     * Công thức: Chia đều food cho tất cả khách → tính giảm giá phần trẻ em.
+     */
+    private BigDecimal calculateFoodChildDiscount(RoomBooking booking, BigDecimal foodTotal) {
+        if (booking == null || foodTotal == null || foodTotal.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // guestsCount đã bao gồm trẻ 5-12 (đã cộng slot), lấy tổng thực tế
+        int guestsCountWithSlots = booking.getGuestsCount() != null ? booking.getGuestsCount() : 1;
+        int under5 = booking.getChildrenUnder5() != null ? booking.getChildrenUnder5() : 0;
+        int between5And12 = booking.getChildren5to12() != null ? booking.getChildren5to12() : 0;
+
+        // Tổng người thực sự = guestsCount (đã bao gồm 5-12) + dưới 5
+        int totalPeople = guestsCountWithSlots + under5;
+        if (totalPeople <= 0) return BigDecimal.ZERO;
+        if (under5 == 0 && between5And12 == 0) return BigDecimal.ZERO;
+
+        // Phần food trẻ dưới 5 → miễn phí 100%
+        BigDecimal discountUnder5 = foodTotal
+                .multiply(BigDecimal.valueOf(under5))
+                .divide(BigDecimal.valueOf(totalPeople), 4, RoundingMode.HALF_UP);
+
+        // Phần food trẻ 5-12 → giảm 30%
+        BigDecimal discount5to12 = foodTotal
+                .multiply(BigDecimal.valueOf(between5And12))
+                .multiply(new BigDecimal("0.30"))
+                .divide(BigDecimal.valueOf(totalPeople), 4, RoundingMode.HALF_UP);
+
+        return discountUnder5.add(discount5to12).setScale(0, RoundingMode.HALF_UP);
+    }
+
     private InvoiceDTO toDto(Invoice invoice) {
         InvoiceDTO dto = new InvoiceDTO();
         dto.setInvoiceId(invoice.getInvoiceId());
@@ -632,6 +745,11 @@ public class InvoiceServiceImpl implements InvoiceService {
         }
         BigDecimal childDiscount = calculateSpaChildDiscount(invoice.getRoomBooking());
         dto.setSpaChildDiscount(childDiscount);
+        // BR-CHILD: Food child discount
+        BigDecimal foodDiscount = calculateFoodChildDiscount(invoice.getRoomBooking(),
+                defaultZero(invoiceRepository.sumFoodSubtotal(
+                        invoice.getRoomBooking() != null ? invoice.getRoomBooking().getBookingId() : null)));
+        dto.setFoodChildDiscount(foodDiscount);
         if (invoice.getUser() != null) {
             dto.setCustomerName(invoice.getUser().getFullName());
         } else {
