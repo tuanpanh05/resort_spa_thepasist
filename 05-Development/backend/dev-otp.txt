@@ -69,3 +69,12 @@ Deposit Paid: 8,250,000 VNĐ
 Amount Due: 19,250,000 VNĐ
 Time Sent: 2026-06-29T21:55:23.092711200
 ========================================
+========================================
+INVOICE EMAIL
+Email: nghiacoc2562005@gmail.com
+Invoice: #NS-INV-90
+Guest: b
+Total: 14,080,000 VNĐ
+Payment Method: Tiền mặt tại quầy
+Time Sent: 2026-06-30T15:38:05.139778400
+========================================
