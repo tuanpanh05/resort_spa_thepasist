@@ -102,6 +102,20 @@ export default function Payment() {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
+      // Kiểm tra trạng thái mới nhất từ server trước khi tiến hành hủy
+      const freshInvoice = await paymentApi.getInvoice(invoiceId);
+      const isPaidNow = 
+        freshInvoice.status === "PAID" || 
+        (freshInvoice.bookingStatus === "CONFIRMED" && Number(freshInvoice.depositAmount || 0) > 0);
+
+      if (isPaidNow) {
+        // Đơn hàng thực tế đã được thanh toán (VNPay IPN hoặc lễ tân đã xác nhận), không được hủy!
+        setIsPaid(true);
+        setInvoice(freshInvoice);
+        return;
+      }
+
+      // Nếu thực sự chưa thanh toán, tiến hành hủy phòng
       const bookingId = invoice?.bookingId;
       if (bookingId) {
         await bookingLookupApi.cancel(bookingId, "Hết hạn thời gian thanh toán cọc (1 phút)");
@@ -133,6 +147,33 @@ export default function Payment() {
 
     return () => clearInterval(timer);
   }, [invoice, timeLeft, isPaid]);
+
+  // Tự động kiểm tra trạng thái thanh toán từ server mỗi 3 giây (Auto Polling)
+  // Giúp tự chuyển sang trang thành công ngay khi lễ tân xác nhận hoặc VNPay IPN phản hồi
+  useEffect(() => {
+    if (!invoice || isPaid || invoice.status === "PAID") {
+      return;
+    }
+
+    const pollInterval = setInterval(() => {
+      paymentApi.getInvoice(invoiceId)
+        .then((data) => {
+          const isPaidNow = 
+            data.status === "PAID" || 
+            (data.bookingStatus === "CONFIRMED" && Number(data.depositAmount || 0) > 0);
+          if (isPaidNow) {
+            setIsPaid(true);
+            setInvoice(data);
+            clearInterval(pollInterval);
+          }
+        })
+        .catch((err) => {
+          console.warn("Lỗi khi tự động kiểm tra trạng thái thanh toán:", err);
+        });
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [invoiceId, invoice, isPaid]);
 
   useEffect(() => {
     if (showTimeoutModal) {
