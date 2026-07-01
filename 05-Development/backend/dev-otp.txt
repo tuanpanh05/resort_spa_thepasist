@@ -1,19 +1,19 @@
 ========================================
-Email: nha29052005@gmail.com
+Email: xx@gmail.com
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 216282
-Time: 2026-07-01T21:53:33.793803800
+OTP Code: 102410
+Time: 2026-07-01T23:39:00.441482400
 ========================================
 ========================================
 ROOM BOOKING CONFIVERMATION EMAIL
-Email: nha29052005@gmail.com
-Guest Name: hoàng anh
-Booking ID: #NS-128
+Email: xx@gmail.com
+Guest Name: dddd
+Booking ID: #NS-36
 Check-in: 2026-07-02T14:00
 Check-out: 2026-07-03T12:00
-Rooms: Bungalow Đá Cuội Bên Rừng (Phòng BD-101), Biệt Thự Đồi Trà Thiền Định (Phòng BT-103)
-Total Amount: 10,450,000 VNĐ
-Deposit Paid: 3,135,000 VNĐ
-Amount Due: 7,315,000 VNĐ
-Time Sent: 2026-07-01T22:51:15.848134500
+Rooms: Vip Villa 1-Bedroom Pool (Phòng Vip-203)
+Total Amount: 6,006,000 VNĐ
+Deposit Paid: 1,801,800 VNĐ
+Amount Due: 4,204,200 VNĐ
+Time Sent: 2026-07-01T23:40:17.616858500
 ========================================

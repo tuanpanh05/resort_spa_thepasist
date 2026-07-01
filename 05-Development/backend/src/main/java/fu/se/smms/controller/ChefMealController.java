@@ -78,10 +78,10 @@ public class ChefMealController {
 
             List<FoodOrder> activeOrders = foodOrderRepository.findAll().stream()
                     .filter(o -> o.getTable() != null && o.getTable().getTableId().equals(table.getTableId()))
-                    .filter(o -> !o.getStatus().equals("Completed") && !o.getStatus().equals("Cancelled"))
+                    .filter(o -> !"DELIVERED".equalsIgnoreCase(o.getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getStatus()))
                     .collect(Collectors.toList());
             for (FoodOrder o : activeOrders) {
-                o.setStatus("Completed");
+                o.setStatus("DELIVERED");
                 foodOrderRepository.save(o);
             }
         }
@@ -341,8 +341,7 @@ public class ChefMealController {
         
         List<FoodOrder> orders = foodOrderRepository.findAll().stream()
                 .filter(o -> o.getOrderTime() != null && o.getOrderTime().toLocalDate().equals(finalDate))
-                // Tab 4 KDS: chỉ hiện đơn gọi thêm tại bàn (ROOM SERVICE)
-                .filter(o -> !"PACKAGE MEAL".equals(o.getOrigin()))
+                // Tab 4 KDS: sẽ được filter lại ở Frontend
                 .filter(o -> o.getRoomBooking() == null || (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"PENDING_DEPOSIT".equalsIgnoreCase(o.getRoomBooking().getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
                 .collect(Collectors.toList());
         List<Map<String, Object>> response = orders.stream().map(order -> {

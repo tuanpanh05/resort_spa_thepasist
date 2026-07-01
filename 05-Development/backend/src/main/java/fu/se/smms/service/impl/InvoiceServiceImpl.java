@@ -72,6 +72,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private TreatmentRoomRepository treatmentRoomRepository;
     @Autowired
     private AccompanyingGuestRepository accompanyingGuestRepository;
+    @Autowired
+    private fu.se.smms.service.TableAssignmentService tableAssignmentService;
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -181,6 +183,12 @@ public class InvoiceServiceImpl implements InvoiceService {
             booking.setStatus("CONFIRMED");
             booking.setTotalDeposit(payableAmount);
             roomBookingRepository.save(booking);
+
+            try {
+                tableAssignmentService.assignTableForBooking(booking.getBookingId(), booking.getGuestsCount() != null ? booking.getGuestsCount() : 2);
+            } catch (Exception e) {
+                log.warn("Lỗi xếp bàn tự động khi xác nhận cọc: {}", e.getMessage());
+            }
 
             // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE
             try {
@@ -360,6 +368,12 @@ public class InvoiceServiceImpl implements InvoiceService {
                 booking.setStatus("CONFIRMED");
                 booking.setTotalDeposit(paymentAmount);
                 roomBookingRepository.save(booking);
+
+                try {
+                    tableAssignmentService.assignTableForBooking(booking.getBookingId(), booking.getGuestsCount() != null ? booking.getGuestsCount() : 2);
+                } catch (Exception e) {
+                    log.warn("Lỗi xếp bàn tự động khi VNPay xác nhận cọc: {}", e.getMessage());
+                }
 
                 // Giải phóng trạng thái phòng từ VIEWING sang AVAILABLE
                 try {

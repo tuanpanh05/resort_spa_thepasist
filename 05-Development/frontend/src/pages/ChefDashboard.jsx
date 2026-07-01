@@ -62,13 +62,13 @@ export default function ChefDashboard() {
       const existingTableIdx = currentTables.findIndex(t => t.id === roomStr);
       if (existingTableIdx >= 0) {
         currentTables[existingTableIdx].status = "Occupied";
-        currentTables[existingTableIdx].currentGuest = activeRooms[roomStr];
+        currentTables[existingTableIdx].guestName = activeRooms[roomStr];
       } else {
         currentTables.push({
           id: roomStr,
           status: "Occupied",
           capacity: 4,
-          currentGuest: activeRooms[roomStr]
+          guestName: activeRooms[roomStr]
         });
       }
     });
@@ -105,7 +105,7 @@ export default function ChefDashboard() {
           !(o.mealCode && o.mealCode.toUpperCase().includes("COMBO"))
       );
       setOrders(finalOrders);
-      setTables(computeDynamicTables(finalOrders, baseTables));
+      setTables(computeDynamicTables(mappedOrders, baseTables));
     } catch (err) {
       console.warn("Could not fetch orders for date", err);
     }
@@ -243,10 +243,10 @@ export default function ChefDashboard() {
         id: t.id,
         status: (t.status && t.status.toUpperCase() === "AVAILABLE") ? "Available" : "Occupied",
         capacity: t.capacity,
-        currentGuest: null
+        guestName: null
       }));
       setBaseTables(realTables);
-      setTables(computeDynamicTables(finalOrders, realTables));
+      setTables(computeDynamicTables(mappedOrders, realTables));
     } catch (err) {
       console.warn("Could not fetch chef data from live server.", err);
       // Leave state as empty arrays — do not fallback to mock data
