@@ -17,6 +17,49 @@ import BookingSuccess from "../components/booking/BookingSuccess";
 
 export default function BookingPage() {
   const navigate = useNavigate();
+  const userRole = localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "";
+  const isCustomer = !userRole || userRole.toUpperCase() === "CUSTOMER";
+
+  if (!isCustomer) {
+    const dashboardPath = userRole === "MANAGER" || userRole === "ADMIN" 
+      ? "/admin" 
+      : userRole === "CHEF" 
+        ? "/chef" 
+        : userRole === "RECEPTIONIST" || userRole === "STAFF" 
+          ? "/staff" 
+          : "/specialist";
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-sage-50 pt-28 pb-16 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-primary-100 p-8 text-center space-y-6">
+          <div className="inline-flex p-4 bg-amber-50 border border-amber-200 rounded-full text-amber-600 animate-pulse">
+            <svg className="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="font-serif text-2xl font-light text-sage-950">Đặt lịch không khả dụng</h2>
+          <p className="text-sm text-sage-650 leading-relaxed">
+            Bạn đang đăng nhập bằng tài khoản quản lý/nhân viên (<strong className="text-primary-850">{userRole}</strong>). 
+            Chức năng đặt lịch nghỉ dưỡng chỉ áp dụng đối với tài khoản Khách Hàng.
+          </p>
+          <div className="pt-4 flex flex-col gap-2">
+            <Link
+              to={dashboardPath}
+              className="w-full inline-flex items-center justify-center px-6 py-3 text-xs font-bold tracking-widest bg-primary-800 text-white hover:bg-primary-900 transition rounded-full uppercase"
+            >
+              Vào trang quản trị
+            </Link>
+            <Link
+              to="/"
+              className="w-full inline-flex items-center justify-center px-6 py-3 text-xs font-bold tracking-widest border border-primary-200 text-sage-700 hover:bg-primary-50 transition rounded-full uppercase"
+            >
+              Quay lại trang chủ
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Wizard Step State: 1 = Guest Info, 2 = Select Villa & Services, 3 = Review, 4 = Payment QR
   const [step, setStep] = useState(1);
