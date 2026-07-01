@@ -279,6 +279,7 @@ function ConsultationModal({ isOpen, onClose }) {
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const userRole = localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "";
 
   // Wellness experiences mock data
   const experiences = [
@@ -426,18 +427,29 @@ export default function Home() {
 
           <ScrollReveal delay={600}>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6">
-              <a
-                href="/dat-lich"
-                className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] transition-all duration-300 shadow-md hover:-translate-y-0.5 hover:scale-105 uppercase cursor-pointer rounded-full"
-              >
-                Đặt lịch trải nghiệm
-              </a>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest border border-[#2d5a3b]/30 text-[#2d5a3b] hover:bg-[#2d5a3b]/10 hover:text-[#14291c] transition-all duration-300 uppercase cursor-pointer bg-white/40 backdrop-blur-sm shadow-sm rounded-full"
-              >
-                Nhận tư vấn Trị Liệu
-              </button>
+              {userRole && userRole.toUpperCase() !== "CUSTOMER" ? (
+                <Link
+                  to={userRole === "MANAGER" || userRole === "ADMIN" ? "/admin" : userRole === "CHEF" ? "/chef" : userRole === "RECEPTIONIST" || userRole === "STAFF" ? "/staff" : "/specialist"}
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] transition-all duration-300 shadow-md hover:-translate-y-0.5 hover:scale-105 uppercase cursor-pointer rounded-full"
+                >
+                  Truy cập trang quản trị ({userRole})
+                </Link>
+              ) : (
+                <>
+                  <a
+                    href="/dat-lich"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest bg-gradient-to-r from-[#2d5a3b] to-[#1e3d27] text-white hover:from-[#3b754e] hover:to-[#264a30] transition-all duration-300 shadow-md hover:-translate-y-0.5 hover:scale-105 uppercase cursor-pointer rounded-full"
+                  >
+                    Đặt lịch trải nghiệm
+                  </a>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-xs font-bold tracking-widest border border-[#2d5a3b]/30 text-[#2d5a3b] hover:bg-[#2d5a3b]/10 hover:text-[#14291c] transition-all duration-300 uppercase cursor-pointer bg-white/40 backdrop-blur-sm shadow-sm rounded-full"
+                  >
+                    Nhận tư vấn Trị Liệu
+                  </button>
+                </>
+              )}
             </div>
           </ScrollReveal>
         </div>

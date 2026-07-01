@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, Routes, Route, useLocation } from "react-router-dom";
-import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf, MessageSquare, Clock, XCircle } from "lucide-react";
+import { User, Heart, CalendarDays, CreditCard, ArrowLeft, BadgeCheck, Leaf, MessageSquare, Clock, XCircle, ShieldCheck } from "lucide-react";
 import heroBg from "../assets/hero_bg.png";
 import { userApi } from "../api";
 import { fmtDate } from "../utils/formatters";
@@ -146,23 +146,45 @@ export default function ProfilePage() {
           <div className="w-full md:w-64 flex-shrink-0 bg-white rounded-md shadow-sm p-4 h-fit border border-primary-100">
             <h2 className="text-[10px] font-bold text-sage-400 uppercase tracking-widest px-3 mb-3">{t("profile.menuTitle")}</h2>
             <nav className="space-y-1">
-              {MENU_ITEMS.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <Link
-                    to={item.path}
-                    key={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all rounded-sm ${
-                      active
-                        ? "bg-primary-900 text-white shadow-sm"
-                        : "text-sage-600 hover:bg-primary-50 hover:text-primary-900"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{t(item.labelKey)}</span>
-                  </Link>
-                );
-              })}
+              {(() => {
+                const role = profile?.role || "";
+                const isCust = !role || role === "CUSTOMER" || role === "GUEST";
+                const items = isCust ? MENU_ITEMS : [
+                  { path: "/tai-khoan", labelKey: "nav.personalInfo", icon: User },
+                  {
+                    path: role === "MANAGER" || role === "ADMIN"
+                      ? "/admin"
+                      : role === "CHEF"
+                        ? "/chef"
+                        : role === "RECEPTIONIST" || role === "STAFF"
+                          ? "/staff"
+                          : "/specialist",
+                    labelKey: "Bảng quản lý",
+                    icon: ShieldCheck,
+                    isExternal: true
+                  }
+                ];
+
+                return items.map((item) => {
+                  const active = !item.isExternal && isActive(item.path);
+                  return (
+                    <Link
+                      to={item.path}
+                      key={item.path}
+                      className={`flex items-center gap-3 px-3 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all rounded-sm ${
+                        active
+                          ? "bg-primary-900 text-white shadow-sm"
+                          : item.isExternal
+                            ? "text-primary-800 hover:bg-primary-50 font-bold"
+                            : "text-sage-600 hover:bg-primary-50 hover:text-primary-900"
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      <span>{item.isExternal ? item.labelKey : t(item.labelKey)}</span>
+                    </Link>
+                  );
+                });
+              })()}
             </nav>
           </div>
 
@@ -170,13 +192,48 @@ export default function ProfilePage() {
           <div className="flex-grow bg-white rounded-md shadow-sm p-6 border border-primary-100">
             <Routes>
               <Route index element={<PersonalInfoForm profile={profile} onProfileUpdate={setProfile} />} />
-              <Route path="suc-khoe" element={<HealthRecords />} />
-              <Route path="lich-hoat-dong" element={<GuestCalendarView />} />
-              <Route path="lich-su-dat-hang" element={<BookingHistory />} />
-              <Route path="lich-trinh" element={<ItineraryTab />} />
-              <Route path="lich-su-thanh-toan" element={<PaymentHistory profile={profile} />} />
-              <Route path="huy-dich-vu" element={<CancelServicesTab />} />
-              <Route path="ho-tro" element={<SupportRequests profile={profile} />} />
+              {(() => {
+                const role = profile?.role || "";
+                const isCust = !role || role === "CUSTOMER" || role === "GUEST";
+                const accessDeniedEl = (
+                  <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-4">
+                    <div className="p-4 bg-amber-50 rounded-full border border-amber-200 text-amber-600 animate-pulse">
+                      <ShieldCheck className="h-8 w-8" />
+                    </div>
+                    <h3 className="font-serif text-lg font-semibold text-sage-900">Tính năng này không khả dụng</h3>
+                    <p className="text-xs text-sage-500 max-w-sm">
+                      Bạn đang đăng nhập bằng tài khoản nhân viên/quản trị (<strong className="text-primary-850">{role}</strong>). 
+                      Vui lòng truy cập bảng quản trị để xem và quản lý thông tin.
+                    </p>
+                    <Link
+                      to={
+                        role === "MANAGER" || role === "ADMIN"
+                          ? "/admin"
+                          : role === "CHEF"
+                            ? "/chef"
+                            : role === "RECEPTIONIST" || role === "STAFF"
+                              ? "/staff"
+                              : "/specialist"
+                      }
+                      className="px-6 py-2 bg-primary-800 text-white hover:bg-primary-900 text-xs font-bold uppercase rounded-full transition-colors"
+                    >
+                      Vào trang quản trị
+                    </Link>
+                  </div>
+                );
+
+                return (
+                  <>
+                    <Route path="suc-khoe" element={isCust ? <HealthRecords /> : accessDeniedEl} />
+                    <Route path="lich-hoat-dong" element={isCust ? <GuestCalendarView /> : accessDeniedEl} />
+                    <Route path="lich-su-dat-hang" element={isCust ? <BookingHistory /> : accessDeniedEl} />
+                    <Route path="lich-trinh" element={isCust ? <ItineraryTab /> : accessDeniedEl} />
+                    <Route path="lich-su-thanh-toan" element={isCust ? <PaymentHistory profile={profile} /> : accessDeniedEl} />
+                    <Route path="huy-dich-vu" element={isCust ? <CancelServicesTab /> : accessDeniedEl} />
+                    <Route path="ho-tro" element={isCust ? <SupportRequests profile={profile} /> : accessDeniedEl} />
+                  </>
+                );
+              })()}
             </Routes>
           </div>
         </div>

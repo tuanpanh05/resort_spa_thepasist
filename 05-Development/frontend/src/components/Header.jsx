@@ -249,53 +249,57 @@ export default function Header() {
                           <User className="h-3.5 w-3.5 text-primary-600" />
                           {t("nav.personalInfo")}
                         </Link>
-                        <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
-                          <CalendarDays className="h-3.5 w-3.5 text-primary-600" />
-                          {t("nav.orderHistory")}
-                        </Link>
-                        <Link to="/tai-khoan/suc-khoe" onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
-                          <Heart className="h-3.5 w-3.5 text-rose-500" />
-                          {t("nav.healthProfile")}
-                        </Link>
-                        <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
-                          <CreditCard className="h-3.5 w-3.5 text-primary-600" />
-                          {t("nav.paymentHistory")}
-                        </Link>
-                        <Link to="/tai-khoan/ho-tro" onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
-                          <MessageSquare className="h-3.5 w-3.5 text-primary-600" />
-                          Liên hệ hỗ trợ
-                        </Link>
-                        
-                        {/* Lịch trình section inside dropdown */}
-                        <div className="border-t border-primary-100 my-1" />
-                        <div className="px-4 py-2">
-                          <div className="flex items-center gap-2 text-xs font-bold text-sage-900 mb-1.5">
-                            <Clock className="h-3.5 w-3.5 text-primary-600" />
-                            {t("nav.itinerary")}
-                          </div>
-                          {loadingBooking ? (
-                            <p className="text-[10px] text-sage-400 italic">{t("nav.loading")}</p>
-                          ) : latestBooking ? (
-                            <div className="space-y-1 text-[11px] text-sage-600 bg-primary-50/50 p-2 rounded-lg border border-primary-100/50">
-                              <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
-                              <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
-                              <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
-                              <Link 
-                                to="/tai-khoan/lich-su-dat-hang" 
-                                onClick={() => setDropdownOpen(false)}
-                                className="block text-center text-[10px] font-bold text-primary-700 hover:text-primary-900 hover:underline mt-1.5 pt-1 border-t border-primary-100/50"
-                              >
-                                {t("nav.viewDetails")}
-                              </Link>
+                        {(!userRole || userRole.toUpperCase() === "CUSTOMER") && (
+                          <>
+                            <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                              <CalendarDays className="h-3.5 w-3.5 text-primary-600" />
+                              {t("nav.orderHistory")}
+                            </Link>
+                            <Link to="/tai-khoan/suc-khoe" onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                              <Heart className="h-3.5 w-3.5 text-rose-500" />
+                              {t("nav.healthProfile")}
+                            </Link>
+                            <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                              <CreditCard className="h-3.5 w-3.5 text-primary-600" />
+                              {t("nav.paymentHistory")}
+                            </Link>
+                            <Link to="/tai-khoan/ho-tro" onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-sage-700 hover:bg-primary-50 hover:text-primary-900 transition-colors">
+                              <MessageSquare className="h-3.5 w-3.5 text-primary-600" />
+                              Liên hệ hỗ trợ
+                            </Link>
+                            
+                            {/* Lịch trình section inside dropdown */}
+                            <div className="border-t border-primary-100 my-1" />
+                            <div className="px-4 py-2">
+                              <div className="flex items-center gap-2 text-xs font-bold text-sage-900 mb-1.5">
+                                <Clock className="h-3.5 w-3.5 text-primary-600" />
+                                {t("nav.itinerary")}
+                              </div>
+                              {loadingBooking ? (
+                                <p className="text-[10px] text-sage-400 italic">{t("nav.loading")}</p>
+                              ) : latestBooking ? (
+                                <div className="space-y-1 text-[11px] text-sage-600 bg-primary-50/50 p-2 rounded-lg border border-primary-100/50">
+                                  <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
+                                  <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
+                                  <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
+                                  <Link 
+                                    to="/tai-khoan/lich-su-dat-hang" 
+                                    onClick={() => setDropdownOpen(false)}
+                                    className="block text-center text-[10px] font-bold text-primary-700 hover:text-primary-900 hover:underline mt-1.5 pt-1 border-t border-primary-100/50"
+                                  >
+                                    {t("nav.viewDetails")}
+                                  </Link>
+                                </div>
+                              ) : (
+                                <p className="text-[10px] text-sage-400 italic">{t("nav.noItinerary")}</p>
+                              )}
                             </div>
-                          ) : (
-                            <p className="text-[10px] text-sage-400 italic">{t("nav.noItinerary")}</p>
-                          )}
-                        </div>
+                          </>
+                        )}
                         <div className="border-t border-primary-100 my-1" />
                         <button onClick={handleLogout}
                           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
@@ -364,12 +368,21 @@ export default function Header() {
               </div>
             </div>
 
-            <Link
-              to="/dat-lich"
-              className="whitespace-nowrap px-6 py-2.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_15px_rgba(205,162,80,0.35)] shadow-sm"
-            >
-              {t("nav.bookNow")}
-            </Link>
+            {userRole && userRole.toUpperCase() !== "CUSTOMER" ? (
+              <Link
+                to={userRole === "MANAGER" || userRole === "ADMIN" ? "/admin" : userRole === "CHEF" ? "/chef" : userRole === "RECEPTIONIST" || userRole === "STAFF" ? "/staff" : "/specialist"}
+                className="whitespace-nowrap px-6 py-2.5 bg-primary-800 hover:bg-primary-900 text-white text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_15px_rgba(45,90,59,0.35)] shadow-sm"
+              >
+                Trang Quản Trị
+              </Link>
+            ) : (
+              <Link
+                to="/dat-lich"
+                className="whitespace-nowrap px-6 py-2.5 bg-[#cda250] hover:bg-[#d9b360] text-[#070e0a] text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_15px_rgba(205,162,80,0.35)] shadow-sm"
+              >
+                {t("nav.bookNow")}
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -448,42 +461,46 @@ export default function Header() {
                   className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
                   <User className="h-4 w-4 text-primary-600" /> {t("nav.personalInfo")}
                 </Link>
-                <Link to="/tai-khoan/suc-khoe" onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-rose-500" /> {t("nav.healthProfile")}
-                </Link>
-                <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-primary-600" /> {t("nav.orderHistory")}
-                </Link>
-                <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary-600" /> {t("nav.paymentHistory")}
-                </Link>
-                <Link to="/tai-khoan/ho-tro" onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-primary-600" /> Liên hệ hỗ trợ
-                </Link>
-                <div className="px-3 py-2 border border-primary-100 rounded-lg bg-primary-50/20">
-                  <div className="flex items-center gap-2 text-sm font-bold text-sage-900 mb-1.5">
-                    <Clock className="h-4 w-4 text-primary-600" /> {t("nav.itinerary")}
-                  </div>
-                  {loadingBooking ? (
-                    <p className="text-xs text-sage-400 italic">{t("nav.loading")}</p>
-                  ) : latestBooking ? (
-                    <div className="space-y-1 text-xs text-sage-600">
-                      <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
-                      <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
-                      <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
-                      <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
-                        className="block text-center text-xs font-bold text-primary-700 hover:text-primary-900 hover:underline mt-2 pt-1.5 border-t border-primary-100/50">
-                        {t("nav.viewDetails")}
-                      </Link>
+                {(!userRole || userRole.toUpperCase() === "CUSTOMER") && (
+                  <>
+                    <Link to="/tai-khoan/suc-khoe" onClick={() => setIsOpen(false)}
+                      className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-rose-500" /> {t("nav.healthProfile")}
+                    </Link>
+                    <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
+                      className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-primary-600" /> {t("nav.orderHistory")}
+                    </Link>
+                    <Link to="/tai-khoan/lich-su-thanh-toan" onClick={() => setIsOpen(false)}
+                      className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-primary-600" /> {t("nav.paymentHistory")}
+                    </Link>
+                    <Link to="/tai-khoan/ho-tro" onClick={() => setIsOpen(false)}
+                      className="block px-3 py-2.5 rounded-md text-sm font-medium text-sage-800 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 hover:translate-x-1.5 flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-primary-600" /> Liên hệ hỗ trợ
+                    </Link>
+                    <div className="px-3 py-2 border border-primary-100 rounded-lg bg-primary-50/20">
+                      <div className="flex items-center gap-2 text-sm font-bold text-sage-900 mb-1.5">
+                        <Clock className="h-4 w-4 text-primary-600" /> {t("nav.itinerary")}
+                      </div>
+                      {loadingBooking ? (
+                        <p className="text-xs text-sage-400 italic">{t("nav.loading")}</p>
+                      ) : latestBooking ? (
+                        <div className="space-y-1 text-xs text-sage-600">
+                          <p><span className="font-semibold text-primary-800">{t("nav.checkIn")}:</span> {fmtDate(latestBooking.checkInDate)}</p>
+                          <p><span className="font-semibold text-primary-800">{t("nav.packageName")}:</span> {latestBooking.packageName || "N/A"}</p>
+                          <p><span className="font-semibold text-primary-800">{t("nav.checkOut")}:</span> {fmtDate(latestBooking.checkOutDate)}</p>
+                          <Link to="/tai-khoan/lich-su-dat-hang" onClick={() => setIsOpen(false)}
+                            className="block text-center text-xs font-bold text-primary-700 hover:text-primary-900 hover:underline mt-2 pt-1.5 border-t border-primary-100/50">
+                            {t("nav.viewDetails")}
+                          </Link>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-sage-400 italic">{t("nav.noItinerary")}</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-sage-400 italic">{t("nav.noItinerary")}</p>
-                  )}
-                </div>
+                  </>
+                )}
                 <button onClick={() => { setIsOpen(false); handleLogout(); }}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition cursor-pointer">
                   <LogOut className="h-4 w-4" /> {t("nav.signOut")}
