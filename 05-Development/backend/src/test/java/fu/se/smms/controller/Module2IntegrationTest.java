@@ -19,7 +19,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
-@Transactional
 class Module2IntegrationTest {
 
     @Autowired

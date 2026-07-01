@@ -49,6 +49,7 @@ class InvoiceServiceImplTest {
     private FoodOrderRepository foodOrderRepository;
     private EmailService emailService;
     private SpaBookingRepository spaBookingRepository;
+    private fu.se.smms.repository.AccompanyingGuestRepository accompanyingGuestRepository;
     private InvoiceServiceImpl service;
     private VNPayProperties vnPayProperties;
     private fu.se.smms.service.VNPayService vnPayService;
@@ -63,6 +64,7 @@ class InvoiceServiceImplTest {
         foodOrderRepository = mock(FoodOrderRepository.class);
         emailService = mock(EmailService.class);
         spaBookingRepository = mock(SpaBookingRepository.class);
+        accompanyingGuestRepository = mock(fu.se.smms.repository.AccompanyingGuestRepository.class);
 
         SystemConfiguration depositConfig = new SystemConfiguration();
         depositConfig.setConfigKey("deposit_ratio");
@@ -85,6 +87,7 @@ class InvoiceServiceImplTest {
                 foodOrderRepository, emailService,
                 spaBookingRepository
         );
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "accompanyingGuestRepository", accompanyingGuestRepository);
 
         // Default stubbing to prevent recalculate() from throwing exceptions or returning null
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));

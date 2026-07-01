@@ -1,9 +1,12 @@
 package fu.se.smms.service.impl;
 
+import fu.se.smms.repository.UserRepository;
+import fu.se.smms.repository.AccompanyingGuestRepository;
 import fu.se.smms.entity.Room;
 import fu.se.smms.entity.RoomBooking;
 import fu.se.smms.repository.RoomBookingRepository;
 import fu.se.smms.repository.RoomRepository;
+import fu.se.smms.dto.CheckInRequestDTO;
 import fu.se.smms.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,15 +33,21 @@ class CheckInServiceImplTest {
 
     private RoomBookingRepository roomBookingRepository;
     private RoomRepository roomRepository;
+    private UserRepository userRepository;
+    private AccompanyingGuestRepository accompanyingGuestRepository;
     private CheckInServiceImpl checkInService;
 
     @BeforeEach
     void setUp() {
         roomBookingRepository = mock(RoomBookingRepository.class);
         roomRepository = mock(RoomRepository.class);
+        userRepository = mock(UserRepository.class);
+        accompanyingGuestRepository = mock(AccompanyingGuestRepository.class);
         checkInService = new CheckInServiceImpl();
         ReflectionTestUtils.setField(checkInService, "roomBookingRepository", roomBookingRepository);
         ReflectionTestUtils.setField(checkInService, "roomRepository", roomRepository);
+        ReflectionTestUtils.setField(checkInService, "userRepository", userRepository);
+        ReflectionTestUtils.setField(checkInService, "accompanyingGuestRepository", accompanyingGuestRepository);
     }
 
     // ─── TC-004 ──────────────────────────────────────────────────────────────
@@ -54,8 +63,14 @@ class CheckInServiceImplTest {
         when(roomBookingRepository.findById(202)).thenReturn(Optional.of(booking));
 
         // Act & Assert
+        CheckInRequestDTO request = new CheckInRequestDTO();
+        request.setBookingId(202);
+        request.setIdentityDocument(null);
+        request.setNationality("Vietnamese");
+        request.setAccompanyingGuests(java.util.Collections.emptyList());
+
         BusinessException exception = assertThrows(BusinessException.class, () ->
-                checkInService.performCheckIn(202, null, "Vietnamese", java.util.Collections.emptyList())
+                checkInService.performCheckIn(request)
         );
 
         assertEquals("CHECKIN-002", exception.getCode());
@@ -74,8 +89,14 @@ class CheckInServiceImplTest {
         when(roomBookingRepository.findById(203)).thenReturn(Optional.of(booking));
 
         // Act & Assert
+        CheckInRequestDTO request = new CheckInRequestDTO();
+        request.setBookingId(203);
+        request.setIdentityDocument("   ");
+        request.setNationality("Vietnamese");
+        request.setAccompanyingGuests(java.util.Collections.emptyList());
+
         BusinessException exception = assertThrows(BusinessException.class, () ->
-                checkInService.performCheckIn(203, "   ", "Vietnamese", java.util.Collections.emptyList())
+                checkInService.performCheckIn(request)
         );
 
         assertEquals("CHECKIN-002", exception.getCode());
@@ -104,7 +125,13 @@ class CheckInServiceImplTest {
         when(roomRepository.save(any(Room.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        checkInService.performCheckIn(202, "CCCD123456789", "Vietnamese", java.util.Collections.emptyList());
+        CheckInRequestDTO request = new CheckInRequestDTO();
+        request.setBookingId(202);
+        request.setIdentityDocument("012345678901");
+        request.setNationality("Vietnamese");
+        request.setAccompanyingGuests(java.util.Collections.emptyList());
+
+        checkInService.performCheckIn(request);
 
         // Assert
         assertEquals("CHECKED_IN", booking.getStatus(),

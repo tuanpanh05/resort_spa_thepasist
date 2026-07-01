@@ -235,6 +235,35 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         try {
+            System.out.println("[DB Seeder] Structural Check: Creating incurred_services table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.incurred_services', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.incurred_services (
+                        id INT IDENTITY(1,1) PRIMARY KEY,
+                        room_booking_id INT NULL REFERENCES dbo.room_booking(booking_id) ON DELETE SET NULL,
+                        room_number VARCHAR(50) NOT NULL,
+                        category VARCHAR(100) NOT NULL,
+                        detail NVARCHAR(MAX) NOT NULL,
+                        price DECIMAL(12, 2) NOT NULL,
+                        status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                        created_at DATETIME2 NOT NULL DEFAULT GETDATE()
+                    );
+                END
+                """);
+
+            System.out.println("[DB Seeder] Structural Check: Adding service_subtotal to invoice if not exists...");
+            jdbcTemplate.execute("""
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('dbo.invoice') AND name = 'service_subtotal')
+                BEGIN
+                    ALTER TABLE dbo.invoice ADD service_subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0.00;
+                END
+                """);
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Structural check for incurred_services failed: " + e.getMessage());
+        }
+
+        try {
             System.out.println("[DB Seeder] Skipping hardcoded Food Menu updates to preserve user edits.");
             /* 
             jdbcTemplate.update("UPDATE food_menu SET dish_name=N'ChÃ¡o Yáº¿n Máº¡ch Háº¡t Chia', description=N'ChÃ¡o yáº¿n máº¡ch nguyÃªn cÃ¡m náº¥u cÃ¹ng háº¡t chia, háº¡t Ã³c chÃ³ vÃ  dÃ¢u tÃ¢y tÆ°Æ¡i.', dietary_tags='Vegan, Healthy', price=120000, available_days='1,3,5', image_url='/images/dishes/dish_chao_yen_mach.png', is_package_included=1, periods='Breakfast' WHERE food_id=1");

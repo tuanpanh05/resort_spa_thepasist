@@ -1,13 +1,6 @@
 ========================================
-<<<<<<< HEAD
-Email: anhpham@imail.edu.vn
+Email: nha29052005@gmail.com
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 964927
-Time: 2026-06-29T12:09:43.990880100
-=======
-Email: tuananh1122hy@gmail.com
-Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 672408
-Time: 2026-06-29T09:39:50.682875
->>>>>>> 3f7c0609c7af9dd77f14421d346fb7e235e3f865
+OTP Code: 216282
+Time: 2026-07-01T21:53:33.793803800
 ========================================

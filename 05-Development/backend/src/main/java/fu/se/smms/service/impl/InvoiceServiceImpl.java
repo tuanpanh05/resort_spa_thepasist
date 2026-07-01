@@ -121,7 +121,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional
     public InvoiceDTO createInvoice(Integer bookingId) {
         Invoice invoice = invoiceRepository.findFirstByRoomBooking_BookingId(bookingId)
                 .orElseGet(() -> buildInvoiceForBooking(bookingId));
@@ -624,11 +624,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         BigDecimal finalAmount = grandTotal.subtract(discount);
         BigDecimal depositAmount = defaultZero(invoice.getRoomBooking().getTotalDeposit());
-        BigDecimal amountDue = finalAmount.subtract(depositAmount);
-        
-        if (amountDue.compareTo(BigDecimal.ZERO) < 0) {
-            amountDue = BigDecimal.ZERO;
+        if (depositAmount.compareTo(finalAmount) > 0) {
+            throw new BusinessException("INV-409", HttpStatus.CONFLICT,
+                    "Tiền đặt cọc không được lớn hơn tổng số tiền hóa đơn.");
         }
+        BigDecimal amountDue = finalAmount.subtract(depositAmount);
 
         invoice.setRoomSubtotal(roomSubtotal);
         invoice.setSpaSubtotal(spaSubtotal);
