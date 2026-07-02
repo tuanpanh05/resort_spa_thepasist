@@ -14,6 +14,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import fu.se.smms.repository.IncurredServiceRepository;
+
 /**
  * Unit tests for Revenue Forecasting - Module 5 (UC24-25).
  * Verifies calculation accuracy of statistical forecasting and empty DB fallbacks.
@@ -22,13 +24,15 @@ class RevenueForecastServiceImplTest {
 
     private InvoiceRepository invoiceRepository;
     private RoomRepository roomRepository;
+    private IncurredServiceRepository incurredServiceRepository;
     private RevenueServiceImpl service;
 
     @BeforeEach
     void setUp() {
         invoiceRepository = mock(InvoiceRepository.class);
         roomRepository = mock(RoomRepository.class);
-        service = new RevenueServiceImpl(invoiceRepository, roomRepository);
+        incurredServiceRepository = mock(IncurredServiceRepository.class);
+        service = new RevenueServiceImpl(invoiceRepository, roomRepository, incurredServiceRepository);
     }
 
     @Test

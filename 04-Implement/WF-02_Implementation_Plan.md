@@ -1,19 +1,19 @@
 # KẾ HOẠCH THỰC THI MÃ NGUỒN VÀ KIỂM THỬ (EDS & TDD SPECIFICATION)
 ## Quy trình WF-02: Tìm kiếm & Đặt phòng cùng Gói trị liệu (Module 2)
 
-| Field | Value |
-| :--- | :--- |
-| **Document ID** | RESORT-M2-IMP-002 |
-| **Version** | 1.0 |
-| **Date** | 2026-07-01 |
-| **Status** | Approved |
-| **Document Owner** | SWP391 SE2023-G3 Architecture Team |
-| **Author** | Antigravity AI Pair Programmer |
-| **Reviewed by** | SWP391 SE2023-G3 Tech Lead |
-| **DPO Sign-off** | [x] Approved — 2026-07-01 — Data Protection Officer |
-| **Approved by** | Principal Architect |
-| **Last Review** | 2026-07-01 |
-| **Based on EDS/TDD** | EDS v2.0 & TDD v1.0 |
+| Field                | Value                                               |
+| :---------------------| :----------------------------------------------------|
+| **Document ID**      | RESORT-M2-IMP-002                                   |
+| **Version**          | 1.0                                                 |
+| **Date**             | 2026-07-01                                          |
+| **Status**           | Approved                                            |
+| **Document Owner**   | SWP391 SE2023-G3 Architecture Team                  |
+| **Author**           | Pham Duy Nghia                      |
+| **Reviewed by**      | SWP391 SE2023-G3 Tech Lead                          |
+| **DPO Sign-off**     | [x] Approved — 2026-07-01 — Data Protection Officer |
+| **Approved by**      | Principal Architect                                 |
+| **Last Review**      | 2026-07-01                                          |
+| **Based on EDS/TDD** | EDS v2.0 & TDD v1.0                                 |
 
 ---
 

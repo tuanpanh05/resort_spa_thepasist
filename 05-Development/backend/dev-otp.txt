@@ -1,19 +1,39 @@
 ========================================
-Email: xx@gmail.com
+Email: phuonganhpham@imail.edu.vn
 Purpose: REGISTER / ACTIVATE ACCOUNT
-OTP Code: 102410
-Time: 2026-07-01T23:39:00.441482400
+OTP Code: 545943
+Time: 2026-07-02T08:33:25.380379600
 ========================================
 ========================================
-ROOM BOOKING CONFIVERMATION EMAIL
-Email: xx@gmail.com
-Guest Name: dddd
-Booking ID: #NS-36
-Check-in: 2026-07-02T14:00
-Check-out: 2026-07-03T12:00
-Rooms: Vip Villa 1-Bedroom Pool (Phòng Vip-203)
-Total Amount: 6,006,000 VNĐ
-Deposit Paid: 1,801,800 VNĐ
-Amount Due: 4,204,200 VNĐ
-Time Sent: 2026-07-01T23:40:17.616858500
+SPA BOOKING CONFIRMATION EMAIL
+Email: hoaianhpham@imail.edu.vn
+Guest Name: Hoai Anh Pham
+Service Name: Tập thở kiểm soát năng lượng Pranayama
+Start Time: 2026-07-04T08:00
+Therapist: Yoga Trainer
+Room: Yoga Studio 1
+Price: 350,000 VNĐ
+Time Sent: 2026-07-02T09:30:34.481483100
+========================================
+========================================
+SPA BOOKING CONFIRMATION EMAIL
+Email: hoaianhpham@imail.edu.vn
+Guest Name: Hoai Anh Pham
+Service Name: Massage hương trầm tự nhiên (75 phút)
+Start Time: 2026-07-04T08:00
+Therapist: Bác Sĩ Hải - Trị Liệu
+Room: Therapy Room A
+Price: 1,000,000 VNĐ
+Time Sent: 2026-07-02T09:30:34.481483100
+========================================
+========================================
+SPA BOOKING CONFIRMATION EMAIL
+Email: hoaianhpham@imail.edu.vn
+Guest Name: Hoai Anh Pham
+Service Name: Châm cứu & Xung điện phục hồi xung thần kinh
+Start Time: 2026-07-04T08:00
+Therapist: Physiotherapist
+Room: Therapy Room B
+Price: 950,000 VNĐ
+Time Sent: 2026-07-02T09:30:34.674725200
 ========================================

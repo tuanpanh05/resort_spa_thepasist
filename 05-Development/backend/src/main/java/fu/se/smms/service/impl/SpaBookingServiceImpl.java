@@ -234,20 +234,30 @@ public class SpaBookingServiceImpl implements SpaBookingService {
         // Package vs Extra charge rules (UC11 vs UC15)
         if (request.getIsPackageIncluded() != null && request.getIsPackageIncluded()) {
             if (request.getRoomBookingId() == null) {
-                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Äáº·t lá»‹ch theo gÃ³i yÃªu cáº§u pháº£i cung cáº¥p mÃ£ Ä‘áº·t phÃ²ng lÆ°u trÃº.");
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, "Ä áº·t lá»‹ch theo gÃ³i yÃªu cáº§u pháº£i cung cáº¥p mÃ£ Ä‘áº·t phÃ²ng lÆ°u trÃº.");
             }
             RoomBooking roomBooking = roomBookingRepository.findById(request.getRoomBookingId())
                     .orElseThrow(() -> new BusinessException("SPA-006", HttpStatus.NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin phÃ²ng Ä‘Ã£ Ä‘áº·t."));
 
             if (!roomBooking.getUser().getUserId().equals(userId)) {
-                throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "MÃ£ Ä‘áº·t phÃ²ng khÃ´ng thuá»™c vá» khÃ¡ch hÃ ng nÃ y.");
+                throw new BusinessException("SPA-403", HttpStatus.FORBIDDEN, "MÃ£ Ä‘áº·t phÃ²ng khÃ´ng thuá»™c vá»  khÃ¡ch hÃ ng nÃ y.");
             }
 
-            // BR-30: Session time must fall within the stay check-in/check-out dates
-            if (start.isBefore(roomBooking.getCheckInDate()) || end.isAfter(roomBooking.getCheckOutDate())) {
+            // Room booking must be active or confirmed (future booking)
+            String rbStatus = roomBooking.getStatus();
+            if (!"CONFIRMED".equalsIgnoreCase(rbStatus) && !"CHECKED_IN".equalsIgnoreCase(rbStatus)) {
                 throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, 
-                        String.format("Thá»i gian trá»‹ liá»‡u pháº£i náº±m trong khoáº£ng lÆ°u trÃº (%s - %s).", 
-                                roomBooking.getCheckInDate(), roomBooking.getCheckOutDate()));
+                        "Đơn đặt phòng không hợp lệ, đã bị hủy hoặc đã kết thúc.");
+            }
+
+            // BR-30: Session time must fall within stay hours (Check-in from 14:00 on check-in day to 12:00 check-out day)
+            java.time.LocalDateTime checkInLimit = roomBooking.getCheckInDate().toLocalDate().atTime(14, 0);
+            java.time.LocalDateTime checkOutLimit = roomBooking.getCheckOutDate().toLocalDate().atTime(12, 0);
+
+            if (start.isBefore(checkInLimit) || end.isAfter(checkOutLimit)) {
+                throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST, 
+                        String.format("Thời gian trị liệu phải nằm trong thời gian lưu trú tại resort (từ 14:00 ngày %s đến 12:00 ngày %s).", 
+                                roomBooking.getCheckInDate().toLocalDate(), roomBooking.getCheckOutDate().toLocalDate()));
             }
 
             RetreatPackage retreatPackage = roomBooking.getRetreatPackage();
@@ -287,20 +297,21 @@ public class SpaBookingServiceImpl implements SpaBookingService {
                         "Ma dat phong khong thuoc ve khach hang nay.");
             }
 
-            // Dat phong phai dang hoat dong (chua bi huy / chua tra phong).
+            // Dat phong phai o trang thai dang hoat dong hoac sap den (CONFIRMED hoặc CHECKED_IN)
             String rbStatus = roomBooking.getStatus();
-            if (rbStatus == null
-                    || "CANCELLED".equalsIgnoreCase(rbStatus)
-                    || "CHECKED_OUT".equalsIgnoreCase(rbStatus)) {
+            if (!"CONFIRMED".equalsIgnoreCase(rbStatus) && !"CHECKED_IN".equalsIgnoreCase(rbStatus)) {
                 throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST,
-                        "Dat phong khong con hieu luc. Vui long co dat phong dang hoat dong de dat dich vu spa.");
+                        "Đơn đặt phòng không hợp lệ, đã bị hủy hoặc đã kết thúc.");
             }
 
-            // BR-30: Thoi gian tri lieu phai nam trong khoang luu tru.
-            if (start.isBefore(roomBooking.getCheckInDate()) || end.isAfter(roomBooking.getCheckOutDate())) {
+            // BR-30: Thoi gian tri lieu phai nam trong thoi gian cu tru (tu 14:00 ngay check-in den 12:00 ngay check-out).
+            java.time.LocalDateTime checkInLimit = roomBooking.getCheckInDate().toLocalDate().atTime(14, 0);
+            java.time.LocalDateTime checkOutLimit = roomBooking.getCheckOutDate().toLocalDate().atTime(12, 0);
+
+            if (start.isBefore(checkInLimit) || end.isAfter(checkOutLimit)) {
                 throw new BusinessException("SPA-400", HttpStatus.BAD_REQUEST,
-                        String.format("Thoi gian tri lieu phai nam trong khoang luu tru (%s - %s).",
-                                roomBooking.getCheckInDate(), roomBooking.getCheckOutDate()));
+                        String.format("Thời gian trị liệu phải nằm trong thời gian lưu trú tại resort (từ 14:00 ngày %s đến 12:00 ngày %s).",
+                                roomBooking.getCheckInDate().toLocalDate(), roomBooking.getCheckOutDate().toLocalDate()));
             }
 
             booking.setRoomBooking(roomBooking);

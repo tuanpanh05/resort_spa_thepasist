@@ -1,7 +1,7 @@
 import React from "react";
 import { Check } from "lucide-react";
 
-export default function BookingWizardHeader({ step, bookingStatus }) {
+export default function BookingWizardHeader({ step, bookingStatus, onStepClick }) {
   if (bookingStatus === "CONFIRMED") return null;
 
   const steps = [
@@ -26,8 +26,17 @@ export default function BookingWizardHeader({ step, bookingStatus }) {
         {steps.map((s) => {
           const isActive = step >= s.number;
           const isCurrent = step === s.number;
+          const canGoBack = s.number < step;
           return (
-            <div key={s.number} className="flex flex-col items-center z-10">
+            <div
+              key={s.number}
+              className={`flex flex-col items-center z-10 ${canGoBack ? "cursor-pointer" : ""}`}
+              onClick={() => {
+                if (canGoBack && onStepClick) {
+                  onStepClick(s.number);
+                }
+              }}
+            >
               <div
                 className={`h-9 w-9 rounded-full flex items-center justify-center font-serif font-semibold text-xs transition-all duration-300 ${
                   isActive

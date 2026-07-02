@@ -715,7 +715,7 @@ export default function BookingPage() {
         </div>
 
         {/* Wizard Header */}
-        <BookingWizardHeader step={step} bookingStatus={bookingStatus} />
+        <BookingWizardHeader step={step} bookingStatus={bookingStatus} onStepClick={(s) => setStep(s)} />
 
         {/* STEP PANELS CONTAINER */}
         {bookingStatus === "CONFIRMED" ? (

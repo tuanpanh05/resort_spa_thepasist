@@ -152,7 +152,7 @@ export default function SpaBookingWizard({
 
     // BR: Phải có đặt phòng lưu trú tại resort mới được đặt dịch vụ spa.
     if ((userBookings || []).length === 0) {
-      setBookingError("Bạn cần có đặt phòng lưu trú tại resort trước khi đặt dịch vụ spa. Vui lòng đặt phòng trước.");
+      setBookingError("Quý khách cần có đơn đặt phòng (đang hoạt động hoặc sắp đến) tại resort mới được đặt dịch vụ spa. Vui lòng đặt phòng trước.");
       return;
     }
 
@@ -277,11 +277,19 @@ export default function SpaBookingWizard({
           const n = idx + 1;
           const done = step > n;
           const active = step === n;
+          const canGoBack = n < step;
           return (
             <React.Fragment key={n}>
-              <div className="flex items-center gap-2">
+              <div
+                className={`flex items-center gap-2 ${canGoBack ? "cursor-pointer select-none" : ""}`}
+                onClick={() => {
+                  if (canGoBack) {
+                    setStep(n);
+                  }
+                }}
+              >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                  done ? "bg-forest-ink border-forest-ink text-warm-cream"
+                  done ? "bg-forest-ink border-forest-ink text-warm-cream hover:opacity-85"
                   : active ? "border-forest-ink text-forest-ink bg-warm-cream"
                   : "border-sage-mist text-black-olive/40 bg-white"}`}>
                   {done ? <CheckCircle className="w-4 h-4" /> : n}
@@ -496,7 +504,14 @@ export default function SpaBookingWizard({
             ))}
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-sage-mist/40">
+          <div className="flex justify-between items-center pt-4 border-t border-sage-mist/40 gap-4">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="px-6 py-3.5 border border-forest-ink/30 text-forest-ink text-xs font-semibold uppercase tracking-wider hover:bg-forest-ink/5 transition-all rounded-lg flex items-center cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1.5" /> Quay lại
+            </button>
             <button type="button" 
               onClick={() => setStep(3)} 
               disabled={selectedServices.some(x => !x.selectedSlot)}
@@ -566,7 +581,7 @@ export default function SpaBookingWizard({
               </p>
             ) : (userBookings || []).length === 0 ? (
               <p className="text-xs text-red-700 font-medium">
-                Bạn cần có đặt phòng lưu trú tại resort trước khi đặt dịch vụ spa.
+                Quý khách cần có đơn đặt phòng tại resort mới được đặt dịch vụ spa.
                 <Link to="/dat-lich" className="underline font-semibold ml-1 hover:text-red-800">Đặt phòng ngay &rarr;</Link>
               </p>
             ) : (
@@ -611,10 +626,19 @@ export default function SpaBookingWizard({
             </div>
           )}
 
-          <button type="button" onClick={handleBook} disabled={isBooking || medicalProfile == null || !consentChecked || (userBookings || []).length === 0 || (!selectedServices.every(x => x.isFree) && !selectedRoomBookingId)}
-            className="w-full bg-forest-ink text-warm-cream hover:bg-forest-ink/90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs py-4 rounded-lg uppercase tracking-widest transition-all shadow-md cursor-pointer flex items-center justify-center gap-2">
-            {isBooking ? (<><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý đặt tất cả...</>) : (<><CheckCircle className="w-4 h-4" /> Xác nhận đặt lịch ngay</>)}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="w-full sm:w-auto px-6 py-4 border border-forest-ink/30 text-forest-ink text-xs font-semibold uppercase tracking-wider hover:bg-forest-ink/5 transition-all rounded-lg flex items-center justify-center cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1.5" /> Quay lại
+            </button>
+            <button type="button" onClick={handleBook} disabled={isBooking || medicalProfile == null || !consentChecked || (userBookings || []).length === 0 || (!selectedServices.every(x => x.isFree) && !selectedRoomBookingId)}
+              className="flex-1 bg-forest-ink text-warm-cream hover:bg-forest-ink/90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs py-4 rounded-lg uppercase tracking-widest transition-all shadow-md cursor-pointer flex items-center justify-center gap-2">
+              {isBooking ? (<><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý đặt tất cả...</>) : (<><CheckCircle className="w-4 h-4" /> Xác nhận đặt lịch ngay</>)}
+            </button>
+          </div>
         </div>
       )}
     </div>

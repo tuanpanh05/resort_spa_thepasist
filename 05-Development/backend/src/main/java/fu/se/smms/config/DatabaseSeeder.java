@@ -1,5 +1,6 @@
 package fu.se.smms.config;
 
+import java.math.BigDecimal;
 import fu.se.smms.entity.User;
 import fu.se.smms.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +108,26 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.err.println("[DB Seeder] Warning: Could not handle complaints database setup: " + e.getMessage());
         }
 
+        try {
+            System.out.println("[DB Seeder] Creating accompanying_guest table if not exists...");
+            jdbcTemplate.execute("""
+                IF OBJECT_ID('dbo.accompanying_guest', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.accompanying_guest (
+                        guest_id INT IDENTITY(1,1) PRIMARY KEY,
+                        booking_id INT NOT NULL,
+                        full_name NVARCHAR(100) NOT NULL,
+                        identity_document VARCHAR(255) NULL,
+                        relationship NVARCHAR(50) NULL,
+                        is_child BIT NOT NULL DEFAULT 0,
+                        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+                        CONSTRAINT FK_accompanying_guest_booking FOREIGN KEY (booking_id) REFERENCES dbo.room_booking(booking_id) ON DELETE CASCADE
+                    );
+                END
+                """);
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not create accompanying_guest table: " + e.getMessage());
+        }
 
         try {
             System.out.println("[DB Seeder] Creating restaurant_table if not exists...");
@@ -293,6 +314,23 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.out.println("[DB Seeder] Food Menu items preserved successfully.");
         } catch (Exception e) {
             System.err.println("[DB Seeder] Could not check Food Menu. Reason: " + e.getMessage());
+        }
+
+        try {
+            System.out.println("[DB Seeder] Checking if Kid's Combo exists...");
+            Integer countKidsCombo = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM dbo.food_menu WHERE dish_name = N'Combo Trẻ Em Dưới 5 Tuổi'", 
+                Integer.class
+            );
+            if (countKidsCombo != null && countKidsCombo == 0) {
+                System.out.println("[DB Seeder] Seeding Combo Trẻ Em Dưới 5 Tuổi...");
+                jdbcTemplate.execute("""
+                    INSERT INTO dbo.food_menu (dish_name, description, price, dietary_tags, category, is_today_menu, sold_out, is_package_included, periods, available_days, enabled)
+                    VALUES (N'Combo Trẻ Em Dưới 5 Tuổi', N'Combo ăn uống đầy đủ dinh dưỡng cho bé dưới 5 tuổi, bao gồm tất cả các loại đồ ăn, không phân biệt sáng, trưa, chiều tối.', 120000.00, 'Omnivore', N'Món trẻ em', 1, 0, 1, 'Breakfast,Lunch,Dinner', '0,1,2,3,4,5,6', 1)
+                    """);
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not seed Kid's Combo: " + e.getMessage());
         }
 
         ensureSpecialtySchema();
@@ -556,6 +594,88 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         } catch (Exception e) {
             System.err.println("[DB Seeder] Warning: Incurred services setup / seeding failed: " + e.getMessage());
+        }
+
+        // Seed fake invoices for months 1-5 of 2026 for dashboard display
+        try {
+            Integer countFakeBookings = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM dbo.room_booking WHERE check_in_date = '2026-01-10 14:00:00'", Integer.class);
+            if (countFakeBookings != null && countFakeBookings == 0) {
+                System.out.println("[DB Seeder] Seeding fake invoice data for January to May 2026...");
+                // Ensure a guest user exists for these bookings
+                seedUser("guest@nguson.com", "Khách Hàng Trải Nghiệm", "0909999999", "CUSTOMER");
+                Integer userId = jdbcTemplate.queryForObject("SELECT user_id FROM dbo.users WHERE email = 'guest@nguson.com'", Integer.class);
+                if (userId != null) {
+                    String[] checkIns = {
+                        "2026-01-10 14:00:00",
+                        "2026-02-12 14:00:00",
+                        "2026-03-15 14:00:00",
+                        "2026-04-18 14:00:00",
+                        "2026-05-20 14:00:00"
+                    };
+                    String[] checkOuts = {
+                        "2026-01-13 12:00:00",
+                        "2026-02-15 12:00:00",
+                        "2026-03-18 12:00:00",
+                        "2026-04-21 12:00:00",
+                        "2026-05-23 12:00:00"
+                    };
+                    BigDecimal[] roomSubs = {
+                        new BigDecimal("12000000.00"),
+                        new BigDecimal("15000000.00"),
+                        new BigDecimal("10000000.00"),
+                        new BigDecimal("18000000.00"),
+                        new BigDecimal("16000000.00")
+                    };
+                    BigDecimal[] spaSubs = {
+                        new BigDecimal("2400000.00"),
+                        new BigDecimal("1600000.00"),
+                        new BigDecimal("3000000.00"),
+                        new BigDecimal("0.00"),
+                        new BigDecimal("4400000.00")
+                    };
+                    BigDecimal[] foodSubs = {
+                        new BigDecimal("1600000.00"),
+                        new BigDecimal("2400000.00"),
+                        new BigDecimal("1000000.00"),
+                        new BigDecimal("3600000.00"),
+                        new BigDecimal("2000000.00")
+                    };
+                    BigDecimal[] taxFees = {
+                        new BigDecimal("1600000.00"),
+                        new BigDecimal("1900000.00"),
+                        new BigDecimal("1400000.00"),
+                        new BigDecimal("2160000.00"),
+                        new BigDecimal("2240000.00")
+                    };
+                    BigDecimal[] finals = {
+                        new BigDecimal("17600000.00"),
+                        new BigDecimal("20900000.00"),
+                        new BigDecimal("15400000.00"),
+                        new BigDecimal("23760000.00"),
+                        new BigDecimal("24640000.00")
+                    };
+
+                    for (int i = 0; i < 5; i++) {
+                        jdbcTemplate.update(
+                            "INSERT INTO dbo.room_booking (user_id, status, check_in_date, check_out_date, total_deposit, created_at) " +
+                            "VALUES (?, 'CHECKED_OUT', ?, ?, ?, ?)",
+                            userId, checkIns[i], checkOuts[i], finals[i].multiply(new BigDecimal("0.3")), checkIns[i]
+                        );
+                        
+                        Integer bookingId = jdbcTemplate.queryForObject("SELECT @@IDENTITY", Integer.class);
+                        if (bookingId != null) {
+                            jdbcTemplate.update(
+                                "INSERT INTO dbo.invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, service_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status, payment_time) " +
+                                "VALUES (?, ?, ?, ?, ?, 0.00, ?, ?, ?, 0.00, 'PAID', ?)",
+                                userId, bookingId, roomSubs[i], spaSubs[i], foodSubs[i], taxFees[i], finals[i], finals[i], checkOuts[i]
+                            );
+                        }
+                    }
+                    System.out.println("[DB Seeder] Successfully seeded fake invoices for months 1-5 of 2026.");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Fake invoice seeding failed: " + e.getMessage());
         }
     }
 

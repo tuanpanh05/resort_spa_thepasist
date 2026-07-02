@@ -582,3 +582,45 @@ BEGIN
 END
 GO
 
+-- ============================================================
+-- Update CK_room_status constraint to include 'VIEWING' status
+-- ============================================================
+IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_room_status' AND parent_object_id = OBJECT_ID('dbo.room'))
+BEGIN
+    ALTER TABLE dbo.room DROP CONSTRAINT CK_room_status;
+END
+GO
+ALTER TABLE dbo.room ADD CONSTRAINT CK_room_status CHECK (status IN ('AVAILABLE','OCCUPIED','MAINTENANCE','DIRTY','CLEANING','VACANT_NEEDS_CLEANING','VIEWING'));
+GO
+
+-- ============================================================
+-- Create accompanying_guest table if it doesn't exist
+-- ============================================================
+IF OBJECT_ID('dbo.accompanying_guest', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.accompanying_guest (
+        guest_id INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id INT NOT NULL,
+        full_name NVARCHAR(100) NOT NULL,
+        identity_document VARCHAR(255) NULL,
+        relationship NVARCHAR(50) NULL,
+        is_child BIT NOT NULL DEFAULT 0,
+        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT FK_accompanying_guest_booking FOREIGN KEY (booking_id) REFERENCES dbo.room_booking(booking_id) ON DELETE CASCADE
+    );
+END
+GO
+
+-- ============================================================
+-- Fix booking #19 and its food orders status to be active / pending
+-- ============================================================
+IF EXISTS (SELECT 1 FROM dbo.room_booking WHERE booking_id = 19)
+BEGIN
+    UPDATE dbo.room_booking SET status = 'CONFIRMED', total_deposit = 3750000.00 WHERE booking_id = 19;
+    UPDATE dbo.food_order SET status = 'PREPARING' WHERE room_booking_id = 19;
+END
+GO
+
+
+
+

@@ -8,7 +8,7 @@
 | **Date** | 2026-07-01 |
 | **Status** | Approved |
 | **Document Owner** | SWP391 SE2023-G3 Architecture Team |
-| **Author** | Antigravity AI Pair Programmer |
+| **Author** |Pham Anh Tuan|
 | **Reviewed by** | SWP391 SE2023-G3 Tech Lead |
 | **DPO Sign-off** | [x] Approved — 2026-07-01 — Data Protection Officer |
 | **Approved by** | Principal Architect |

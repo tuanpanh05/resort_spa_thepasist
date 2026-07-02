@@ -20,13 +20,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     // ─── Aggregation queries for recalculate() ──────────────────────────────
 
     @Query(value = """
-            SELECT COALESCE(room_charge.room_subtotal, 0)
+            SELECT COALESCE(
+                (SELECT SUM(d.price_at_booking) FROM dbo.room_booking_detail d WHERE d.booking_id = b.booking_id)
+                * DATEDIFF(day, b.check_in_date, b.check_out_date),
+                0
+            )
             FROM dbo.room_booking b
-            OUTER APPLY (
-                SELECT SUM(d.price_at_booking) * DATEDIFF(day, b.check_in_date, b.check_out_date) AS room_subtotal
-                FROM dbo.room_booking_detail d
-                WHERE d.booking_id = b.booking_id
-            ) room_charge
             WHERE b.booking_id = :bookingId
             """, nativeQuery = true)
     BigDecimal sumRoomSubtotal(@Param("bookingId") Integer bookingId);
@@ -175,6 +174,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
               AND (CAST(:month AS INT) IS NULL OR MONTH(rb.check_out_date) = CAST(:month AS INT))
             """, nativeQuery = true)
     Long countCheckedOutBookingsByPeriod(@Param("year") Integer year, @Param("month") Integer month);
+
+    @Query("SELECT i FROM Invoice i WHERE i.status = 'PAID' AND YEAR(i.paymentTime) = :year AND (:month IS NULL OR MONTH(i.paymentTime) = :month)")
+    List<Invoice> findPaidInvoicesByPeriod(@Param("year") Integer year, @Param("month") Integer month);
 
     /**
      * Monthly breakdown of revenue for chart rendering.

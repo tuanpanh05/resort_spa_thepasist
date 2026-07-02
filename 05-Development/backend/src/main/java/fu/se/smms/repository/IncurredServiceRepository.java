@@ -21,4 +21,6 @@ public interface IncurredServiceRepository extends JpaRepository<IncurredService
            "AND rb.status IN ('CONFIRMED', 'CHECKED_IN') " +
            "ORDER BY rb.checkInDate DESC")
     List<RoomBooking> findActiveBookingByRoomNumber(@Param("roomNumber") String roomNumber);
+
+    List<IncurredService> findByRoomBooking_BookingIdInAndStatus(List<Integer> bookingIds, String status);
 }
