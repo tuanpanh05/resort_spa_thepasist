@@ -17,3 +17,29 @@ Deposit Paid: 1,801,800 VNĐ
 Amount Due: 4,204,200 VNĐ
 Time Sent: 2026-07-01T23:40:17.616858500
 ========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-132
+Check-in: 2026-07-02T14:00
+Check-out: 2026-07-04T12:00
+Rooms: Biệt Thự Đồi Trà Thiền Định (Phòng BT-104), Biệt Thự Đồi Trà Thiền Định (Phòng BT-105), Biệt Thự Đồi Trà Thiền Định (Phòng BT-106)
+Total Amount: 44,809,600 VNĐ
+Deposit Paid: 13,442,880 VNĐ
+Amount Due: 31,366,720 VNĐ
+Time Sent: 2026-07-02T11:09:05.832248500
+========================================
+========================================
+ROOM BOOKING CONFIVERMATION EMAIL
+Email: nghiacoc2562005@gmail.com
+Guest Name: b
+Booking ID: #NS-134
+Check-in: 2026-07-02T14:00
+Check-out: 2026-07-04T12:00
+Rooms: Bungalow Gỗ Hướng Suối (Phòng BG-104), Bungalow Gỗ Hướng Suối (Phòng BG-105), Bungalow Gỗ Hướng Suối (Phòng BG-106), Bungalow Gỗ Hướng Suối (Phòng BG-107)
+Total Amount: 51,006,450 VNĐ
+Deposit Paid: 15,301,935 VNĐ
+Amount Due: 35,704,515 VNĐ
+Time Sent: 2026-07-02T11:24:17.782355600
+========================================

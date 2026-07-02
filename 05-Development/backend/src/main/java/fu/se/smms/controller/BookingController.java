@@ -55,10 +55,30 @@ public class BookingController {
                 && !principal.getName().isBlank()
                 && !"anonymousUser".equals(principal.getName())) {
             // Authenticated user
-            user = userRepository.findByEmail(principal.getName())
+            User loggedIn = userRepository.findByEmail(principal.getName())
                     .orElseThrow(() -> new BusinessException(
                             "BOOKING-001", HttpStatus.NOT_FOUND,
                             "Không tìm thấy người dùng đang đăng nhập."));
+            if ("STAFF".equals(loggedIn.getRole()) || "ADMIN".equals(loggedIn.getRole())) {
+                if (request.getEmail() == null || request.getEmail().isBlank()) {
+                    throw new BusinessException(
+                            "BOOKING-001", HttpStatus.BAD_REQUEST,
+                            "Vui lòng nhập Email để đặt phòng.");
+                }
+                user = userRepository.findByEmail(request.getEmail()).orElseGet(() -> {
+                    User newUser = User.builder()
+                            .email(request.getEmail())
+                            .fullName(request.getFullName() != null ? request.getFullName() : "Khách")
+                            .phone(request.getPhone() != null ? request.getPhone() : "")
+                            .role("GUEST")
+                            .status("ACTIVE")
+                            .passwordHash("GUEST_" + System.currentTimeMillis())
+                            .build();
+                    return userRepository.save(newUser);
+                });
+            } else {
+                user = loggedIn;
+            }
         } else {
             // Guest user — find or create by email from request body
             if (request.getEmail() == null || request.getEmail().isBlank()) {

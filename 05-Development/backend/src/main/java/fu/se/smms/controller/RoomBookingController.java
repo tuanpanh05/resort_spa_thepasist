@@ -42,8 +42,8 @@ public class RoomBookingController {
             response.put("invoiceId", invoice.getInvoiceId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.err.println("[RoomBookingController Debug] Error creating booking:");
-            e.printStackTrace();
+            System.out.println("[RoomBookingController Debug] Error creating booking: " + e.getMessage());
+            e.printStackTrace(System.out);
             return ResponseEntity.badRequest().body("Failed to create booking: " + e.getMessage());
         }
     }

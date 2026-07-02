@@ -15,8 +15,8 @@ public class BookingRequestDTO {
     private Integer childrenUnder5;
     private Integer children5to12;
 
-    @NotNull(message = "Vui lòng chọn biệt thự/phòng trống.")
     private Integer roomId;
+    private List<Integer> roomIds;
     private Integer villaId;
     private Integer roomQuantity;
     private Map<String, Integer> roomTypeQuantities;
@@ -35,6 +35,12 @@ public class BookingRequestDTO {
     private String allergies;
     private Boolean explicitConsentSigned;
     private String specialRequests;
+
+    // Guest identity and accompanying guests
+    private String identityDocument;
+    private String nationality;
+    private String documentType;
+    private List<AccompanyingGuestDTO> accompanyingGuests;
 
     // Meal selections
     // Structure: Date (YYYY-MM-DD) -> Period (Breakfast, Lunch, Dinner) -> FoodId -> Quantity
@@ -56,6 +62,9 @@ public class BookingRequestDTO {
 
     public Integer getRoomId() { return roomId; }
     public void setRoomId(Integer roomId) { this.roomId = roomId; }
+
+    public List<Integer> getRoomIds() { return roomIds; }
+    public void setRoomIds(List<Integer> roomIds) { this.roomIds = roomIds; }
 
     public Integer getVillaId() { return villaId; }
     public void setVillaId(Integer villaId) { this.villaId = villaId; }
@@ -144,4 +153,16 @@ public class BookingRequestDTO {
 
     public Integer getChildren5to12() { return children5to12; }
     public void setChildren5to12(Integer children5to12) { this.children5to12 = children5to12; }
+
+    public String getIdentityDocument() { return identityDocument; }
+    public void setIdentityDocument(String identityDocument) { this.identityDocument = identityDocument; }
+
+    public String getNationality() { return nationality; }
+    public void setNationality(String nationality) { this.nationality = nationality; }
+
+    public String getDocumentType() { return documentType; }
+    public void setDocumentType(String documentType) { this.documentType = documentType; }
+
+    public List<AccompanyingGuestDTO> getAccompanyingGuests() { return accompanyingGuests; }
+    public void setAccompanyingGuests(List<AccompanyingGuestDTO> accompanyingGuests) { this.accompanyingGuests = accompanyingGuests; }
 }

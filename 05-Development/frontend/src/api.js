@@ -241,7 +241,7 @@ export const masterDataApi = {
 // ============================================================
 export const bookingApi = {
   createBooking: (dto) =>
-    apiRequest("/v1/bookings", {
+    apiRequest("/bookings/create", {
       method: "POST",
       body: JSON.stringify(dto),
     }),

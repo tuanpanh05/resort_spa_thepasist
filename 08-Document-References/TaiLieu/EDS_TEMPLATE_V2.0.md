@@ -1,20 +1,48 @@
+**4:
+
+đọc file template 08_Document_References\Template\PHASE-2_ADR.md để sửa lại file 03_Design\ADR\ADR-01.md theo mẫu
+
+5:
+
+đọc file 03_Design\ADR\ADR-01.md và đọc WF-02 trong file 02_Requirement\workflow.md và đọc file 02_Requirement\classdiagram.md và đọc file 02_Requirement\BusinessRule.md và đọc file 02_Requirement\RequirementsTraceabilityMatrix.md và viết kế hoạch thực thi code WF-02 trong 02_Requirement\workflow.md theo mẫu template 08_Document_References\Template\EDS_TEMPLATE_V2.0.md và 08_Document_References\Template\TDD_TEMPLATE_V1.md và kết quả lưu vào thư mục 04_Implement dưới dạng markdown ; full stack (frontend,backend và database) theo mô hình MVC
+
+6:
+
+đọc file 03_Design\ADR\ADR-01.md và đọc WF-02 trong file 02_Requirement\workflow.md và đọc file 02_Requirement\classdiagram.md và đọc file 02_Requirement\BusinessRule.md và đọc file 02_Requirement\RequirementsTraceabilityMatrix.md và viết kế hoạch thực thi code WF-02 trong 02_Requirement\workflow.md theo mẫu template 08_Document_References\Template\EDS_TEMPLATE_V2.0.md và 08_Document_References\Template\TDD_TEMPLATE_V1.md và kết quả lưu vào thư mục 04_Implement dưới dạng markdown ; full stack (frontend,backend và database) theo mô hình MVC
+
+**osasddkal
+
+**4:
+
+đọc file template 08_Document_References\Template\PHASE-2_ADR.md để sửa lại file 03_Design\ADR\ADR-01.md theo mẫu
+
+5:
+
+đọc file 03_Design\ADR\ADR-01.md và đọc WF-02 trong file 02_Requirement\workflow.md và đọc file 02_Requirement\classdiagram.md và đọc file 02_Requirement\BusinessRule.md và đọc file 02_Requirement\RequirementsTraceabilityMatrix.md và viết kế hoạch thực thi code WF-02 trong 02_Requirement\workflow.md theo mẫu template 08_Document_References\Template\EDS_TEMPLATE_V2.0.md và 08_Document_References\Template\TDD_TEMPLATE_V1.md và kết quả lưu vào thư mục 04_Implement dưới dạng markdown ; full stack (frontend,backend và database) theo mô hình MVC
+
+6:
+
+đọc file 03_Design\ADR\ADR-01.md và đọc WF-02 trong file 02_Requirement\workflow.md và đọc file 02_Requirement\classdiagram.md và đọc file 02_Requirement\BusinessRule.md và đọc file 02_Requirement\RequirementsTraceabilityMatrix.md và viết kế hoạch thực thi code WF-02 trong 02_Requirement\workflow.md theo mẫu template 08_Document_References\Template\EDS_TEMPLATE_V2.0.md và 08_Document_References\Template\TDD_TEMPLATE_V1.md và kết quả lưu vào thư mục 04_Implement dưới dạng markdown ; full stack (frontend,backend và database) theo mô hình MVC
+
+**
+
 # ENGINEERING DOCUMENT STANDARD (EDS) v2.0
 
 ## Quy chuẩn Tài liệu Kỹ thuật và Đặc tả Hiện thực hóa
 
-| Field | Value |
-| :--- | :--- |
-| **Document ID** | [PROJECT]-[MODULE]-IMP-[NNN] |
-| **Version** | 1.0 |
-| **Date** | YYYY-MM-DD |
-| **Status** | Draft / In Review / Approved / Deprecated |
-| **Document Owner** | [Tên cụ thể — không phải team] |
-| **Author** | [Tên + Role] |
-| **Reviewed by** | [Tech Lead] |
-| **DPO Sign-off** | [ ] Pending / [x] Approved — YYYY-MM-DD — [Tên DPO] *(bắt buộc với module PII)* |
-| **Approved by** | [Principal Architect] |
-| **Last Review** | YYYY-MM-DD *(stale nếu > 2 sprints không cập nhật)* |
-| **Based on EDS** | v2.0 |
+| Field                    | Value                                                                                  |
+| :----------------------- | :------------------------------------------------------------------------------------- |
+| **Document ID**    | [PROJECT]-[MODULE]-IMP-[NNN]                                                           |
+| **Version**        | 1.0                                                                                    |
+| **Date**           | YYYY-MM-DD                                                                             |
+| **Status**         | Draft / In Review / Approved / Deprecated                                              |
+| **Document Owner** | [Tên cụ thể — không phải team]                                                   |
+| **Author**         | [Tên + Role]                                                                          |
+| **Reviewed by**    | [Tech Lead]                                                                            |
+| **DPO Sign-off**   | [ ] Pending / [x] Approved — YYYY-MM-DD — [Tên DPO]*(bắt buộc với module PII)* |
+| **Approved by**    | [Principal Architect]                                                                  |
+| **Last Review**    | YYYY-MM-DD*(stale nếu > 2 sprints không cập nhật)*                               |
+| **Based on EDS**   | v2.0                                                                                   |
 
 ---
 
@@ -22,9 +50,9 @@
 
 > **Policy 4.4 — Immutable History**: Không bao giờ xóa thông tin cũ. Mọi thay đổi phải ghi vào bảng này.
 
-| Ngày | Người thực hiện | Nội dung thay đổi. |
-| :--- | :--- | :--- |
-| YYYY-MM-DD | [Tên — Role] | Tạo tài liệu lần đầu |
+| Ngày      | Người thực hiện | Nội dung thay đổi.      |
+| :--------- | :------------------ | :------------------------- |
+| YYYY-MM-DD | [Tên — Role]      | Tạo tài liệu lần đầu |
 
 ---
 
@@ -33,7 +61,7 @@
 1. [Tổng quan Module](#1-tổng-quan-module)
 2. [Ma trận Truy vết (Traceability Matrix)](#2-ma-trận-truy-vết-traceability-matrix)
 3. [Architecture Decision Records (ADR)](#3-architecture-decision-records-adr)
-4. [Non-Functional Requirements & SLA](#4-non-functional-requirements--sla)
+4. [Non-Functional Requirements &amp; SLA](#4-non-functional-requirements--sla)
 5. [Static Modeling (Mô hình Tĩnh)](#5-static-modeling-mô-hình-tĩnh)
 6. [Dynamic Modeling (Mô hình Động)](#6-dynamic-modeling-mô-hình-động)
 7. [Domain Event Catalog](#7-domain-event-catalog)
@@ -41,7 +69,7 @@
 9. [API Specification](#9-api-specification)
 10. [Bảng mã lỗi (Error Codes)](#10-bảng-mã-lỗi-error-codes)
 11. [Quy trình Triển khai (Step-by-Step)](#11-quy-trình-triển-khai-step-by-step)
-12. [Rollback & Incident Runbook](#12-rollback--incident-runbook)
+12. [Rollback &amp; Incident Runbook](#12-rollback--incident-runbook)
 13. [Kịch bản Kiểm thử Chi tiết](#13-kịch-bản-kiểm-thử-chi-tiết)
 14. [Phương pháp Xác minh](#14-phương-pháp-xác-minh)
 15. [Mẫu thử thực tế (API Verification Samples)](#15-mẫu-thử-thực-tế-api-verification-samples)
@@ -54,14 +82,14 @@
 
 > Mô tả ngắn gọn mục đích của module, phạm vi nghiệp vụ và lý do tồn tại.
 
-| Field | Value |
-| :--- | :--- |
-| **Module Name** | [Tên module] |
-| **Bounded Context** | [Domain] |
-| **Data Classification** | Public / Internal / Confidential / PII / Sensitive-PII |
-| **Compliance Scope** | GDPR / CCPA / PDPA / N/A |
-| **Upstream Dependencies** | [Module A, Module B] |
-| **Downstream Consumers** | [Module X, Module Y] |
+| Field                           | Value                                                  |
+| :------------------------------ | :----------------------------------------------------- |
+| **Module Name**           | [Tên module]                                          |
+| **Bounded Context**       | [Domain]                                               |
+| **Data Classification**   | Public / Internal / Confidential / PII / Sensitive-PII |
+| **Compliance Scope**      | GDPR / CCPA / PDPA / N/A                               |
+| **Upstream Dependencies** | [Module A, Module B]                                   |
+| **Downstream Consumers**  | [Module X, Module Y]                                   |
 
 ---
 
@@ -70,11 +98,11 @@
 > Ánh xạ trực tiếp: `[Mã yêu cầu]` &rarr; `[Thành phần Code]` &rarr; `[Mục tiêu Tuân thủ]`.
 > **Policy**: Không viết code nếu không biết code đó phục vụ Rule nào.
 
-| Requirement ID | Loại (BR/ADR/US) | Mô tả yêu cầu | Thành phần Code | Compliance Target | ADR liên quan |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| BR-CON-001 | Business Rule | [Mô tả] | `ConsentService.grant()` | GDPR Art. 7.1 | ADR-001 |
-| US-CON-005 | User Story | [Mô tả] | `ConsentController.POST /consents` | — | — |
-| ADR-001 | Decision | [Mô tả] | `ConsentRepository` | GDPR Art. 5.1(e) | — |
+| Requirement ID | Loại (BR/ADR/US) | Mô tả yêu cầu | Thành phần Code                    | Compliance Target | ADR liên quan |
+| :------------- | :---------------- | :---------------- | :----------------------------------- | :---------------- | :------------- |
+| BR-CON-001     | Business Rule     | [Mô tả]         | `ConsentService.grant()`           | GDPR Art. 7.1     | ADR-001        |
+| US-CON-005     | User Story        | [Mô tả]         | `ConsentController.POST /consents` | —                | —             |
+| ADR-001        | Decision          | [Mô tả]         | `ConsentRepository`                | GDPR Art. 5.1(e)  | —             |
 
 ---
 
@@ -85,34 +113,40 @@
 
 ### ADR-[NNN] — [Tiêu đề quyết định ngắn gọn]
 
-| Field | Value |
-| :--- | :--- |
-| **Status** | Proposed / Accepted / Superseded / Deprecated |
-| **Deciders** | [Tên + Role của người ra quyết định] |
-| **Date** | YYYY-MM-DD |
-| **Supersedes** | ADR-[NNN] *(nếu thay thế ADR cũ)* |
+| Field                | Value                                         |
+| :------------------- | :-------------------------------------------- |
+| **Status**     | Proposed / Accepted / Superseded / Deprecated |
+| **Deciders**   | [Tên + Role của người ra quyết định]   |
+| **Date**       | YYYY-MM-DD                                    |
+| **Supersedes** | ADR-[NNN]*(nếu thay thế ADR cũ)*         |
 
 #### Bối cảnh (Context)
+
 > Mô tả vấn đề hoặc áp lực buộc phải đưa ra quyết định này. Bối cảnh kỹ thuật, nghiệp vụ, hoặc pháp lý nào dẫn đến ADR này?
 
 #### Các phương án đã xem xét (Options Considered)
 
-| Phương án | Mô tả | Ưu điểm | Nhược điểm |
-| :--- | :--- | :--- | :--- |
-| A | [Mô tả phương án A] | + [...] | - [...] |
-| B | [Mô tả phương án B] | + [...] | - [...] |
+| Phương án | Mô tả                  | Ưu điểm | Nhược điểm |
+| :----------- | :----------------------- | :--------- | :------------- |
+| A            | [Mô tả phương án A] | + [...]    | - [...]        |
+| B            | [Mô tả phương án B] | + [...]    | - [...]        |
 
 #### Quyết định (Decision)
+
 > Chọn Phương án [X] vì [lý do cụ thể].
 
 #### Hệ quả (Consequences)
+
 ##### Tích cực:
+
 * [Hệ quả tích cực 1]
 
 ##### Tiêu cực / Trade-offs:
+
 * [Trade-off 1 — và cách giảm thiểu]
 
 ##### Compliance Impact:
+
 * [Ảnh hưởng đến GDPR / CCPA / ... nếu có]
 
 > *(Thêm ADR mới bên dưới, không xóa ADR cũ. Nếu ADR bị thay thế, đánh dấu Superseded by ADR-[NNN])*
@@ -126,29 +160,30 @@
 
 ### 4.1. Performance & Availability
 
-| Category | Requirement | Target SLA | Measurement Method | Compliance Basis |
-| :--- | :--- | :--- | :--- | :--- |
-| Latency | API response (p99) | < 300ms | k6 load test | — |
-| Availability | Uptime (monthly) | 99.9% | Uptime monitor | — |
-| Throughput | Concurrent requests | 500 req/s | Load test | — |
+| Category     | Requirement         | Target SLA | Measurement Method | Compliance Basis |
+| :----------- | :------------------ | :--------- | :----------------- | :--------------- |
+| Latency      | API response (p99)  | < 300ms    | k6 load test       | —               |
+| Availability | Uptime (monthly)    | 99.9%      | Uptime monitor     | —               |
+| Throughput   | Concurrent requests | 500 req/s  | Load test          | —               |
 
 ### 4.2. Data Integrity & Retention
 
-| Category | Requirement | Target | Verification Method | Compliance Basis |
-| :--- | :--- | :--- | :--- | :--- |
-| Durability | Zero record loss | RPO = 0 | Transaction log | GDPR Art. 5.1(f) |
-| Retention | Audit log retention | 7 năm | DB backup policy | GDPR Art. 5.1(e) |
-| Consistency | Consent &harr; Audit sync | 100% | Reconciliation job | GDPR Art. 7.1 |
+| Category    | Requirement              | Target  | Verification Method | Compliance Basis |
+| :---------- | :----------------------- | :------ | :------------------ | :--------------- |
+| Durability  | Zero record loss         | RPO = 0 | Transaction log     | GDPR Art. 5.1(f) |
+| Retention   | Audit log retention      | 7 năm  | DB backup policy    | GDPR Art. 5.1(e) |
+| Consistency | Consent&harr; Audit sync | 100%    | Reconciliation job  | GDPR Art. 7.1    |
 
 ### 4.3. Security
 
-| Category | Requirement | Target | Verification Method | Compliance Basis |
-| :--- | :--- | :--- | :--- | :--- |
-| Encryption at rest | PII fields | AES-256 | openssl CLI check | GDPR Art. 32 |
-| Encryption in transit | All endpoints | TLS 1.3+ | SSL Labs scan | GDPR Art. 32 |
-| Access control | Role-based | Least privilege | Auth Matrix (§16) | GDPR Art. 25 |
+| Category              | Requirement   | Target          | Verification Method | Compliance Basis |
+| :-------------------- | :------------ | :-------------- | :------------------ | :--------------- |
+| Encryption at rest    | PII fields    | AES-256         | openssl CLI check   | GDPR Art. 32     |
+| Encryption in transit | All endpoints | TLS 1.3+        | SSL Labs scan       | GDPR Art. 32     |
+| Access control        | Role-based    | Least privilege | Auth Matrix (§16)  | GDPR Art. 25     |
 
 ### 4.4. Scalability & Capacity Planning
+
 > Dự kiến tải trong 12 tháng tới: [X] users, [Y] consent records/day. Giải pháp scale: [horizontal / vertical / caching strategy].
 
 ---
@@ -291,15 +326,15 @@ EXPIRED --> ACTIVE : [Điều kiện]\n[Action]
 
 ### 7.1. Events Published (Phát ra)
 
-| Event Name | Trigger | Publisher | Subscriber(s) | Payload Schema | Async? |
-| :--- | :--- | :--- | :--- | :--- | :--- |
+| Event Name         | Trigger           | Publisher | Subscriber(s)        | Payload Schema     | Async? |
+| :----------------- | :---------------- | :-------- | :------------------- | :----------------- | :----- |
 | `[EntityVerbed]` | [Mô tả trigger] | [Service] | [ServiceA, ServiceB] | `[EventName].ts` | Yes/No |
 
 ### 7.2. Events Consumed (Tiêu thụ)
 
-| Event Name | Source | Handler | Action thực hiện |
-| :--- | :--- | :--- | :--- |
-| `[EntityVerbed]` | [SourceModule] | [HandlerClass] | [Mô tả xử lý] |
+| Event Name         | Source         | Handler        | Action thực hiện |
+| :----------------- | :------------- | :------------- | :----------------- |
+| `[EntityVerbed]` | [SourceModule] | [HandlerClass] | [Mô tả xử lý]  |
 
 ### 7.3. Payload Schema
 
@@ -375,17 +410,18 @@ export interface I[ModuleName]Repository {
 
 ### 9.1. Endpoints Table
 
-| Method | Path | Auth Level | Required Roles | Rate Limit | Idempotent? |
-| :--- | :--- | :--- | :--- | :--- | :---: |
-| **POST** | `/api/v1/[resource]` | JWT Bearer | `[ROLE_A]` | 100/min | No |
-| **GET** | `/api/v1/[resource]/:id` | JWT Bearer | `[ROLE_A, ROLE_B]` | 300/min | Yes |
-| **PATCH** | `/api/v1/[resource]/:id` | JWT Bearer | `[ROLE_A]` | 60/min | Yes |
+| Method          | Path                       | Auth Level | Required Roles       | Rate Limit | Idempotent? |
+| :-------------- | :------------------------- | :--------- | :------------------- | :--------- | :---------: |
+| **POST**  | `/api/v1/[resource]`     | JWT Bearer | `[ROLE_A]`         | 100/min    |     No     |
+| **GET**   | `/api/v1/[resource]/:id` | JWT Bearer | `[ROLE_A, ROLE_B]` | 300/min    |     Yes     |
+| **PATCH** | `/api/v1/[resource]/:id` | JWT Bearer | `[ROLE_A]`         | 60/min     |     Yes     |
 
 ### 9.2. Request / Response Schemas
 
 #### POST `/api/v1/[resource]` — Tạo mới
 
 ##### Request Body:
+
 ```json
 {
   "fieldA": "value",
@@ -394,6 +430,7 @@ export interface I[ModuleName]Repository {
 ```
 
 ##### Response — 201 Created (Happy Path):
+
 ```json
 {
   "id": "uuid-v4",
@@ -404,6 +441,7 @@ export interface I[ModuleName]Repository {
 ```
 
 ##### Response — 400 Bad Request (Validation Error):
+
 ```json
 {
   "error": {
@@ -417,6 +455,7 @@ export interface I[ModuleName]Repository {
 ```
 
 ##### Response — 409 Conflict:
+
 ```json
 {
   "error": {
@@ -432,25 +471,27 @@ export interface I[ModuleName]Repository {
 
 > Tiền tố mã lỗi phải nhất quán theo module (vd: `CON-` cho Consent, `IAM-` cho Identity).
 
-| Code | HTTP Status | Message (EN) | Message (VI) | Trigger Condition |
-| :--- | :---: | :--- | :--- | :--- |
-| `[MOD]-001` | 400 | Validation failed | Dữ liệu không hợp lệ | [Khi nào xảy ra] |
-| `[MOD]-002` | 409 | Resource conflict | Xung đột tài nguyên | [Khi nào xảy ra] |
-| `[MOD]-003` | 404 | Resource not found | Không tìm thấy | [Khi nào xảy ra] |
-| `[MOD]-004` | 403 | Insufficient permissions | Không đủ quyền | [Khi nào xảy ra] |
-| `[MOD]-005` | 500 | Internal error | Lỗi hệ thống | [Khi nào xảy ra] |
+| Code          | HTTP Status | Message (EN)             | Message (VI)              | Trigger Condition  |
+| :------------ | :---------: | :----------------------- | :------------------------ | :----------------- |
+| `[MOD]-001` |     400     | Validation failed        | Dữ liệu không hợp lệ | [Khi nào xảy ra] |
+| `[MOD]-002` |     409     | Resource conflict        | Xung đột tài nguyên   | [Khi nào xảy ra] |
+| `[MOD]-003` |     404     | Resource not found       | Không tìm thấy         | [Khi nào xảy ra] |
+| `[MOD]-004` |     403     | Insufficient permissions | Không đủ quyền        | [Khi nào xảy ra] |
+| `[MOD]-005` |     500     | Internal error           | Lỗi hệ thống           | [Khi nào xảy ra] |
 
 ---
 
 ## 11. Quy trình Triển khai (Step-by-Step)
 
 ### 11.1. Prerequisites
+
 - [ ] ADR đã được Accepted (xem §3)
 - [ ] DPO đã sign-off nếu module xử lý PII (xem header)
 - [ ] Blueprint đã được Principal Architect approve
 - [ ] Môi trường staging đã sẵn sàng
 
 ### 11.2. Pre-Migration Checklist *(bắt buộc tick trước khi chạy migration)*
+
 - [ ] Đã backup DB production: `pg_dump -h [host] -u [user] [db] > backup_YYYYMMDD.sql`
 - [ ] Migration đã chạy thành công trên staging &ge; 24 giờ
 - [ ] Rollback script đã được test trên staging (xem §12)
@@ -459,17 +500,21 @@ export interface I[ModuleName]Repository {
 ### 11.3. Implementation Steps
 
 #### Chặng 1 — [Tên chặng]
+
 ```bash
 # Lệnh cụ thể, có thể chạy ngay
 npx prisma migrate dev --name [migration_name]
 ```
+
 > [!WARNING]
 > **Chú ý**: [Cảnh báo rủi ro nếu có]
 
 #### Chặng 2 — [Tên chặng]
+
 *(Code snippet minh họa nếu cần)*
 
 #### Chặng 3 — Verification sau deploy
+
 ```bash
 # Kiểm tra nhanh sau khi deploy
 curl -X GET https://[host]/api/v1/health
@@ -477,6 +522,7 @@ curl -X GET https://[host]/api/v1/health
 ```
 
 ### 11.4. Deployment Checklist
+
 - [ ] Migration chạy thành công
 - [ ] Health check endpoint trả về 200
 - [ ] Error rate < 1% trong 10 phút đầu
@@ -492,12 +538,12 @@ curl -X GET https://[host]/api/v1/health
 
 ### 12.1. Điều kiện kích hoạt Rollback (Trigger Conditions)
 
-| Điều kiện | Ngưỡng | Người quyết định |
-| :--- | :--- | :--- |
-| Error rate tăng đột biến | > 5% trong 5 phút | On-call Engineer |
-| Latency p99 vượt ngưỡng | > 2x baseline | On-call Engineer |
-| Dữ liệu không nhất quán | Bất kỳ case nào | Tech Lead + DPO |
-| Audit log ngừng hoạt động | > 1 phút | On-call Engineer |
+| Điều kiện                  | Ngưỡng           | Người quyết định |
+| :---------------------------- | :----------------- | :-------------------- |
+| Error rate tăng đột biến  | > 5% trong 5 phút | On-call Engineer      |
+| Latency p99 vượt ngưỡng   | > 2x baseline      | On-call Engineer      |
+| Dữ liệu không nhất quán  | Bất kỳ case nào | Tech Lead + DPO       |
+| Audit log ngừng hoạt động | > 1 phút          | On-call Engineer      |
 
 ### 12.2. Rollback Procedure
 
@@ -518,16 +564,18 @@ curl -X GET https://[host]/api/v1/health
 
 ### 12.3. Notification Protocol
 
-| Thời điểm | Người nhận | Kênh | Template |
-| :--- | :--- | :--- | :--- |
-| Ngay khi phát hiện | On-call team | Slack `#incident` | `"🚨 [SERVICE] incident detected: [mô tả]"` |
-| Trong 30 phút | DPO | Email | *(Bắt buộc nếu PII bị ảnh hưởng — GDPR Art. 33)* |
-| Trong 72 giờ | DPA | Email | *(Bắt buộc nếu có data breach — GDPR Art. 33)* |
+| Thời điểm         | Người nhận | Kênh              | Template                                                   |
+| :------------------- | :------------ | :----------------- | :--------------------------------------------------------- |
+| Ngay khi phát hiện | On-call team  | Slack`#incident` | `"🚨 [SERVICE] incident detected: [mô tả]"`            |
+| Trong 30 phút       | DPO           | Email              | *(Bắt buộc nếu PII bị ảnh hưởng — GDPR Art. 33)* |
+| Trong 72 giờ        | DPA           | Email              | *(Bắt buộc nếu có data breach — GDPR Art. 33)*      |
 
 ### 12.4. Post-Incident Review (PIR)
+
 > Bắt buộc hoàn thành PIR document trong vòng 48 giờ sau khi incident được resolve.
 
 #### PIR Template:
+
 * **Timeline**: Diễn biến từng bước theo thứ tự thời gian
 * **Root Cause**: Nguyên nhân gốc rễ (5 Whys)
 * **Impact**: Số users ảnh hưởng, thời gian downtime, PII exposure?
@@ -539,6 +587,7 @@ curl -X GET https://[host]/api/v1/health
 ## 13. Kịch bản Kiểm thử Chi tiết
 
 > **Policy (EDS v2.0 — Test Data)**: Mọi test scenario phải khai báo Test Data Classification.
+>
 > * `SYNTHETIC` *(bắt buộc mặc định)* — dữ liệu giả hoàn toàn
 > * `ANONYMIZED` — nếu cần realistic data, phải anonymize trước
 > * ❌ **TUYỆT ĐỐI KHÔNG** dùng Production PII trong test cases
@@ -553,16 +602,17 @@ curl -X GET https://[host]/api/v1/health
   * And [precondition khác]
 
 ##### Scenario: [Mô tả happy path]
+
 * Given [trạng thái ban đầu]
 * When [hành động thực hiện]
 * Then [kết quả mong đợi]
 
 ##### Scenario: [Mô tả error path]
+
 * Given [trạng thái ban đầu]
 * When [hành động gây lỗi]
 * Then [lỗi mong đợi — error code cụ thể]
 * And [không có side effect ngoài ý muốn]
-
 * **Hàm được test**: `ClassName.methodName()`
 * **Invariant kiểm tra**: [Mô tả invariant]
 
@@ -571,13 +621,13 @@ curl -X GET https://[host]/api/v1/health
 #### `TC-INT-001` — [Tên test case]
 
 ##### Scenario: [Service + Repository phối hợp đúng]
+
 * Given test data classification: `SYNTHETIC`
 * And database đang chạy với seed data [X]
 * When [Service method] được gọi với input [Y]
 * Then repository [repoMethod] được gọi đúng 1 lần
 * And database chứa record với `[field]` = `[expected value]`
 * And audit log chứa event `[EventName]` với payload [Z]
-
 * **External dependencies**: [Vault / Mailer / Cache / ...]
 * **Mock strategy**: [Mock hoàn toàn / Test container / ...]
 
@@ -586,27 +636,30 @@ curl -X GET https://[host]/api/v1/health
 #### `TC-E2E-001` — [Tên test case]
 
 ##### Scenario: [Luồng hoàn chỉnh qua API]
+
 * Given test data classification: `SYNTHETIC`
 * And user `[roleX]` đã đăng nhập, có JWT hợp lệ
 * When POST `/api/v1/[resource]` được gọi với:
 
-| Header | Value |
-| :--- | :--- |
-| Authorization | Bearer [token] |
-| Content-Type | application/json |
-| X-Correlation-Id | [uuid] |
+| Header           | Value            |
+| :--------------- | :--------------- |
+| Authorization    | Bearer [token]   |
+| Content-Type     | application/json |
+| X-Correlation-Id | [uuid]           |
 
 * Then response status là 201
 * And response body chứa `[field]` = `[expected]`
 * And database chứa record mới
 
 ##### Scenario: [Unauthorized access]
+
 * Given user không có role `[requiredRole]`
 * When POST `/api/v1/[resource]` được gọi
 * Then response status là 403
 * And response body chứa error code `[MOD]-004`
 
 ##### Scenario: [CSRF / Injection attempt]
+
 * Given [payload độc hại]
 * When [endpoint] được gọi với payload đó
 * Then [hệ thống xử lý an toàn, không có injection]
@@ -681,6 +734,7 @@ curl -X POST https://[host]/api/v1/[resource] \
 ```
 
 ##### Expected Response (201):
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -701,6 +755,7 @@ curl -X POST https://[host]/api/v1/[resource] \
 ```
 
 ##### Expected Response (400):
+
 ```json
 {
   "error": {
@@ -719,6 +774,7 @@ curl -X GET https://[host]/api/v1/[resource]/[id]
 ```
 
 ##### Expected Response (401):
+
 ```json
 {
   "error": {
@@ -734,15 +790,16 @@ curl -X GET https://[host]/api/v1/[resource]/[id]
 
 > **Nguyên tắc Least Privilege**: Mỗi Role chỉ có quyền tối thiểu cần thiết để thực hiện nhiệm vụ của mình.
 
-| Endpoint | GUEST | USER | ADMIN | DPO | SYSTEM |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| `GET /api/v1/[resource]` | ❌ | ✅ Own | ✅ All | ✅ All | ✅ All |
-| `POST /api/v1/[resource]` | ❌ | ✅ | ✅ | ❌ | ✅ |
-| `PATCH /api/v1/[resource]/:id` | ❌ | ✅ Own | ✅ All | ❌ | ✅ |
-| `DELETE /api/v1/[resource]/:id` | ❌ | ❌ | ✅ | ❌ | ❌ |
-| `GET /api/v1/[resource]/audit` | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Endpoint                          | GUEST |  USER  | ADMIN |  DPO  | SYSTEM |
+| :-------------------------------- | :---: | :----: | :----: | :----: | :----: |
+| `GET /api/v1/[resource]`        |  ❌  | ✅ Own | ✅ All | ✅ All | ✅ All |
+| `POST /api/v1/[resource]`       |  ❌  |   ✅   |   ✅   |   ❌   |   ✅   |
+| `PATCH /api/v1/[resource]/:id`  |  ❌  | ✅ Own | ✅ All |   ❌   |   ✅   |
+| `DELETE /api/v1/[resource]/:id` |  ❌  |   ❌   |   ✅   |   ❌   |   ❌   |
+| `GET /api/v1/[resource]/audit`  |  ❌  |   ❌   |   ✅   |   ✅   |   ✅   |
 
 ##### Chú thích:
+
 * ✅ = Được phép
 * ❌ = Bị từ chối (403)
 * **Own** = Chỉ được phép với resource của chính mình
@@ -753,23 +810,24 @@ curl -X GET https://[host]/api/v1/[resource]/[id]
 
 ### A. Glossary (Thuật ngữ)
 
-| Thuật ngữ | Định nghĩa |
-| :--- | :--- |
-| `[Term]` | [Định nghĩa rõ ràng, không mơ hồ] |
-| **PII** | Personally Identifiable Information (Thông tin cá nhân có thể định danh) |
-| **Append-only** | Chiến lược lưu trữ không cho phép UPDATE/DELETE, chỉ INSERT |
-| **DPO** | Data Protection Officer (Nhân viên bảo vệ dữ liệu) |
+| Thuật ngữ           | Định nghĩa                                                                   |
+| :-------------------- | :------------------------------------------------------------------------------ |
+| `[Term]`            | [Định nghĩa rõ ràng, không mơ hồ]                                       |
+| **PII**         | Personally Identifiable Information (Thông tin cá nhân có thể định danh) |
+| **Append-only** | Chiến lược lưu trữ không cho phép UPDATE/DELETE, chỉ INSERT             |
+| **DPO**         | Data Protection Officer (Nhân viên bảo vệ dữ liệu)                        |
 
 ### B. Tài liệu tham khảo
 
-| Document | Link / Path |
-| :--- | :--- |
-| GDPR Art. 7 (Consent conditions) | [Link] |
-| GDPR Art. 32 (Security of processing) | [Link] |
-| IAM Core Blueprint (Master Template) | `03_implement/IAM_TECHNICAL_IMPLEMENTATION.md` |
-| Refresh Token Blueprint | `03_implement/IAM_REFRESH_TOKEN_TECHNICAL.md` |
+| Document                              | Link / Path                                      |
+| :------------------------------------ | :----------------------------------------------- |
+| GDPR Art. 7 (Consent conditions)      | [Link]                                           |
+| GDPR Art. 32 (Security of processing) | [Link]                                           |
+| IAM Core Blueprint (Master Template)  | `03_implement/IAM_TECHNICAL_IMPLEMENTATION.md` |
+| Refresh Token Blueprint               | `03_implement/IAM_REFRESH_TOKEN_TECHNICAL.md`  |
 
 ---
+
 > **EDS v2.0** — Áp dụng ngay lập tức cho toàn bộ repo PrivacyOps.
 > Các sections đánh dấu ⭐️ là bổ sung mới so với EDS v1.0.
 > Câu hỏi hoặc đề xuất sửa đổi: tạo Issue với label `docs-policy`.
