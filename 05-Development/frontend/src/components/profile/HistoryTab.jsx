@@ -265,11 +265,7 @@ export default function HistoryTab() {
                       {s.therapistName && (
                         <p className="text-xs text-sage-500 mt-1">Hướng dẫn: {s.therapistName}</p>
                       )}
-                      {s.specialNote && (
-                        <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">
-                          Ghi chú: {s.specialNote}
-                        </p>
-                      )}
+
                     </div>
                     <StatusBadge status={s.status} map={SPA_STATUS_MAP} />
                   </div>

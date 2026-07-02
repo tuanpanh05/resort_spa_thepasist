@@ -97,11 +97,16 @@ export default function GuestDashboard() {
 
       if (data.booking) {
         const checkIn = new Date(data.booking.checkInDate);
+        checkIn.setHours(0, 0, 0, 0);
         const checkOut = new Date(data.booking.checkOutDate);
+        checkOut.setHours(0, 0, 0, 0);
         const days = [];
         let curr = new Date(checkIn);
-        while (curr < checkOut) {
-          days.push(curr.toISOString().split("T")[0]);
+        while (curr <= checkOut) {
+          const yyyy = curr.getFullYear();
+          const mm = String(curr.getMonth() + 1).padStart(2, '0');
+          const dd = String(curr.getDate()).padStart(2, '0');
+          days.push(`${yyyy}-${mm}-${dd}`);
           curr.setDate(curr.getDate() + 1);
         }
         setBookingDays(days);

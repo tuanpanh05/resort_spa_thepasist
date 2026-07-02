@@ -195,9 +195,7 @@ export default function BookingHistory() {
                     {s.roomName && (
                       <p className="text-xs text-sage-500 mt-1">{t("profile.roomNo")}: {s.roomName}</p>
                     )}
-                    {s.specialNote && (
-                      <p className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-sm mt-2 w-fit">{t("profile.noteLabel")}: {s.specialNote}</p>
-                    )}
+
                   </div>
                   <StatusBadge status={s.status} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
                 </div>

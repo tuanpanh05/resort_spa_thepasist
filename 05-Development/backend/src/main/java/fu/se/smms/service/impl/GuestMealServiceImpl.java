@@ -475,54 +475,78 @@ public class GuestMealServiceImpl implements GuestMealService {
     @Override
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getChefAllergies() {
-        List<MedicalProfile> profiles = medicalProfileRepository.findAll();
+        java.time.LocalDate today = java.time.LocalDate.now();
         List<Map<String, Object>> resultList = new ArrayList<>();
+        
+        List<RoomBooking> activeBookings = roomBookingRepository.findAllActiveBookings();
+        
+        Set<User> validUsers = new HashSet<>();
+        Map<Integer, String> userToRoomMap = new HashMap<>();
 
-        for (MedicalProfile mp : profiles) {
-            if (Boolean.TRUE.equals(mp.getExplicitConsentSigned())) {
-                Map<String, Object> guestAllergyMap = new HashMap<>();
-                guestAllergyMap.put("userId", mp.getUser().getUserId());
-                guestAllergyMap.put("fullName", mp.getUser().getFullName());
-                guestAllergyMap.put("email", mp.getUser().getEmail());
-                guestAllergyMap.put("phone", mp.getUser().getPhone());
-
-                List<RoomBooking> activeBookings = roomBookingRepository.findActiveBookingsByUserId(mp.getUser().getUserId());
-                List<String> roomNumbers = roomBookingRepository.findActiveRoomNumbersByUserId(mp.getUser().getUserId());
-
-                boolean isStayingToday = false;
-                java.time.LocalDate today = java.time.LocalDate.now();
-                if (!activeBookings.isEmpty()) {
-                    for (RoomBooking b : activeBookings) {
-                        java.time.LocalDate checkIn = b.getCheckInDate().toLocalDate();
-                        java.time.LocalDate checkOut = b.getCheckOutDate().toLocalDate();
-                        if (!checkOut.isBefore(today) && !checkIn.isAfter(today)) {
-                            isStayingToday = true;
-                            break;
+        for (RoomBooking b : activeBookings) {
+            if (b.getCheckOutDate() != null && !b.getCheckOutDate().toLocalDate().isBefore(today)) {
+                User u = b.getUser();
+                if (u != null) {
+                    validUsers.add(u);
+                    if (b.getDetails() != null) {
+                        for (RoomBookingDetail detail : b.getDetails()) {
+                            if (detail.getRoom() != null) {
+                                String roomNum = detail.getRoom().getRoomNumber();
+                                String existing = userToRoomMap.get(u.getUserId());
+                                if (existing == null) {
+                                    userToRoomMap.put(u.getUserId(), roomNum);
+                                } else if (!existing.contains(roomNum)) {
+                                    userToRoomMap.put(u.getUserId(), existing + ", " + roomNum);
+                                }
+                            }
                         }
                     }
                 }
+            }
+        }
 
-                if (!isStayingToday) {
-                    continue;
-                }
+        for (User u : validUsers) {
+            List<FoodOrder> orders = foodOrderRepository.findByUser_UserId(u.getUserId());
+            FoodOrder validOrder = null;
+            if (orders != null) {
+                validOrder = orders.stream()
+                    .filter(o -> !"CANCELLED".equalsIgnoreCase(o.getStatus()) && 
+                                 o.getOrderTime() != null && 
+                                 !o.getOrderTime().toLocalDate().isBefore(today) &&
+                                 (o.getRoomBooking() == null || 
+                                   (!"PENDING".equalsIgnoreCase(o.getRoomBooking().getStatus()) && 
+                                    !"PENDING_DEPOSIT".equalsIgnoreCase(o.getRoomBooking().getStatus()) && 
+                                    !"CANCELLED".equalsIgnoreCase(o.getRoomBooking().getStatus())))
+                           )
+                    .min(java.util.Comparator.comparing(FoodOrder::getOrderTime))
+                    .orElse(null);
+            }
 
-                if (!activeBookings.isEmpty()) {
-                    guestAllergyMap.put("room", roomNumbers.isEmpty() ? "N/A" : String.join(", ", roomNumbers));
-                    guestAllergyMap.put("checkIn", activeBookings.get(0).getCheckInDate().toString().split("T")[0]);
-                } else {
-                    guestAllergyMap.put("room", "N/A");
-                    guestAllergyMap.put("checkIn", "N/A");
-                }
+            if (validOrder == null) {
+                continue;
+            }
 
-                String decryptedAllergies = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
-                String readableAllergies = decryptedAllergies;
-                String dietaryPreference = "Healthy";
+            Map<String, Object> guestAllergyMap = new HashMap<>();
+            guestAllergyMap.put("userId", u.getUserId());
+            guestAllergyMap.put("fullName", u.getFullName());
+            guestAllergyMap.put("email", u.getEmail());
+            guestAllergyMap.put("phone", u.getPhone());
+            guestAllergyMap.put("room", userToRoomMap.getOrDefault(u.getUserId(), "N/A"));
+            guestAllergyMap.put("checkIn", validOrder.getOrderTime().toLocalDate().toString());
+
+            MedicalProfile mp = medicalProfileRepository.findByUser_UserId(u.getUserId()).orElse(null);
+            String readableAllergies = "Không có";
+            String dietaryPreference = "Healthy";
+            String decryptedAllergies = "";
+
+            if (mp != null) {
                 try {
-                    ObjectMapper mapper = new ObjectMapper();
-                    JsonNode node = mapper.readTree(decryptedAllergies);
+                    decryptedAllergies = AESUtil.decrypt(mp.getFoodAllergiesEncrypted());
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(decryptedAllergies);
                     List<String> list = new ArrayList<>();
                     if (node.has("selected") && node.get("selected").isArray()) {
-                        for (JsonNode item : node.get("selected")) {
+                        for (com.fasterxml.jackson.databind.JsonNode item : node.get("selected")) {
                             String val = item.asText();
                             if (val.equalsIgnoreCase("peanuts")) val = "Đậu phộng";
                             else if (val.equalsIgnoreCase("shellfish")) val = "Hải sản có vỏ";

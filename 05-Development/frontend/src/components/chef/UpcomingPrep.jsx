@@ -154,18 +154,7 @@ export default function UpcomingPrep({
             ))}
           </div>
 
-          {/* Customer Notes */}
-          {ord.note && (
-            <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50/30 border border-amber-200/60 rounded-xl p-3 relative overflow-hidden shadow-sm">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-500" />
-              <span className="font-bold uppercase tracking-widest text-[9px] flex items-center mb-1 text-amber-800">
-                <AlertTriangle className="w-3 h-3 mr-1" /> Ghi chú bếp:
-              </span>
-              <p className="text-[11px] font-medium text-amber-950 leading-relaxed pl-1">
-                {ord.note}
-              </p>
-            </div>
-          )}
+          {/* Customer Notes Removed */}
         </div>
 
         {/* Footer Actions */}
