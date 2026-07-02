@@ -7,10 +7,19 @@ import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 
 export default function Login() {
-  const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
-  const [password, setPassword] = useState(() => localStorage.getItem("rememberedPassword") || "");
+  const [email, setEmail] = useState(() => {
+    const saved = localStorage.getItem("rememberedEmail");
+    return (saved && saved !== "null" && saved !== "undefined") ? saved : "";
+  });
+  const [password, setPassword] = useState(() => {
+    const saved = localStorage.getItem("rememberedPassword");
+    return (saved && saved !== "null" && saved !== "undefined") ? saved : "";
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("rememberedEmail"));
+  const [rememberMe, setRememberMe] = useState(() => {
+    const saved = localStorage.getItem("rememberedEmail");
+    return !!(saved && saved !== "null" && saved !== "undefined" && saved.trim() !== "");
+  });
   const [error, setError] = useState("");
   
   // Custom states for animated floating placeholders

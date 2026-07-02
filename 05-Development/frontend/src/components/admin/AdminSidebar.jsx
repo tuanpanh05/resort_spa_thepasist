@@ -1,5 +1,6 @@
 import React from "react";
-import { ShieldCheck, LogOut, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ShieldCheck, LogOut, X, User } from "lucide-react";
 
 export default function AdminSidebar({
   activeTab,
@@ -75,8 +76,15 @@ export default function AdminSidebar({
           </nav>
         </div>
 
-        {/* Footer Log out */}
-        <div className="px-4">
+        {/* Footer Navigation & Log out */}
+        <div className="px-4 space-y-1">
+          <Link
+            to="/tai-khoan"
+            className="w-full flex items-center space-x-3 px-4 py-3 text-primary-100/70 hover:bg-primary-900 hover:text-white transition-all duration-150 cursor-pointer text-xs font-semibold tracking-wider"
+          >
+            <User className="h-4.5 w-4.5 text-primary-300" />
+            <span>Thông tin cá nhân</span>
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-all duration-150 cursor-pointer text-xs font-semibold tracking-wider"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Crown,
   Leaf,
@@ -279,7 +279,25 @@ function ConsultationModal({ isOpen, onClose }) {
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   const userRole = localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "";
+
+  useEffect(() => {
+    if (userRole) {
+      const role = userRole.toUpperCase();
+      if (role !== "CUSTOMER") {
+        if (role === "ADMIN" || role === "MANAGER") {
+          navigate("/admin", { replace: true });
+        } else if (role === "RECEPTIONIST" || role === "STAFF") {
+          navigate("/staff", { replace: true });
+        } else if (role === "CHEF") {
+          navigate("/chef", { replace: true });
+        } else if (role === "SPA" || role === "YOGA" || role === "PHYSIO" || role === "THERAPIST") {
+          navigate("/specialist", { replace: true });
+        }
+      }
+    }
+  }, [userRole, navigate]);
 
   // Wellness experiences mock data
   const experiences = [
