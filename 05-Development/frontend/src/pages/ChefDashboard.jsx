@@ -445,8 +445,13 @@ export default function ChefDashboard() {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
         userRoleLabel="Executive Chef"
         handleLogout={() => {
-          if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?"))
+          if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi khu vực bếp trực?")) {
+            ["token", "userEmail", "userRole", "userFullName", "userSpecialty", "specialistRole"].forEach((k) => {
+              localStorage.removeItem(k);
+              sessionStorage.removeItem(k);
+            });
             window.location.href = "/dang-nhap";
+          }
         }}
         sidebarItems={[
           {

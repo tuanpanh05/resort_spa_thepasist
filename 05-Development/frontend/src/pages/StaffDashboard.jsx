@@ -203,6 +203,10 @@ export default function StaffDashboard() {
 
   const handleLogout = () => {
     if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống nhân viên?')) {
+      ["token", "userEmail", "userRole", "userFullName", "userSpecialty", "specialistRole"].forEach((k) => {
+        localStorage.removeItem(k);
+        sessionStorage.removeItem(k);
+      });
       navigate('/dang-nhap');
     }
   };
