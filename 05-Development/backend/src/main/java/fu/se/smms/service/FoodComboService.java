@@ -19,15 +19,18 @@ public class FoodComboService {
     private final ComboMenuTemplateRepository comboMenuTemplateRepository;
     private final DailyMealOrderRepository dailyMealOrderRepository;
     private final RoomBookingRepository roomBookingRepository;
+    private final FoodMenuRepository foodMenuRepository;
 
     public FoodComboService(BookingDietRepository bookingDietRepository,
                             ComboMenuTemplateRepository comboMenuTemplateRepository,
                             DailyMealOrderRepository dailyMealOrderRepository,
-                            RoomBookingRepository roomBookingRepository) {
+                            RoomBookingRepository roomBookingRepository,
+                            FoodMenuRepository foodMenuRepository) {
         this.bookingDietRepository = bookingDietRepository;
         this.comboMenuTemplateRepository = comboMenuTemplateRepository;
         this.dailyMealOrderRepository = dailyMealOrderRepository;
         this.roomBookingRepository = roomBookingRepository;
+        this.foodMenuRepository = foodMenuRepository;
     }
 
     /**
@@ -115,6 +118,22 @@ public class FoodComboService {
                     }
                 }
             }
+        }
+
+        // Auto-allocation of kid's combo if child under 5 exists
+        if (booking.getChildrenUnder5() != null && booking.getChildrenUnder5() > 0) {
+            foodMenuRepository.findByDishName("Combo Trẻ Em Dưới 5 Tuổi").ifPresent(kidsCombo -> {
+                DailyMealOrder kidsOrder = DailyMealOrder.builder()
+                        .roomBooking(booking)
+                        .serveDate(serveDate)
+                        .mealType(mealType)
+                        .dietaryTag("Kids")
+                        .foodMenu(kidsCombo)
+                        .quantity(booking.getChildrenUnder5())
+                        .status("PENDING")
+                        .build();
+                ordersToSave.add(kidsOrder);
+            });
         }
 
         // Save generated menu to DB

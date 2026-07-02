@@ -1,19 +1,19 @@
 # KẾ HOẠCH THỰC THI MÃ NGUỒN VÀ KIỂM THỬ (EDS & TDD SPECIFICATION)
 ## Quy trình WF-06: Hóa đơn Tổng hợp & Làm thủ tục Trả phòng (Module 5)
 
-| Field | Value |
-| :--- | :--- |
-| **Document ID** | RESORT-M5-IMP-001 |
-| **Version** | 1.0 |
-| **Date** | 2026-07-01 |
-| **Status** | Approved |
-| **Document Owner** | SWP391 SE2023-G3 Architecture Team |
-| **Author** | Antigravity AI Pair Programmer |
-| **Reviewed by** | SWP391 SE2023-G3 Tech Lead |
-| **DPO Sign-off** | [x] Approved — 2026-07-01 — Data Protection Officer |
-| **Approved by** | Principal Architect |
-| **Last Review** | 2026-07-01 |
-| **Based on EDS/TDD** | EDS v2.0 & TDD v1.0 |
+| Field                | Value                                               |
+| :---------------------| :----------------------------------------------------|
+| **Document ID**      | RESORT-M5-IMP-001                                   |
+| **Version**          | 1.0                                                 |
+| **Date**             | 2026-07-01                                          |
+| **Status**           | Approved                                            |
+| **Document Owner**   | SWP391 SE2023-G3 Architecture Team                  |
+| **Author**           | All Team 3                                          |
+| **Reviewed by**      | SWP391 SE2023-G3 Tech Lead                          |
+| **DPO Sign-off**     | [x] Approved — 2026-07-01 — Data Protection Officer |
+| **Approved by**      | Principal Architect                                 |
+| **Last Review**      | 2026-07-01                                          |
+| **Based on EDS/TDD** | EDS v2.0 & TDD v1.0                                 |
 
 ---
 

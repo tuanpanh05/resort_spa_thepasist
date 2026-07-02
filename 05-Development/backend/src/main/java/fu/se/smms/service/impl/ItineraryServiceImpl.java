@@ -150,8 +150,9 @@ public class ItineraryServiceImpl {
         checkInEvent.setTitle("Nhận phòng (Check-In)");
         checkInEvent.setDescription("Thủ tục nhận phòng tại quầy lễ tân");
         checkInEvent.setStartTime(booking.getCheckInDate());
-        checkInEvent.setStatus("CHECKED_IN".equals(booking.getStatus()) ||
-                              "CHECKED_OUT".equals(booking.getStatus()) ? "COMPLETED" : "PENDING");
+        checkInEvent.setStatus("CANCELLED".equalsIgnoreCase(booking.getStatus()) ? "CANCELLED" :
+                              ("CHECKED_IN".equals(booking.getStatus()) ||
+                               "CHECKED_OUT".equals(booking.getStatus()) ? "COMPLETED" : "PENDING"));
         timeline.add(checkInEvent);
 
         // Add Spa booking events
@@ -224,7 +225,8 @@ public class ItineraryServiceImpl {
         checkOutEvent.setTitle("Trả phòng (Check-Out)");
         checkOutEvent.setDescription("Thủ tục trả phòng và thanh toán cuối kỳ");
         checkOutEvent.setStartTime(booking.getCheckOutDate());
-        checkOutEvent.setStatus("CHECKED_OUT".equals(booking.getStatus()) ? "COMPLETED" : "PENDING");
+        checkOutEvent.setStatus("CANCELLED".equalsIgnoreCase(booking.getStatus()) ? "CANCELLED" :
+                               ("CHECKED_OUT".equals(booking.getStatus()) ? "COMPLETED" : "PENDING"));
         timeline.add(checkOutEvent);
 
         // Sort timeline by startTime

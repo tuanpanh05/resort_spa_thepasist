@@ -19,6 +19,7 @@ GO
 -- =========================================================================
 -- 1. DROP EXISTING TABLES (CHILDREN FIRST, THEN PARENTS)
 -- =========================================================================
+IF OBJECT_ID('dbo.accompanying_guest', 'U') IS NOT NULL DROP TABLE dbo.accompanying_guest;
 IF OBJECT_ID('dbo.package_highlights', 'U') IS NOT NULL DROP TABLE dbo.package_highlights;
 IF OBJECT_ID('dbo.package_features', 'U') IS NOT NULL DROP TABLE dbo.package_features;
 IF OBJECT_ID('dbo.feedback', 'U') IS NOT NULL DROP TABLE dbo.feedback;
@@ -144,7 +145,7 @@ CREATE TABLE dbo.room (
     room_number  VARCHAR(50)  NOT NULL UNIQUE,
     status       VARCHAR(50)  NOT NULL DEFAULT 'AVAILABLE',
 
-    CONSTRAINT CK_room_status CHECK (status IN ('AVAILABLE','OCCUPIED','MAINTENANCE','DIRTY','CLEANING','VACANT_NEEDS_CLEANING'))
+    CONSTRAINT CK_room_status CHECK (status IN ('AVAILABLE','OCCUPIED','MAINTENANCE','DIRTY','CLEANING','VACANT_NEEDS_CLEANING','VIEWING'))
 );
 GO
 
@@ -183,6 +184,18 @@ CREATE TABLE dbo.room_booking_detail (
     price_at_booking DECIMAL(15,2) NOT NULL,
 
     CONSTRAINT CK_room_booking_detail_price CHECK (price_at_booking >= 0)
+);
+GO
+
+-- 2.6.1 Accompanying Guest
+CREATE TABLE dbo.accompanying_guest (
+    guest_id          INT           IDENTITY(1,1) PRIMARY KEY,
+    booking_id        INT           NOT NULL REFERENCES dbo.room_booking(booking_id) ON DELETE CASCADE,
+    full_name         NVARCHAR(100) NOT NULL,
+    identity_document VARCHAR(255)  NULL,
+    relationship      NVARCHAR(50)  NULL,
+    is_child          BIT           NOT NULL DEFAULT 0,
+    created_at        DATETIME2     NOT NULL DEFAULT GETDATE()
 );
 GO
 

@@ -264,6 +264,10 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     alert("Đang đăng xuất khỏi phiên làm việc Admin...");
+    ["token", "userEmail", "userRole", "userFullName", "userSpecialty", "specialistRole"].forEach((k) => {
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    });
     navigate("/dang-nhap");
   };
 

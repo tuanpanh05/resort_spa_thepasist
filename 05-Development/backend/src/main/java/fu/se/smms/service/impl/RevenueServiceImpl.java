@@ -15,6 +15,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fu.se.smms.entity.Invoice;
+import fu.se.smms.entity.IncurredService;
+import fu.se.smms.repository.IncurredServiceRepository;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 /**
  * Implementation of RevenueService for UC24 (Revenue Dashboard) and UC25 (Occupancy/Utilization Report).
  * BR-27: Revenue calculation is broken down precisely by department (Room, Spa, F&B).
@@ -27,10 +33,14 @@ public class RevenueServiceImpl implements RevenueService {
     // Inject RoomRepository to count total rooms for occupancy rate
     private final fu.se.smms.repository.RoomRepository roomRepository;
 
+    private final IncurredServiceRepository incurredServiceRepository;
+
     public RevenueServiceImpl(InvoiceRepository invoiceRepository,
-                              fu.se.smms.repository.RoomRepository roomRepository) {
+                              fu.se.smms.repository.RoomRepository roomRepository,
+                              IncurredServiceRepository incurredServiceRepository) {
         this.invoiceRepository = invoiceRepository;
         this.roomRepository = roomRepository;
+        this.incurredServiceRepository = incurredServiceRepository;
     }
 
     @Override
@@ -41,18 +51,94 @@ public class RevenueServiceImpl implements RevenueService {
         dto.setYear(year);
         dto.setMonth(month);
 
-        // BR-27: Revenue breakdown by department
-        BigDecimal roomRev = nullToZero(invoiceRepository.sumRoomRevenueByPeriod(year, month));
-        BigDecimal spaRev  = nullToZero(invoiceRepository.sumSpaRevenueByPeriod(year, month));
-        BigDecimal foodRev = nullToZero(invoiceRepository.sumFoodRevenueByPeriod(year, month));
-        BigDecimal taxRev  = nullToZero(invoiceRepository.sumTaxRevenueByPeriod(year, month));
-        BigDecimal grandTotal = roomRev.add(spaRev).add(foodRev).add(taxRev);
+        List<Invoice> paidInvoices = invoiceRepository.findPaidInvoicesByPeriod(year, month);
 
-        dto.setTotalRoomRevenue(roomRev);
-        dto.setTotalSpaRevenue(spaRev);
-        dto.setTotalFoodRevenue(foodRev);
-        dto.setTotalTaxRevenue(taxRev);
-        dto.setGrandTotalRevenue(grandTotal);
+        List<Integer> bookingIds = paidInvoices.stream()
+            .map(i -> i.getRoomBooking() != null ? i.getRoomBooking().getBookingId() : null)
+            .filter(Objects::nonNull)
+            .toList();
+
+        Map<Integer, List<IncurredService>> servicesByBooking = new HashMap<>();
+        if (!bookingIds.isEmpty()) {
+            List<IncurredService> completedServices = incurredServiceRepository.findByRoomBooking_BookingIdInAndStatus(bookingIds, "Completed");
+            servicesByBooking = completedServices.stream()
+                .collect(Collectors.groupingBy(s -> s.getRoomBooking().getBookingId()));
+        }
+
+        BigDecimal totalRoomRevenue = BigDecimal.ZERO;
+        BigDecimal totalSpaRevenue = BigDecimal.ZERO;
+        BigDecimal totalFoodRevenue = BigDecimal.ZERO;
+        BigDecimal grandTotalRevenue = BigDecimal.ZERO;
+
+        for (Invoice invoice : paidInvoices) {
+            BigDecimal roomSub = invoice.getRoomSubtotal() != null ? invoice.getRoomSubtotal() : BigDecimal.ZERO;
+            BigDecimal spaSub = invoice.getSpaSubtotal() != null ? invoice.getSpaSubtotal() : BigDecimal.ZERO;
+            BigDecimal foodSub = invoice.getFoodSubtotal() != null ? invoice.getFoodSubtotal() : BigDecimal.ZERO;
+
+            BigDecimal extraRoom = BigDecimal.ZERO;
+            BigDecimal extraSpa = BigDecimal.ZERO;
+            BigDecimal extraFood = BigDecimal.ZERO;
+
+            if (invoice.getRoomBooking() != null) {
+                List<IncurredService> bookingServices = servicesByBooking.getOrDefault(invoice.getRoomBooking().getBookingId(), List.of());
+                for (IncurredService service : bookingServices) {
+                    String cat = service.getCategory();
+                    BigDecimal price = service.getPrice() != null ? service.getPrice() : BigDecimal.ZERO;
+                    if ("Spa booking".equalsIgnoreCase(cat)) {
+                        extraSpa = extraSpa.add(price);
+                    } else if ("Restaurant order".equalsIgnoreCase(cat) || "Room service".equalsIgnoreCase(cat)) {
+                        extraFood = extraFood.add(price);
+                    } else {
+                        extraRoom = extraRoom.add(price);
+                    }
+                }
+            }
+
+            BigDecimal rawRoom = roomSub.add(extraRoom);
+            BigDecimal rawSpa = spaSub.add(extraSpa);
+            BigDecimal rawFood = foodSub.add(extraFood);
+
+            BigDecimal rawTotal = rawRoom.add(rawSpa).add(rawFood);
+            BigDecimal finalAmt = invoice.getFinalAmount() != null ? invoice.getFinalAmount() : BigDecimal.ZERO;
+
+            BigDecimal netRoom = BigDecimal.ZERO;
+            BigDecimal netSpa = BigDecimal.ZERO;
+            BigDecimal netFood = BigDecimal.ZERO;
+
+            if (rawTotal.compareTo(BigDecimal.ZERO) > 0) {
+                if (rawRoom.compareTo(BigDecimal.ZERO) > 0 && rawSpa.compareTo(BigDecimal.ZERO) > 0 && rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt.multiply(rawRoom).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netSpa = finalAmt.multiply(rawSpa).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netFood = finalAmt.subtract(netRoom).subtract(netSpa);
+                } else if (rawRoom.compareTo(BigDecimal.ZERO) > 0 && rawSpa.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt.multiply(rawRoom).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netSpa = finalAmt.subtract(netRoom);
+                } else if (rawRoom.compareTo(BigDecimal.ZERO) > 0 && rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt.multiply(rawRoom).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netFood = finalAmt.subtract(netRoom);
+                } else if (rawSpa.compareTo(BigDecimal.ZERO) > 0 && rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netSpa = finalAmt.multiply(rawSpa).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netFood = finalAmt.subtract(netSpa);
+                } else if (rawRoom.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt;
+                } else if (rawSpa.compareTo(BigDecimal.ZERO) > 0) {
+                    netSpa = finalAmt;
+                } else if (rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netFood = finalAmt;
+                }
+            }
+
+            totalRoomRevenue = totalRoomRevenue.add(netRoom);
+            totalSpaRevenue = totalSpaRevenue.add(netSpa);
+            totalFoodRevenue = totalFoodRevenue.add(netFood);
+            grandTotalRevenue = grandTotalRevenue.add(finalAmt);
+        }
+
+        dto.setTotalRoomRevenue(totalRoomRevenue);
+        dto.setTotalSpaRevenue(totalSpaRevenue);
+        dto.setTotalFoodRevenue(totalFoodRevenue);
+        dto.setTotalTaxRevenue(BigDecimal.ZERO);
+        dto.setGrandTotalRevenue(grandTotalRevenue);
 
         // Transaction counts
         dto.setTotalInvoicesPaid(invoiceRepository.countPaidInvoicesByPeriod(year, month));
@@ -72,7 +158,7 @@ public class RevenueServiceImpl implements RevenueService {
 
         // Monthly breakdown for charts (only when viewing full year - month is null)
         if (month == null) {
-            dto.setMonthlyBreakdown(buildMonthlyBreakdown(year));
+            dto.setMonthlyBreakdown(buildMonthlyBreakdown(paidInvoices, year));
         }
 
         // Therapist utilization (UC25)
@@ -108,15 +194,7 @@ public class RevenueServiceImpl implements RevenueService {
 
     // ─── Private Helper Methods ───────────────────────────────────────────────
 
-    private List<MonthlyRevenueItem> buildMonthlyBreakdown(Integer year) {
-        List<Object[]> rawData = invoiceRepository.findMonthlyRevenueBreakdown(year);
-        // Build a map keyed by month number (1-12)
-        Map<Integer, Object[]> dataByMonth = new HashMap<>();
-        for (Object[] row : rawData) {
-            int monthNum = ((Number) row[0]).intValue();
-            dataByMonth.put(monthNum, row);
-        }
-
+    private List<MonthlyRevenueItem> buildMonthlyBreakdown(List<Invoice> paidInvoices, Integer year) {
         List<MonthlyRevenueItem> breakdown = new ArrayList<>();
         String[] monthNames = {"Tháng 01", "Tháng 02", "Tháng 03", "Tháng 04",
                                "Tháng 05", "Tháng 06", "Tháng 07", "Tháng 08",
@@ -125,20 +203,95 @@ public class RevenueServiceImpl implements RevenueService {
         for (int m = 1; m <= 12; m++) {
             MonthlyRevenueItem item = new MonthlyRevenueItem();
             item.setLabel(monthNames[m - 1] + "/" + year);
-            if (dataByMonth.containsKey(m)) {
-                Object[] row = dataByMonth.get(m);
-                item.setRoomRevenue(nullToZero(row[1]));
-                item.setSpaRevenue(nullToZero(row[2]));
-                item.setFoodRevenue(nullToZero(row[3]));
-                item.setTotalRevenue(item.getRoomRevenue().add(item.getSpaRevenue()).add(item.getFoodRevenue()));
-            } else {
-                item.setRoomRevenue(BigDecimal.ZERO);
-                item.setSpaRevenue(BigDecimal.ZERO);
-                item.setFoodRevenue(BigDecimal.ZERO);
-                item.setTotalRevenue(BigDecimal.ZERO);
-            }
+            item.setRoomRevenue(BigDecimal.ZERO);
+            item.setSpaRevenue(BigDecimal.ZERO);
+            item.setFoodRevenue(BigDecimal.ZERO);
+            item.setTotalRevenue(BigDecimal.ZERO);
             breakdown.add(item);
         }
+
+        List<Integer> bookingIds = paidInvoices.stream()
+            .map(i -> i.getRoomBooking() != null ? i.getRoomBooking().getBookingId() : null)
+            .filter(Objects::nonNull)
+            .toList();
+
+        Map<Integer, List<IncurredService>> servicesByBooking = new HashMap<>();
+        if (!bookingIds.isEmpty()) {
+            List<IncurredService> completedServices = incurredServiceRepository.findByRoomBooking_BookingIdInAndStatus(bookingIds, "Completed");
+            servicesByBooking = completedServices.stream()
+                .collect(Collectors.groupingBy(s -> s.getRoomBooking().getBookingId()));
+        }
+
+        for (Invoice invoice : paidInvoices) {
+            if (invoice.getPaymentTime() == null) continue;
+            int monthNum = invoice.getPaymentTime().getMonthValue();
+            if (monthNum < 1 || monthNum > 12) continue;
+
+            MonthlyRevenueItem item = breakdown.get(monthNum - 1);
+
+            BigDecimal roomSub = invoice.getRoomSubtotal() != null ? invoice.getRoomSubtotal() : BigDecimal.ZERO;
+            BigDecimal spaSub = invoice.getSpaSubtotal() != null ? invoice.getSpaSubtotal() : BigDecimal.ZERO;
+            BigDecimal foodSub = invoice.getFoodSubtotal() != null ? invoice.getFoodSubtotal() : BigDecimal.ZERO;
+
+            BigDecimal extraRoom = BigDecimal.ZERO;
+            BigDecimal extraSpa = BigDecimal.ZERO;
+            BigDecimal extraFood = BigDecimal.ZERO;
+
+            if (invoice.getRoomBooking() != null) {
+                List<IncurredService> bookingServices = servicesByBooking.getOrDefault(invoice.getRoomBooking().getBookingId(), List.of());
+                for (IncurredService service : bookingServices) {
+                    String cat = service.getCategory();
+                    BigDecimal price = service.getPrice() != null ? service.getPrice() : BigDecimal.ZERO;
+                    if ("Spa booking".equalsIgnoreCase(cat)) {
+                        extraSpa = extraSpa.add(price);
+                    } else if ("Restaurant order".equalsIgnoreCase(cat) || "Room service".equalsIgnoreCase(cat)) {
+                        extraFood = extraFood.add(price);
+                    } else {
+                        extraRoom = extraRoom.add(price);
+                    }
+                }
+            }
+
+            BigDecimal rawRoom = roomSub.add(extraRoom);
+            BigDecimal rawSpa = spaSub.add(extraSpa);
+            BigDecimal rawFood = foodSub.add(extraFood);
+
+            BigDecimal rawTotal = rawRoom.add(rawSpa).add(rawFood);
+            BigDecimal finalAmt = invoice.getFinalAmount() != null ? invoice.getFinalAmount() : BigDecimal.ZERO;
+
+            BigDecimal netRoom = BigDecimal.ZERO;
+            BigDecimal netSpa = BigDecimal.ZERO;
+            BigDecimal netFood = BigDecimal.ZERO;
+
+            if (rawTotal.compareTo(BigDecimal.ZERO) > 0) {
+                if (rawRoom.compareTo(BigDecimal.ZERO) > 0 && rawSpa.compareTo(BigDecimal.ZERO) > 0 && rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt.multiply(rawRoom).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netSpa = finalAmt.multiply(rawSpa).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netFood = finalAmt.subtract(netRoom).subtract(netSpa);
+                } else if (rawRoom.compareTo(BigDecimal.ZERO) > 0 && rawSpa.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt.multiply(rawRoom).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netSpa = finalAmt.subtract(netRoom);
+                } else if (rawRoom.compareTo(BigDecimal.ZERO) > 0 && rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt.multiply(rawRoom).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netFood = finalAmt.subtract(netRoom);
+                } else if (rawSpa.compareTo(BigDecimal.ZERO) > 0 && rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netSpa = finalAmt.multiply(rawSpa).divide(rawTotal, 2, RoundingMode.HALF_UP);
+                    netFood = finalAmt.subtract(netSpa);
+                } else if (rawRoom.compareTo(BigDecimal.ZERO) > 0) {
+                    netRoom = finalAmt;
+                } else if (rawSpa.compareTo(BigDecimal.ZERO) > 0) {
+                    netSpa = finalAmt;
+                } else if (rawFood.compareTo(BigDecimal.ZERO) > 0) {
+                    netFood = finalAmt;
+                }
+            }
+
+            item.setRoomRevenue(item.getRoomRevenue().add(netRoom));
+            item.setSpaRevenue(item.getSpaRevenue().add(netSpa));
+            item.setFoodRevenue(item.getFoodRevenue().add(netFood));
+            item.setTotalRevenue(item.getTotalRevenue().add(finalAmt));
+        }
+
         return breakdown;
     }
 

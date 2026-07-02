@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   Loader2,
   FileCheck2,
-  Clock
+  Clock,
+  Baby
 } from "lucide-react";
 import axiosClient from "../api/axiosClient";
 import Card from "../components/ui/Card";
@@ -329,6 +330,94 @@ export default function GuestDashboard() {
       }
   };
 
+  const renderDishCard = (dish) => {
+    const isAllergen = consentCheckbox && dish.isAllergen;
+    const isSoldOut = dish.soldOut === true && selectedDate === todayStr;
+    const qty = selections[selectedDate]?.[activeTab]?.[dish.foodId] || 0;
+    const isIncluded = isIncludedInPackage(dish.foodId);
+
+    return (
+      <div key={dish.foodId} className={`flex flex-col bg-white rounded-2xl overflow-hidden transition-all duration-300 border shadow-sm hover:shadow-lg ${isSoldOut ? "border-gray-200 bg-gray-50/80 opacity-70 grayscale-[0.5]" : isAllergen ? "border-red-300 bg-red-50/10 hover:border-red-400" : "border-primary-100 hover:border-primary-300 hover:-translate-y-1"}`}>
+        
+        {/* Image Section */}
+        <div className="h-48 w-full relative overflow-hidden bg-sage-50">
+          <img src={dish.image || getFoodImage(dish)} alt={dish.dishName} className={`w-full h-full object-cover transition-transform duration-700 ${!isSoldOut && 'hover:scale-110'}`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-90" />
+          
+          {isSoldOut && (
+            <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center">
+              <span className="bg-white/95 text-gray-800 font-bold text-[10px] px-4 py-2 rounded-full uppercase tracking-widest shadow-lg">Hết Hàng</span>
+            </div>
+          )}
+          
+          {isAllergen && !isSoldOut && (
+            <div className="absolute inset-0 bg-red-900/10 flex items-start justify-end p-3">
+              <span className="bg-red-600/95 backdrop-blur-sm text-white font-bold text-[9px] px-3 py-1.5 rounded-full uppercase tracking-wider animate-pulse shadow-md flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Dị Ứng</span>
+            </div>
+          )}
+
+          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+              {isIncluded ? (
+                <span className="bg-primary-500/95 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">Gói Miễn Phí</span>
+              ) : (
+                <span />
+              )}
+              <span className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg text-white font-semibold font-mono text-base tracking-wider border border-white/10 shadow-sm">
+                {formatCurrency(dish.price)}
+              </span>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="p-5 flex-1 flex flex-col justify-between relative bg-white">
+          <div>
+            <h4 className={`font-serif text-[17px] font-bold leading-snug line-clamp-2 ${isAllergen ? "text-red-900" : "text-sage-900"}`}>{dish.dishName}</h4>
+            <p className="text-xs text-sage-500 font-light mt-2 line-clamp-2 leading-relaxed">{dish.description}</p>
+            
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {dish.dietaryTags && dish.dietaryTags.split(",").map((tag) => (
+                <span key={tag.trim()} className="text-[9px] font-bold uppercase tracking-wider border border-primary-200/60 text-primary-700 px-2.5 py-0.5 bg-primary-50/50 rounded-full">
+                  {tag.trim()}
+                </span>
+              ))}
+            </div>
+            
+            {isAllergen && <div className="mt-3 bg-red-50/80 p-2.5 rounded-xl border border-red-100/50 flex items-start gap-2"><Info className="w-3 h-3 text-red-500 mt-0.5 shrink-0" /><p className="text-[10px] text-red-600 font-medium leading-relaxed">{dish.warningMessage}</p></div>}
+          </div>
+          
+          {/* Controls */}
+          <div className="mt-5 pt-4 border-t border-gray-100/80 flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              {isSoldOut ? (
+                <span className="text-[10px] font-bold bg-gray-100 px-4 py-2 rounded-xl uppercase text-gray-500 tracking-wider w-full text-center">Tạm Ngưng Phục Vụ</span>
+              ) : orderMode === 'preselect' && selectedDate === todayStr ? (
+                <span className="text-[10px] font-bold border border-amber-200 px-3 py-2 rounded-xl uppercase text-amber-600 bg-amber-50 w-full text-center tracking-wider">Đã Chốt Bếp</span>
+              ) : (
+                <div className="flex items-center justify-between w-full bg-sage-50/50 p-1.5 rounded-xl border border-primary-100">
+                  <button disabled={qty===0} onClick={() => updateQuantity(selectedDate, activeTab, dish.foodId, -1)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white border border-transparent hover:border-primary-200 hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent"><Minus className="h-3.5 w-3.5 text-sage-600"/></button>
+                  <span className="font-mono text-sm font-bold w-8 text-center text-primary-950">{qty}</span>
+                  <button onClick={() => handleIncreaseQuantity(selectedDate, activeTab, dish)} className={`w-8 h-8 flex items-center justify-center rounded-lg shadow-sm transition-all ${isAllergen ? "bg-red-100 hover:bg-red-200 text-red-600" : "bg-primary-800 hover:bg-primary-900 hover:shadow-md text-white"}`}><Plus className="h-3.5 w-3.5"/></button>
+                </div>
+              )}
+            </div>
+            
+            {qty > 0 && !(orderMode === 'preselect' && selectedDate === todayStr) && (
+              <div className="animate-fade-in">
+                <input 
+                  type="text" 
+                  placeholder="Ghi chú cho bếp (VD: Ít cay...)"
+                  className="w-full text-[11px] p-2.5 border border-primary-200/50 rounded-xl bg-white text-sage-700 placeholder:text-sage-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all shadow-inner"
+                  value={specialNotes[`${selectedDate}_${activeTab}_${dish.foodId}`] || ""}
+                  onChange={(e) => handleNoteChange(selectedDate, activeTab, dish.foodId, e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-sage-50/20">
@@ -556,101 +645,49 @@ export default function GuestDashboard() {
               {/* MEAL TAB CONTENT */}
               {selectedDate && (
                 <div className="flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-24">
-                    {menuItems.filter(item => !item.periods || item.periods.includes(activeTab)).map((dish) => {
-                      const isAllergen = consentCheckbox && dish.isAllergen;
-                      const isSoldOut = dish.soldOut === true && selectedDate === todayStr;
-                      const qty = selections[selectedDate]?.[activeTab]?.[dish.foodId] || 0;
-                      const isIncluded = isIncludedInPackage(dish.foodId);
+                  <div className="flex flex-col gap-8 pb-24 w-full">
+                    {(() => {
+                      const filteredDishes = menuItems.filter(item => !item.periods || item.periods.includes(activeTab));
+                      const kidsDishes = filteredDishes.filter(item => item.category === "Món trẻ em" || item.category === "Món ăn trẻ em" || item.dietaryTags?.toLowerCase().includes("kids") || item.dishName?.toLowerCase().includes("trẻ em"));
+                      const adultDishes = filteredDishes.filter(item => item.category !== "Món trẻ em" && item.category !== "Món ăn trẻ em" && !item.dietaryTags?.toLowerCase().includes("kids") && !item.dishName?.toLowerCase().includes("trẻ em"));
 
-                      return (
-                        <div key={dish.foodId} className={`flex flex-col bg-white rounded-2xl overflow-hidden transition-all duration-300 border shadow-sm hover:shadow-lg ${isSoldOut ? "border-gray-200 bg-gray-50/80 opacity-70 grayscale-[0.5]" : isAllergen ? "border-red-300 bg-red-50/10 hover:border-red-400" : "border-primary-100 hover:border-primary-300 hover:-translate-y-1"}`}>
-                          
-                          {/* Image Section */}
-                          <div className="h-48 w-full relative overflow-hidden bg-sage-50">
-                            <img src={dish.image || getFoodImage(dish)} alt={dish.dishName} className={`w-full h-full object-cover transition-transform duration-700 ${!isSoldOut && 'hover:scale-110'}`} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-90" />
-                            
-                            {isSoldOut && (
-                              <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center">
-                                <span className="bg-white/95 text-gray-800 font-bold text-[10px] px-4 py-2 rounded-full uppercase tracking-widest shadow-lg">Hết Hàng</span>
-                              </div>
-                            )}
-                            
-                            {isAllergen && !isSoldOut && (
-                              <div className="absolute inset-0 bg-red-900/10 flex items-start justify-end p-3">
-                                <span className="bg-red-600/95 backdrop-blur-sm text-white font-bold text-[9px] px-3 py-1.5 rounded-full uppercase tracking-wider animate-pulse shadow-md flex items-center gap-1.5"><AlertTriangle className="w-3 h-3" /> Dị Ứng</span>
-                              </div>
-                            )}
-
-                            <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
-                                {isIncluded ? (
-                                  <span className="bg-primary-500/95 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">Gói Miễn Phí</span>
-                                ) : (
-                                  <span />
-                                )}
-                                <span className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg text-white font-semibold font-mono text-base tracking-wider border border-white/10 shadow-sm">
-                                  {formatCurrency(dish.price)}
-                                </span>
-                            </div>
-                          </div>
-
-                          {/* Content Section */}
-                          <div className="p-5 flex-1 flex flex-col justify-between relative bg-white">
-                            <div>
-                              <h4 className={`font-serif text-[17px] font-bold leading-snug line-clamp-2 ${isAllergen ? "text-red-900" : "text-sage-900"}`}>{dish.dishName}</h4>
-                              <p className="text-xs text-sage-500 font-light mt-2 line-clamp-2 leading-relaxed">{dish.description}</p>
-                              
-                              <div className="flex flex-wrap gap-1.5 mt-3">
-                                {dish.dietaryTags && dish.dietaryTags.split(",").map((tag) => (
-                                  <span key={tag.trim()} className="text-[9px] font-bold uppercase tracking-wider border border-primary-200/60 text-primary-700 px-2.5 py-0.5 bg-primary-50/50 rounded-full">
-                                    {tag.trim()}
-                                  </span>
-                                ))}
-                              </div>
-                              
-                              {isAllergen && <div className="mt-3 bg-red-50/80 p-2.5 rounded-xl border border-red-100/50 flex items-start gap-2"><Info className="w-3 h-3 text-red-500 mt-0.5 shrink-0" /><p className="text-[10px] text-red-600 font-medium leading-relaxed">{dish.warningMessage}</p></div>}
-                            </div>
-                            
-                            {/* Controls */}
-                            <div className="mt-5 pt-4 border-t border-gray-100/80 flex flex-col gap-3">
-                              <div className="flex justify-between items-center">
-                                {isSoldOut ? (
-                                  <span className="text-[10px] font-bold bg-gray-100 px-4 py-2 rounded-xl uppercase text-gray-500 tracking-wider w-full text-center">Tạm Ngưng Phục Vụ</span>
-                                ) : orderMode === 'preselect' && selectedDate === todayStr ? (
-                                  <span className="text-[10px] font-bold border border-amber-200 px-3 py-2 rounded-xl uppercase text-amber-600 bg-amber-50 w-full text-center tracking-wider">Đã Chốt Bếp</span>
-                                ) : (
-                                  <div className="flex items-center justify-between w-full bg-sage-50/50 p-1.5 rounded-xl border border-primary-100">
-                                    <button disabled={qty===0} onClick={() => updateQuantity(selectedDate, activeTab, dish.foodId, -1)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white border border-transparent hover:border-primary-200 hover:shadow-sm transition-all disabled:opacity-30 disabled:hover:bg-transparent"><Minus className="h-3.5 w-3.5 text-sage-600"/></button>
-                                    <span className="font-mono text-sm font-bold w-8 text-center text-primary-950">{qty}</span>
-                                    <button onClick={() => handleIncreaseQuantity(selectedDate, activeTab, dish)} className={`w-8 h-8 flex items-center justify-center rounded-lg shadow-sm transition-all ${isAllergen ? "bg-red-100 hover:bg-red-200 text-red-600" : "bg-primary-800 hover:bg-primary-900 hover:shadow-md text-white"}`}><Plus className="h-3.5 w-3.5"/></button>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {qty > 0 && !(orderMode === 'preselect' && selectedDate === todayStr) && (
-                                <div className="animate-fade-in">
-                                  <input 
-                                    type="text" 
-                                    placeholder="Ghi chú cho bếp (VD: Ít cay...)"
-                                    className="w-full text-[11px] p-2.5 border border-primary-200/50 rounded-xl bg-white text-sage-700 placeholder:text-sage-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all shadow-inner"
-                                    value={specialNotes[`${selectedDate}_${activeTab}_${dish.foodId}`] || ""}
-                                    onChange={(e) => handleNoteChange(selectedDate, activeTab, dish.foodId, e.target.value)}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    {menuItems.filter(item => !item.periods || item.periods.includes(activeTab)).length === 0 && (
-                        <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+                      if (filteredDishes.length === 0) {
+                        return (
+                          <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200">
                             <Coffee className="w-12 h-12 mx-auto text-gray-300 mb-4" />
                             <p className="text-gray-500 font-medium">Chưa có món ăn nào trong thực đơn này.</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="flex flex-col gap-8 w-full">
+                          {/* KIDS MENU SECTION */}
+                          {kidsDishes.length > 0 && (
+                            <div className="bg-amber-50/30 p-6 sm:p-8 rounded-3xl border border-amber-100/70 shadow-sm w-full">
+                              <h3 className="font-serif text-base sm:text-lg font-bold text-amber-950 mb-6 flex items-center gap-2">
+                                <Baby className="w-5 h-5 text-amber-700" /> Thực Đơn Cho Bé Dưới 5 Tuổi
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                                {kidsDishes.map(renderDishCard)}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ADULT MENU SECTION */}
+                          {adultDishes.length > 0 && (
+                            <div className="p-2 w-full">
+                              <h3 className="font-serif text-base sm:text-lg font-bold text-sage-950 mb-6 flex items-center gap-2">
+                                <UtensilsCrossed className="w-4 h-4 text-primary-800" /> Thực Đơn Người Lớn
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                                {adultDishes.map(renderDishCard)}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
               )}

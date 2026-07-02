@@ -448,11 +448,11 @@ export default function Spa() {
       ])
         .then(([profile, bookings, services, medProfile, packagesData]) => {
           setCurrentUser(profile);
-          // Only show confirmed room bookings
-          const confirmedBookings = (bookings || []).filter(
-            b => b.status === "CONFIRMED" || b.status === "CHECK_IN" || b.status === "COMPLETED"
+          // Only show confirmed or checked-in stay bookings for Spa scheduling
+          const activeBookings = (bookings || []).filter(
+            b => b.status === "CONFIRMED" || b.status === "CHECKED_IN"
           );
-          setUserBookings(confirmedBookings);
+          setUserBookings(activeBookings);
           setSpaServices(services || []);
           setMedicalProfile(medProfile);
           setHealthConsentCheck(medProfile?.explicitConsentSigned || false);

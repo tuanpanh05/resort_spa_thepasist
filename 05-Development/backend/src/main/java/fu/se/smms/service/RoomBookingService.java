@@ -23,7 +23,7 @@ public class RoomBookingService {
     private final RetreatPackageRepository retreatPackageRepository;
     private final RoomRepository roomRepository;
     private final MedicalProfileRepository medicalProfileRepository;
-    
+
     private final FoodOrderRepository foodOrderRepository;
     private final FoodOrderDetailRepository foodOrderDetailRepository;
     private final FoodMenuRepository foodMenuRepository;
@@ -43,21 +43,21 @@ public class RoomBookingService {
     private fu.se.smms.service.SpaBookingService spaBookingService;
 
     public RoomBookingService(UserRepository userRepository,
-                              RoomBookingRepository roomBookingRepository,
-                              RetreatPackageRepository retreatPackageRepository,
-                              RoomRepository roomRepository,
-                              MedicalProfileRepository medicalProfileRepository,
-                              FoodOrderRepository foodOrderRepository,
-                              FoodOrderDetailRepository foodOrderDetailRepository,
-                              FoodMenuRepository foodMenuRepository,
-                              PackageFoodLimitRepository packageFoodLimitRepository,
-                              SpaBookingRepository spaBookingRepository,
-                              InvoiceService invoiceService,
-                              InvoiceRepository invoiceRepository,
-                              RoomBookingDetailRepository roomBookingDetailRepository,
-                              SystemConfigurationRepository systemConfigurationRepository,
-                              TableAssignmentService tableAssignmentService,
-                              TreatmentRoomRepository treatmentRoomRepository) {
+            RoomBookingRepository roomBookingRepository,
+            RetreatPackageRepository retreatPackageRepository,
+            RoomRepository roomRepository,
+            MedicalProfileRepository medicalProfileRepository,
+            FoodOrderRepository foodOrderRepository,
+            FoodOrderDetailRepository foodOrderDetailRepository,
+            FoodMenuRepository foodMenuRepository,
+            PackageFoodLimitRepository packageFoodLimitRepository,
+            SpaBookingRepository spaBookingRepository,
+            InvoiceService invoiceService,
+            InvoiceRepository invoiceRepository,
+            RoomBookingDetailRepository roomBookingDetailRepository,
+            SystemConfigurationRepository systemConfigurationRepository,
+            TableAssignmentService tableAssignmentService,
+            TreatmentRoomRepository treatmentRoomRepository) {
         this.userRepository = userRepository;
         this.roomBookingRepository = roomBookingRepository;
         this.retreatPackageRepository = retreatPackageRepository;
@@ -98,8 +98,9 @@ public class RoomBookingService {
             newProfile.setUser(user);
             return newProfile;
         });
-        
-        profile.setExplicitConsentSigned(dto.getExplicitConsentSigned() != null ? dto.getExplicitConsentSigned() : false);
+
+        profile.setExplicitConsentSigned(
+                dto.getExplicitConsentSigned() != null ? dto.getExplicitConsentSigned() : false);
         if (dto.getAllergies() != null) {
             profile.setFoodAllergiesEncrypted(dto.getAllergies()); // using setter that encrypts
         }
@@ -135,7 +136,7 @@ public class RoomBookingService {
         booking.setCheckOutDate(checkOut);
         booking.setStatus("PENDING_DEPOSIT");
         booking.setTotalDeposit(BigDecimal.ZERO);
-        
+
         // 4. Create RoomBookingDetail(s) based on roomTypeQuantities
         List<RoomBookingDetail> details = new ArrayList<>();
         Map<String, Integer> roomTypeQuantities = dto.getRoomTypeQuantities();
@@ -157,7 +158,8 @@ public class RoomBookingService {
                 continue;
             }
             int qty = entry.getValue() != null ? entry.getValue() : 0;
-            if (qty < 1) continue;
+            if (qty < 1)
+                continue;
 
             List<Room> matchingRooms = roomRepository.findAll().stream()
                     .filter(r -> r.getRoomType() != null && r.getRoomType().getRoomTypeId().equals(roomTypeId))
@@ -166,7 +168,8 @@ public class RoomBookingService {
             List<Room> availableRooms = new ArrayList<>();
             for (Room r : matchingRooms) {
                 boolean isBookable = "AVAILABLE".equalsIgnoreCase(r.getStatus());
-                if (isBookable && roomBookingRepository.countOverlappingBookings(r.getRoomId(), checkIn, checkOut) == 0) {
+                if (isBookable
+                        && roomBookingRepository.countOverlappingBookings(r.getRoomId(), checkIn, checkOut) == 0) {
                     availableRooms.add(r);
                 }
             }
@@ -177,7 +180,8 @@ public class RoomBookingService {
                         : matchingRooms.get(0).getRoomType().getTypeName();
                 throw new fu.se.smms.exception.BusinessException(
                         "BOOKING-004", org.springframework.http.HttpStatus.CONFLICT,
-                        "Hạng phòng \"" + typeName + "\" đã hết phòng trống trong khoảng thời gian này. Vui lòng chọn ngày hoặc hạng phòng khác.");
+                        "Hạng phòng \"" + typeName
+                                + "\" đã hết phòng trống trong khoảng thời gian này. Vui lòng chọn ngày hoặc hạng phòng khác.");
             }
 
             for (int i = 0; i < qty; i++) {
@@ -199,7 +203,8 @@ public class RoomBookingService {
                     detail.setRoom(assignedRoom);
 
                     BigDecimal priceAtBooking = BigDecimal.valueOf(5000000); // Fallback price
-                    if (assignedRoom.getRoomType() != null && assignedRoom.getRoomType().getBasePricePerNight() != null) {
+                    if (assignedRoom.getRoomType() != null
+                            && assignedRoom.getRoomType().getBasePricePerNight() != null) {
                         priceAtBooking = assignedRoom.getRoomType().getBasePricePerNight();
                     }
                     detail.setPriceAtBooking(priceAtBooking);
@@ -215,29 +220,16 @@ public class RoomBookingService {
                 RoomBookingDetail detail = new RoomBookingDetail();
                 detail.setRoomBooking(booking);
                 detail.setRoom(fallbackRoom);
-                detail.setPriceAtBooking(fallbackRoom.getRoomType() != null && fallbackRoom.getRoomType().getBasePricePerNight() != null 
-                    ? fallbackRoom.getRoomType().getBasePricePerNight() : BigDecimal.valueOf(5000000));
+                detail.setPriceAtBooking(
+                        fallbackRoom.getRoomType() != null && fallbackRoom.getRoomType().getBasePricePerNight() != null
+                                ? fallbackRoom.getRoomType().getBasePricePerNight()
+                                : BigDecimal.valueOf(5000000));
                 details.add(detail);
             }
         }
         booking.setDetails(details);
 
         RoomBooking savedBooking = roomBookingRepository.save(booking);
-
-        // Đổi trạng thái phòng sang VIEWING (Khách đang xem / chờ thanh toán)
-        try {
-            if (savedBooking.getDetails() != null) {
-                for (RoomBookingDetail detail : savedBooking.getDetails()) {
-                    Room room = detail.getRoom();
-                    if (room != null && "AVAILABLE".equalsIgnoreCase(room.getStatus())) {
-                        room.setStatus("VIEWING");
-                        roomRepository.save(room);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Non-fatal
-        }
 
         // 5. Process Meal Selections
         if (dto.getMealSelections() != null && !dto.getMealSelections().isEmpty()) {
@@ -282,11 +274,13 @@ public class RoomBookingService {
                     for (Map.Entry<Integer, Integer> foodEntry : foods.entrySet()) {
                         Integer foodId = foodEntry.getKey();
                         Integer qty = foodEntry.getValue();
-                        
-                        if (qty == null || qty <= 0) continue;
+
+                        if (qty == null || qty <= 0)
+                            continue;
 
                         Optional<FoodMenu> menuOpt = foodMenuRepository.findById(foodId);
-                        if (menuOpt.isEmpty()) continue;
+                        if (menuOpt.isEmpty())
+                            continue;
                         FoodMenu dish = menuOpt.get();
 
                         int previousQty = dailySelectedCounts.getOrDefault(foodId, 0);
@@ -330,14 +324,6 @@ public class RoomBookingService {
             }
         }
 
-        // 6. Calculate initial invoice
-        try {
-            invoiceService.createInvoice(savedBooking.getBookingId());
-        } catch (Exception e) {
-            System.err.println("[Invoice Calc] Error creating initial invoice: " + e.getMessage());
-            e.printStackTrace();
-        }
-
         return savedBooking;
     }
 
@@ -353,9 +339,11 @@ public class RoomBookingService {
         if (email == null || email.isBlank() || phone == null || phone.isBlank()) {
             throw new RuntimeException("Vui lòng nhập đầy đủ Email và Số điện thoại.");
         }
-        List<RoomBooking> bookings = roomBookingRepository.findByEmailAndPhoneWithFullDetails(email.trim(), phone.trim());
+        List<RoomBooking> bookings = roomBookingRepository.findByEmailAndPhoneWithFullDetails(email.trim(),
+                phone.trim());
         // Force-initialize lazy associations within the transaction
-        // (cannot JOIN FETCH both 'details' and 'retreatPackages' — MultipleBagFetchException)
+        // (cannot JOIN FETCH both 'details' and 'retreatPackages' —
+        // MultipleBagFetchException)
         for (RoomBooking b : bookings) {
             if (b.getRetreatPackages() != null) {
                 b.getRetreatPackages().size(); // trigger lazy load
@@ -369,7 +357,8 @@ public class RoomBookingService {
 
     /**
      * Update booking details (name, phone, dates) with full validation.
-     * Verifies email+phone ownership, checks room overlap, validates activity ranges,
+     * Verifies email+phone ownership, checks room overlap, validates activity
+     * ranges,
      * and recalculates the invoice automatically.
      */
     @Transactional
@@ -380,7 +369,8 @@ public class RoomBookingService {
 
         User user = booking.getUser();
         if (user == null || !email.equalsIgnoreCase(user.getEmail()) || !phone.equals(user.getPhone())) {
-            throw new RuntimeException("ThÃ´ng tin Email hoáº·c Sá»‘ Ä‘iá»‡n thoáº¡i khÃ´ng khá»›p vá»›i Ä‘Æ¡n Ä‘áº·t phÃ²ng nÃ y.");
+            throw new RuntimeException(
+                    "ThÃ´ng tin Email hoáº·c Sá»‘ Ä‘iá»‡n thoáº¡i khÃ´ng khá»›p vá»›i Ä‘Æ¡n Ä‘áº·t phÃ²ng nÃ y.");
         }
 
         // 2. Update guest name/phone if provided
@@ -423,7 +413,8 @@ public class RoomBookingService {
                 List<SpaBooking> spaBookings = spaBookingRepository.findByRoomBookingId(bookingId);
                 for (SpaBooking spa : spaBookings) {
                     if (spa.getStartDatetime() != null) {
-                        if (spa.getStartDatetime().isBefore(newCheckIn) || spa.getStartDatetime().isAfter(newCheckOut)) {
+                        if (spa.getStartDatetime().isBefore(newCheckIn)
+                                || spa.getStartDatetime().isAfter(newCheckOut)) {
                             throw new RuntimeException("KhÃ´ng thá»ƒ thay Ä‘á»•i ngÃ y: Lá»‹ch háº¹n Spa '"
                                     + (spa.getSpaService() != null ? spa.getSpaService().getName() : "")
                                     + "' náº±m ngoÃ i khoáº£ng thá»i gian lÆ°u trÃº má»›i.");
@@ -448,7 +439,8 @@ public class RoomBookingService {
                         orderTime = ((java.sql.Timestamp) rawTime).toLocalDateTime();
                     }
                     if (orderTime != null && (orderTime.isBefore(newCheckIn) || orderTime.isAfter(newCheckOut))) {
-                        throw new RuntimeException("KhÃ´ng thá»ƒ thay Ä‘á»•i ngÃ y: CÃ³ Ä‘Æ¡n gá»i mÃ³n náº±m ngoÃ i khoáº£ng thá»i gian lÆ°u trÃº má»›i.");
+                        throw new RuntimeException(
+                                "KhÃ´ng thá»ƒ thay Ä‘á»•i ngÃ y: CÃ³ Ä‘Æ¡n gá»i mÃ³n náº±m ngoÃ i khoáº£ng thá»i gian lÆ°u trÃº má»›i.");
                     }
                 }
             } catch (RuntimeException e) {
@@ -495,10 +487,14 @@ public class RoomBookingService {
     @Transactional
     public RoomBooking cancelBooking(Integer bookingId, String reason) {
         RoomBooking booking = roomBookingRepository.findById(bookingId)
-                .orElseThrow(() -> new fu.se.smms.exception.BusinessException("BOOKING-001", org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đặt phòng."));
+                .orElseThrow(() -> new fu.se.smms.exception.BusinessException("BOOKING-001",
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đặt phòng."));
 
-        if (!"PENDING_DEPOSIT".equalsIgnoreCase(booking.getStatus()) && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
-            throw new fu.se.smms.exception.BusinessException("BOOKING-002", org.springframework.http.HttpStatus.CONFLICT, "Không thể hủy đặt phòng ở trạng thái hiện tại: " + booking.getStatus());
+        if (!"PENDING_DEPOSIT".equalsIgnoreCase(booking.getStatus())
+                && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            throw new fu.se.smms.exception.BusinessException("BOOKING-002",
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Không thể hủy đặt phòng ở trạng thái hiện tại: " + booking.getStatus());
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -555,7 +551,8 @@ public class RoomBookingService {
         try {
             List<FoodOrder> pendingOrders = foodOrderRepository.findByRoomBooking_BookingId(bookingId)
                     .stream()
-                    .filter(o -> "PENDING".equalsIgnoreCase(o.getStatus()) || "PREPARING".equalsIgnoreCase(o.getStatus()))
+                    .filter(o -> "PENDING".equalsIgnoreCase(o.getStatus())
+                            || "PREPARING".equalsIgnoreCase(o.getStatus()))
                     .collect(Collectors.toList());
             for (FoodOrder order : pendingOrders) {
                 order.setStatus("CANCELLED");
@@ -573,7 +570,8 @@ public class RoomBookingService {
             for (SpaBooking sb : spaBookings) {
                 if ("PENDING".equalsIgnoreCase(sb.getStatus()) || "CONFIRMED".equalsIgnoreCase(sb.getStatus())) {
                     sb.setStatus("CANCELLED");
-                    sb.setCancellationReason(reason != null && !reason.isBlank() ? reason : "Hủy do hủy phòng đặt cùng.");
+                    sb.setCancellationReason(
+                            reason != null && !reason.isBlank() ? reason : "Hủy do hủy phòng đặt cùng.");
                     sb.setCancellationTime(now);
                     sb.setRefundAmount(BigDecimal.ZERO);
                     if (sb.getTreatmentRoom() != null) {
@@ -593,15 +591,20 @@ public class RoomBookingService {
     @Transactional
     public RoomBooking cancelRoomBookingDetail(Integer detailId, String reason) {
         RoomBookingDetail detail = roomBookingDetailRepository.findById(detailId)
-                .orElseThrow(() -> new fu.se.smms.exception.BusinessException("BOOKING-001", org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy chi tiết đặt phòng."));
+                .orElseThrow(() -> new fu.se.smms.exception.BusinessException("BOOKING-001",
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy chi tiết đặt phòng."));
 
         RoomBooking booking = detail.getRoomBooking();
         if (booking == null) {
-            throw new fu.se.smms.exception.BusinessException("BOOKING-002", org.springframework.http.HttpStatus.CONFLICT, "Chi tiết phòng này không thuộc về đặt phòng nào.");
+            throw new fu.se.smms.exception.BusinessException("BOOKING-002",
+                    org.springframework.http.HttpStatus.CONFLICT, "Chi tiết phòng này không thuộc về đặt phòng nào.");
         }
 
-        if (!"PENDING_DEPOSIT".equalsIgnoreCase(booking.getStatus()) && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
-            throw new fu.se.smms.exception.BusinessException("BOOKING-002", org.springframework.http.HttpStatus.CONFLICT, "Không thể hủy phòng ở trạng thái hiện tại: " + booking.getStatus());
+        if (!"PENDING_DEPOSIT".equalsIgnoreCase(booking.getStatus())
+                && !"CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
+            throw new fu.se.smms.exception.BusinessException("BOOKING-002",
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Không thể hủy phòng ở trạng thái hiện tại: " + booking.getStatus());
         }
 
         // If this is the last room, cancel the entire booking
@@ -613,7 +616,8 @@ public class RoomBookingService {
         BigDecimal refundAmt = BigDecimal.ZERO;
         BigDecimal roomPrice = detail.getPriceAtBooking() != null ? detail.getPriceAtBooking() : BigDecimal.ZERO;
         long nights = java.time.Duration.between(booking.getCheckInDate(), booking.getCheckOutDate()).toDays();
-        if (nights <= 0) nights = 1;
+        if (nights <= 0)
+            nights = 1;
         BigDecimal roomTotalAmount = roomPrice.multiply(BigDecimal.valueOf(nights));
 
         // Get deposit ratio from config, default to 30%
@@ -628,7 +632,8 @@ public class RoomBookingService {
                 .orElse(new BigDecimal("0.30"));
 
         // deposit for this room = roomTotalAmount * 1.10 (tax) * depositRatio
-        BigDecimal roomDeposit = roomTotalAmount.multiply(new BigDecimal("1.10")).multiply(depositRatio).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal roomDeposit = roomTotalAmount.multiply(new BigDecimal("1.10")).multiply(depositRatio).setScale(2,
+                java.math.RoundingMode.HALF_UP);
 
         if ("CONFIRMED".equalsIgnoreCase(booking.getStatus())) {
             LocalDateTime checkIn = booking.getCheckInDate();
@@ -666,10 +671,12 @@ public class RoomBookingService {
         booking.setRefundAmount(currentRefund.add(refundAmt));
 
         String roomNum = room != null ? room.getRoomNumber() : "N/A";
-        String roomCancelInfo = String.format("Hủy phòng %s (Hoàn trả: %s, Lý do: %s)", roomNum, refundAmt.toString(), reason);
-        booking.setCancellationReason(booking.getCancellationReason() == null || booking.getCancellationReason().isBlank()
-                ? roomCancelInfo
-                : booking.getCancellationReason() + "; " + roomCancelInfo);
+        String roomCancelInfo = String.format("Hủy phòng %s (Hoàn trả: %s, Lý do: %s)", roomNum, refundAmt.toString(),
+                reason);
+        booking.setCancellationReason(
+                booking.getCancellationReason() == null || booking.getCancellationReason().isBlank()
+                        ? roomCancelInfo
+                        : booking.getCancellationReason() + "; " + roomCancelInfo);
         booking.setCancellationTime(now);
 
         RoomBooking saved = roomBookingRepository.save(booking);
@@ -690,7 +697,7 @@ public class RoomBookingService {
 
         java.math.BigDecimal totalAddedPrice = java.math.BigDecimal.ZERO;
         java.math.BigDecimal additionalDeposit = java.math.BigDecimal.ZERO;
-        
+
         java.util.List<String> messages = new java.util.ArrayList<>();
 
         // 1. Handle Room Addition
@@ -700,7 +707,7 @@ public class RoomBookingService {
             }
             Room room = roomRepository.findById(dto.getRoomId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng với ID: " + dto.getRoomId()));
-            
+
             java.time.LocalDateTime checkIn = booking.getCheckInDate();
             java.time.LocalDateTime checkOut = booking.getCheckOutDate();
             if (dto.getCheckInDate() != null && !dto.getCheckInDate().isBlank()) {
@@ -711,10 +718,12 @@ public class RoomBookingService {
             }
 
             long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn.toLocalDate(), checkOut.toLocalDate());
-            if (nights <= 0) nights = 1;
+            if (nights <= 0)
+                nights = 1;
 
-            java.math.BigDecimal roomPrice = room.getRoomType().getBasePricePerNight().multiply(java.math.BigDecimal.valueOf(nights));
-            
+            java.math.BigDecimal roomPrice = room.getRoomType().getBasePricePerNight()
+                    .multiply(java.math.BigDecimal.valueOf(nights));
+
             RoomBookingDetail detail = new RoomBookingDetail();
             detail.setRoomBooking(booking);
             detail.setRoom(room);
@@ -729,20 +738,21 @@ public class RoomBookingService {
             totalAddedPrice = totalAddedPrice.add(roomPrice);
             java.math.BigDecimal extraRoomDeposit = java.math.BigDecimal.ZERO;
             additionalDeposit = additionalDeposit.add(extraRoomDeposit);
-            
+
             messages.add("Đã thêm phòng " + room.getRoomNumber() + " (" + nights + " đêm).");
         }
 
         // 2. Handle Retreat Package Addition
         if (dto.getPackageId() != null) {
             RetreatPackage retreatPackage = retreatPackageRepository.findById(dto.getPackageId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy gói trị liệu với ID: " + dto.getPackageId()));
-            
+                    .orElseThrow(
+                            () -> new RuntimeException("Không tìm thấy gói trị liệu với ID: " + dto.getPackageId()));
+
             if (booking.getRetreatPackages() == null) {
                 booking.setRetreatPackages(new java.util.ArrayList<>());
             }
             booking.getRetreatPackages().add(retreatPackage);
-            
+
             totalAddedPrice = totalAddedPrice.add(retreatPackage.getPrice());
             messages.add("Đã thêm gói retreat: " + retreatPackage.getName() + ".");
         }
@@ -752,7 +762,7 @@ public class RoomBookingService {
             int qty = dto.getFoodQuantity() != null ? dto.getFoodQuantity() : 1;
             FoodMenu food = foodMenuRepository.findById(dto.getFoodMenuId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn với ID: " + dto.getFoodMenuId()));
-            
+
             java.math.BigDecimal foodPrice = food.getPrice().multiply(java.math.BigDecimal.valueOf(qty));
 
             FoodOrder order = new FoodOrder();
@@ -778,10 +788,11 @@ public class RoomBookingService {
         // 4. Handle Spa Addition
         if (dto.getSpaServiceId() != null && dto.getSpaStartDatetime() != null) {
             SpaService spa = spaServiceRepository.findById(dto.getSpaServiceId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ Spa với ID: " + dto.getSpaServiceId()));
+                    .orElseThrow(
+                            () -> new RuntimeException("Không tìm thấy dịch vụ Spa với ID: " + dto.getSpaServiceId()));
 
             java.time.LocalDateTime startDt = java.time.LocalDateTime.parse(dto.getSpaStartDatetime());
-            
+
             fu.se.smms.dto.SpaBookingRequestDTO spaReq = new fu.se.smms.dto.SpaBookingRequestDTO();
             spaReq.setSpaServiceId(dto.getSpaServiceId());
             spaReq.setStartDatetime(startDt);
@@ -791,7 +802,8 @@ public class RoomBookingService {
             spaBookingService.scheduleSpaBooking(booking.getUser().getUserId(), spaReq, "RECEPTIONIST");
 
             totalAddedPrice = totalAddedPrice.add(spa.getPrice());
-            messages.add("Đã đặt thêm Spa: " + spa.getName() + " lúc " + startDt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM")) + ".");
+            messages.add("Đã đặt thêm Spa: " + spa.getName() + " lúc "
+                    + startDt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM")) + ".");
         }
 
         roomBookingRepository.save(booking);
@@ -811,7 +823,7 @@ public class RoomBookingService {
         result.put("totalAddedPrice", totalAddedPrice);
         result.put("additionalDeposit", additionalDeposit);
         result.put("invoiceId", invoiceId);
-        
+
         return result;
     }
 }
