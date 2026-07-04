@@ -17,10 +17,11 @@ import BookingSuccess from "../components/booking/BookingSuccess";
 
 export default function BookingPage() {
   const navigate = useNavigate();
-  const userRole = localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "";
-  const isCustomer = !userRole || userRole.toUpperCase() === "CUSTOMER";
+  const userRole = (localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "").toUpperCase();
+  const isStaffBooking = ["RECEPTIONIST", "STAFF", "ADMIN", "MANAGER"].includes(userRole);
+  const isCustomer = !userRole || userRole === "CUSTOMER";
 
-  if (!isCustomer) {
+  if (!isCustomer && !isStaffBooking) {
     const dashboardPath = userRole === "MANAGER" || userRole === "ADMIN" 
       ? "/admin" 
       : userRole === "CHEF" 
@@ -215,6 +216,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      if (isStaffBooking) return;
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
       try {
@@ -233,6 +235,7 @@ export default function BookingPage() {
     };
 
     const fetchHealthProfile = async () => {
+      if (isStaffBooking) return;
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
       try {
@@ -716,6 +719,18 @@ export default function BookingPage() {
 
         {/* Wizard Header */}
         <BookingWizardHeader step={step} bookingStatus={bookingStatus} onStepClick={(s) => setStep(s)} />
+
+        {isStaffBooking && (
+          <div className="mb-6 p-4 bg-primary-800 text-white rounded-xl text-xs flex items-center justify-between shadow-md animate-fade-in">
+            <span className="font-medium">
+              🔔 <strong>Chế độ Lễ tân:</strong> Đang thực hiện đặt lịch trị liệu &amp; nghỉ dưỡng hộ khách.
+              Tài khoản khách hàng mới (GUEST) sẽ được tự động tạo với mật khẩu đăng nhập mặc định là <strong>123456</strong> dựa trên email của khách.
+            </span>
+            <Link to="/staff" className="underline font-bold text-white hover:text-primary-100 ml-4 whitespace-nowrap">
+              Quay lại Dashboard Lễ tân
+            </Link>
+          </div>
+        )}
 
         {/* STEP PANELS CONTAINER */}
         {bookingStatus === "CONFIRMED" ? (

@@ -33,6 +33,9 @@ export default function Payment() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
+  const userRole = (localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "").toUpperCase();
+  const isStaff = ["RECEPTIONIST", "STAFF", "ADMIN", "MANAGER"].includes(userRole);
+
   // Countdown Timer states (5 minutes timeout)
   const [timeLeft, setTimeLeft] = useState(300);
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
@@ -893,6 +896,31 @@ export default function Payment() {
                           )}
                         </button>
                       </div>
+
+                      {isStaff && (
+                        <div className="mt-4 p-4 border border-emerald-200 bg-emerald-50/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="text-xs text-emerald-800">
+                            <span className="font-bold block">🔔 Quyền hạn Lễ tân/Nhân viên:</span>
+                            <span className="font-light block mt-0.5">
+                              Xác nhận đã trực tiếp thu tiền mặt từ khách để ghi nhận hóa đơn đã thanh toán.
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handlePaymentSubmit}
+                            disabled={isProcessing}
+                            className="w-full sm:w-auto px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold uppercase tracking-wider transition-all duration-300 disabled:opacity-75 cursor-pointer text-center flex items-center justify-center font-sans"
+                          >
+                            {isProcessing ? (
+                              <>
+                                <Loader2 className="animate-spin mr-2 h-3.5 w-3.5" /> Đang cập nhật...
+                              </>
+                            ) : (
+                              "Xác nhận đã thu tiền mặt"
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

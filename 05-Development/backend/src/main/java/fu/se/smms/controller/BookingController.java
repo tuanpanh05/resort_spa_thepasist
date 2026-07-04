@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.Principal;
@@ -40,6 +42,9 @@ public class BookingController {
     @Autowired
     private SystemConfigurationRepository systemConfigurationRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     /**
      * UC07/UC-13: Create a new retreat package booking with deposit payment.
      * Supports BOTH authenticated users (Principal) AND guests (email+phone in request body).
@@ -59,7 +64,8 @@ public class BookingController {
                     .orElseThrow(() -> new BusinessException(
                             "BOOKING-001", HttpStatus.NOT_FOUND,
                             "Không tìm thấy người dùng đang đăng nhập."));
-            if ("STAFF".equals(loggedIn.getRole()) || "ADMIN".equals(loggedIn.getRole())) {
+            String loggedInRole = loggedIn.getRole();
+            if ("STAFF".equals(loggedInRole) || "RECEPTIONIST".equals(loggedInRole) || "ADMIN".equals(loggedInRole) || "MANAGER".equals(loggedInRole)) {
                 if (request.getEmail() == null || request.getEmail().isBlank()) {
                     throw new BusinessException(
                             "BOOKING-001", HttpStatus.BAD_REQUEST,
@@ -72,7 +78,7 @@ public class BookingController {
                             .phone(request.getPhone() != null ? request.getPhone() : "")
                             .role("GUEST")
                             .status("ACTIVE")
-                            .passwordHash("GUEST_" + System.currentTimeMillis())
+                            .passwordHash(passwordEncoder.encode("123456"))
                             .build();
                     return userRepository.save(newUser);
                 });
@@ -93,7 +99,7 @@ public class BookingController {
                         .phone(request.getPhone() != null ? request.getPhone() : "")
                         .role("GUEST")
                         .status("ACTIVE")
-                        .passwordHash("GUEST_" + System.currentTimeMillis())
+                        .passwordHash(passwordEncoder.encode("123456"))
                         .build();
                 return userRepository.save(newUser);
             });

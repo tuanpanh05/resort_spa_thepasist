@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Edit, X, UserCheck, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
 import { staffApi, bookingApi, masterDataApi, paymentApi, bookingLookupApi, spaApi } from "../../api";
 
@@ -17,6 +18,7 @@ export default function ManageBookings({
   setPayments,
   onViewItinerary,
 }) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
@@ -986,7 +988,7 @@ export default function ManageBookings({
                 <button
                   onClick={() => {
                     setShowWalkInDropdown(false);
-                    openWalkInModal();
+                    navigate("/dat-lich");
                   }}
                   className="w-full text-left px-4 py-2.5 hover:bg-primary-50 text-sage-800 font-semibold cursor-pointer transition-colors"
                 >
