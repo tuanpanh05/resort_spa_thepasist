@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Edit, X, UserCheck, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
-import { staffApi, bookingApi, masterDataApi, paymentApi, bookingLookupApi, spaApi } from "../../api";
+import { Search, Edit, X, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
+import { staffApi, bookingApi, masterDataApi, paymentApi, spaApi } from "../../api";
 
 /**
  * UC08: ManageBookings — Arrivals Dashboard & Check-In Management.
@@ -112,50 +112,10 @@ export default function ManageBookings({
     });
   }, [walkInForm.guestsCount, walkInForm.childrenUnder5, walkInForm.children5to12]);
 
-  // Walk-in options dropdown and extra service modals
-  const [showWalkInDropdown, setShowWalkInDropdown] = useState(false);
-  const [showLookupModal, setShowLookupModal] = useState(false);
-  const [lookupEmail, setLookupEmail] = useState("");
-  const [lookupPhone, setLookupPhone] = useState("");
-  const [lookupResults, setLookupResults] = useState([]);
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupError, setLookupError] = useState(null);
-  const [selectedLookupBooking, setSelectedLookupBooking] = useState(null);
-
-  const [showAddExtraModal, setShowAddExtraModal] = useState(false);
-  const [extraLoading, setExtraLoading] = useState(false);
-  const [extraError, setExtraError] = useState(null);
-  const [extraItinerary, setExtraItinerary] = useState(null);
-  const [extraForm, setExtraForm] = useState({
-    roomId: "",
-    packageId: "",
-    checkInDate: "",
-    checkOutDate: "",
-    foodMenuId: "",
-    foodQuantity: 1,
-    spaServiceId: "",
-    spaStartDatetime: ""
-  });
-  
-  const [foodMenu, setFoodMenu] = useState([]);
-  const [spaServices, setSpaServices] = useState([]);
-  
-  // Spa scheduling states
-  const [spaDate, setSpaDate] = useState("");
-  const [spaAvailableSlots, setSpaAvailableSlots] = useState([]);
-  const [spaSlotsLoading, setSpaSlotsLoading] = useState(false);
-
   // Load all operational data from API
   useEffect(() => {
     loadAllData();
   }, []);
-
-  // Restore operational data when modal is closed
-  useEffect(() => {
-    if (!showAddExtraModal) {
-      loadAllData();
-    }
-  }, [showAddExtraModal]);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -650,80 +610,7 @@ export default function ManageBookings({
     alert("Đã lưu đặt phòng. Đơn hàng hiện đang ở trạng thái CHỜ ĐẶT CỌC (PENDING_DEPOSIT). Lễ tân có thể xác nhận thanh toán sau.");
   };
 
-  const handleLookupSubmit = async (e) => {
-    e.preventDefault();
-    if (!lookupEmail.trim() || !lookupPhone.trim()) {
-      setLookupError("Vui lòng điền cả Email và Số điện thoại.");
-      return;
-    }
-    setLookupLoading(true);
-    setLookupError(null);
-    setLookupResults([]);
-    setSelectedLookupBooking(null);
-    try {
-      const results = await bookingLookupApi.lookup(lookupEmail.trim(), lookupPhone.trim());
-      const activeBookings = (results || []).filter(b => b.status === "CONFIRMED" || b.status === "CHECKED_IN");
-      setLookupResults(activeBookings);
-      if (activeBookings.length === 0) {
-        setLookupError("Không tìm thấy đặt phòng nào đang hoạt động cho Email và Số điện thoại này.");
-      }
-    } catch (err) {
-      setLookupError(err.message || "Lỗi khi tra cứu đặt phòng.");
-    } finally {
-      setLookupLoading(false);
-    }
-  };
 
-  const handleAddExtraSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedLookupBooking) {
-      setExtraError("Vui lòng chọn một đặt phòng trước.");
-      return;
-    }
-    
-    if (!extraForm.roomId && !extraForm.packageId && !extraForm.foodMenuId && !extraForm.spaServiceId) {
-      setExtraError("Vui lòng chọn ít nhất một dịch vụ để đặt thêm.");
-      return;
-    }
-
-    setExtraLoading(true);
-    setExtraError(null);
-    try {
-      const payload = {
-        roomId: extraForm.roomId ? parseInt(extraForm.roomId) : null,
-        packageId: extraForm.packageId ? parseInt(extraForm.packageId) : null,
-        checkInDate: extraForm.checkInDate || null,
-        checkOutDate: extraForm.checkOutDate || null,
-        foodMenuId: extraForm.foodMenuId ? parseInt(extraForm.foodMenuId) : null,
-        foodQuantity: extraForm.foodMenuId ? parseInt(extraForm.foodQuantity || 1) : null,
-        spaServiceId: extraForm.spaServiceId ? parseInt(extraForm.spaServiceId) : null,
-        spaStartDatetime: extraForm.spaServiceId ? extraForm.spaStartDatetime : null
-      };
-
-      const res = await staffApi.addExtraServices(selectedLookupBooking.bookingId, payload);
-      
-      alert(`Đặt thêm dịch vụ thành công!\nPhát sinh: ${formatCurrency(res.totalAddedPrice || 0)}\nCọc thêm: ${formatCurrency(res.additionalDeposit || 0)}`);
-      
-      setShowAddExtraModal(false);
-      setShowLookupModal(false);
-      setExtraForm({
-        roomId: "",
-        packageId: "",
-        checkInDate: "",
-        checkOutDate: "",
-        foodMenuId: "",
-        foodQuantity: 1,
-        spaServiceId: "",
-        spaStartDatetime: ""
-      });
-      setSelectedLookupBooking(null);
-      await loadAllData();
-    } catch (err) {
-      setExtraError(err.message || "Không thể đặt thêm dịch vụ.");
-    } finally {
-      setExtraLoading(false);
-    }
-  };
 
   // Format error messages to hide raw database/SQL exceptions from guests/staff
   const cleanErrorMessage = (err) => {
@@ -919,48 +806,7 @@ export default function ManageBookings({
     }
   };
 
-  // Calculate dynamic totals for Add Extra Services modal
-  const getExtraServicesTotals = () => {
-    if (!showAddExtraModal || !selectedLookupBooking) return { roomTotal: 0, pkgTotal: 0, foodTotal: 0, spaTotal: 0, totalAdded: 0, roomNights: 0 };
-    
-    let roomTotal = 0;
-    let roomNights = 0;
-    if (extraForm.roomId) {
-      const selectedRoom = villas.find(v => String(v.roomId) === String(extraForm.roomId));
-      if (extraForm.checkInDate && extraForm.checkOutDate) {
-        const start = new Date(extraForm.checkInDate);
-        const end = new Date(extraForm.checkOutDate);
-        const diffTime = end - start;
-        roomNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      }
-      if (roomNights <= 0) roomNights = 1;
-      roomTotal = (selectedRoom ? (selectedRoom.basePrice || selectedRoom.basePricePerNight || 0) : 0) * roomNights;
-    }
 
-    let pkgTotal = 0;
-    if (extraForm.packageId) {
-      const selectedPkg = packages.find(p => String(p.packageId) === String(extraForm.packageId));
-      pkgTotal = selectedPkg ? (selectedPkg.price || 0) : 0;
-    }
-
-    let foodTotal = 0;
-    if (extraForm.foodMenuId) {
-      const selectedFood = foodMenu.find(f => String(f.foodId) === String(extraForm.foodMenuId));
-      const qty = parseInt(extraForm.foodQuantity) || 1;
-      foodTotal = (selectedFood ? (selectedFood.price || 0) : 0) * qty;
-    }
-
-    let spaTotal = 0;
-    if (extraForm.spaServiceId) {
-      const selectedSpa = spaServices.find(s => String(s.serviceId) === String(extraForm.spaServiceId));
-      spaTotal = selectedSpa ? (selectedSpa.price || 0) : 0;
-    }
-
-    const totalAdded = roomTotal + pkgTotal + foodTotal + spaTotal;
-    return { roomTotal, pkgTotal, foodTotal, spaTotal, totalAdded, roomNights };
-  };
-
-  const { roomTotal, pkgTotal, foodTotal, spaTotal, totalAdded, roomNights } = getExtraServicesTotals();
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
@@ -975,42 +821,13 @@ export default function ManageBookings({
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-none">
-            <button
-              onClick={() => setShowWalkInDropdown(!showWalkInDropdown)}
-              className="w-full px-4 py-2 bg-[#cda250] hover:bg-[#b0873a] text-white text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1 transition-all duration-300"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Khách vãng lai (Walk-in)
-            </button>
-            {showWalkInDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-primary-100 shadow-xl z-50 py-1 text-xs">
-                <button
-                  onClick={() => {
-                    setShowWalkInDropdown(false);
-                    navigate("/dat-lich");
-                  }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-primary-50 text-sage-800 font-semibold cursor-pointer transition-colors"
-                >
-                  ➕ Đặt phòng mới
-                </button>
-                <button
-                  onClick={() => {
-                    setShowWalkInDropdown(false);
-                    setShowLookupModal(true);
-                    setLookupEmail("");
-                    setLookupPhone("");
-                    setLookupError(null);
-                    setLookupResults([]);
-                    setSelectedLookupBooking(null);
-                  }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-primary-50 text-sage-800 font-semibold cursor-pointer border-t border-primary-50 transition-colors"
-                >
-                  🔄 Đặt thêm dịch vụ
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => navigate("/dat-lich")}
+            className="px-4 py-2 bg-[#cda250] hover:bg-[#b0873a] text-white text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-all duration-300"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Đặt Mới
+          </button>
           <button
             onClick={loadAllData}
             className="px-3 py-2 border border-primary-100 hover:bg-primary-50 text-sage-600 hover:text-sage-900 text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1 transition-all"

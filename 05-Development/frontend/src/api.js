@@ -299,11 +299,6 @@ export const staffApi = {
       body: JSON.stringify(dto),
     }),
 
-  addExtraServices: (bookingId, dto) =>
-    apiRequest(`/bookings/${bookingId}/add-extra`, {
-      method: "POST",
-      body: JSON.stringify(dto),
-    }),
 
   getFoodMenu: () => apiRequest("/chef/menu"),
 
