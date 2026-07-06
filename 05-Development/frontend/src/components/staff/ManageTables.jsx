@@ -38,7 +38,7 @@ export default function ManageTables({ tables, setTables, selectedDate, setSelec
     const assignedTable = suitableTables[0];
 
     try {
-      await axiosClient.post(`/chef/tables/${assignedTable.id}/book`);
+      await axiosClient.post(`/chef/tables/${assignedTable.id}/book?guestName=${encodeURIComponent(guestName)}`);
       setTables(prev => prev.map(t => 
         t.id === assignedTable.id 
           ? { ...t, status: 'Occupied', guestName: guestName } 
