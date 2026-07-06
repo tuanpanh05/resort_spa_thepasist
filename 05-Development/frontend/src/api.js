@@ -241,7 +241,7 @@ export const masterDataApi = {
 // ============================================================
 export const bookingApi = {
   createBooking: (dto) =>
-    apiRequest("/v1/bookings", {
+    apiRequest("/bookings/create", {
       method: "POST",
       body: JSON.stringify(dto),
     }),
@@ -299,11 +299,6 @@ export const staffApi = {
       body: JSON.stringify(dto),
     }),
 
-  addExtraServices: (bookingId, dto) =>
-    apiRequest(`/bookings/${bookingId}/add-extra`, {
-      method: "POST",
-      body: JSON.stringify(dto),
-    }),
 
   getFoodMenu: () => apiRequest("/chef/menu"),
 

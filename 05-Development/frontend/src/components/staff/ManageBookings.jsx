@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Search, Edit, X, UserCheck, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
-import { staffApi, bookingApi, masterDataApi, paymentApi, bookingLookupApi, spaApi } from "../../api";
+import { useNavigate } from "react-router-dom";
+import { Search, Edit, X, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
+import { staffApi, bookingApi, masterDataApi, paymentApi, spaApi } from "../../api";
 
 /**
  * UC08: ManageBookings — Arrivals Dashboard & Check-In Management.
@@ -17,6 +18,7 @@ export default function ManageBookings({
   setPayments,
   onViewItinerary,
 }) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
@@ -59,57 +61,61 @@ export default function ManageBookings({
     fullName: "",
     email: "",
     phone: "",
-    roomId: "",
-    packageId: "",
+    roomIds: [],
+    comboId: "",
     checkInDate: new Date().toISOString().split("T")[0],
     checkOutDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-    guestsCount: 1
+    guestsCount: 1,
+    childrenUnder5: 0,
+    children5to12: 0,
   });
 
-  // Walk-in options dropdown and extra service modals
-  const [showWalkInDropdown, setShowWalkInDropdown] = useState(false);
-  const [showLookupModal, setShowLookupModal] = useState(false);
-  const [lookupEmail, setLookupEmail] = useState("");
-  const [lookupPhone, setLookupPhone] = useState("");
-  const [lookupResults, setLookupResults] = useState([]);
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupError, setLookupError] = useState(null);
-  const [selectedLookupBooking, setSelectedLookupBooking] = useState(null);
+  const [walkInStep, setWalkInStep] = useState(1);
+  const [walkInIdentityDocument, setWalkInIdentityDocument] = useState("");
+  const [walkInDocumentType, setWalkInDocumentType] = useState("CCCD");
+  const [walkInNationality, setWalkInNationality] = useState("Vietnam");
+  const [walkInAccompanyingAdults, setWalkInAccompanyingAdults] = useState([]);
+  const [walkInAccompanyingChildren, setWalkInAccompanyingChildren] = useState([]);
+  const [walkInVillas, setWalkInVillas] = useState([]);
+  const [walkInVillasLoading, setWalkInVillasLoading] = useState(false);
+  const [createdInvoice, setCreatedInvoice] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // "cash" | "vnpay"
 
-  const [showAddExtraModal, setShowAddExtraModal] = useState(false);
-  const [extraLoading, setExtraLoading] = useState(false);
-  const [extraError, setExtraError] = useState(null);
-  const [extraItinerary, setExtraItinerary] = useState(null);
-  const [extraForm, setExtraForm] = useState({
-    roomId: "",
-    packageId: "",
-    checkInDate: "",
-    checkOutDate: "",
-    foodMenuId: "",
-    foodQuantity: 1,
-    spaServiceId: "",
-    spaStartDatetime: ""
-  });
-  
-  const [foodMenu, setFoodMenu] = useState([]);
-  const [spaServices, setSpaServices] = useState([]);
-  
-  // Spa scheduling states
-  const [spaDate, setSpaDate] = useState("");
-  const [spaAvailableSlots, setSpaAvailableSlots] = useState([]);
-  const [spaSlotsLoading, setSpaSlotsLoading] = useState(false);
+  useEffect(() => {
+    const accAdultsCount = Math.max(0, parseInt(walkInForm.guestsCount || 1) - 1);
+    const accChildrenCount = parseInt(walkInForm.childrenUnder5 || 0) + parseInt(walkInForm.children5to12 || 0);
+
+    setWalkInAccompanyingAdults((prev) => {
+      const next = [...prev];
+      if (accAdultsCount > prev.length) {
+        for (let i = prev.length; i < accAdultsCount; i++) {
+          next.push({ fullName: "", documentType: "CCCD", identityDocument: "" });
+        }
+      } else if (accAdultsCount < prev.length) {
+        next.splice(accAdultsCount);
+      }
+      return next;
+    });
+
+    setWalkInAccompanyingChildren((prev) => {
+      const next = [...prev];
+      if (accChildrenCount > prev.length) {
+        for (let i = prev.length; i < accChildrenCount; i++) {
+          next.push({ fullName: "", relationship: "Con" });
+        }
+      } else if (accChildrenCount < prev.length) {
+        next.splice(accChildrenCount);
+      }
+      return next;
+    });
+  }, [walkInForm.guestsCount, walkInForm.childrenUnder5, walkInForm.children5to12]);
 
   // Load all operational data from API
   useEffect(() => {
     loadAllData();
   }, []);
-
-  // Restore operational data when modal is closed
-  useEffect(() => {
-    if (!showAddExtraModal) {
-      loadAllData();
-    }
-  }, [showAddExtraModal]);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -303,123 +309,308 @@ export default function ManageBookings({
     }
   };
 
+  const generateMealsFromCombo = (comboId, items, totalGuests, checkInStr, checkOutStr) => {
+    try {
+      if (!items || items.length === 0 || !comboId) return {};
+
+      const checkIn = new Date(checkInStr);
+      const checkOut = new Date(checkOutStr);
+      if (checkOut <= checkIn) return {};
+
+      const days = [];
+      let curr = new Date(checkIn);
+      while (curr <= checkOut) {
+        days.push(curr.toISOString().split("T")[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+
+      let pool = items;
+      if (comboId === 'detox') {
+        pool = pool.filter(i => {
+          const tags = (i.dietaryTags || "").toLowerCase();
+          return tags.includes("vegan") || tags.includes("vegetarian") || tags.includes("healthy");
+        });
+      } else if (comboId === 'recovery') {
+        pool = pool.filter(i => {
+          const tags = (i.dietaryTags || "").toLowerCase();
+          return tags.includes("keto") || tags.includes("healthy");
+        });
+      } else if (comboId === 'vip') {
+        pool = pool.filter(i => {
+          const tags = (i.dietaryTags || "").toLowerCase();
+          return tags.includes("omnivore") || tags.includes("pescatarian") || tags.includes("healthy") || tags.includes("keto");
+        });
+      }
+      if (pool.length === 0) pool = items;
+
+      const fallbackFoodId = items[0]?.foodId;
+      const periods = ["Breakfast", "Lunch", "Dinner"];
+      const result = {};
+
+      days.forEach((dateStr, dayIndex) => {
+        const dateObj = {};
+        periods.forEach((period, pIdx) => {
+          const periodPool = pool.filter(i => {
+            if (Array.isArray(i.periods)) return i.periods.some(per => typeof per === 'string' && per.toLowerCase().includes(period.toLowerCase()));
+            return typeof i.periods === 'string' && i.periods.toLowerCase().includes(period.toLowerCase());
+          });
+          const finalPool = periodPool.length > 0 ? periodPool : pool;
+
+          const isDrink = i => /nước|drink|thức uống/i.test(i.category || "") || /nước|trà|sinh tố|sữa|ép/i.test(i.dishName || i.name || "");
+          const isAppetizer = i => /khai vị|appetizer|salad/i.test(i.category || "") || /gỏi|salad|soup/i.test(i.dishName || i.name || "");
+
+          const nuoc = finalPool.filter(i => isDrink(i));
+          const khai = finalPool.filter(i => isAppetizer(i));
+          const chinh = finalPool.filter(i => !isDrink(i) && !isAppetizer(i));
+
+          const getId = (subPool, offset) => {
+            if (subPool.length > 0) return subPool[offset % subPool.length].foodId;
+            return finalPool[offset % finalPool.length]?.foodId || fallbackFoodId;
+          };
+
+          const id1 = getId(nuoc, dayIndex * 3 + pIdx * 5);
+          const id2 = getId(khai, dayIndex * 3 + 1 + pIdx * 5);
+          const id3 = getId(chinh, dayIndex * 3 + 2 + pIdx * 5);
+
+          if (!dateObj[period]) dateObj[period] = {};
+          [id1, id2, id3].forEach(fid => {
+            if (!fid) return;
+            dateObj[period][fid] = (dateObj[period][fid] || 0) + totalGuests;
+          });
+        });
+        if (Object.keys(dateObj).length > 0) result[dateStr] = dateObj;
+      });
+
+      return result;
+    } catch (e) {
+      console.error("Lỗi khi sinh thực đơn combo vãng lai:", e);
+      return {};
+    }
+  };
+
+  const openWalkInModal = () => {
+    setWalkInStep(1);
+    setWalkInIdentityDocument("");
+    setWalkInDocumentType("CCCD");
+    setWalkInNationality("Vietnam");
+    setWalkInAccompanyingAdults([]);
+    setWalkInAccompanyingChildren([]);
+    setWalkInVillas([]);
+    setWalkInForm({
+      fullName: "",
+      email: "",
+      phone: "",
+      roomIds: [],
+      comboId: "",
+      checkInDate: new Date().toISOString().split("T")[0],
+      checkOutDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+      guestsCount: 1,
+      childrenUnder5: 0,
+      children5to12: 0,
+    });
+    setWalkInError(null);
+    setShowWalkInModal(true);
+  };
+
+  const goToRoomSelection = async () => {
+    if (!walkInForm.fullName.trim() || !walkInForm.email.trim() || !walkInForm.phone.trim() || !walkInIdentityDocument.trim()) {
+      setWalkInError("Vui lòng điền đầy đủ thông tin người đặt (bao gồm họ tên, SĐT, email) và số CCCD/Passport.");
+      return;
+    }
+    if (new Date(walkInForm.checkOutDate) <= new Date(walkInForm.checkInDate)) {
+      setWalkInError("Ngày trả phòng phải sau ngày nhận phòng.");
+      return;
+    }
+
+    // Validate accompanying guest fields if any
+    for (let i = 0; i < walkInAccompanyingAdults.length; i++) {
+      const adult = walkInAccompanyingAdults[i];
+      if (!adult.fullName.trim() || !adult.identityDocument.trim()) {
+        setWalkInError(`Vui lòng điền đầy đủ họ tên và số CCCD/Passport cho người lớn đi cùng #${i + 1}.`);
+        return;
+      }
+    }
+    for (let i = 0; i < walkInAccompanyingChildren.length; i++) {
+      const child = walkInAccompanyingChildren[i];
+      if (!child.fullName.trim()) {
+        setWalkInError(`Vui lòng điền đầy đủ họ tên cho trẻ em đi cùng #${i + 1}.`);
+        return;
+      }
+    }
+
+    setWalkInError(null);
+    setWalkInVillasLoading(true);
+    try {
+      const data = await staffApi.getVillas(walkInForm.checkInDate, walkInForm.checkOutDate);
+      setWalkInVillas(data || []);
+      setWalkInStep(2);
+    } catch (err) {
+      setWalkInError(err.message || "Lỗi khi lấy danh sách phòng trống.");
+    } finally {
+      setWalkInVillasLoading(false);
+    }
+  };
+
   // Walk-in Booking Submission
   const handleWalkInSubmit = async (e) => {
     e.preventDefault();
-    if (!walkInForm.fullName.trim() || !walkInForm.email.trim() || !walkInForm.phone.trim() || !walkInForm.roomId) {
-      setWalkInError("Vui lòng điền đầy đủ các thông tin bắt buộc.");
+    if (walkInForm.roomIds.length === 0) {
+      setWalkInError("Vui lòng chọn ít nhất 1 phòng trống ở Bước 2.");
       return;
     }
     setWalkInLoading(true);
     setWalkInError(null);
     try {
+      const totalGuestsForMeals = parseInt(walkInForm.guestsCount || 1) + parseInt(walkInForm.children5to12 || 0) + parseInt(walkInForm.childrenUnder5 || 0);
+      const computedMeals = walkInForm.comboId 
+        ? generateMealsFromCombo(walkInForm.comboId, foodMenu, totalGuestsForMeals, walkInForm.checkInDate, walkInForm.checkOutDate)
+        : {};
+
       const dto = {
         fullName: walkInForm.fullName.trim(),
         email: walkInForm.email.trim(),
         phone: walkInForm.phone.trim(),
-        roomId: parseInt(walkInForm.roomId),
-        checkInDate: walkInForm.checkInDate,
-        checkOutDate: walkInForm.checkOutDate,
+        roomId: walkInForm.roomIds.length > 0 ? parseInt(walkInForm.roomIds[0]) : null,
+        roomIds: walkInForm.roomIds.map(id => parseInt(id)),
+        checkInDate: walkInForm.checkInDate + "T14:00:00",
+        checkOutDate: walkInForm.checkOutDate + "T12:00:00",
         guestsCount: parseInt(walkInForm.guestsCount || 1),
-        packageIds: walkInForm.packageId ? [parseInt(walkInForm.packageId)] : [],
+        childrenUnder5: parseInt(walkInForm.childrenUnder5 || 0),
+        children5to12: parseInt(walkInForm.children5to12 || 0),
+        childrenCount: parseInt(walkInForm.childrenUnder5 || 0) + parseInt(walkInForm.children5to12 || 0),
+        packageIds: [],
+        mealSelections: computedMeals,
+        // Residency details
+        identityDocument: walkInIdentityDocument.trim(),
+        documentType: walkInDocumentType,
+        nationality: walkInNationality.trim(),
+        accompanyingGuests: [
+          ...walkInAccompanyingAdults.map(a => ({
+            fullName: a.fullName.trim(),
+            identityDocument: a.identityDocument.trim(),
+            documentType: a.documentType || "CCCD",
+            relationship: "Khách đi cùng",
+            isChild: false
+          })),
+          ...walkInAccompanyingChildren.map(c => ({
+            fullName: c.fullName.trim(),
+            identityDocument: null,
+            documentType: "CCCD",
+            relationship: c.relationship.trim(),
+            isChild: true
+          }))
+        ]
       };
 
-      await bookingApi.createBooking(dto);
-      setShowWalkInModal(false);
-      // Reset form
-      setWalkInForm({
-        fullName: "",
-        email: "",
-        phone: "",
-        roomId: "",
-        packageId: "",
-        checkInDate: new Date().toISOString().split("T")[0],
-        checkOutDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-        guestsCount: 1
-      });
-      await loadAllData();
-      alert("Đặt phòng cho khách vãng lai (Walk-in Guest) thành công!");
+      console.log("[WalkIn Debug] Sending DTO:", dto);
+      const response = await bookingApi.createBooking(dto);
+      console.log("[WalkIn Debug] API Response:", response);
+      const invoiceId = response.invoiceId;
+      if (invoiceId) {
+        console.log("[WalkIn Debug] Found invoiceId:", invoiceId);
+        const invoiceData = await paymentApi.getInvoice(invoiceId);
+        console.log("[WalkIn Debug] Fetched invoice data:", invoiceData);
+        setCreatedInvoice(invoiceData);
+        setWalkInStep(3);
+      } else {
+        console.warn("[WalkIn Debug] No invoiceId in response. Redirecting to dashboard.");
+        setShowWalkInModal(false);
+        // Reset form
+        setWalkInForm({
+          fullName: "",
+          email: "",
+          phone: "",
+          roomIds: [],
+          comboId: "",
+          checkInDate: new Date().toISOString().split("T")[0],
+          checkOutDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+          guestsCount: 1,
+          childrenUnder5: 0,
+          children5to12: 0,
+        });
+        setWalkInIdentityDocument("");
+        setWalkInAccompanyingAdults([]);
+        setWalkInAccompanyingChildren([]);
+        setWalkInStep(1);
+        await loadAllData();
+        alert("Đặt phòng cho khách vãng lai (Walk-in Guest) thành công!");
+      }
     } catch (err) {
+      console.error("[WalkIn Debug] Exception occurred:", err);
       setWalkInError(err.message || "Không thể đặt phòng cho khách vãng lai.");
     } finally {
       setWalkInLoading(false);
     }
   };
 
-  const handleLookupSubmit = async (e) => {
-    e.preventDefault();
-    if (!lookupEmail.trim() || !lookupPhone.trim()) {
-      setLookupError("Vui lòng điền cả Email và Số điện thoại.");
-      return;
-    }
-    setLookupLoading(true);
-    setLookupError(null);
-    setLookupResults([]);
-    setSelectedLookupBooking(null);
+  // Walk-in Deposit Payment Submission
+  const handleDepositPayment = async (e) => {
+    if (e) e.preventDefault();
+    if (!createdInvoice) return;
+    setPaymentLoading(true);
+    setPaymentError(null);
     try {
-      const results = await bookingLookupApi.lookup(lookupEmail.trim(), lookupPhone.trim());
-      const activeBookings = (results || []).filter(b => b.status === "CONFIRMED" || b.status === "CHECKED_IN");
-      setLookupResults(activeBookings);
-      if (activeBookings.length === 0) {
-        setLookupError("Không tìm thấy đặt phòng nào đang hoạt động cho Email và Số điện thoại này.");
+      if (paymentMethod === "cash") {
+        await paymentApi.markCashPayment(createdInvoice.invoiceId);
+        alert(`Xác nhận thanh toán cọc thành công bằng TIỀN MẶT cho hóa đơn #${createdInvoice.invoiceId}. Đơn đặt phòng đã chuyển sang CONFIRMED.`);
+      } else {
+        const data = await paymentApi.getPaymentUrl(createdInvoice.invoiceId);
+        window.open(data.paymentUrl, "_blank");
+        alert(`Đã tạo link thanh toán VNPay thành công cho hóa đơn #${createdInvoice.invoiceId}. Một tab thanh toán mới đã được mở. Vui lòng quét mã trên tab mới.`);
       }
-    } catch (err) {
-      setLookupError(err.message || "Lỗi khi tra cứu đặt phòng.");
-    } finally {
-      setLookupLoading(false);
-    }
-  };
-
-  const handleAddExtraSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedLookupBooking) {
-      setExtraError("Vui lòng chọn một đặt phòng trước.");
-      return;
-    }
-    
-    if (!extraForm.roomId && !extraForm.packageId && !extraForm.foodMenuId && !extraForm.spaServiceId) {
-      setExtraError("Vui lòng chọn ít nhất một dịch vụ để đặt thêm.");
-      return;
-    }
-
-    setExtraLoading(true);
-    setExtraError(null);
-    try {
-      const payload = {
-        roomId: extraForm.roomId ? parseInt(extraForm.roomId) : null,
-        packageId: extraForm.packageId ? parseInt(extraForm.packageId) : null,
-        checkInDate: extraForm.checkInDate || null,
-        checkOutDate: extraForm.checkOutDate || null,
-        foodMenuId: extraForm.foodMenuId ? parseInt(extraForm.foodMenuId) : null,
-        foodQuantity: extraForm.foodMenuId ? parseInt(extraForm.foodQuantity || 1) : null,
-        spaServiceId: extraForm.spaServiceId ? parseInt(extraForm.spaServiceId) : null,
-        spaStartDatetime: extraForm.spaServiceId ? extraForm.spaStartDatetime : null
-      };
-
-      const res = await staffApi.addExtraServices(selectedLookupBooking.bookingId, payload);
       
-      alert(`Đặt thêm dịch vụ thành công!\nPhát sinh: ${formatCurrency(res.totalAddedPrice || 0)}\nCọc thêm: ${formatCurrency(res.additionalDeposit || 0)}`);
-      
-      setShowAddExtraModal(false);
-      setShowLookupModal(false);
-      setExtraForm({
-        roomId: "",
-        packageId: "",
-        checkInDate: "",
-        checkOutDate: "",
-        foodMenuId: "",
-        foodQuantity: 1,
-        spaServiceId: "",
-        spaStartDatetime: ""
+      // Close modal and reset form state
+      setShowWalkInModal(false);
+      setWalkInForm({
+        fullName: "",
+        email: "",
+        phone: "",
+        roomIds: [],
+        comboId: "",
+        checkInDate: new Date().toISOString().split("T")[0],
+        checkOutDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        guestsCount: 1,
+        childrenUnder5: 0,
+        children5to12: 0,
       });
-      setSelectedLookupBooking(null);
+      setWalkInIdentityDocument("");
+      setWalkInAccompanyingAdults([]);
+      setWalkInAccompanyingChildren([]);
+      setWalkInStep(1);
+      setCreatedInvoice(null);
       await loadAllData();
     } catch (err) {
-      setExtraError(err.message || "Không thể đặt thêm dịch vụ.");
+      setPaymentError(err.message || "Gặp lỗi khi xử lý thanh toán cọc.");
     } finally {
-      setExtraLoading(false);
+      setPaymentLoading(false);
     }
   };
+
+  // Close Walk-in Booking step 3 and leave as pending deposit
+  const handleSkipPayment = async () => {
+    setShowWalkInModal(false);
+    setWalkInForm({
+      fullName: "",
+      email: "",
+      phone: "",
+      roomIds: [],
+      comboId: "",
+      checkInDate: new Date().toISOString().split("T")[0],
+      checkOutDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+      guestsCount: 1,
+      childrenUnder5: 0,
+      children5to12: 0,
+    });
+    setWalkInIdentityDocument("");
+    setWalkInAccompanyingAdults([]);
+    setWalkInAccompanyingChildren([]);
+    setWalkInStep(1);
+    setCreatedInvoice(null);
+    await loadAllData();
+    alert("Đã lưu đặt phòng. Đơn hàng hiện đang ở trạng thái CHỜ ĐẶT CỌC (PENDING_DEPOSIT). Lễ tân có thể xác nhận thanh toán sau.");
+  };
+
+
 
   // Format error messages to hide raw database/SQL exceptions from guests/staff
   const cleanErrorMessage = (err) => {
@@ -615,48 +806,7 @@ export default function ManageBookings({
     }
   };
 
-  // Calculate dynamic totals for Add Extra Services modal
-  const getExtraServicesTotals = () => {
-    if (!showAddExtraModal || !selectedLookupBooking) return { roomTotal: 0, pkgTotal: 0, foodTotal: 0, spaTotal: 0, totalAdded: 0, roomNights: 0 };
-    
-    let roomTotal = 0;
-    let roomNights = 0;
-    if (extraForm.roomId) {
-      const selectedRoom = villas.find(v => String(v.roomId) === String(extraForm.roomId));
-      if (extraForm.checkInDate && extraForm.checkOutDate) {
-        const start = new Date(extraForm.checkInDate);
-        const end = new Date(extraForm.checkOutDate);
-        const diffTime = end - start;
-        roomNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      }
-      if (roomNights <= 0) roomNights = 1;
-      roomTotal = (selectedRoom ? (selectedRoom.basePrice || selectedRoom.basePricePerNight || 0) : 0) * roomNights;
-    }
 
-    let pkgTotal = 0;
-    if (extraForm.packageId) {
-      const selectedPkg = packages.find(p => String(p.packageId) === String(extraForm.packageId));
-      pkgTotal = selectedPkg ? (selectedPkg.price || 0) : 0;
-    }
-
-    let foodTotal = 0;
-    if (extraForm.foodMenuId) {
-      const selectedFood = foodMenu.find(f => String(f.foodId) === String(extraForm.foodMenuId));
-      const qty = parseInt(extraForm.foodQuantity) || 1;
-      foodTotal = (selectedFood ? (selectedFood.price || 0) : 0) * qty;
-    }
-
-    let spaTotal = 0;
-    if (extraForm.spaServiceId) {
-      const selectedSpa = spaServices.find(s => String(s.serviceId) === String(extraForm.spaServiceId));
-      spaTotal = selectedSpa ? (selectedSpa.price || 0) : 0;
-    }
-
-    const totalAdded = roomTotal + pkgTotal + foodTotal + spaTotal;
-    return { roomTotal, pkgTotal, foodTotal, spaTotal, totalAdded, roomNights };
-  };
-
-  const { roomTotal, pkgTotal, foodTotal, spaTotal, totalAdded, roomNights } = getExtraServicesTotals();
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
@@ -671,42 +821,13 @@ export default function ManageBookings({
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-none">
-            <button
-              onClick={() => setShowWalkInDropdown(!showWalkInDropdown)}
-              className="w-full px-4 py-2 bg-[#cda250] hover:bg-[#b0873a] text-white text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1 transition-all duration-300"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Khách vãng lai (Walk-in)
-            </button>
-            {showWalkInDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-primary-100 shadow-xl z-50 py-1 text-xs">
-                <button
-                  onClick={() => {
-                    setShowWalkInDropdown(false);
-                    setShowWalkInModal(true);
-                  }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-primary-50 text-sage-800 font-semibold cursor-pointer transition-colors"
-                >
-                  ➕ Đặt phòng mới
-                </button>
-                <button
-                  onClick={() => {
-                    setShowWalkInDropdown(false);
-                    setShowLookupModal(true);
-                    setLookupEmail("");
-                    setLookupPhone("");
-                    setLookupError(null);
-                    setLookupResults([]);
-                    setSelectedLookupBooking(null);
-                  }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-primary-50 text-sage-800 font-semibold cursor-pointer border-t border-primary-50 transition-colors"
-                >
-                  🔄 Đặt thêm dịch vụ
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => navigate("/dat-lich")}
+            className="px-4 py-2 bg-[#cda250] hover:bg-[#b0873a] text-white text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-all duration-300"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Đặt Mới
+          </button>
           <button
             onClick={loadAllData}
             className="px-3 py-2 border border-primary-100 hover:bg-primary-50 text-sage-600 hover:text-sage-900 text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1 transition-all"
@@ -957,171 +1078,559 @@ export default function ManageBookings({
               <button
                 onClick={() => setShowWalkInModal(false)}
                 className="text-sage-400 hover:text-sage-900 cursor-pointer"
+                type="button"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-
+            
             {walkInError && (
-              <div className="bg-red-50 border border-red-200 p-3 text-xs text-red-700 flex items-center gap-2">
+              <div className="bg-red-50 border border-red-200 p-3 flex items-center gap-2 text-red-700 rounded text-xs">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>{walkInError}</span>
               </div>
             )}
 
-            <form onSubmit={handleWalkInSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {walkInStep === 1 ? (
+              <div className="space-y-4 text-xs">
+                {/* Step 1 Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Tên khách hàng <span className="text-red-550">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={walkInForm.fullName}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, fullName: e.target.value })}
+                      placeholder="VD: Nguyễn Văn A"
+                      className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Số điện thoại <span className="text-red-550">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={walkInForm.phone}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, phone: e.target.value })}
+                      placeholder="VD: 0987654321"
+                      className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                    Tên khách hàng <span className="text-red-550">*</span>
+                    Email khách hàng <span className="text-red-550">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     required
-                    value={walkInForm.fullName}
-                    onChange={(e) => setWalkInForm({ ...walkInForm, fullName: e.target.value })}
-                    placeholder="VD: Nguyễn Văn A"
+                    value={walkInForm.email}
+                    onChange={(e) => setWalkInForm({ ...walkInForm, email: e.target.value })}
+                    placeholder="VD: guest@gmail.com"
                     className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
                   />
                 </div>
+
+                {/* Primary Guest Identity Section */}
+                <div className="p-3 bg-primary-50/20 border border-primary-100 rounded space-y-2">
+                  <span className="font-semibold text-sage-700 text-[10px] block uppercase">
+                    Căn cước / Hộ chiếu người đặt <span className="text-red-550">*</span>
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <select
+                      value={walkInDocumentType}
+                      onChange={(e) => setWalkInDocumentType(e.target.value)}
+                      className="p-2 border border-primary-100 rounded bg-white text-xs"
+                    >
+                      <option value="CCCD">CCCD</option>
+                      <option value="PASSPORT">Passport</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder={walkInDocumentType === "PASSPORT" ? "Số Hộ chiếu" : "Số CCCD"}
+                      value={walkInIdentityDocument}
+                      onChange={(e) => setWalkInIdentityDocument(e.target.value)}
+                      className="p-2 border border-primary-100 rounded bg-white text-xs col-span-2"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Ngày nhận phòng <span className="text-red-550">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={walkInForm.checkInDate}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, checkInDate: e.target.value })}
+                      className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Ngày trả phòng <span className="text-red-550">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={walkInForm.checkOutDate}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, checkOutDate: e.target.value })}
+                      className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Người lớn <span className="text-red-550">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={walkInForm.guestsCount}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, guestsCount: Math.max(1, parseInt(e.target.value) || 1) })}
+                      className="w-full p-2 border border-primary-100 rounded bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Trẻ em dưới 5 (Miễn phí)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={walkInForm.childrenUnder5}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, childrenUnder5: Math.max(0, parseInt(e.target.value) || 0) })}
+                      className="w-full p-2 border border-primary-100 rounded bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                      Trẻ em 5-12 (Giảm 30%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={walkInForm.children5to12}
+                      onChange={(e) => setWalkInForm({ ...walkInForm, children5to12: Math.max(0, parseInt(e.target.value) || 0) })}
+                      className="w-full p-2 border border-primary-100 rounded bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Accompanying Guests list section */}
+                {(walkInAccompanyingAdults.length > 0 || walkInAccompanyingChildren.length > 0) && (
+                  <div className="border-t border-primary-100 pt-3 space-y-3">
+                    <h4 className="text-[10px] font-bold text-sage-800 uppercase tracking-wide">
+                      Thông tin khách đi cùng đoàn
+                    </h4>
+
+                    {/* Adults */}
+                    {walkInAccompanyingAdults.map((adult, index) => (
+                      <div key={`walkin-adult-${index}`} className="p-3 bg-sage-50/50 border border-primary-50 rounded space-y-2 text-xs">
+                        <span className="font-semibold text-sage-700 text-[10px] block uppercase">
+                          Người lớn đi cùng #{index + 1}
+                        </span>
+                        <div className="grid grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Họ và tên"
+                            value={adult.fullName}
+                            onChange={(e) => {
+                              const updated = [...walkInAccompanyingAdults];
+                              updated[index].fullName = e.target.value;
+                              setWalkInAccompanyingAdults(updated);
+                            }}
+                            className="p-2 border border-primary-100 rounded bg-white text-xs col-span-3"
+                            required
+                          />
+                          <select
+                            value={adult.documentType || "CCCD"}
+                            onChange={(e) => {
+                              const updated = [...walkInAccompanyingAdults];
+                              updated[index].documentType = e.target.value;
+                              setWalkInAccompanyingAdults(updated);
+                            }}
+                            className="p-2 border border-primary-100 rounded bg-white text-xs"
+                          >
+                            <option value="CCCD">CCCD</option>
+                            <option value="PASSPORT">Passport</option>
+                          </select>
+                          <input
+                            type="text"
+                            placeholder={adult.documentType === "PASSPORT" ? "Số Hộ chiếu" : "Số CCCD"}
+                            value={adult.identityDocument}
+                            onChange={(e) => {
+                              const updated = [...walkInAccompanyingAdults];
+                              updated[index].identityDocument = e.target.value;
+                              setWalkInAccompanyingAdults(updated);
+                            }}
+                            className="p-2 border border-primary-100 rounded bg-white text-xs col-span-2"
+                            required
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Children */}
+                    {walkInAccompanyingChildren.map((child, index) => (
+                      <div key={`walkin-child-${index}`} className="p-3 bg-sky-50/10 border border-sky-100 rounded space-y-2 text-xs">
+                        <span className="font-semibold text-sky-700 text-[10px] block uppercase">
+                          Trẻ em đi cùng #{index + 1}
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Họ và tên"
+                            value={child.fullName}
+                            onChange={(e) => {
+                              const updated = [...walkInAccompanyingChildren];
+                              updated[index].fullName = e.target.value;
+                              setWalkInAccompanyingChildren(updated);
+                            }}
+                            className="p-2 border border-primary-100 rounded bg-white text-xs col-span-2"
+                            required
+                          />
+                          <span className="text-[10px] text-sage-400 self-center">Mối quan hệ:</span>
+                          <select
+                            value={child.relationship}
+                            onChange={(e) => {
+                              const updated = [...walkInAccompanyingChildren];
+                              updated[index].relationship = e.target.value;
+                              setWalkInAccompanyingChildren(updated);
+                            }}
+                            className="p-2 border border-primary-100 rounded bg-white text-xs cursor-pointer"
+                          >
+                            <option value="Con">Con ruột</option>
+                            <option value="Cháu">Cháu</option>
+                            <option value="Em">Em</option>
+                            <option value="Khác">Quan hệ khác</option>
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div>
                   <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                    Số điện thoại <span className="text-red-550">*</span>
+                    Chọn gói Combo ẩm thực
                   </label>
-                  <input
-                    type="tel"
-                    required
-                    value={walkInForm.phone}
-                    onChange={(e) => setWalkInForm({ ...walkInForm, phone: e.target.value })}
-                    placeholder="VD: 0987654321"
-                    className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
-                  />
+                  <select
+                    value={walkInForm.comboId}
+                    onChange={(e) => setWalkInForm({ ...walkInForm, comboId: e.target.value })}
+                    className="w-full p-2.5 border border-primary-100 focus:outline-primary-200 bg-white"
+                  >
+                    <option value="">Không sử dụng gói combo</option>
+                    <option value="detox">Gói Detox Thanh Lọc (3 Bữa/Ngày)</option>
+                    <option value="recovery">Gói Phục Hồi Năng Lượng (3 Bữa/Ngày)</option>
+                    <option value="vip">Gói Thưởng Thức VIP (3 Bữa/Ngày)</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t border-primary-50">
+                  <button
+                    type="button"
+                    onClick={() => setShowWalkInModal(false)}
+                    className="px-4 py-2 border border-primary-100 text-xs font-semibold uppercase tracking-wider hover:bg-primary-50 cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToRoomSelection}
+                    disabled={walkInVillasLoading}
+                    className="px-6 py-2 bg-primary-800 text-white text-xs font-semibold uppercase tracking-wider hover:bg-primary-900 cursor-pointer flex items-center gap-2"
+                  >
+                    {walkInVillasLoading ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Đang tải...
+                      </>
+                    ) : (
+                      "Tiếp theo"
+                    )}
+                  </button>
                 </div>
               </div>
-
-              <div>
-                <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                  Email khách hàng <span className="text-red-550">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={walkInForm.email}
-                  onChange={(e) => setWalkInForm({ ...walkInForm, email: e.target.value })}
-                  placeholder="VD: guest@gmail.com"
-                  className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                    Ngày nhận phòng <span className="text-red-550">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={walkInForm.checkInDate}
-                    onChange={(e) => setWalkInForm({ ...walkInForm, checkInDate: e.target.value })}
-                    className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
-                  />
+            ) : walkInStep === 2 ? (
+              <form onSubmit={handleWalkInSubmit} className="space-y-4 text-xs">
+                {/* Step 2 Fields */}
+                <div className="bg-primary-50/30 p-3.5 border border-primary-100 rounded-lg flex flex-col gap-1 text-sage-900">
+                  <div>
+                    Đoàn khách đăng ký: <strong className="text-primary-700">{walkInForm.guestsCount} Người lớn</strong>
+                    {parseInt(walkInForm.childrenUnder5 || 0) + parseInt(walkInForm.children5to12 || 0) > 0 && (
+                      <>
+                        , <strong className="text-sky-700">{parseInt(walkInForm.childrenUnder5 || 0) + parseInt(walkInForm.children5to12 || 0)} Trẻ em</strong>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-sage-500">
+                    Chọn các phòng trống phù hợp bên dưới để sắp xếp phòng cho đoàn.
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                    Ngày trả phòng <span className="text-red-550">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={walkInForm.checkOutDate}
-                    onChange={(e) => setWalkInForm({ ...walkInForm, checkOutDate: e.target.value })}
-                    className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
+                  <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-2">
                     Chọn biệt thự/Phòng trống <span className="text-red-550">*</span>
                   </label>
-                  <select
-                    required
-                    value={walkInForm.roomId}
-                    onChange={(e) => setWalkInForm({ ...walkInForm, roomId: e.target.value })}
-                    className="w-full p-2.5 border border-primary-100 focus:outline-primary-200 bg-white"
-                  >
-                    <option value="">-- Chọn phòng khả dụng --</option>
-                    {villas
-                      .filter((v) => v.status === "AVAILABLE" || v.status === "available")
-                      .map((v) => (
-                        <option key={v.roomId} value={v.roomId}>
-                          Phòng {v.roomNumber} ({v.roomTypeName} - Tối đa {v.capacity || 2} khách)
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                    Chọn gói Retreat trị liệu
-                  </label>
-                  <select
-                    value={walkInForm.packageId}
-                    onChange={(e) => setWalkInForm({ ...walkInForm, packageId: e.target.value })}
-                    className="w-full p-2.5 border border-primary-100 focus:outline-primary-200 bg-white"
-                  >
-                    <option value="">Không sử dụng gói</option>
-                    {packages.map((pkg) => (
-                      <option key={pkg.packageId} value={pkg.packageId}>
-                        {pkg.name} ({pkg.durationDays} ngày - {formatCurrency(pkg.price)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              <div>
-                <label className="block font-semibold uppercase tracking-wider text-sage-500 mb-1">
-                  Số lượng khách
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={walkInForm.guestsCount}
-                  onChange={(e) => setWalkInForm({ ...walkInForm, guestsCount: e.target.value })}
-                  className="w-full p-2.5 border border-primary-100 focus:outline-primary-200"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4 border-t border-primary-50">
-                <button
-                  type="button"
-                  onClick={() => setShowWalkInModal(false)}
-                  className="px-4 py-2 border border-primary-100 text-xs font-semibold uppercase tracking-wider hover:bg-primary-50 cursor-pointer"
-                  disabled={walkInLoading}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={walkInLoading}
-                  className="px-6 py-2 bg-primary-800 text-white text-xs font-semibold uppercase tracking-wider hover:bg-primary-900 cursor-pointer flex items-center gap-2 disabled:opacity-50"
-                >
-                  {walkInLoading ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Đang xử lý...
-                    </>
+                  {walkInVillasLoading ? (
+                    <div className="flex flex-col items-center justify-center py-10 space-y-2 text-sage-400">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#cda250]" />
+                      <p>Đang tìm kiếm phòng trống khả dụng...</p>
+                    </div>
                   ) : (
                     <>
-                      <Plus className="h-3.5 w-3.5" />
-                      Tạo đặt phòng
+                      <div className="grid grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+                        {walkInVillas.filter(v => v.status === "AVAILABLE" || v.status === "available").length === 0 ? (
+                          <div className="col-span-2 text-center py-10 text-sage-400 italic bg-sage-50 border border-primary-50 rounded">
+                            Không có phòng nào còn trống trong khoảng thời gian đã chọn!
+                          </div>
+                        ) : (
+                          walkInVillas
+                            .filter(v => v.status === "AVAILABLE" || v.status === "available")
+                            .map((v) => {
+                              const isChecked = walkInForm.roomIds.includes(String(v.roomId));
+                              return (
+                                <div
+                                  key={v.roomId}
+                                  onClick={() => {
+                                    const rid = String(v.roomId);
+                                    if (isChecked) {
+                                      setWalkInForm({ ...walkInForm, roomIds: walkInForm.roomIds.filter(id => id !== rid) });
+                                    } else {
+                                      setWalkInForm({ ...walkInForm, roomIds: [...walkInForm.roomIds, rid] });
+                                    }
+                                  }}
+                                  className={`relative p-3 border rounded-xl cursor-pointer select-none transition-all flex flex-col gap-1 text-left ${
+                                    isChecked
+                                      ? "border-[#cda250] bg-gradient-to-b from-white to-[#cda250]/5 shadow-md ring-1 ring-[#cda250]"
+                                      : "border-primary-100 hover:border-primary-200 hover:bg-sage-50/30"
+                                  }`}
+                                >
+                                  <div className="font-bold text-sage-900 text-sm flex items-center justify-between">
+                                    <span>Phòng {v.roomNumber}</span>
+                                    {isChecked && (
+                                      <span className="w-3.5 h-3.5 bg-[#cda250] rounded-full flex items-center justify-center text-white text-[9px] font-black">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-sage-500 font-medium">
+                                    {v.roomTypeName}
+                                  </div>
+                                  <div className="text-[10px] text-primary-600 font-medium mt-1">
+                                    Tối đa {v.capacity || 2} khách
+                                  </div>
+                                </div>
+                              );
+                            })
+                        )}
+                      </div>
+
+                      {walkInForm.roomIds.length > 0 && (
+                        <div className="mt-3 flex items-center justify-between p-2.5 bg-sage-50/60 border border-primary-50 rounded-lg text-sage-700">
+                          <div>
+                            Đã chọn: <strong>{walkInForm.roomIds.length} phòng</strong>
+                          </div>
+                          <div>
+                            Tổng sức chứa: <strong>{walkInForm.roomIds.reduce((sum, rid) => {
+                              const r = walkInVillas.find(v => String(v.roomId) === String(rid));
+                              return sum + (r ? (r.capacity || 2) : 0);
+                            }, 0)} khách</strong>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
-                </button>
-              </div>
-            </form>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t border-primary-50">
+                  <button
+                    type="button"
+                    onClick={() => setWalkInStep(1)}
+                    className="px-4 py-2 border border-primary-100 text-xs font-semibold uppercase tracking-wider hover:bg-primary-50 cursor-pointer"
+                    disabled={walkInLoading}
+                  >
+                    Quay lại
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={walkInLoading || walkInForm.roomIds.length === 0}
+                    className="px-6 py-2 bg-primary-800 text-white text-xs font-semibold uppercase tracking-wider hover:bg-primary-900 cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {walkInLoading ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Đang tạo đặt phòng...
+                      </>
+                    ) : (
+                      "Tạo đặt phòng"
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Step 3: Hóa đơn chi tiết & Lựa chọn phương thức cọc */
+              <form onSubmit={handleDepositPayment} className="space-y-4 text-xs text-left">
+                {paymentError && (
+                  <div className="bg-red-50 border border-red-200 p-3.5 flex items-center gap-2 text-red-700">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{paymentError}</span>
+                  </div>
+                )}
+
+                {createdInvoice && (
+                  <>
+                    <div className="border border-primary-100 bg-primary-50/20 p-5 space-y-4 rounded-xl shadow-[0_2px_12px_rgba(26,44,34,0.02)]">
+                      <div className="flex justify-between items-center pb-2 border-b border-primary-100/50">
+                        <span className="font-bold uppercase tracking-wider text-primary-800 text-[10px]">
+                          Thông tin hóa đơn đặt phòng #NS-{createdInvoice.invoiceId}
+                        </span>
+                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/50 text-[9px] font-bold uppercase rounded-md">
+                          Chờ Đặt Cọc (30%)
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-y-2 text-[11px]">
+                        <span className="text-sage-500">Khách hàng đặt:</span>
+                        <span className="font-semibold text-right text-sage-950">{walkInForm.fullName}</span>
+
+                        <span className="text-sage-500">Số điện thoại:</span>
+                        <span className="font-semibold text-right text-sage-950">{walkInForm.phone}</span>
+
+                        <span className="text-sage-500">Thời gian lưu trú:</span>
+                        <span className="font-semibold text-right text-sage-950">
+                          {formatDate(walkInForm.checkInDate)} → {formatDate(walkInForm.checkOutDate)}
+                        </span>
+
+                        <span className="text-sage-500">Số phòng đã chọn:</span>
+                        <span className="font-semibold text-right text-primary-800">
+                          {walkInForm.roomIds.map(rid => {
+                            const r = villas.find(v => String(v.roomId) === String(rid));
+                            return r ? `Phòng ${r.roomNumber}` : rid;
+                          }).join(", ")}
+                        </span>
+
+                        {walkInForm.comboId && (
+                          <>
+                            <span className="text-sage-500">Gói combo ẩm thực:</span>
+                            <span className="font-semibold text-right text-sage-950">
+                              {walkInForm.comboId === "detox"
+                                ? "Gói Detox Thanh Lọc"
+                                : walkInForm.comboId === "recovery"
+                                ? "Gói Phục Hồi Năng Lượng"
+                                : "Gói Thưởng Thức VIP"}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="border-t border-dashed border-primary-200/60 pt-3 mt-3 space-y-2 text-[11px]">
+                        <div className="flex justify-between text-sage-600">
+                          <span>🛏️ Tiền phòng nghỉ:</span>
+                          <span className="font-mono font-semibold">{formatCurrency(createdInvoice.roomSubtotal)}</span>
+                        </div>
+                        {createdInvoice.foodSubtotal > 0 && (
+                          <div className="flex justify-between text-sage-600">
+                            <span>🍲 Tiền combo đồ ăn đã chọn:</span>
+                            <span className="font-mono font-semibold">{formatCurrency(createdInvoice.foodSubtotal)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sage-500 text-[10px] italic">
+                          <span>Thuế và phí dịch vụ (10%):</span>
+                          <span className="font-mono">{formatCurrency(createdInvoice.taxAndFees)}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-primary-100 flex justify-between items-center text-sm font-serif">
+                        <span className="font-normal text-sage-900">Tổng giá trị hóa đơn:</span>
+                        <span className="font-bold text-sage-950">{formatCurrency(createdInvoice.finalAmount)}</span>
+                      </div>
+
+                      <div className="p-3 bg-amber-50/70 border border-amber-250/50 flex justify-between items-center rounded-lg mt-2 text-xs shadow-sm">
+                        <span className="font-semibold text-amber-900 flex items-center gap-1.5">
+                          <CreditCard className="h-4 w-4 text-amber-700" />
+                          Tiền đặt cọc cần đóng (30%):
+                        </span>
+                        <span className="font-mono font-black text-amber-800 text-sm">
+                          {formatCurrency(createdInvoice.finalAmount * 0.3)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block font-bold uppercase tracking-wider text-sage-500 mb-2">
+                        Chọn phương thức thanh toán cọc <span className="text-red-550">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div
+                          onClick={() => setPaymentMethod("cash")}
+                          className={`p-4 border rounded-xl cursor-pointer select-none transition-all flex flex-col items-center gap-2 text-center ${
+                            paymentMethod === "cash"
+                              ? "border-[#cda250] bg-gradient-to-b from-white to-[#cda250]/5 shadow-md ring-1 ring-[#cda250]"
+                              : "border-primary-100 hover:border-primary-200 hover:bg-sage-50/30"
+                          }`}
+                        >
+                          <Users className="h-6 w-6 text-[#cda250]" />
+                          <div className="font-bold text-sage-900 text-xs">1. Lễ tân xác nhận</div>
+                          <div className="text-[10px] text-sage-500 font-medium">Thu tiền mặt tại quầy</div>
+                        </div>
+
+                        <div
+                          onClick={() => setPaymentMethod("vnpay")}
+                          className={`p-4 border rounded-xl cursor-pointer select-none transition-all flex flex-col items-center gap-2 text-center ${
+                            paymentMethod === "vnpay"
+                              ? "border-[#cda250] bg-gradient-to-b from-white to-[#cda250]/5 shadow-md ring-1 ring-[#cda250]"
+                              : "border-primary-100 hover:border-primary-200 hover:bg-sage-50/30"
+                          }`}
+                        >
+                          <CreditCard className="h-6 w-6 text-primary-850" />
+                          <div className="font-bold text-sage-900 text-xs">2. Thanh toán VNPay</div>
+                          <div className="text-[10px] text-sage-500 font-medium">Tạo link thanh toán trực tuyến</div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-4 border-t border-primary-50">
+                  <button
+                    type="button"
+                    onClick={handleSkipPayment}
+                    className="px-4 py-2 border border-primary-100 text-xs font-semibold uppercase tracking-wider hover:bg-primary-50 cursor-pointer text-sage-600 disabled:opacity-50"
+                    disabled={paymentLoading}
+                  >
+                    Bỏ qua & Thanh toán sau
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={paymentLoading}
+                    className="px-6 py-2 bg-primary-800 text-white text-xs font-semibold uppercase tracking-wider hover:bg-primary-900 cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {paymentLoading ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Đang xử lý...
+                      </>
+                    ) : (
+                      "Xác nhận thanh toán cọc"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

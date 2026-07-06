@@ -42,6 +42,12 @@ public class RoomBookingService {
     @org.springframework.beans.factory.annotation.Autowired
     private fu.se.smms.service.SpaBookingService spaBookingService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private AccompanyingGuestRepository accompanyingGuestRepository;
+
     public RoomBookingService(UserRepository userRepository,
             RoomBookingRepository roomBookingRepository,
             RetreatPackageRepository retreatPackageRepository,
@@ -79,28 +85,37 @@ public class RoomBookingService {
     @Transactional
     public RoomBooking createBooking(BookingRequestDTO dto) {
         // 1. Get or create user
-        User user = userRepository.findByEmail(dto.getEmail()).orElseGet(() -> {
-            User newUser = User.builder()
+        User user = userRepository.findByEmail(dto.getEmail()).orElse(null);
+        if (user == null) {
+            user = User.builder()
                     .email(dto.getEmail())
                     .fullName(dto.getFullName())
                     .phone(dto.getPhone())
+                    .idPassportEncrypted(dto.getIdentityDocument())
                     .role("GUEST")
                     .status("ACTIVE")
-                    .passwordHash("DummyHash123") // Should be generated/random in reality
+                    .passwordHash(passwordEncoder.encode("123456"))
                     .build();
-            return userRepository.save(newUser);
-        });
+            user = userRepository.save(user);
+        } else {
+            // Update identity document if not set yet
+            if ((user.getIdPassportEncrypted() == null || user.getIdPassportEncrypted().isBlank()) && dto.getIdentityDocument() != null) {
+                user.setIdPassportEncrypted(dto.getIdentityDocument());
+                user = userRepository.save(user);
+            }
+        }
 
         // 2. Update Medical Profile
         Optional<MedicalProfile> profileOpt = medicalProfileRepository.findByUser_UserId(user.getUserId());
-        MedicalProfile profile = profileOpt.orElseGet(() -> {
-            MedicalProfile newProfile = new MedicalProfile();
-            newProfile.setUser(user);
-            return newProfile;
-        });
-
-        profile.setExplicitConsentSigned(
-                dto.getExplicitConsentSigned() != null ? dto.getExplicitConsentSigned() : false);
+        MedicalProfile profile;
+        if (profileOpt.isPresent()) {
+            profile = profileOpt.get();
+        } else {
+            profile = new MedicalProfile();
+            profile.setUser(user);
+        }
+        
+        profile.setExplicitConsentSigned(dto.getExplicitConsentSigned() != null ? dto.getExplicitConsentSigned() : false);
         if (dto.getAllergies() != null) {
             profile.setFoodAllergiesEncrypted(dto.getAllergies()); // using setter that encrypts
         }
@@ -134,11 +149,33 @@ public class RoomBookingService {
         LocalDateTime checkOut = dto.getCheckOutDate().toLocalDate().atTime(12, 0, 0);
         booking.setCheckInDate(checkIn);
         booking.setCheckOutDate(checkOut);
-        booking.setStatus("PENDING_DEPOSIT");
+        if (dto.getIdentityDocument() != null && !dto.getIdentityDocument().isBlank()) {
+            booking.setStatus("CONFIRMED");
+        } else {
+            booking.setStatus("PENDING_DEPOSIT");
+        }
         booking.setTotalDeposit(BigDecimal.ZERO);
-
-        // 4. Create RoomBookingDetail(s) based on roomTypeQuantities
+        // 4. Create RoomBookingDetail(s)
         List<RoomBookingDetail> details = new ArrayList<>();
+
+        // 4a. If specific roomIds provided (walk-in staff selection), assign those exact rooms
+        if (dto.getRoomIds() != null && !dto.getRoomIds().isEmpty()) {
+            for (Integer specificRoomId : dto.getRoomIds()) {
+                Room room = roomRepository.findById(specificRoomId).orElse(null);
+                if (room != null) {
+                    RoomBookingDetail detail = new RoomBookingDetail();
+                    detail.setRoomBooking(booking);
+                    detail.setRoom(room);
+                    BigDecimal priceAtBooking = BigDecimal.valueOf(5000000);
+                    if (room.getRoomType() != null && room.getRoomType().getBasePricePerNight() != null) {
+                        priceAtBooking = room.getRoomType().getBasePricePerNight();
+                    }
+                    detail.setPriceAtBooking(priceAtBooking);
+                    details.add(detail);
+                }
+            }
+        } else {
+        // 4b. Fallback: use roomTypeQuantities (online booking flow)
         Map<String, Integer> roomTypeQuantities = dto.getRoomTypeQuantities();
         if (roomTypeQuantities == null || roomTypeQuantities.isEmpty()) {
             Integer vId = dto.getVillaId();
@@ -212,6 +249,7 @@ public class RoomBookingService {
                 }
             }
         }
+        } // end else (roomTypeQuantities fallback)
 
         if (details.isEmpty()) {
             List<Room> allRooms = roomRepository.findAll();
@@ -322,6 +360,38 @@ public class RoomBookingService {
                 foodOrder.setTotalAmount(totalExtraCharges);
                 foodOrderRepository.save(foodOrder);
             }
+        }
+
+        // 5b. Save primary guest and accompanying guests to database if identityDocument is present
+        if (dto.getIdentityDocument() != null && !dto.getIdentityDocument().isBlank()) {
+            AccompanyingGuest mainGuestObj = new AccompanyingGuest();
+            mainGuestObj.setBookingId(savedBooking.getBookingId());
+            mainGuestObj.setFullName(savedBooking.getUser().getFullName());
+            mainGuestObj.setIdentityDocument(dto.getIdentityDocument().trim());
+            mainGuestObj.setRelationship("Người đăng ký");
+            mainGuestObj.setIsChild(false);
+            accompanyingGuestRepository.save(mainGuestObj);
+ 
+            if (dto.getAccompanyingGuests() != null && !dto.getAccompanyingGuests().isEmpty()) {
+                for (fu.se.smms.dto.AccompanyingGuestDTO gDto : dto.getAccompanyingGuests()) {
+                    if (gDto.getFullName() == null || gDto.getFullName().isBlank()) continue;
+                    AccompanyingGuest guestObj = new AccompanyingGuest();
+                    guestObj.setBookingId(savedBooking.getBookingId());
+                    guestObj.setFullName(gDto.getFullName().trim());
+                    guestObj.setIdentityDocument(gDto.getIdentityDocument() != null ? gDto.getIdentityDocument().trim() : null);
+                    guestObj.setRelationship(gDto.getRelationship() != null ? gDto.getRelationship().trim() : "Khách đi cùng");
+                    guestObj.setIsChild(gDto.getIsChild() != null ? gDto.getIsChild() : false);
+                    accompanyingGuestRepository.save(guestObj);
+                }
+            }
+        }
+
+        // 6. Calculate initial invoice
+        try {
+            invoiceService.createInvoice(savedBooking.getBookingId());
+        } catch (Exception e) {
+            System.err.println("[Invoice Calc] Error creating initial invoice: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return savedBooking;
@@ -689,141 +759,5 @@ public class RoomBookingService {
 
         return saved;
     }
-
-    @Transactional
-    public java.util.Map<String, Object> addExtraServices(Integer bookingId, fu.se.smms.dto.AddExtraServicesDTO dto) {
-        RoomBooking booking = roomBookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đặt phòng với ID: " + bookingId));
-
-        java.math.BigDecimal totalAddedPrice = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal additionalDeposit = java.math.BigDecimal.ZERO;
-
-        java.util.List<String> messages = new java.util.ArrayList<>();
-
-        // 1. Handle Room Addition
-        if (dto.getRoomId() != null) {
-            if (!"CHECKED_IN".equalsIgnoreCase(booking.getStatus())) {
-                throw new RuntimeException("Chỉ hỗ trợ đặt thêm phòng khi khách đã thực hiện Check-in lưu trú.");
-            }
-            Room room = roomRepository.findById(dto.getRoomId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng với ID: " + dto.getRoomId()));
-
-            java.time.LocalDateTime checkIn = booking.getCheckInDate();
-            java.time.LocalDateTime checkOut = booking.getCheckOutDate();
-            if (dto.getCheckInDate() != null && !dto.getCheckInDate().isBlank()) {
-                checkIn = java.time.LocalDate.parse(dto.getCheckInDate()).atTime(14, 0);
-            }
-            if (dto.getCheckOutDate() != null && !dto.getCheckOutDate().isBlank()) {
-                checkOut = java.time.LocalDate.parse(dto.getCheckOutDate()).atTime(12, 0);
-            }
-
-            long nights = java.time.temporal.ChronoUnit.DAYS.between(checkIn.toLocalDate(), checkOut.toLocalDate());
-            if (nights <= 0)
-                nights = 1;
-
-            java.math.BigDecimal roomPrice = room.getRoomType().getBasePricePerNight()
-                    .multiply(java.math.BigDecimal.valueOf(nights));
-
-            RoomBookingDetail detail = new RoomBookingDetail();
-            detail.setRoomBooking(booking);
-            detail.setRoom(room);
-            detail.setPriceAtBooking(room.getRoomType().getBasePricePerNight());
-            roomBookingDetailRepository.save(detail);
-
-            if ("CHECKED_IN".equals(booking.getStatus())) {
-                room.setStatus("OCCUPIED");
-                roomRepository.save(room);
-            }
-
-            totalAddedPrice = totalAddedPrice.add(roomPrice);
-            java.math.BigDecimal extraRoomDeposit = java.math.BigDecimal.ZERO;
-            additionalDeposit = additionalDeposit.add(extraRoomDeposit);
-
-            messages.add("Đã thêm phòng " + room.getRoomNumber() + " (" + nights + " đêm).");
-        }
-
-        // 2. Handle Retreat Package Addition
-        if (dto.getPackageId() != null) {
-            RetreatPackage retreatPackage = retreatPackageRepository.findById(dto.getPackageId())
-                    .orElseThrow(
-                            () -> new RuntimeException("Không tìm thấy gói trị liệu với ID: " + dto.getPackageId()));
-
-            if (booking.getRetreatPackages() == null) {
-                booking.setRetreatPackages(new java.util.ArrayList<>());
-            }
-            booking.getRetreatPackages().add(retreatPackage);
-
-            totalAddedPrice = totalAddedPrice.add(retreatPackage.getPrice());
-            messages.add("Đã thêm gói retreat: " + retreatPackage.getName() + ".");
-        }
-
-        // 3. Handle Food Addition
-        if (dto.getFoodMenuId() != null) {
-            int qty = dto.getFoodQuantity() != null ? dto.getFoodQuantity() : 1;
-            FoodMenu food = foodMenuRepository.findById(dto.getFoodMenuId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy món ăn với ID: " + dto.getFoodMenuId()));
-
-            java.math.BigDecimal foodPrice = food.getPrice().multiply(java.math.BigDecimal.valueOf(qty));
-
-            FoodOrder order = new FoodOrder();
-            order.setRoomBooking(booking);
-            order.setUser(booking.getUser());
-            order.setStatus("PREPARING");
-            order.setOrigin("RECEPTIONIST");
-            order.setOrderTime(java.time.LocalDateTime.now());
-            order.setTotalAmount(foodPrice);
-            foodOrderRepository.save(order);
-
-            FoodOrderDetail orderDetail = new FoodOrderDetail();
-            orderDetail.setFoodOrder(order);
-            orderDetail.setFoodMenu(food);
-            orderDetail.setQuantity(qty);
-            orderDetail.setPriceAtOrder(food.getPrice());
-            foodOrderDetailRepository.save(orderDetail);
-
-            totalAddedPrice = totalAddedPrice.add(foodPrice);
-            messages.add("Đã đặt thêm món ăn: " + food.getDishName() + " x" + qty + ".");
-        }
-
-        // 4. Handle Spa Addition
-        if (dto.getSpaServiceId() != null && dto.getSpaStartDatetime() != null) {
-            SpaService spa = spaServiceRepository.findById(dto.getSpaServiceId())
-                    .orElseThrow(
-                            () -> new RuntimeException("Không tìm thấy dịch vụ Spa với ID: " + dto.getSpaServiceId()));
-
-            java.time.LocalDateTime startDt = java.time.LocalDateTime.parse(dto.getSpaStartDatetime());
-
-            fu.se.smms.dto.SpaBookingRequestDTO spaReq = new fu.se.smms.dto.SpaBookingRequestDTO();
-            spaReq.setSpaServiceId(dto.getSpaServiceId());
-            spaReq.setStartDatetime(startDt);
-            spaReq.setRoomBookingId(bookingId);
-            spaReq.setIsPackageIncluded(false);
-
-            spaBookingService.scheduleSpaBooking(booking.getUser().getUserId(), spaReq, "RECEPTIONIST");
-
-            totalAddedPrice = totalAddedPrice.add(spa.getPrice());
-            messages.add("Đã đặt thêm Spa: " + spa.getName() + " lúc "
-                    + startDt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM")) + ".");
-        }
-
-        roomBookingRepository.save(booking);
-
-        Integer invoiceId = null;
-        try {
-            fu.se.smms.dto.InvoiceDTO inv = invoiceService.createInvoice(bookingId);
-            if (inv != null) {
-                invoiceId = inv.getInvoiceId();
-            }
-        } catch (Exception ignored) {
-        }
-
-        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
-        result.put("success", true);
-        result.put("message", String.join(" ", messages));
-        result.put("totalAddedPrice", totalAddedPrice);
-        result.put("additionalDeposit", additionalDeposit);
-        result.put("invoiceId", invoiceId);
-
-        return result;
-    }
 }
+

@@ -42,8 +42,8 @@ public class RoomBookingController {
             response.put("invoiceId", invoice.getInvoiceId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.err.println("[RoomBookingController Debug] Error creating booking:");
-            e.printStackTrace();
+            System.out.println("[RoomBookingController Debug] Error creating booking: " + e.getMessage());
+            e.printStackTrace(System.out);
             return ResponseEntity.badRequest().body("Failed to create booking: " + e.getMessage());
         }
     }
@@ -98,16 +98,6 @@ public class RoomBookingController {
         }
     }
 
-    @PostMapping("/{bookingId}/add-extra")
-    public ResponseEntity<?> addExtraServices(@PathVariable Integer bookingId,
-                                               @RequestBody fu.se.smms.dto.AddExtraServicesDTO request) {
-        try {
-            Map<String, Object> response = roomBookingService.addExtraServices(bookingId, request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
 
     @PostMapping("/{bookingId}/cancel")
     public ResponseEntity<?> cancelBooking(@PathVariable Integer bookingId,

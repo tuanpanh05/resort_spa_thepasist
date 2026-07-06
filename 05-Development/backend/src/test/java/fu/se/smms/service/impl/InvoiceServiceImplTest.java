@@ -516,6 +516,26 @@ class InvoiceServiceImplTest {
         assertEquals(new BigDecimal("297000.00"), result.getFinalAmount());
     }
 
+    @Test
+    @DisplayName("Deposit-TC01: Cash deposit payment sets booking status to CONFIRMED and calculates deposit amount")
+    void cashDepositPaymentSetsBookingStatusToConfirmed() {
+        Invoice invoice = unpaidInvoice();
+        RoomBooking booking = invoice.getRoomBooking();
+        booking.setStatus("PENDING_DEPOSIT");
+        booking.setTotalDeposit(BigDecimal.ZERO);
+        
+        when(invoiceRepository.findById(1)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roomBookingRepository.save(any(RoomBooking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        InvoiceDTO dto = service.markCashPayment(1);
+        
+        assertEquals("CONFIRMED", booking.getStatus());
+        assertNotNull(booking.getTotalDeposit());
+        assertTrue(booking.getTotalDeposit().compareTo(BigDecimal.ZERO) > 0);
+        verify(transactionLogRepository, atLeastOnce()).save(any());
+    }
+
     // ─── Helper methods ────────────────────────────────────────────────────────
 
     private Invoice unpaidInvoice() {

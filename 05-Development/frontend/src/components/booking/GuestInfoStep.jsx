@@ -205,7 +205,7 @@ export default function GuestInfoStep({
             </div>
             <div>
               <label className="block text-[11px] uppercase text-sage-700 font-bold mb-1.5">
-                Từ 5 - 12 tuổi
+                Từ 5 - 12 tuổi (Giảm 30%)
               </label>
               <div className="relative">
                 <input

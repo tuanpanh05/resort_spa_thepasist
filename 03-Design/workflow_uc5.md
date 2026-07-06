@@ -7,6 +7,7 @@ Tài liệu này mô tả chi tiết luồng nghiệp vụ (Workflow) từ Front
 ## 🗺️ TỔNG QUAN LUỒNG CHẠY (WORKFLOW)
 
 ### Luồng thực hiện Xóa dữ liệu sức khỏe (Hard Delete)
+
 ```mermaid
 sequenceDiagram
     actor Guest as Khách hàng
@@ -49,16 +50,18 @@ sequenceDiagram
 ## 💾 CẤU TRÚC DATABASE (TABLES LIÊN QUAN)
 
 ### Bảng `medical_profile` (Entity: [MedicalProfile.java](file:///d:/Semester5/P/Project/su26-swp391-se2023-g3/05-Development/backend/src/main/java/fu/se/smms/entity/MedicalProfile.java))
+
 Khác với các thực thể khác có thể áp dụng cơ chế Soft Delete (đổi flag active thành inactive) để giữ lại dữ liệu lịch sử hóa đơn hoặc giao dịch, bảng `medical_profile` bắt buộc phải áp dụng **Hard Delete** (xóa vật lý dòng dữ liệu khỏi bảng) khi người dùng yêu cầu xóa, để đảm bảo tuân thủ tính riêng tư và quy định lưu trữ dữ liệu tối thiểu.
+
 * Lệnh SQL thực thi dưới DB:
   ```sql
   DELETE FROM medical_profile WHERE user_id = ?;
   ```
 
----
+## k usdkjf (RELATED SERVICES)
 
-## 🛠️ CÁC SERVICE LIÊN QUAN (RELATED SERVICES)
+### i aấn oó chê[MedicalProfileService (MedicalProfileServiceImpl)](file:///d:/Semester5/P/Project/su26-swp391-se2023-g3/05-Development/backend/src/main/java/fu/se/smms/service/impl/MedicalProfileServiceImpl.java)
 
-### 1. [MedicalProfileService (MedicalProfileServiceImpl)](file:///d:/Semester5/P/Project/su26-swp391-se2023-g3/05-Development/backend/src/main/java/fu/se/smms/service/impl/MedicalProfileServiceImpl.java)
 Cung cấp logic nghiệp vụ xử lý xóa bỏ dữ liệu:
+
 * `deleteMedicalProfile(String email)`: Định vị ID người dùng qua email, truy xuất bản ghi trong `medical_profile` và ra lệnh xóa vật lý thông qua Spring Data JPA Repository. Ném lỗi nếu hồ sơ không tồn tại để ngăn chặn các request rác hoặc xóa trùng lặp.
