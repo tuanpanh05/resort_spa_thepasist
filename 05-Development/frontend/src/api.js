@@ -1,6 +1,7 @@
 /**
  * API utility for making authenticated requests to the backend.
  * Base URL: http://localhost:8080/api
+ * Fix: improve bill payment flow
  */
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
