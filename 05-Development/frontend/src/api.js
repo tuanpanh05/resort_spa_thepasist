@@ -1,11 +1,6 @@
 /**
  * API utility for making authenticated requests to the backend.
  * Base URL: http://localhost:8080/api
- * Fix: improve bill payment flow
- * Fix: correct payment logic for multi-service booking
- * Fix: handle error response on bill generation
- * Fix: update API endpoint for invoice summary
- * Fix: refactor bill display component UI
  */
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
