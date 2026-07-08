@@ -1,4 +1,3 @@
-// RoomsPage: displays available room types and villa listings
 import React, { useState } from "react";
 import {
   Maximize,

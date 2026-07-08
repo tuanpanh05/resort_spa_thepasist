@@ -1,4 +1,3 @@
-// Payment page - handles VNPay & bank transfer flows
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link, useSearchParams } from "react-router-dom";
 import {

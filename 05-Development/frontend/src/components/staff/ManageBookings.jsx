@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Edit, X, Shield, AlertCircle, Loader2, Eye, Users, Bed, CreditCard, Calendar, Plus, LogOut } from "lucide-react";
 import { staffApi, bookingApi, masterDataApi, paymentApi, spaApi } from "../../api";
-// Check-in flow: validate CCCD/Passport before confirming arrival
 
 /**
  * UC08: ManageBookings — Arrivals Dashboard & Check-In Management.
