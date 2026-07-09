@@ -2,6 +2,10 @@ import React from "react";
 import { Heart, UtensilsCrossed, Check, Copy, Info, ShieldCheck, Loader2 } from "lucide-react";
 import { DIET_OPTIONS, ALLERGY_OPTIONS } from "../../constants/booking";
 
+// Payment rate constants - deposit 30%, remaining 70% paid at check-out
+const DEPOSIT_RATE = 0.3;
+const REMAINING_RATE = 0.7;
+
 export default function ConfirmationStep({
   guestInfo,
   nightsCount,
@@ -265,6 +269,7 @@ export default function ConfirmationStep({
         </div>
 
         {/* Part 3: Total and Payment info */}
+        {/* Deposit = totalAmount * DEPOSIT_RATE (30%), Remaining = totalAmount * REMAINING_RATE (70%) */}
         <div className="bg-[#fbfaf7] border border-[#cda250]/20 p-6 space-y-4 rounded-2xl shadow-xs">
           <div className="flex justify-between items-end pb-4 border-b border-[#cda250]/15 border-dashed">
             <div>
