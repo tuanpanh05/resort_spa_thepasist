@@ -54,6 +54,16 @@ public class InvoiceServiceImpl implements InvoiceService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InvoiceServiceImpl.class);
     private static final BigDecimal TAX_RATE = new BigDecimal("0.10");
 
+    // Payment processing constants (UC21/UC22 - Module 5)
+    /** Deposit ratio: guest pays 30% of total invoice at booking time. */
+    private static final BigDecimal DEPOSIT_RATIO = new BigDecimal("0.30");
+    /** Remaining ratio: guest pays 70% of total invoice at check-out. */
+    private static final BigDecimal REMAINING_RATIO = new BigDecimal("0.70");
+
+    /** Invoice lifecycle statuses */
+    private static final String INVOICE_STATUS_PENDING = "PENDING";
+    private static final String INVOICE_STATUS_PAID    = "PAID";
+
     private final InvoiceRepository invoiceRepository;
     private final RoomBookingRepository roomBookingRepository;
     private final RoomRepository roomRepository;
