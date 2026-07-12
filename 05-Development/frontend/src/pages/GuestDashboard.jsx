@@ -68,6 +68,15 @@ export default function GuestDashboard() {
   const [bookingDays, setBookingDays] = useState([]);
   const todayStr = new Date().toISOString().split("T")[0];
 
+  const isPeriodAvailable = (period) => {
+    if (orderMode !== "extra") return true; // Preselect mode has no time restriction for tabs
+    const hour = new Date().getHours();
+    if (period === "Breakfast") return hour >= 6 && hour < 9;
+    if (period === "Lunch") return hour >= 11 && hour < 14;
+    if (period === "Dinner") return hour >= 18 && hour < 21;
+    return false;
+  };
+
   useEffect(() => {
     const email = localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail");
     const role = localStorage.getItem("userRole") || sessionStorage.getItem("userRole");
@@ -111,7 +120,20 @@ export default function GuestDashboard() {
           curr.setDate(curr.getDate() + 1);
         }
         setBookingDays(days);
-        setSelectedDate(todayStr);
+        const isStayingToday = days.includes(todayStr);
+        if (isStayingToday) {
+            setOrderMode("extra");
+            setSelectedDate(todayStr);
+            const hour = new Date().getHours();
+            if (hour >= 6 && hour < 9) setActiveTab("Breakfast");
+            else if (hour >= 11 && hour < 14) setActiveTab("Lunch");
+            else if (hour >= 18 && hour < 21) setActiveTab("Dinner");
+            else setActiveTab("");
+        } else {
+            setOrderMode("preselect");
+            setSelectedDate(days.length > 0 ? days[0] : todayStr);
+            setActiveTab("Breakfast");
+        }
 
         if (data.booking.orders && data.booking.orders.length > 0) {
           // Lịch sử đơn hàng đã được fetch nhưng ta không load vào giỏ hàng hiện tại
@@ -325,8 +347,14 @@ export default function GuestDashboard() {
       setSpecialNotes({});
       if (mode === 'extra') {
           setSelectedDate(todayStr);
+          const hour = new Date().getHours();
+          if (hour >= 6 && hour < 9) setActiveTab("Breakfast");
+          else if (hour >= 11 && hour < 14) setActiveTab("Lunch");
+          else if (hour >= 18 && hour < 21) setActiveTab("Dinner");
+          else setActiveTab("");
       } else {
           if (bookingDays.length > 0) setSelectedDate(bookingDays[0]);
+          setActiveTab("Breakfast");
       }
   };
 
@@ -610,7 +638,8 @@ export default function GuestDashboard() {
               <div className="flex bg-sage-100/50 rounded-xl p-1 mb-4 border border-sage-200">
                 <button 
                   onClick={() => handleModeSwitch("extra")}
-                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${orderMode === "extra" ? "bg-white text-primary-800 shadow-sm border border-sage-200" : "text-sage-500 hover:text-sage-700"}`}
+                  disabled={!bookingDays.includes(todayStr)}
+                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${orderMode === "extra" ? "bg-white text-primary-800 shadow-sm border border-sage-200" : "text-sage-500 hover:text-sage-700"} ${!bookingDays.includes(todayStr) ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   Gọi Thêm Tại Bàn
                 </button>
@@ -624,22 +653,28 @@ export default function GuestDashboard() {
 
               {/* TABS HEADER */}
               <div className="flex bg-white rounded-xl shadow-sm border border-primary-100 p-1 mb-6 relative z-10 overflow-x-auto hide-scrollbar">
-                {["Breakfast", "Lunch", "Dinner"].map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setActiveTab(period)}
-                    className={`flex-1 min-w-[100px] py-3 px-4 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
-                      activeTab === period 
-                        ? "bg-primary-800 text-white shadow-md transform scale-[1.02]" 
-                        : "text-sage-500 hover:text-primary-700 hover:bg-primary-50"
-                    }`}
-                  >
-                    {period === "Breakfast" && <Coffee className="w-4 h-4" />}
-                    {period === "Lunch" && <Sun className="w-4 h-4" />}
-                    {period === "Dinner" && <Moon className="w-4 h-4" />}
-                    {period}
-                  </button>
-                ))}
+                {["Breakfast", "Lunch", "Dinner"].map((period) => {
+                  const available = isPeriodAvailable(period);
+                  return (
+                    <button
+                      key={period}
+                      onClick={() => setActiveTab(period)}
+                      disabled={!available}
+                      className={`flex-1 min-w-[100px] py-3 px-4 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                        !available 
+                          ? "opacity-50 cursor-not-allowed text-gray-400 bg-gray-100" 
+                          : activeTab === period 
+                            ? "bg-primary-800 text-white shadow-md transform scale-[1.02]" 
+                            : "text-sage-500 hover:text-primary-700 hover:bg-primary-50"
+                      }`}
+                    >
+                      {period === "Breakfast" && <Coffee className="w-4 h-4" />}
+                      {period === "Lunch" && <Sun className="w-4 h-4" />}
+                      {period === "Dinner" && <Moon className="w-4 h-4" />}
+                      {period}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* MEAL TAB CONTENT */}

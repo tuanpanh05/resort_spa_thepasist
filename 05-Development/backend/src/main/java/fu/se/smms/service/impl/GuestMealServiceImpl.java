@@ -60,7 +60,10 @@ public class GuestMealServiceImpl implements GuestMealService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
-        List<RoomBooking> activeBookings = roomBookingRepository.findActiveBookingsByUserId(user.getUserId());
+        java.time.LocalDate today = java.time.LocalDate.now();
+        List<RoomBooking> activeBookings = roomBookingRepository.findActiveBookingsByUserId(user.getUserId()).stream()
+                .filter(b -> !b.getCheckOutDate().toLocalDate().isBefore(today))
+                .collect(Collectors.toList());
         RoomBooking activeBooking = activeBookings.isEmpty() ? null : activeBookings.get(0);
 
         Optional<MedicalProfile> profileOpt = medicalProfileRepository.findByUser_UserId(user.getUserId());
@@ -536,7 +539,7 @@ public class GuestMealServiceImpl implements GuestMealService {
 
             MedicalProfile mp = medicalProfileRepository.findByUser_UserId(u.getUserId()).orElse(null);
             String readableAllergies = "Không có";
-            String dietaryPreference = "Healthy";
+            String dietaryPreference = "Chưa cung cấp";
             String decryptedAllergies = "";
 
             if (mp != null) {
@@ -596,6 +599,24 @@ public class GuestMealServiceImpl implements GuestMealService {
     @Override
     @Transactional
     public Map<String, Object> orderExtra(MealPreselectionDTO dto) {
+        int currentHour = java.time.LocalTime.now().getHour();
+        if (dto.getSelections() != null) {
+            for (MealPreselectionDTO.MealSelectionItem item : dto.getSelections()) {
+                String period = item.getPeriod();
+                if (period != null) {
+                    if ("Breakfast".equalsIgnoreCase(period) && (currentHour < 6 || currentHour >= 9)) {
+                        throw new RuntimeException("Thời gian gọi thêm món sáng (Breakfast) tại bàn chỉ từ 06:00 đến 08:59.");
+                    }
+                    if ("Lunch".equalsIgnoreCase(period) && (currentHour < 11 || currentHour >= 14)) {
+                        throw new RuntimeException("Thời gian gọi thêm món trưa (Lunch) tại bàn chỉ từ 11:00 đến 13:59.");
+                    }
+                    if ("Dinner".equalsIgnoreCase(period) && (currentHour < 18 || currentHour >= 21)) {
+                        throw new RuntimeException("Thời gian gọi thêm món tối (Dinner) tại bàn chỉ từ 18:00 đến 20:59.");
+                    }
+                }
+            }
+        }
+
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found."));
 

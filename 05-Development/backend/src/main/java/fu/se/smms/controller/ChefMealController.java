@@ -53,18 +53,46 @@ public class ChefMealController {
         List<Map<String, Object>> tables = tablesData.stream().map(t -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", t.getTableNumber());
-            map.put("status", t.getStatus()); 
             map.put("capacity", t.getCapacity());
+            
+            String rawStatus = t.getStatus();
+            String guestName = "";
+            if (rawStatus != null && rawStatus.startsWith("OCCUPIED")) {
+                map.put("status", "Occupied");
+                if (rawStatus.contains("|")) {
+                    guestName = rawStatus.substring(rawStatus.indexOf("|") + 1);
+                } else {
+                    // Try to find from active food order
+                    FoodOrder activeOrder = foodOrderRepository.findAll().stream()
+                            .filter(o -> o.getTable() != null && o.getTable().getTableId().equals(t.getTableId()))
+                            .filter(o -> !"CANCELLED".equalsIgnoreCase(o.getStatus()) && !"DELIVERED".equalsIgnoreCase(o.getStatus()))
+                            .findFirst()
+                            .orElse(null);
+                    if (activeOrder != null && activeOrder.getUser() != null) {
+                        guestName = activeOrder.getUser().getFullName();
+                    } else {
+                        guestName = "Khách vãng lai";
+                    }
+                }
+            } else {
+                map.put("status", "Available");
+            }
+            map.put("guestName", guestName);
+            
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(tables);
     }
 
     @PostMapping("/tables/{tableNumber}/book")
-    public ResponseEntity<?> bookTable(@PathVariable String tableNumber) {
+    public ResponseEntity<?> bookTable(@PathVariable String tableNumber, @RequestParam(required = false) String guestName) {
         RestaurantTable table = restaurantTableRepository.findByTableNumber(tableNumber).orElse(null);
         if (table == null) return ResponseEntity.badRequest().build();
-        table.setStatus("OCCUPIED");
+        if (guestName != null && !guestName.trim().isEmpty()) {
+            table.setStatus("OCCUPIED|" + guestName.trim());
+        } else {
+            table.setStatus("OCCUPIED");
+        }
         restaurantTableRepository.save(table);
         return ResponseEntity.ok(Collections.singletonMap("success", true));
     }

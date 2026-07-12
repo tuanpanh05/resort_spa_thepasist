@@ -34,6 +34,15 @@ import fu.se.smms.dto.GuestResidencyDTO;
 @Service
 public class CheckInServiceImpl {
 
+    /** Status required before a booking can proceed to check-in (BR-12). */
+    private static final String CHECKIN_STATUS_REQUIRED = "CONFIRMED";
+
+    /** Status applied to the booking after successful check-in. */
+    private static final String CHECKIN_STATUS_CHECKED_IN = "CHECKED_IN";
+
+    /** Room state applied to all associated rooms after check-in (BR-13b). */
+    private static final String ROOM_STATUS_OCCUPIED = "OCCUPIED";
+
     @Autowired
     private RoomBookingRepository roomBookingRepository;
 
@@ -69,7 +78,8 @@ public class CheckInServiceImpl {
                         "Không tìm thấy đặt phòng với ID: " + bookingId));
 
         // 2. BR-12: Booking must be CONFIRMED
-        if (!"CONFIRMED".equals(booking.getStatus())) {
+        // Use constant CHECKIN_STATUS_REQUIRED to avoid magic string comparison
+        if (!CHECKIN_STATUS_REQUIRED.equals(booking.getStatus())) {
             throw new BusinessException(
                     "CHECKIN-003", HttpStatus.CONFLICT,
                     "Chỉ có thể làm thủ tục nhận phòng cho đặt phòng ở trạng thái CONFIRMED. " +
