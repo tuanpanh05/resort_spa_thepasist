@@ -105,7 +105,11 @@ export default function DetailModal({
         )}
         {/* Totals */}
         <div className="pt-4 border-t border-[#cda250]/15 space-y-2.5 mt-4">
-          <div className="flex justify-between font-serif text-base text-[#1a2f23]">
+          <div className="flex justify-between text-xs text-sage-500 font-light">
+            <span>Thuế VAT & Phí dịch vụ (10%):</span>
+            <span className="font-mono">{formatCurrency(totalAmount - Math.round(totalAmount / 1.1))}</span>
+          </div>
+          <div className="flex justify-between font-serif text-base text-[#1a2f23] pt-1 border-t border-primary-50/50">
             <span>Tổng chi phí:</span>
             <span className="font-bold">{formatCurrency(totalAmount)}</span>
           </div>

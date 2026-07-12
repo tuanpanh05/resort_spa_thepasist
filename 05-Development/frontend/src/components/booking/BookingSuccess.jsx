@@ -105,6 +105,10 @@ export default function BookingSuccess({
 
         <div className="pt-4 border-t border-primary-100 space-y-2.5 text-xs">
           <div className="flex justify-between">
+            <span className="text-sage-500 font-light">Thuế VAT & Phí dịch vụ (10%):</span>
+            <span className="font-semibold text-sage-950 font-mono">{formatCurrency(totalAmount - Math.round(totalAmount / 1.1))}</span>
+          </div>
+          <div className="flex justify-between pt-1 border-t border-primary-50/50">
             <span className="text-sage-500 font-light">Tổng chi phí đặt phòng:</span>
             <span className="font-semibold text-sage-950">{formatCurrency(totalAmount)}</span>
           </div>

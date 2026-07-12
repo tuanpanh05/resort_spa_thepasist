@@ -8,12 +8,12 @@
 
 ## Thông tin UAT
 
-| Thông tin | Chi tiết |
-|-----------|---------|
-| **Ngày dự kiến UAT** | Tuần cuối trước deadline nộp bài |
-| **Người tham gia** | Sinh viên nhóm (đóng vai từng role) + Giáo viên hướng dẫn |
-| **Môi trường** | Development server local hoặc staging |
-| **Cơ sở đánh giá** | SRS + Đề bài SWP391-HOS-03 + Business Rules |
+| Thông tin            | Chi tiết                                                  |
+| ----------------------| -----------------------------------------------------------|
+| **Ngày dự kiến UAT** | Tuần cuối trước deadline nộp bài                          |
+| **Người tham gia**   | Sinh viên nhóm (đóng vai từng role) + Giáo viên hướng dẫn |
+| **Môi trường**       | Development server local hoặc staging                     |
+| **Cơ sở đánh giá**   | SRS + Đề bài SWP391-HOS-03 + Business Rules               |
 
 ---
 
@@ -66,13 +66,13 @@
 
 ### 👨‍🍳 Role: CHEF (Bếp trưởng)
 
-| STT | Scenario | UC liên quan | Kết quả mong đợi | Pass/Fail | Ghi chú |
-|-----|----------|-------------|------------------|-----------|---------|
-| Ch-01 | Đăng nhập và xem order hôm nay | UC16 | Danh sách orders với allergy badges | ⬜ | |
-| Ch-02 | Xem cảnh báo dị ứng nổi bật | UC16 | Badge đỏ cho khách có allergen | ⬜ | |
-| Ch-03 | Không thể xem physical condition | UC16/RBAC | Thông tin bệnh lý bị ẩn | ⬜ | **BR-21** |
-| Ch-04 | Cập nhật menu món ăn | UC17 | Món ăn mới hiển thị đúng | ⬜ | |
-| Ch-05 | Cập nhật trạng thái order | UC16 | PENDING → PREPARING → READY → DELIVERED | ⬜ | |
+| STT   | Scenario                         | UC liên quan | Kết quả mong đợi                        | Pass/Fail | Ghi chú   |
+| -------| ----------------------------------| --------------| -----------------------------------------| -----------| -----------|
+| Ch-01 | Đăng nhập và xem order hôm nay   | UC16         | Danh sách orders với allergy badges     | ⬜         |           |
+| Ch-02 | Xem cảnh báo dị ứng nổi bật      | UC16         | Badge đỏ cho khách có allergen          | ⬜         |           |
+| Ch-03 | Không thể xem physical condition | UC16/RBAC    | Thông tin bệnh lý bị ẩn                 | ⬜         | **BR-21** |
+| Ch-04 | Cập nhật menu món ăn             | UC17         | Món ăn mới hiển thị đúng                | ⬜         |           |
+| Ch-05 | Cập nhật trạng thái order        | UC16         | PENDING → PREPARING → READY → DELIVERED | ⬜         |           |
 
 ---
 

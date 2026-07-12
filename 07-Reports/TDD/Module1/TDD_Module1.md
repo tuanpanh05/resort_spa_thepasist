@@ -56,18 +56,18 @@
 
 ## 1. Thông tin Module
 
-| Field                           | Value                                                                                                    |
-| :------------------------------ | :------------------------------------------------------------------------------------------------------- |
-| **Feature / Gap ID**      | GAP-AUTH-001                                                                                             |
-| **Module**                | Authentication & Sensitive Health Profile                                                                |
-| **Spec gốc**             | [AUTH_EDS.md](file:///d:/Semester5/P/Project/su26-swp391-se2023-g3/05-Development/backend/docs/AUTH_EDS.md) |
-| **Priority**              | 🔴 P0 (Core Security and PII Compliance)                                                                 |
-| **Sprint**                | S1                                                                                                       |
-| **Milestone**             | M3 Alpha — 2026-06-14                                                                                   |
-| **Data Classification**   | Sensitive-PII / PII                                                                                      |
-| **Compliance Scope**      | Nghị định 13/2023/NĐ-CP Điều 4 & 6, Luật Cư trú 2020                                            |
-| **Upstream Dependencies** | None                                                                                                     |
-| **Downstream Consumers**  | Module 2 (Booking), Module 3 (Spa Schedule), Module 4 (F&B), Module 5 (Folio Billing)                    |
+| Field                     | Value　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| :--------------------------| :------------------------------------------------------------------------------------------------------------|
+| **Feature / Gap ID**      | GAP-AUTH-001　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　|
+| **Module**                | Authentication & Sensitive Health Profile　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Spec gốc**              | [AUTH_EDS.md](file:///d:/Semester5/P/Project/su26-swp391-se2023-g3/05-Development/backend/docs/AUTH_EDS.md) |
+| **Priority**              | 🔴 P0 (Core Security and PII Compliance)　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　|
+| **Sprint**                | S1　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　|
+| **Milestone**             | M3 Alpha — 2026-06-14　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Data Classification**   | Sensitive-PII / PII　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 |
+| **Compliance Scope**      | Nghị định 13/2023/NĐ-CP Điều 4 & 6, Luật Cư trú 2020　　　　　　　　　　　　　　　　　　　　　　　　　　　　|
+| **Upstream Dependencies** | None　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　|
+| **Downstream Consumers**  | Module 2 (Booking), Module 3 (Spa Schedule), Module 4 (F&B), Module 5 (Folio Billing)　　　　　　　　　　　 |
 
 ---
 
@@ -332,13 +332,13 @@
 
 ## 5. Red-Green-Refactor Tracker
 
-| TC ID           | Test File                             | 🔴 RED confirmed | 🟢 GREEN (commit) | 🔵 REFACTOR note                            |
-| :-------------- | :------------------------------------ | :--------------: | :---------------- | :------------------------------------------ |
-| `AUTH-TC-001` | `AuthControllerTest.java`           |        ✅        | `39f997f`       | Tối ưu hóa kiểm tra email tồn tại     |
-| `AUTH-TC-003` | `AuthControllerTest.java`           |        ✅        | `39f997f`       | Chặn tài khoản staff bị khóa           |
-| `AUTH-TC-004` | `MedicalProfileControllerTest.java` |        ✅        | `39f997f`       | Bắt buộc kiểm tra explicit consent       |
-| `AUTH-TC-005` | `AESCryptoConverter.java`           |        ✅        | `39f997f`       | Đưa logic mã hóa vào JPA converter     |
-| `AUTH-TC-009` | `UserServiceImpl.java`              |        ✅        | `39f997f`       | Chỉ cập nhật tên từ Google nếu trống |
+| TC ID         | Test File                           | 🔴 RED confirmed | 🟢 GREEN (commit) | 🔵 REFACTOR note　　　　　　　　　　 |
+| :--------------| :------------------------------------| :----------------:| :-----------------| :-------------------------------------|
+| `AUTH-TC-001` | `AuthControllerTest.java`           | ✅　　　　　　　　| `39f997f`        | Tối ưu hóa kiểm tra email tồn tại　　|
+| `AUTH-TC-003` | `AuthControllerTest.java`           | ✅　　　　　　　　| `39f997f`        | Chặn tài khoản staff bị khóa　　　　 |
+| `AUTH-TC-004` | `MedicalProfileControllerTest.java` | ✅　　　　　　　　| `39f997f`        | Bắt buộc kiểm tra explicit consent　 |
+| `AUTH-TC-005` | `AESCryptoConverter.java`           | ✅　　　　　　　　| `39f997f`        | Đưa logic mã hóa vào JPA converter　 |
+| `AUTH-TC-009` | `UserServiceImpl.java`              | ✅　　　　　　　　| `39f997f`        | Chỉ cập nhật tên từ Google nếu trống |
 
 ---
 

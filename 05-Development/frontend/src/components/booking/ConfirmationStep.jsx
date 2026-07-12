@@ -279,10 +279,13 @@ export default function ConfirmationStep({
           </div>
 
           <div className="grid grid-cols-2 gap-y-3 font-light text-sage-700 text-xs sm:text-sm pt-2">
-            <span className="font-medium text-[#1a2f23]">Tiền đặt cọc cần thanh toán (30%):</span>
+            <span className="font-medium text-sage-600 font-serif">Thuế VAT & Phí dịch vụ (10%):</span>
+            <span className="font-semibold text-sage-800 text-right font-mono">{formatCurrency(totalAmount - Math.round(totalAmount / 1.1))}</span>
+
+            <span className="font-medium text-[#1a2f23] font-serif">Tiền đặt cọc cần thanh toán (30%):</span>
             <span className="font-bold text-[#cda250] text-right font-mono">{formatCurrency(depositAmount)}</span>
 
-            <span className="font-medium text-sage-600">Số dư thanh toán khi check-out (70%):</span>
+            <span className="font-medium text-sage-600 font-serif">Số dư thanh toán khi check-out (70%):</span>
             <span className="font-semibold text-sage-800 text-right font-mono">{formatCurrency(remainingAmount)}</span>
           </div>
         </div>
