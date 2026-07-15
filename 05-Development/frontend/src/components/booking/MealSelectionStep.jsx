@@ -92,34 +92,14 @@ export default function MealSelectionStep({
 
   const calculateTotalComboPrice = (combo) => {
     try {
-      if (!combo.dailyMenus || combo.dailyMenus.length === 0) return 0;
-      let sum = 0;
-      const actualDaysCount = openDays.length;
-      const chargedGuestsCount = guestsCount;
-      openDays.slice(0, actualDaysCount).forEach((date, index) => {
-        const menuDayIndex = index % combo.dailyMenus.length;
-        const dailyMenu = combo.dailyMenus[menuDayIndex] || [];
-        
-        dailyMenu.forEach(item => {
-          const count = item.qty || 1;
-          
-          const addPrice = (dish, qty) => {
-              if (!dish) return;
-              if (dish.isPackageIncluded) {
-                  const chargeableQty = Math.max(0, qty - chargedGuestsCount);
-                  sum += dish.price * chargeableQty;
-              } else {
-                  sum += dish.price * qty;
-              }
-          };
+      if (!combo || !combo.id) return 0;
+      let dailyPrice = 0;
+      if (combo.id === "detox") dailyPrice = 150000;
+      else if (combo.id === "recovery") dailyPrice = 200000;
+      else if (combo.id === "vip") dailyPrice = 450000;
 
-          if (!item.noSubstituteFound) {
-              const origDish = packageMenuItems.find(m => m.foodId === item.foodId);
-              addPrice(origDish, count);
-          }
-        });
-      });
-      return sum;
+      const actualDaysCount = openDays ? openDays.length : 0;
+      return dailyPrice * guestsCount * actualDaysCount;
     } catch (e) {
       console.error("Error calculating combo price:", e);
       return 0;
@@ -339,22 +319,25 @@ export default function MealSelectionStep({
 
   return (
     <div className="space-y-6 text-left animate-fade-in">
-      <div className="border-b border-[#cda250]/15 pb-4 mb-8">
-        <h2 className="text-resort-section font-serif text-[#1a2f23] mb-1.5 font-semibold uppercase tracking-wide">
-          Bước 4: Chọn Gói Combo Ẩm Thực (Không bắt buộc)
+      <div className="border-b border-[#cda250]/15 pb-5 mb-8">
+        <div className="inline-block px-3 py-1 bg-[#cda250]/10 text-[#cda250] text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-3">
+          04 / TIỆN ÍCH DỊCH VỤ
+        </div>
+        <h2 className="text-2xl font-sans text-[#1a2f23] font-bold uppercase tracking-wide leading-tight">
+          Chọn Gói Combo Ẩm Thực (Không bắt buộc)
         </h2>
-        <p className="text-resort-desc mt-1 text-sage-600 font-light">
+        <p className="text-sm mt-2 text-sage-600 font-light leading-relaxed">
           Chọn một gói ẩm thực áp dụng cho tất cả các khách trong suốt {nightsCount} ngày lưu trú. Thực đơn sẽ được Bếp trưởng luân phiên xoay vòng mỗi ngày để đem lại sự đa dạng!
         </p>
       </div>
 
       {/* ── BR-10: Cut-off Time Warning ─────────────────────────────────── */}
       {showCutoffWarning && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-300 rounded-xl flex items-start gap-3">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3 shadow-xs">
           <Clock className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-bold text-red-700">Đã qua giờ đặt trước cho ngày mai!</p>
-            <p className="text-xs text-red-600 mt-0.5">
+            <p className="text-xs text-red-600 mt-0.5 leading-relaxed">
               Thời gian hạn chót (Cut-off) là <strong>{CUTOFF_HOUR}:00</strong>. Bạn không thể đặt trước bữa ăn cho ngày mai nữa. Các ngày còn lại trong lịch vẫn có thể đặt bình thường.
             </p>
           </div>
@@ -363,49 +346,53 @@ export default function MealSelectionStep({
 
       {/* BR-30: All days blocked */}
       {allDaysBlocked && mealBookingDays.length > 0 && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 shadow-xs">
           <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-bold text-amber-800">Không còn ngày nào có thể đặt trước</p>
-            <p className="text-xs text-amber-700 mt-0.5">Tất cả các ngày trong lịch lưu trú đã qua hoặc đã qua cut-off 22:00. Bạn vẫn có thể bỏ qua bước này và tiếp tục xác nhận đặt phòng.</p>
+            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">Tất cả các ngày trong lịch lưu trú đã qua hoặc đã qua cut-off 22:00. Bạn vẫn có thể bỏ qua bước này và tiếp tục xác nhận đặt phòng.</p>
           </div>
         </div>
       )}
 
       {/* Remaining open days info */}
       {!allDaysBlocked && openDays.length < mealBookingDays.length && openDays.length > 0 && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3 text-xs text-blue-700">
-          <Info className="h-4 w-4 flex-shrink-0" />
+        <div className="mb-4 p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3 text-xs text-blue-700 shadow-xs">
+          <Info className="h-4.5 w-4.5 flex-shrink-0 text-blue-500" />
           <span>Gói combo sẽ áp dụng cho <strong>{openDays.length}</strong> ngày còn có thể đặt trước (từ {openDays[0]} đến {openDays[openDays.length-1]}).</span>
         </div>
       )}
 
       {/* Auto Filter Banner */}
       {consentDataProcessing && consentSharing ? (
-        <div className="mb-6 p-4 bg-[#cda250]/5 border border-[#cda250]/20 rounded-xl text-xs text-[#1a2f23] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-250 rounded-2xl text-xs text-emerald-955 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center space-x-2.5">
-            <Info className="h-4.5 w-4.5 text-[#cda250] flex-shrink-0" />
+            <div className="p-1 bg-emerald-500/25 text-emerald-700 rounded-lg">
+              <Check className="h-4 w-4 stroke-[3px]" />
+            </div>
             <span>
-              <strong>Thực đơn đã được tự động quét theo hồ sơ bệnh lý & chế độ ăn uống.</strong>
+              <strong>Thực đơn đã được quét tự động theo hồ sơ dị ứng thực phẩm & bệnh lý.</strong>
             </span>
           </div>
-          <span className="bg-[#cda250]/10 text-[#cda250] border border-[#cda250]/20 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider self-start sm:self-auto rounded">
+          <span className="bg-emerald-500/20 text-emerald-800 border border-emerald-500/30 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider self-start sm:self-auto rounded-md">
             Đã Lọc Tự Động
           </span>
         </div>
       ) : (
-        <div className="mb-6 p-4 bg-amber-50/50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center space-x-2.5">
-            <AlertTriangle className="h-4.5 w-4.5 text-amber-600 flex-shrink-0" />
+            <div className="p-1 bg-amber-500/20 text-amber-700 rounded-lg">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
             <span>
-              Hệ thống chưa được phép xử lý dữ liệu y tế. Không thể cảnh báo dị ứng.
+              Hệ thống chưa được cấp quyền xử lý dữ liệu y tế. Không thể tự động phát hiện cảnh báo dị ứng.
             </span>
           </div>
         </div>
       )}
 
       {/* Combo List */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="space-y-6 mb-8">
         {safeCombos.map((combo) => {
           const isSelected = selectedComboId === combo.id;
           const totalComboPrice = calculateTotalComboPrice(combo);
@@ -417,96 +404,114 @@ export default function MealSelectionStep({
           return (
             <div
               key={combo.id}
-              className={`group relative border transition-all duration-500 overflow-hidden rounded-2xl flex flex-col h-full ${
-                blocked ? "opacity-50 cursor-not-allowed" :
-                isSelected
-                  ? "cursor-pointer border-[#cda250] shadow-[0_8px_30px_rgba(205,162,80,0.15)] bg-gradient-to-b from-white to-[#cda250]/5 -translate-y-1"
-                  : "cursor-pointer border-[#cda250]/15 bg-white shadow-sm hover:shadow-[0_8px_25px_rgba(26,47,35,0.06)] hover:border-[#cda250]/40 hover:-translate-y-1"
-              }`}
               onClick={() => !blocked && handleComboClick(combo.id)}
+              className={`group relative border transition-all duration-300 overflow-hidden rounded-3xl flex flex-col sm:flex-row bg-white ${
+                blocked ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200" :
+                isSelected
+                  ? "cursor-pointer border-[#cda250] shadow-[0_15px_45px_rgba(205,162,80,0.12)] ring-1 ring-[#cda250] -translate-y-1"
+                  : "cursor-pointer border-sage-200/60 hover:border-[#cda250]/50 hover:shadow-[0_15px_35px_rgba(26,47,35,0.06)] hover:-translate-y-1"
+              }`}
             >
-              <div className="relative h-56 overflow-hidden flex-shrink-0">
+              {/* Left Side: Photo */}
+              <div className="relative sm:w-48 w-full h-40 sm:h-auto shrink-0 overflow-hidden">
                 <img
                   src={combo.image}
                   alt={combo.name}
                   className={`w-full h-full object-cover transition-transform duration-1000 ${isSelected ? 'scale-105' : 'group-hover:scale-105'}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1a2f23]/80 via-black/10 to-transparent opacity-80"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80"></div>
                 
                 {/* Badges */}
-                <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                  <div className="bg-black/40 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg w-max">
-                    {combo.dailyMenus.length} Thực Đơn Luân Phiên
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                  <div className="bg-gradient-to-r from-amber-500 to-[#cda250] text-[#070e0a] text-[8.5px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-md">
+                    {combo.dailyMenus.length} Thực Đơn
                   </div>
                   {hasSubstitutions && (
-                    <div className="bg-amber-500/90 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 shadow-lg rounded-full flex items-center gap-1.5 w-max">
-                      <AlertTriangle className="h-3.5 w-3.5" /> Có Thay Thế Dị Ứng
+                    <div className="bg-red-500/90 text-white text-[8.5px] font-bold uppercase tracking-widest px-2.5 py-1 shadow-md rounded-full flex items-center gap-1">
+                      <AlertTriangle className="h-2.5 w-2.5" /> Dị Ứng
                     </div>
                   )}
                 </div>
 
                 {isSelected && (
-                  <div className="absolute top-4 right-4 bg-[#cda250] text-[#070e0a] rounded-full p-1.5 shadow-[0_4px_12px_rgba(205,162,80,0.5)] transform scale-100 animate-fade-in z-10">
-                    <Check className="w-5 h-5 stroke-[3px]" />
+                  <div className="absolute top-3 right-3 bg-[#cda250] text-[#070e0a] rounded-full p-1.5 shadow-md transform scale-100 animate-fade-in z-10">
+                    <Check className="w-3.5 h-3.5 stroke-[3px]" />
                   </div>
                 )}
               </div>
-              <div className="p-6 flex flex-col flex-grow relative z-10">
-                <h3 className="font-serif text-xl font-bold text-[#1a2f23] leading-snug mb-3 group-hover:text-[#cda250] transition-colors">
-                  {combo.name}
-                </h3>
-                <p className="text-[13px] text-sage-600 font-light leading-relaxed flex-grow mb-5">
-                  {combo.description}
-                </p>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setViewMenuCombo(combo);
-                  }}
-                  className="w-full text-[11px] font-bold text-[#1a2f23] flex items-center justify-center py-3 mb-5 rounded-xl border border-[#1a2f23]/10 bg-[#fbfaf7] hover:bg-[#cda250] hover:text-white hover:border-[#cda250] hover:shadow-md transition-all duration-300 group/btn mt-auto"
-                >
-                  <Info className="w-4 h-4 mr-2 text-sage-500 group-hover/btn:text-white transition-colors flex-shrink-0" /> 
-                  <span className="uppercase tracking-[0.15em] whitespace-nowrap">Xem Thực Đơn</span>
-                </button>
+              {/* Right Side: Content Area */}
+              <div className="p-6 md:p-8 flex-1 flex flex-col justify-between min-w-0">
+                <div>
+                  <h3 className="font-sans text-xl font-bold text-[#1a2f23] mb-2 group-hover:text-[#cda250] transition-colors duration-200">
+                    {combo.name}
+                  </h3>
+                  <p className="text-[13px] text-sage-600 leading-relaxed font-light mb-4">
+                    {combo.description}
+                  </p>
 
-                {hasSubstitutions && (
-                  <div className="mb-5 text-[11px] text-amber-700 font-medium leading-relaxed bg-amber-50/80 p-3 rounded-lg border border-amber-200/50 shadow-sm">
-                    <div className="font-bold mb-1 flex items-center uppercase tracking-wider text-[10px]"><AlertTriangle className="w-3.5 h-3.5 mr-1.5" /> Khẩu phần thay thế:</div>
-                    <ul className="space-y-0.5 list-disc pl-4 text-[10.5px]">
-                      {combo.allergenWarnings.map((w, i) => <li key={i}>{w}</li>)}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="space-y-2 pt-5 border-t border-[#1a2f23]/10">
-                  <div className="flex justify-between items-center text-[13px]">
-                    <span className="text-sage-500">Số lượng:</span>
-                    <span className="font-semibold text-[#1a2f23]">{guestsCount} Khách × {actualDaysCount} Ngày</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[13px]">
-                    <span className="text-sage-500">Trung bình:</span>
-                    <span className="font-semibold text-[#1a2f23]">{formatCurrency(avgPricePerDay)}<span className="text-[10px] text-sage-400 font-normal"> / người / ngày</span></span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center pt-4 mt-2">
-                    <span className="text-[10px] font-bold text-sage-500 uppercase tracking-[0.2em] mb-1">Tổng Gói</span>
-                    <span className="text-[22px] font-bold text-[#cda250] font-serif leading-none tracking-tight">{formatCurrency(totalComboPrice)}</span>
-                  </div>
+                  {hasSubstitutions && (
+                    <div className="mb-4 text-[11px] text-amber-800 font-medium leading-relaxed bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/10 shadow-xs max-w-xl">
+                      <div className="font-bold mb-1.5 flex items-center uppercase tracking-wider text-[9px] text-amber-700">
+                        <AlertTriangle className="w-3.5 h-3.5 mr-1.5" /> Khẩu phần thay thế:
+                      </div>
+                      <ul className="space-y-1 list-disc pl-4 text-[10.5px]">
+                        {combo.allergenWarnings.map((w, i) => <li key={i}>{w}</li>)}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
-                <button
-                  type="button"
-                  disabled={blocked}
-                  className={`mt-6 w-full py-3 rounded-xl font-bold uppercase tracking-wider text-[12px] transition-all duration-300 shadow-sm hover:shadow-md ${
-                    blocked ? "bg-gray-100 border-2 border-gray-300 text-gray-400 cursor-not-allowed" :
-                    isSelected
-                      ? "bg-gradient-to-r from-[#cda250] to-[#b38836] text-white border-none ring-2 ring-[#cda250]/30 ring-offset-2"
-                      : "bg-white border-2 border-[#1a2f23] text-[#1a2f23] hover:bg-[#1a2f23] hover:text-white"
-                  }`}
-                >
-                  {blocked ? "Không Còn Đặt Được" : isSelected ? "Đã Chọn" : "Chọn Gói Này"}
-                </button>
+                {/* Bottom Section: Pricing vertically, then buttons below */}
+                <div className="border-t border-sage-100 pt-4 mt-4 space-y-4">
+                  {/* Pricing stacked vertically */}
+                  <div className="space-y-2 text-sm text-sage-600">
+                    <div className="flex justify-between items-center sm:justify-start sm:gap-4">
+                      <span className="w-20 text-sage-400">Số lượng:</span>
+                      <strong className="text-[#1a2f23]">{guestsCount} Khách × {actualDaysCount} Ngày</strong>
+                    </div>
+                    <div className="flex justify-between items-center sm:justify-start sm:gap-4">
+                      <span className="w-20 text-sage-400">Đơn giá:</span>
+                      <strong className="text-[#1a2f23]">{formatCurrency(avgPricePerDay)} / ngày</strong>
+                    </div>
+                    <div className="flex justify-between items-center sm:justify-start sm:gap-4 pt-1">
+                      <span className="w-20 text-sage-400 font-bold uppercase text-[9px] tracking-wider">Tổng cộng:</span>
+                      <strong className="text-[#cda250] font-sans text-xl">{formatCurrency(totalComboPrice)}</strong>
+                    </div>
+                  </div>
+
+                  {/* Buttons below the pricing */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewMenuCombo(combo);
+                      }}
+                      className="w-full sm:w-auto text-[10px] font-bold text-sage-600 flex items-center justify-center py-2.5 px-5 rounded-xl border border-sage-200 hover:bg-[#cda250] hover:text-[#070e0a] hover:border-transparent transition-all duration-300 uppercase tracking-widest shadow-xs"
+                    >
+                      <Info className="w-3.5 h-3.5 mr-2 flex-shrink-0" /> 
+                      <span>Xem thực đơn mẫu</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      disabled={blocked}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!blocked) handleComboClick(combo.id);
+                      }}
+                      className={`w-full sm:w-auto py-2.5 px-6 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all duration-300 shadow-xs min-w-[140px] text-center ${
+                        blocked ? "bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed" :
+                        isSelected
+                          ? "bg-gradient-to-r from-amber-500 to-[#cda250] text-[#070e0a] border-none shadow-[0_4px_12px_rgba(205,162,80,0.3)] font-extrabold"
+                          : "bg-[#1a2f23] text-white hover:bg-[#cda250] hover:text-[#070e0a] hover:shadow-md border-none"
+                      }`}
+                    >
+                      {blocked ? "Hết Hạn" : isSelected ? "Đã Chọn" : "Chọn Gói"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           );
@@ -518,7 +523,7 @@ export default function MealSelectionStep({
         <div className="text-sm font-semibold text-[#1a2f23]">
           Tổng phụ phí ẩm thực:
         </div>
-        <div className="text-xl font-bold text-[#cda250] font-serif">
+        <div className="text-xl font-bold text-[#cda250] font-sans">
           {formatCurrency(mealTotal)}
         </div>
       </div>
@@ -554,7 +559,7 @@ export default function MealSelectionStep({
             </button>
             <div className="p-6 sm:p-8 border-b border-[#cda250]/15 bg-white relative shrink-0">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#cda250] to-transparent opacity-50"></div>
-              <h3 className="font-serif text-2xl font-bold text-[#1a2f23]">Thực Đơn Mẫu: {viewMenuCombo.name}</h3>
+              <h3 className="font-sans text-2xl font-bold text-[#1a2f23]">Thực Đơn Mẫu: {viewMenuCombo.name}</h3>
               <p className="text-sage-600 text-sm mt-2 max-w-3xl leading-relaxed">
                 Chu kỳ luân phiên 7 ngày độc quyền của Ngũ Sơn Resort đảm bảo mang đến trải nghiệm ẩm thực đa dạng, phong phú và không trùng lặp các món chính trong suốt kỳ nghỉ của bạn.
               </p>
@@ -575,7 +580,7 @@ export default function MealSelectionStep({
 
                   return (
                     <div key={dayIdx} className="bg-white border border-[#cda250]/20 rounded-xl p-5 shadow-sm">
-                      <div className="font-serif font-bold text-2xl text-[#1a2f23] mb-6 pb-4 border-b border-[#cda250]/30 flex items-center gap-3">
+                      <div className="font-sans font-bold text-2xl text-[#1a2f23] mb-6 pb-4 border-b border-[#cda250]/30 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#cda250]/10 flex items-center justify-center">
                           <span className="w-3 h-3 rounded-full bg-[#cda250]"></span>
                         </div>
@@ -596,7 +601,7 @@ export default function MealSelectionStep({
                               <div className="flex items-center justify-center gap-4 mb-8 relative z-10">
                                 <div className="h-[1px] bg-[#cda250]/40 flex-1"></div>
                                 <div className="px-6 py-2 border border-[#cda250]/40 rounded-full bg-[#fbfaf7] shadow-sm">
-                                  <h4 className="font-serif text-sm sm:text-base font-bold text-[#1a2f23] uppercase tracking-[0.2em] whitespace-nowrap">{pName}</h4>
+                                  <h4 className="font-sans text-sm sm:text-base font-bold text-[#1a2f23] uppercase tracking-[0.2em] whitespace-nowrap">{pName}</h4>
                                 </div>
                                 <div className="h-[1px] bg-[#cda250]/40 flex-1"></div>
                               </div>
@@ -705,7 +710,7 @@ export default function MealSelectionStep({
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full">
                 <div className="text-[#cda250] text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-2">{selectedDishDetail.pName}</div>
-                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
+                <h3 className="font-sans text-2xl sm:text-3xl font-bold text-white leading-tight">
                   {selectedDishDetail.dish ? (selectedDishDetail.dish.dishName || selectedDishDetail.dish.name || "Chưa cập nhật tên") : "Đang cập nhật"}
                 </h3>
               </div>

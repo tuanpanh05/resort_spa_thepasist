@@ -45,8 +45,12 @@ public class BookingRequestDTO {
     // Meal selections
     // Structure: Date (YYYY-MM-DD) -> Period (Breakfast, Lunch, Dinner) -> FoodId -> Quantity
     private Map<String, Map<String, Map<Integer, Integer>>> mealSelections;
+    private String selectedComboId;
 
     public BookingRequestDTO() {}
+
+    public String getSelectedComboId() { return selectedComboId; }
+    public void setSelectedComboId(String selectedComboId) { this.selectedComboId = selectedComboId; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }

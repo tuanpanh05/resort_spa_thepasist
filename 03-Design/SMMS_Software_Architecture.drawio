@@ -1,0 +1,450 @@
+<mxfile host="Electron" modified="2026-07-13T01:30:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="smms-architecture" name="SMMS Software Architecture">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1500" math="0" shadow="1" background="#1a1a2e">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ======================================================= -->
+        <!-- TITLE -->
+        <!-- ======================================================= -->
+        <mxCell id="title" value="SMMS — Ngu Son Resort &amp; Spa Management System&#xa;Software Architecture  |  ADR-001: Decoupled MVC Pattern  |  Java 21 + Spring Boot 3.4.2  /  React 19 + Vite  /  MS SQL Server" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#E8D5A3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="1680" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LAYER 1: ACTORS -->
+        <!-- ======================================================= -->
+        <mxCell id="L1" value="ACTORS / NGUOI DUNG" style="swimlane;startSize=28;fillColor=#16213e;strokeColor=#4a90d9;fontColor=#4a90d9;fontSize=13;fontStyle=1;rounded=10;arcSize=4;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="1680" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" value="Guest / Khach&#xa;(Public Browser)" style="rounded=10;fillColor=#0f3460;strokeColor=#4a90d9;fontColor=#fff;fontSize=11;fontStyle=1;" vertex="1" parent="L1">
+          <mxGeometry x="30" y="38" width="155" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="Staff / Le tan&#xa;(StaffDashboard)" style="rounded=10;fillColor=#0f3460;strokeColor=#4a90d9;fontColor=#fff;fontSize=11;fontStyle=1;" vertex="1" parent="L1">
+          <mxGeometry x="210" y="38" width="155" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="Chef / Bep truong&#xa;(ChefDashboard)" style="rounded=10;fillColor=#0f3460;strokeColor=#4a90d9;fontColor=#fff;fontSize=11;fontStyle=1;" vertex="1" parent="L1">
+          <mxGeometry x="390" y="38" width="155" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="Specialist / Tri lieu&#xa;(SpecialistDashboard)" style="rounded=10;fillColor=#0f3460;strokeColor=#4a90d9;fontColor=#fff;fontSize=11;fontStyle=1;" vertex="1" parent="L1">
+          <mxGeometry x="570" y="38" width="165" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="Admin / Quan tri&#xa;(AdminDashboard)" style="rounded=10;fillColor=#0f3460;strokeColor=#4a90d9;fontColor=#fff;fontSize=11;fontStyle=1;" vertex="1" parent="L1">
+          <mxGeometry x="760" y="38" width="155" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LAYER 2: FRONTEND React 19 + Vite -->
+        <!-- ======================================================= -->
+        <mxCell id="L2" value="FRONTEND — React 19 + Vite  (Client-Side: View + Client Controller)  [Port: 5173-5179]" style="swimlane;startSize=30;fillColor=#0d1b2a;strokeColor=#00d4aa;fontColor=#00d4aa;fontSize=13;fontStyle=1;rounded=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="230" width="1680" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- React Router -->
+        <mxCell id="fe-router" value="React Router&#xa;App.jsx&#xa;(Client-Side Routing&#xa;+ ProtectedRoute)" style="rounded=10;fillColor=#1a472a;strokeColor=#00d4aa;fontColor=#00d4aa;fontSize=10;fontStyle=1;" vertex="1" parent="L2">
+          <mxGeometry x="30" y="50" width="150" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Pages -->
+        <mxCell id="fe-pages" value="PAGES (src/pages)" style="swimlane;startSize=22;fillColor=#0d2137;strokeColor=#00a884;fontColor=#00a884;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L2">
+          <mxGeometry x="210" y="42" width="620" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" value="Home.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="10" y="30" width="95" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="BookingPage.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="115" y="30" width="115" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" value="Spa.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="240" y="30" width="85" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" value="Restaurant.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="335" y="30" width="105" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p5" value="Payment.jsx&#xa;PaymentResult.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="450" y="30" width="110" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p6" value="GuestDashboard.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="10" y="75" width="130" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p7" value="StaffDashboard.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="155" y="75" width="125" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p8" value="ChefDashboard.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="295" y="75" width="120" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p9" value="AdminDashboard.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="430" y="75" width="125" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p10" value="SpecialistDashboard" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="10" y="120" width="125" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p11" value="HealthProfile.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="145" y="120" width="120" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p12" value="Login.jsx&#xa;Register.jsx&#xa;ForgotPassword.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="275" y="120" width="125" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p13" value="ProfilePage.jsx&#xa;RoomsPage.jsx" style="rounded=6;fillColor=#0f3460;strokeColor=#00a884;fontColor=#ccffee;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="415" y="120" width="115" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="p14" value="Shared Components (src/components)&#xa;Header | Footer | Hero | Rooms | BookingForm&#xa;ProtectedRoute | ErrorBoundary | PolicyModal&#xa;admin/ | booking/ | staff/ | chef/ | specialist/ | ui/" style="rounded=6;fillColor=#0a1a20;strokeColor=#00a884;fontColor=#99eedd;fontSize=10;" vertex="1" parent="fe-pages">
+          <mxGeometry x="10" y="165" width="595" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Client State (Context) -->
+        <mxCell id="fe-ctx" value="Client State&#xa;(src/context)&#xa;&#xa;LanguageContext.jsx&#xa;NotificationContext.jsx&#xa;&#xa;LocalStorage:&#xa;JWT Access Token" style="rounded=10;fillColor=#1a2a1a;strokeColor=#00d4aa;fontColor=#99ffcc;fontSize=10;" vertex="1" parent="L2">
+          <mxGeometry x="860" y="42" width="165" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- API Service -->
+        <mxCell id="fe-api" value="API Service Layer&#xa;api.js (Axios)&#xa;&#xa;- Attach Bearer Token&#xa;- Centralized Error Handler&#xa;- apiRequest() helper&#xa;- JWT Interceptor" style="rounded=10;fillColor=#2a1a0a;strokeColor=#f5a623;fontColor=#f5d98b;fontSize=10;fontStyle=1;" vertex="1" parent="L2">
+          <mxGeometry x="860" y="200" width="165" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Firebase Client -->
+        <mxCell id="fe-firebase" value="Firebase Client&#xa;firebase.js&#xa;Google OAuth 2.0" style="rounded=10;fillColor=#2a1500;strokeColor=#f5a623;fontColor=#ffcc88;fontSize=10;" vertex="1" parent="L2">
+          <mxGeometry x="1060" y="42" width="150" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Hooks/Utils -->
+        <mxCell id="fe-utils" value="Hooks &amp; Utils&#xa;(src/hooks + src/utils)&#xa;Custom Hooks | Formatters&#xa;Date helpers | Validators" style="rounded=10;fillColor=#0d2137;strokeColor=#00a884;fontColor=#99eedd;fontSize=10;" vertex="1" parent="L2">
+          <mxGeometry x="1060" y="130" width="150" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- VNPay client -->
+        <mxCell id="fe-vnpay" value="VNPay UI&#xa;Payment.jsx&#xa;PaymentResult.jsx&#xa;(HMAC redirect)" style="rounded=10;fillColor=#2a0020;strokeColor=#ff6699;fontColor=#ffbbdd;fontSize=10;" vertex="1" parent="L2">
+          <mxGeometry x="1060" y="240" width="150" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Constants/i18n -->
+        <mxCell id="fe-i18n" value="Constants &amp; i18n&#xa;(src/constants)&#xa;translations.js&#xa;VI / EN Support" style="rounded=10;fillColor=#0d2137;strokeColor=#00a884;fontColor=#99eedd;fontSize=10;" vertex="1" parent="L2">
+          <mxGeometry x="1240" y="42" width="150" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Mock data -->
+        <mxCell id="fe-mock" value="Mock Data&#xa;mockData.js (62KB)&#xa;dev/test stubs" style="rounded=10;fillColor=#0d2137;strokeColor=#00a884;fontColor=#99eedd;fontSize=10;" vertex="1" parent="L2">
+          <mxGeometry x="1240" y="140" width="150" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- NETWORK LAYER -->
+        <!-- ======================================================= -->
+        <mxCell id="L3" value="TANG MANG — HTTP/HTTPS REST JSON API  |  Port: 8080  |  CORS: localhost:5173-5179  |  Bearer Token (JWT)" style="swimlane;startSize=28;fillColor=#12122a;strokeColor=#7b68ee;fontColor=#c8c0ff;fontSize=12;fontStyle=1;rounded=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="570" width="1680" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" value="HTTP Request&#xa;JSON + Bearer Token" style="rounded=10;fillColor=#1e1e4a;strokeColor=#7b68ee;fontColor=#c8c0ff;fontSize=10;" vertex="1" parent="L3">
+          <mxGeometry x="350" y="22" width="170" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="HTTP Response&#xa;JSON DTO / Error DTO" style="rounded=10;fillColor=#1e1e4a;strokeColor=#7b68ee;fontColor=#c8c0ff;fontSize=10;" vertex="1" parent="L3">
+          <mxGeometry x="545" y="22" width="170" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="CORS Config&#xa;SecurityConfig.java + WebConfig.java" style="rounded=10;fillColor=#1e1e4a;strokeColor=#7b68ee;fontColor=#c8c0ff;fontSize=10;" vertex="1" parent="L3">
+          <mxGeometry x="740" y="22" width="200" height="38" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LAYER 4: BACKEND Spring Boot -->
+        <!-- ======================================================= -->
+        <mxCell id="L4" value="BACKEND — Java 21 + Spring Boot 3.4.2  (Server-Side MVC: Controller + Service)  [Port: 8080]" style="swimlane;startSize=30;fillColor=#0a1a0a;strokeColor=#6fcf97;fontColor=#6fcf97;fontSize=13;fontStyle=1;rounded=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="668" width="1680" height="470" as="geometry" />
+        </mxCell>
+
+        <!-- Security -->
+        <mxCell id="be-sec" value="Spring Security Layer" style="swimlane;startSize=22;fillColor=#1a0a0a;strokeColor=#eb5757;fontColor=#eb5757;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L4">
+          <mxGeometry x="30" y="42" width="380" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="sec1" value="JwtFilter.java&#xa;(OncePerRequestFilter)&#xa;Extract + Validate Bearer Token&#xa;Set SecurityContext" style="rounded=8;fillColor=#2a0a0a;strokeColor=#eb5757;fontColor=#ffaaaa;fontSize=10;" vertex="1" parent="be-sec">
+          <mxGeometry x="10" y="30" width="170" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="sec2" value="JwtUtils.java&#xa;Generate / Validate JWT&#xa;Extract Claims / Roles" style="rounded=8;fillColor=#2a0a0a;strokeColor=#eb5757;fontColor=#ffaaaa;fontSize=10;" vertex="1" parent="be-sec">
+          <mxGeometry x="195" y="30" width="170" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="sec3" value="SecurityConfig.java&#xa;Stateless (STATELESS session)&#xa;BCrypt | Role-based access&#xa;CORS policy | CSRF disabled" style="rounded=8;fillColor=#2a0a0a;strokeColor=#eb5757;fontColor=#ffaaaa;fontSize=10;" vertex="1" parent="be-sec">
+          <mxGeometry x="10" y="118" width="170" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="sec4" value="AesEncryptor.java&#xa;EncryptionUtils.java&#xa;AES-256 Symmetric&#xa;PII / Medical Data" style="rounded=8;fillColor=#2a0a0a;strokeColor=#eb5757;fontColor=#ffaaaa;fontSize=10;" vertex="1" parent="be-sec">
+          <mxGeometry x="195" y="118" width="170" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Controllers -->
+        <mxCell id="be-ctrl" value="REST CONTROLLERS  (fu.se.smms.controller)  |  @RestController  |  @Valid DTO" style="swimlane;startSize=22;fillColor=#0a1a0a;strokeColor=#27ae60;fontColor=#27ae60;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L4">
+          <mxGeometry x="435" y="42" width="770" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" value="AuthController&#xa;/auth/**" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="10" y="30" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="BookingController&#xa;RoomBookingController&#xa;/bookings/**" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="130" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" value="SpaBookingController&#xa;/spa-bookings/**" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="260" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="InvoiceController&#xa;/invoices/**&#xa;VNPay Callbacks" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="390" y="30" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" value="ChefMealController&#xa;GuestMealController&#xa;FoodComboController" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="510" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" value="UserController&#xa;AdminController&#xa;/users/** /admin/**" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="640" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c-others" value="VillaController | ShiftController | ComplaintController | FeedbackController | MasterDataController&#xa;MedicalProfileController | SpecialistController | IncurredServiceController | ItineraryController&#xa;RevenueController | CheckInController | InventoryController | VoucherController  (23 controllers total)" style="rounded=6;fillColor=#0a2a0a;strokeColor=#27ae60;fontColor=#aaffaa;fontSize=10;" vertex="1" parent="be-ctrl">
+          <mxGeometry x="10" y="82" width="750" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Config & Schedulers -->
+        <mxCell id="be-sched" value="Config &amp; Schedulers" style="swimlane;startSize=22;fillColor=#1a1a0a;strokeColor=#f2c94c;fontColor=#f2c94c;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L4">
+          <mxGeometry x="1230" y="42" width="230" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="sc1" value="BookingCleanupScheduler&#xa;Auto-cancel unpaid bookings" style="rounded=6;fillColor=#2a2a0a;strokeColor=#f2c94c;fontColor=#ffffaa;fontSize=10;" vertex="1" parent="be-sched">
+          <mxGeometry x="10" y="30" width="205" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="sc2" value="InvoiceCleanupScheduler&#xa;Auto-expire stale invoices" style="rounded=6;fillColor=#2a2a0a;strokeColor=#f2c94c;fontColor=#ffffaa;fontSize=10;" vertex="1" parent="be-sched">
+          <mxGeometry x="10" y="78" width="205" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="sc3" value="SpaReminderScheduler&#xa;Spa appointment reminders" style="rounded=6;fillColor=#2a2a0a;strokeColor=#f2c94c;fontColor=#ffffaa;fontSize=10;" vertex="1" parent="be-sched">
+          <mxGeometry x="10" y="126" width="205" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="sc4" value="VNPayProperties.java" style="rounded=6;fillColor=#2a2a0a;strokeColor=#f2c94c;fontColor=#ffffaa;fontSize=10;" vertex="1" parent="be-sched">
+          <mxGeometry x="10" y="165" width="205" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- Service Layer -->
+        <mxCell id="be-svc" value="SERVICE LAYER — Business Logic  (fu.se.smms.service + .impl)  |  @Transactional  |  @Service" style="swimlane;startSize=22;fillColor=#0a0a1a;strokeColor=#5b86e5;fontColor=#5b86e5;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L4">
+          <mxGeometry x="30" y="258" width="1150" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="sv1" value="RoomBookingService&#xa;(37KB)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="10" y="30" width="125" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv2" value="InvoiceService&#xa;(Consolidated Folio&#xa;50KB Impl)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="148" y="30" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv3" value="SpaBookingService&#xa;(30KB)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="291" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv4" value="GuestMealService&#xa;(38KB)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="424" y="30" width="115" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv5" value="EmailService&#xa;(SMTP / OTP&#xa;40KB Impl)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="552" y="30" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv6" value="VNPayService&#xa;(Payment Gateway)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="675" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv7" value="GoogleCalendarService&#xa;(11KB)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="808" y="30" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv8" value="ReportExportService&#xa;(32KB)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="952" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sv-rest" value="UserService | OtpService | MedicalProfileService | MasterDataService | RevenueService (33KB Impl)&#xa;FeedbackService | VoucherService | TableAssignmentService | InvoicePdfService (14KB) | CheckInService (14KB)" style="rounded=6;fillColor=#0a0a2a;strokeColor=#5b86e5;fontColor=#aabbff;fontSize=10;" vertex="1" parent="be-svc">
+          <mxGeometry x="10" y="82" width="1125" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- DTOs -->
+        <mxCell id="be-dto" value="DTO LAYER (fu.se.smms.dto)  |  40 DTOs" style="swimlane;startSize=22;fillColor=#1a0a1a;strokeColor=#bb6bd9;fontColor=#e0b0ff;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L4">
+          <mxGeometry x="1200" y="258" width="450" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="dto-list" value="BookingRequestDTO | BookingHistoryDTO | InvoiceDTO&#xa;SpaBookingRequestDTO | SpaBookingResponseDTO&#xa;UserProfileDTO | MedicalProfileDTO (AES)&#xa;VNPayPaymentDTO | ItineraryDTO&#xa;RevenueDashboardDTO | RevenueForecastDTO&#xa;CheckInRequestDTO | ArrivalDTO | GuestResidencyDTO&#xa;LoginRequest | LoginResponse | SignUpRequest&#xa;AutoMatchRequestDTO | AutoMatchResponseDTO | ..." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontColor=#e0b0ff;fontSize=10;" vertex="1" parent="be-dto">
+          <mxGeometry x="10" y="28" width="425" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Repository Layer -->
+        <mxCell id="be-repo" value="REPOSITORY LAYER — JPA Gateway  (fu.se.smms.repository)  |  Spring Data JPA + Hibernate  |  Custom @Query" style="swimlane;startSize=22;fillColor=#0a0a0a;strokeColor=#828282;fontColor=#aaaaaa;fontSize=11;fontStyle=1;rounded=10;" vertex="1" parent="L4">
+          <mxGeometry x="30" y="462" width="1620" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="repo-list" value="JpaRepository&lt;User&gt; | JpaRepository&lt;RoomBooking&gt; | JpaRepository&lt;SpaBooking&gt; | JpaRepository&lt;Invoice&gt; | JpaRepository&lt;FoodOrder&gt; | JpaRepository&lt;FoodOrderDetail&gt;&#xa;JpaRepository&lt;Feedback&gt; | JpaRepository&lt;Complaint&gt; | JpaRepository&lt;MedicalProfile&gt; | JpaRepository&lt;Voucher&gt; | JpaRepository&lt;Shift&gt; | JpaRepository&lt;OtpToken&gt; | JpaRepository&lt;Inventory&gt; | ..." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontColor=#aaaaaa;fontSize=10;" vertex="1" parent="be-repo">
+          <mxGeometry x="10" y="25" width="1600" height="48" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LAYER 5: JPA ENTITIES -->
+        <!-- ======================================================= -->
+        <mxCell id="L5" value="JPA ENTITIES — Model Layer  (fu.se.smms.entity)  |  33 Entities  |  ORM via Hibernate" style="swimlane;startSize=28;fillColor=#0a0505;strokeColor=#e07b39;fontColor=#e07b39;fontSize=13;fontStyle=1;rounded=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1158" width="1680" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="User" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="10" y="38" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="RoomBooking&#xa;RoomBookingDetail" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="100" y="38" width="115" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="SpaBooking" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="225" y="38" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="Invoice&#xa;PaymentTransactionLog" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="325" y="38" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="MedicalProfile&#xa;[AES-256 Encrypted]" style="rounded=6;fillColor=#2a0a00;strokeColor=#eb5757;fontColor=#ffaaaa;fontSize=10;fontStyle=1;" vertex="1" parent="L5">
+          <mxGeometry x="460" y="38" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="FoodOrder&#xa;FoodOrderDetail&#xa;FoodMenu" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="600" y="38" width="105" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="Feedback&#xa;Complaint&#xa;ComplaintMessage" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="715" y="38" width="105" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="Voucher" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="830" y="38" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="Shift&#xa;SwapRequest" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="915" y="38" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="RetreatPackage&#xa;BookingDiet" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="1010" y="38" width="105" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="Room&#xa;RoomType" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="1125" y="38" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="SpaService&#xa;TreatmentRoom" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="1215" y="38" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="OtpToken | AccompanyingGuest | Inventory | IncurredService&#xa;DailyMealOrder | ProcurementRequest | SystemConfiguration&#xa;RestaurantTable | PackageFoodLimit | ComboMenuTemplate | DishIngredient" style="rounded=6;fillColor=#2a0a00;strokeColor=#e07b39;fontColor=#ffbb88;fontSize=10;" vertex="1" parent="L5">
+          <mxGeometry x="1325" y="38" width="345" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LAYER 6: DATABASE -->
+        <!-- ======================================================= -->
+        <mxCell id="L6a" value="DATABASE ENGINE" style="swimlane;startSize=28;fillColor=#06060e;strokeColor=#c0392b;fontColor=#e74c3c;fontSize=13;fontStyle=1;rounded=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1288" width="870" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="db1" value="MS SQL Server&#xa;ResortSpaDB&#xa;(JDBC / JPA Hibernate)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#1a0000;strokeColor=#c0392b;fontColor=#ff8888;fontSize=12;fontStyle=1;" vertex="1" parent="L6a">
+          <mxGeometry x="20" y="28" width="190" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="db-tables" value="users | room_bookings | room_booking_details | spa_bookings | invoices | payment_transaction_logs&#xa;medical_profiles | food_orders | food_order_details | food_menus | feedbacks | complaints | vouchers&#xa;shifts | swap_requests | retreat_packages | rooms | room_types | spa_services | treatment_rooms | ..." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontColor=#ff8888;fontSize=10;" vertex="1" parent="L6a">
+          <mxGeometry x="230" y="18" width="625" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LAYER 6b: EXTERNAL SERVICES -->
+        <!-- ======================================================= -->
+        <mxCell id="L6b" value="EXTERNAL SERVICES / THIRD-PARTY INTEGRATIONS" style="swimlane;startSize=28;fillColor=#06060e;strokeColor=#9b59b6;fontColor=#9b59b6;fontSize=13;fontStyle=1;rounded=10;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="950" y="1288" width="790" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ext1" value="VNPay&#xa;Payment Gateway&#xa;HMAC-SHA512" style="rounded=10;fillColor=#1a0a30;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=10;fontStyle=1;" vertex="1" parent="L6b">
+          <mxGeometry x="15" y="30" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext2" value="Firebase Auth&#xa;Google OAuth 2.0&#xa;Social Login" style="rounded=10;fillColor=#1a0a30;strokeColor=#f5a623;fontColor=#ffcc88;fontSize=10;fontStyle=1;" vertex="1" parent="L6b">
+          <mxGeometry x="140" y="30" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext3" value="SMTP Server&#xa;Email + OTP&#xa;Notifications" style="rounded=10;fillColor=#1a0a30;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=10;fontStyle=1;" vertex="1" parent="L6b">
+          <mxGeometry x="265" y="30" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext4" value="Google Calendar&#xa;API v3&#xa;Itinerary Sync" style="rounded=10;fillColor=#1a0a30;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=10;fontStyle=1;" vertex="1" parent="L6b">
+          <mxGeometry x="390" y="30" width="110" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext5" value="Firebase Realtime&#xa;Push Notification&#xa;Context" style="rounded=10;fillColor=#1a0a30;strokeColor=#f5a623;fontColor=#ffcc88;fontSize=10;" vertex="1" parent="L6b">
+          <mxGeometry x="515" y="30" width="115" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext6" value="PDF Engine&#xa;InvoicePdfService&#xa;iText / OpenPDF" style="rounded=10;fillColor=#1a0a30;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=10;" vertex="1" parent="L6b">
+          <mxGeometry x="645" y="30" width="115" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- LEGEND -->
+        <!-- ======================================================= -->
+        <mxCell id="legend" value="ADR-001 Key Constraints&#xa;────────────────────&#xa;1. JPA Entities: fu.se.smms.entity ONLY&#xa;2. Controllers = Route + Validate + DTO&#xa;3. Service Layer = Business Logic&#xa;   (@Transactional on all writes)&#xa;4. Frontend: apiRequest() via api.js&#xa;   (never raw fetch/axios in components)&#xa;5. JWT Stateless Auth (no server sessions)&#xa;6. AES-256: Medical / PII data encrypted&#xa;7. CORS: 5173-5179 &lt;--&gt; 8080" style="text;html=1;strokeColor=#4a90d9;fillColor=#0a0a1a;align=left;verticalAlign=top;whiteSpace=wrap;rounded=10;fontColor=#aaccff;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="1158" width="260" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================================= -->
+        <!-- CONNECTIONS -->
+        <!-- ======================================================= -->
+
+        <!-- Actors -> Router -->
+        <mxCell id="edge-actors-router" value="Browser HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#4a90d9;fontColor=#4a90d9;fontSize=9;" edge="1" source="a1" target="fe-router" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Router -> Pages -->
+        <mxCell id="edge-router-pages" value="Route Match" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#00d4aa;fontColor=#00d4aa;fontSize=9;" edge="1" source="fe-router" target="fe-pages" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Pages -> API Service -->
+        <mxCell id="edge-pages-api" value="apiRequest()" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#f5a623;fontColor=#f5a623;fontSize=9;" edge="1" source="fe-pages" target="fe-api" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Context -> Pages (re-render) -->
+        <mxCell id="edge-ctx-pages" value="Trigger Re-render" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#00d4aa;fontColor=#00d4aa;fontSize=9;dashed=1;" edge="1" source="fe-ctx" target="fe-pages" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API -> Context -->
+        <mxCell id="edge-api-ctx" value="Update State" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#00d4aa;fontColor=#00d4aa;fontSize=9;" edge="1" source="fe-api" target="fe-ctx" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API -> Network -->
+        <mxCell id="edge-api-net" value="HTTP Request (JWT)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#7b68ee;fontColor=#c8c0ff;fontSize=9;fontStyle=1;" edge="1" source="fe-api" target="n1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Network -> Controllers -->
+        <mxCell id="edge-net-ctrl" value="Route to Controller" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#27ae60;fontColor=#6fcf97;fontSize=9;fontStyle=1;" edge="1" source="n2" target="be-ctrl" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Security filter -> Controllers -->
+        <mxCell id="edge-sec-ctrl" value="JWT Filter (Before)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#eb5757;fontColor=#eb5757;fontSize=9;" edge="1" source="be-sec" target="be-ctrl" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Controllers -> Services -->
+        <mxCell id="edge-ctrl-svc" value="Delegate BL" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#5b86e5;fontColor=#5b86e5;fontSize=9;" edge="1" source="be-ctrl" target="be-svc" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- DTOs <-> Controllers -->
+        <mxCell id="edge-dto-ctrl" value="DTO Mapping" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#bb6bd9;fontColor=#bb6bd9;fontSize=9;dashed=1;" edge="1" source="be-dto" target="be-ctrl" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services -> Repository -->
+        <mxCell id="edge-svc-repo" value="Query/Persist @Transactional" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#828282;fontColor=#aaaaaa;fontSize=9;" edge="1" source="be-svc" target="be-repo" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Repository -> Entities -->
+        <mxCell id="edge-repo-entity" value="ORM Map (Hibernate)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#e07b39;fontColor=#e07b39;fontSize=9;" edge="1" source="be-repo" target="L5" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Entities -> DB -->
+        <mxCell id="edge-entity-db" value="JDBC / JPA" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#c0392b;fontColor=#e74c3c;fontSize=9;fontStyle=1;" edge="1" source="L5" target="L6a" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Schedulers -> Services -->
+        <mxCell id="edge-sched-svc" value="Scheduled Tasks" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#f2c94c;fontColor=#f2c94c;fontSize=9;dashed=1;" edge="1" source="be-sched" target="be-svc" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services -> External: VNPay -->
+        <mxCell id="edge-svc-vnpay" value="VNPay HMAC API" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=9;dashed=1;" edge="1" source="sv6" target="ext1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services -> External: Email -->
+        <mxCell id="edge-svc-email" value="SMTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=9;dashed=1;" edge="1" source="sv5" target="ext3" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services -> External: GCal -->
+        <mxCell id="edge-svc-gcal" value="Calendar API v3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9b59b6;fontColor=#cc99ff;fontSize=9;dashed=1;" edge="1" source="sv7" target="ext4" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Frontend Firebase -> External Firebase -->
+        <mxCell id="edge-fe-fb" value="OAuth / Realtime" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#f5a623;fontColor=#f5a623;fontSize=9;dashed=1;" edge="1" source="fe-firebase" target="ext2" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

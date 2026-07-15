@@ -62,8 +62,52 @@ export default function Header() {
       userApi.getMyBookings()
         .then((bookings) => {
           if (bookings && bookings.length > 0) {
-            const activeBooking = bookings.find(b => b.status !== "CANCELLED") || bookings[0];
-            setLatestBooking(activeBooking);
+            let hiddenIds = [];
+            try {
+              const saved = localStorage.getItem("hidden_booking_ids");
+              hiddenIds = saved ? JSON.parse(saved) : [];
+            } catch (e) {
+              console.warn("Failed to parse hidden_booking_ids in Header:", e);
+            }
+
+            const activeBookings = bookings.filter(b => {
+              if (hiddenIds.map(String).includes(String(b.bookingId))) return false;
+
+              const status = b.status || b.bookingStatus;
+              if (["CANCELLED", "CHECKED_OUT"].includes(status)) return false;
+
+              // Check if booking is expired (pending/confirmed but check-in date has passed)
+              const isPendingOrConfirmed = ["PENDING", "PENDING_DEPOSIT", "CONFIRMED"].includes(status);
+              if (isPendingOrConfirmed && b.checkInDate) {
+                const checkInTime = new Date(b.checkInDate);
+                const now = new Date();
+                if (now > checkInTime) {
+                  return false;
+                }
+              }
+
+              // Check if check-out date is in the past
+              if (b.checkOutDate) {
+                const checkOut = new Date(b.checkOutDate);
+                checkOut.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (checkOut < today) {
+                  return false;
+                }
+              }
+
+              return true;
+            });
+
+            if (activeBookings.length > 0) {
+              const sortedUpcoming = [...activeBookings].sort((a, b) => {
+                return new Date(a.checkInDate) - new Date(b.checkInDate);
+              });
+              setLatestBooking(sortedUpcoming[0]);
+            } else {
+              setLatestBooking(null);
+            }
           } else {
             setLatestBooking(null);
           }

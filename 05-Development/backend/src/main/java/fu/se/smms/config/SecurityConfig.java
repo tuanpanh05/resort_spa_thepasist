@@ -43,15 +43,39 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/static/**", "/css/**", "/js/**", "/favicon.ico").permitAll()
                 // Auth endpoints – Public (UC01)
                 .requestMatchers("/auth/**").permitAll()
-                // Public booking, invoice, feedback and complaints endpoints
-                .requestMatchers("/bookings/**", "/invoices/**", "/feedback/**", "/complaints/**", "/vouchers/**").permitAll()
+                // Public booking endpoints
+                .requestMatchers("/bookings/**").permitAll()
+                
+                // Voucher security
+                .requestMatchers("/vouchers/validate").permitAll()
+                .requestMatchers(HttpMethod.GET, "/vouchers", "/vouchers/**").hasAnyRole("ADMIN", "MANAGER", "STAFF")
+                .requestMatchers("/vouchers", "/vouchers/**").hasAnyRole("ADMIN", "MANAGER")
+                
+                // Feedback security
+                .requestMatchers("/feedback/submit", "/feedback/booking/**").permitAll()
+                .requestMatchers("/feedback/user/**").authenticated()
+                .requestMatchers("/feedback/all", "/feedback/**/toxicity").hasAnyRole("ADMIN", "MANAGER")
+                
+                // Complaints security
+                .requestMatchers("/complaints/submit").permitAll()
+                .requestMatchers("/complaints/user/**", "/complaints/*/messages").authenticated()
+                .requestMatchers("/complaints/all", "/complaints/*/resolve", "/complaints/*/assign").hasAnyRole("ADMIN", "MANAGER", "STAFF")
+                
+                // Invoice security
+                .requestMatchers("/invoices/vnpay-callback", "/invoices/vnpay-ipn", "/invoices/vnpay-return").permitAll()
+                .requestMatchers("/invoices/*/payment-url", "/invoices/*/apply-voucher", "/invoices/*/remove-voucher").permitAll()
+                .requestMatchers(HttpMethod.GET, "/invoices/*").permitAll()
+                .requestMatchers("/invoices/user/**").authenticated()
+                .requestMatchers("/invoices", "/invoices/**").hasAnyRole("ADMIN", "MANAGER", "STAFF")
+
+                // Revenue dashboard & reports security
+                .requestMatchers("/revenue/**").hasAnyRole("ADMIN", "MANAGER")
+
                 // Public read-only Master Data endpoints (Guest can browse)
                 .requestMatchers(HttpMethod.GET, "/spa-services", "/spa-services/**", "/retreat-packages", "/retreat-packages/**", "/room-types", "/room-types/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/retreat-packages/filter").permitAll()
                 // Chef and Kitchen Hub endpoints
                 .requestMatchers("/chef/**", "/guest/**").permitAll()
-                // Booking wizard and online payment endpoints – Public (UC07)
-                .requestMatchers("/bookings/create", "/invoices/*", "/invoices/*/payment-url", "/invoices/vnpay-callback", "/invoices/vnpay-ipn", "/invoices/vnpay-return").permitAll()
                 // Admin-only endpoints (UC03, UC04)
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Medical profiles – Authenticated users only (UC02, UC05)

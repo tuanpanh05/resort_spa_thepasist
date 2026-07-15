@@ -34,6 +34,7 @@ const STATUS_BADGES = {
   CANCELLED: "bg-red-50 text-red-600 border-red-200",
   CHECKED_IN: "bg-blue-50 text-blue-700 border-blue-200",
   CHECKED_OUT: "bg-sage-100 text-sage-700 border-sage-200",
+  EXPIRED: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 export default function ItineraryTab() {
@@ -45,6 +46,15 @@ export default function ItineraryTab() {
   const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [error, setError] = useState(null);
 
+  const [hiddenBookingIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem("hidden_booking_ids");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   // 1. Fetch user bookings
   useEffect(() => {
     const fetchBookings = async () => {
@@ -52,13 +62,15 @@ export default function ItineraryTab() {
       setError(null);
       try {
         const data = await userApi.getMyBookings();
-        if (data && data.length > 0) {
-          setBookings(data);
+        const filtered = (data || []).filter((b) => !hiddenBookingIds.map(String).includes(String(b.bookingId)));
+        if (filtered.length > 0) {
+          setBookings(filtered);
           // Auto select the first active booking, or the first booking
-          const active = data.find((b) => b.status !== "CANCELLED") || data[0];
+          const active = filtered.find((b) => b.status !== "CANCELLED") || filtered[0];
           setSelectedBookingId(active.bookingId);
         } else {
           setBookings([]);
+          setSelectedBookingId(null);
         }
       } catch (err) {
         console.error("Lỗi khi tải danh sách đặt phòng:", err);
@@ -68,7 +80,7 @@ export default function ItineraryTab() {
       }
     };
     fetchBookings();
-  }, []);
+  }, [hiddenBookingIds]);
 
   // 2. Fetch itinerary for selected booking
   useEffect(() => {
@@ -95,6 +107,33 @@ export default function ItineraryTab() {
     setSelectedBookingId(id);
   };
 
+  const getRoomDisplayStatus = (booking) => {
+    if (!booking) return "";
+    const status = booking.status || booking.bookingStatus;
+    const isPendingOrConfirmed = ["PENDING", "PENDING_DEPOSIT", "CONFIRMED"].includes(status);
+    if (isPendingOrConfirmed && booking.checkInDate) {
+      const checkInTime = new Date(booking.checkInDate);
+      const now = new Date();
+      if (now > checkInTime) {
+        return "EXPIRED";
+      }
+    }
+    return status;
+  };
+
+  const getEventDisplayStatus = (event) => {
+    if (!event || !event.status) return "";
+    const isPendingOrConfirmed = ["PENDING", "CONFIRMED"].includes(event.status);
+    if (isPendingOrConfirmed && event.startTime) {
+      const startTime = new Date(event.startTime);
+      const now = new Date();
+      if (now > startTime) {
+        return "EXPIRED";
+      }
+    }
+    return event.status;
+  };
+
   const getStatusBadgeClass = (status) => {
     return STATUS_BADGES[status] || "bg-gray-50 text-gray-600 border-gray-200";
   };
@@ -108,6 +147,7 @@ export default function ItineraryTab() {
       CHECKED_IN: "profile.statusInResidence",
       CHECKED_OUT: "profile.statusCheckedOut",
       PENDING_DEPOSIT: "profile.statusPendingDeposit",
+      EXPIRED: "profile.statusExpired",
     };
     const k = keys[status];
     return k ? t(k) : status;
@@ -170,7 +210,7 @@ export default function ItineraryTab() {
             >
               {bookings.map((b) => (
                 <option key={b.bookingId} value={b.bookingId}>
-                  {t("profile.bookingId")} #{b.bookingId} ({fmtDate(b.checkInDate)} - {fmtDate(b.checkOutDate)}) [{getStatusLabel(b.status)}]
+                  {t("profile.bookingId")} #{b.bookingId} ({fmtDate(b.checkInDate)} - {fmtDate(b.checkOutDate)}) [{getStatusLabel(getRoomDisplayStatus(b))}]
                 </option>
               ))}
             </select>
@@ -226,8 +266,8 @@ export default function ItineraryTab() {
                 )}
                 <div className="flex justify-between items-center">
                   <span className="text-sage-500">{t("profile.itineraryStatus")}:</span>
-                  <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(itinerary.bookingStatus)}`}>
-                    {getStatusLabel(itinerary.bookingStatus)}
+                  <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(getRoomDisplayStatus(itinerary))}`}>
+                    {getStatusLabel(getRoomDisplayStatus(itinerary))}
                   </span>
                 </div>
                 {itinerary.totalDeposit > 0 && (
@@ -335,8 +375,8 @@ export default function ItineraryTab() {
                                 )}
                               </div>
                               {event.status && (
-                                <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(event.status)} flex-shrink-0`}>
-                                  {getStatusLabel(event.status)}
+                                <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(getEventDisplayStatus(event))} flex-shrink-0`}>
+                                  {getStatusLabel(getEventDisplayStatus(event))}
                                 </span>
                               )}
                             </div>

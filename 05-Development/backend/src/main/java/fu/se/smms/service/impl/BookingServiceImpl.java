@@ -170,6 +170,17 @@ public class BookingServiceImpl {
         int actualAdults = guestsCount != null ? guestsCount : 2;
         int actualUnder5 = childrenUnder5 != null ? childrenUnder5 : 0;
         int actual5to12 = children5to12 != null ? children5to12 : 0;
+
+        int totalGuests = actualAdults + actual5to12;
+        int roomCapacity = (room.getRoomType() != null && room.getRoomType().getMaxOccupancy() != null)
+                ? room.getRoomType().getMaxOccupancy()
+                : 2;
+        if (totalGuests > roomCapacity) {
+            throw new BusinessException(
+                    "BOOKING-005", HttpStatus.BAD_REQUEST,
+                    "Sức chứa của phòng/villa (" + roomCapacity + " người) không đủ đáp ứng số lượng khách lưu trú (" + totalGuests + " người).");
+        }
+
         // guestsCount = người lớn + trẻ 5-12 (tính slot capacity)
         booking.setGuestsCount(actualAdults + actual5to12);
         booking.setChildrenUnder5(actualUnder5);

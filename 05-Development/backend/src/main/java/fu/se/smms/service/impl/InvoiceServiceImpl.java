@@ -127,7 +127,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional(readOnly = true)
     public List<InvoiceDTO> getAllInvoices() {
         return invoiceRepository.findAll().stream()
-                .filter(i -> !"CANCELLED".equals(i.getStatus()))
                 .map(this::toDto)
                 .toList();
     }

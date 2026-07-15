@@ -226,6 +226,7 @@ export const translations = {
       statusPendingDeposit: "Chờ đặt cọc",
       statusInResidence: "Đang lưu trú",
       statusPendingShort: "Đang chờ",
+      statusExpired: "Đã quá hạn",
 
       // Itinerary
       itineraryTitle: "Lịch trình",
@@ -526,6 +527,7 @@ export const translations = {
       statusPendingDeposit: "Pending deposit",
       statusInResidence: "In residence",
       statusPendingShort: "Pending",
+      statusExpired: "Expired",
 
       // Itinerary
       itineraryTitle: "Itinerary",

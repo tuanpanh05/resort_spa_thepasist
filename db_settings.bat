@@ -1,6 +1,0 @@
-set "DB_HOST=localhost"
-set "DB_PORT=1433"
-set "AUTH_MODE=SQL"
-set "DB_USER=sa"
-set "DB_PASS=123"
-set "DB_NAME=ResortSpaDB"

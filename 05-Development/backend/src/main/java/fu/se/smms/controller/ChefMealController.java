@@ -155,8 +155,16 @@ public class ChefMealController {
     @PostMapping("/menu/upload")
     public ResponseEntity<?> uploadImage(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
         try {
-            String frontendDir = "d:/su26-swp391-se2023-g3/05-Development/frontend/public/images/dishes/";
-            java.io.File dir = new java.io.File(frontendDir);
+            java.io.File workDir = new java.io.File(System.getProperty("user.dir"));
+            java.io.File root = workDir;
+            while (workDir != null) {
+                if (new java.io.File(workDir, "data_dong_bo").exists() || new java.io.File(workDir, "05-Development").exists()) {
+                    root = workDir;
+                    break;
+                }
+                workDir = workDir.getParentFile();
+            }
+            java.io.File dir = new java.io.File(root, "05-Development/frontend/public/images/dishes");
             if (!dir.exists()) dir.mkdirs();
             String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
             java.io.File dest = new java.io.File(dir, filename);

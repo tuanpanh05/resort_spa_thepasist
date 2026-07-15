@@ -40,7 +40,14 @@ if exist ".env" (
     color 0C
 )
 
-echo [*] Su dung database hien tai (Khong reset du lieu).
+echo [*] Don dep tien trinh cu tren port 8080 va 5173...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5173 ^| findstr LISTENING') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
+echo [OK] Da giai phong port!
 echo.
 
 :: 3. Khởi chạy Backend trong cửa sổ CMD mới (Kế thừa biến môi trường JAVA_HOME/PATH)

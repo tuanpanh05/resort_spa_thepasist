@@ -20,19 +20,66 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
+    @org.springframework.beans.factory.annotation.Value("${app.db.reset-on-start:false}")
+    private boolean resetOnStart;
+
     @Override
     public void run(String... args) throws Exception {
-        try {
-            System.out.println("[DB Seeder] Automatically executing patch_utf8.sql to ensure correct Vietnamese encoding on all screens...");
-            org.springframework.jdbc.datasource.init.ResourceDatabasePopulator populator = 
-                new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(
-                    new org.springframework.core.io.ClassPathResource("patch_utf8.sql")
-                );
-            populator.setSqlScriptEncoding("UTF-8");
-            populator.execute(jdbcTemplate.getDataSource());
-            System.out.println("[DB Seeder] Successfully applied Unicode encoding patches from patch_utf8.sql.");
-        } catch (Exception e) {
-            System.err.println("[DB Seeder] Warning: Could not run patch_utf8.sql: " + e.getMessage());
+        java.io.File root = findWorkspaceRoot();
+        java.io.File markerFile = new java.io.File(root, "05-Development/backend/.db_reset_completed");
+
+        if (resetOnStart) {
+            System.out.println("[DB Seeder] RESET TRIGGERED! Starting database synchronization and reset...");
+            try {
+                // Wipe the database first to clear all tables and constraints
+                wipeDatabase();
+
+                // Consolidate separate SQL files into the Master SQL file
+                consolidateSqlFiles(root);
+
+                // 1. Recreate database ResortSpaDB & run the consolidated master schema
+                executeSqlScript(root, "03-Design/database/ResortSpaDB_Master.sql");
+                
+                System.out.println("[DB Seeder] Database reset successfully completed!");
+                
+                // Upgrade columns to NVARCHAR and add columns before seeding
+                try {
+                    System.out.println("[DB Seeder] Upgrading database columns to NVARCHAR before seeding...");
+                    jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN full_name NVARCHAR(255) NOT NULL");
+                    jdbcTemplate.execute("ALTER TABLE retreat_packages ALTER COLUMN name NVARCHAR(200) NOT NULL");
+                    jdbcTemplate.execute("ALTER TABLE spa_services ALTER COLUMN name NVARCHAR(150) NOT NULL");
+                    jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN dish_name NVARCHAR(255) NOT NULL");
+                    jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN description NVARCHAR(MAX) NOT NULL");
+                    jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN category NVARCHAR(255)");
+                    jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN allergens NVARCHAR(255)");
+                    jdbcTemplate.execute("ALTER TABLE food_menu ALTER COLUMN ingredients NVARCHAR(MAX)");
+                    
+                    try { jdbcTemplate.execute("ALTER TABLE food_menu ADD available_days VARCHAR(50) DEFAULT '0,1,2,3,4,5,6'"); } catch (Exception e) {}
+                    try { jdbcTemplate.execute("ALTER TABLE food_menu ADD image_url VARCHAR(255)"); } catch (Exception e) {}
+                    try { jdbcTemplate.execute("ALTER TABLE food_menu ADD is_package_included BIT DEFAULT 1"); } catch (Exception e) {}
+                    try { jdbcTemplate.execute("ALTER TABLE food_menu ADD periods VARCHAR(100) DEFAULT 'Lunch'"); } catch (Exception e) {}
+                    System.out.println("[DB Seeder] Successfully upgraded database columns to NVARCHAR.");
+                } catch (Exception e) {
+                    System.err.println("[DB Seeder] Warning during schema upgrade: " + e.getMessage());
+                }
+
+                // 2. Copy the dishes images
+                syncDishImages(root);
+                
+                // Restore all missing dishes from the folder
+                restoreMissingDishes(root);
+                
+                // 3. Write marker file
+                java.nio.file.Files.writeString(markerFile.toPath(), "completed at " + java.time.LocalDateTime.now());
+                
+                // 4. Try to disable the flag in application.properties
+                disableResetFlagInProperties(root);
+                
+            } catch (Exception e) {
+                System.err.println("[DB Seeder] FATAL ERROR during database reset: " + e.getMessage());
+                e.printStackTrace();
+                throw e;
+            }
         }
 
         try {
@@ -661,8 +708,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                             "VALUES (?, 'CHECKED_OUT', ?, ?, ?, ?)",
                             userId, checkIns[i], checkOuts[i], finals[i].multiply(new BigDecimal("0.3")), checkIns[i]
                         );
-                        
-                        Integer bookingId = jdbcTemplate.queryForObject("SELECT @@IDENTITY", Integer.class);
+                        Integer bookingId = jdbcTemplate.queryForObject("SELECT MAX(booking_id) FROM dbo.room_booking", Integer.class);
                         if (bookingId != null) {
                             jdbcTemplate.update(
                                 "INSERT INTO dbo.invoice (user_id, room_booking_id, room_subtotal, spa_subtotal, food_subtotal, service_subtotal, tax_and_fees, final_amount, deposit_amount, amount_due, status, payment_time) " +
@@ -723,6 +769,484 @@ public class DatabaseSeeder implements CommandLineRunner {
                 jdbcTemplate.execute("IF NOT EXISTS(SELECT 1 FROM treatment_room WHERE room_name=N'Phong VLTL 2') INSERT INTO treatment_room(room_name,status,category) VALUES(N'Phong VLTL 2','AVAILABLE','PHYSIO')");
                 System.out.println("[DB Seeder] Seeded 6 treatment rooms across SPA/YOGA/PHYSIO.");
             } catch (Exception e) { System.err.println("[DB Seeder] Room seed warning: " + e.getMessage()); }
+        }
+    }
+
+    private java.io.File findWorkspaceRoot() {
+        java.io.File dir = new java.io.File(System.getProperty("user.dir"));
+        while (dir != null) {
+            if (new java.io.File(dir, "data_dong_bo").exists() || new java.io.File(dir, "05-Development").exists()) {
+                return dir;
+            }
+            dir = dir.getParentFile();
+        }
+        return new java.io.File(System.getProperty("user.dir"));
+    }
+
+    private void executeSqlScript(java.io.File root, String relativePath) {
+        try {
+            java.io.File file = new java.io.File(root, relativePath);
+            if (!file.exists()) {
+                System.err.println("[DB Seeder] Script not found: " + file.getAbsolutePath());
+                return;
+            }
+            System.out.println("[DB Seeder] Executing script: " + file.getAbsolutePath());
+            String content = new String(java.nio.file.Files.readAllBytes(file.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+            
+            // Split by GO on its own line (case insensitive)
+            String[] statements = content.split("(?i)(?m)^\\s*GO\\s*$");
+            for (String sql : statements) {
+                sql = sql.trim();
+                if (!sql.isEmpty()) {
+                    jdbcTemplate.execute(sql);
+                }
+            }
+            System.out.println("[DB Seeder] Successfully executed: " + file.getName());
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Error executing " + relativePath + ": " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void syncDishImages(java.io.File root) {
+        java.io.File sourceDir = new java.io.File(root, "03-Design/data_dong_bo/DATABASE/Anh Dũng/Anh/dishes");
+        java.io.File targetDir = new java.io.File(root, "05-Development/frontend/public/images/dishes");
+        if (!sourceDir.exists()) {
+            System.out.println("[DB Seeder] Source dishes directory not found: " + sourceDir.getAbsolutePath());
+            return;
+        }
+        if (!targetDir.exists()) {
+            targetDir.mkdirs();
+        }
+        System.out.println("[DB Seeder] Syncing dish images from " + sourceDir.getName() + " to " + targetDir.getName() + "...");
+        java.io.File[] files = sourceDir.listFiles();
+        if (files != null) {
+            int copied = 0;
+            for (java.io.File f : files) {
+                if (f.isFile()) {
+                    java.io.File targetFile = new java.io.File(targetDir, f.getName());
+                    try {
+                        if (!targetFile.exists() || targetFile.length() != f.length()) {
+                            java.nio.file.Files.copy(f.toPath(), targetFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            copied++;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[DB Seeder] Failed to copy image " + f.getName() + ": " + e.getMessage());
+                    }
+                }
+            }
+            System.out.println("[DB Seeder] Dish images sync completed. Copied " + copied + " new/changed images.");
+        }
+    }
+
+    private void disableResetFlagInProperties(java.io.File root) {
+        try {
+            java.io.File propFile = new java.io.File(root, "05-Development/backend/src/main/resources/application.properties");
+            if (propFile.exists()) {
+                String content = new String(java.nio.file.Files.readAllBytes(propFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+                content = content.replace("app.db.reset-on-start=true", "app.db.reset-on-start=false");
+                java.nio.file.Files.writeString(propFile.toPath(), content, java.nio.charset.StandardCharsets.UTF_8);
+                System.out.println("[DB Seeder] Automatically disabled app.db.reset-on-start in application.properties");
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning: Could not disable reset flag in properties: " + e.getMessage());
+        }
+    }
+
+    private void wipeDatabase() {
+        System.out.println("[DB Seeder] Wiping all existing tables and constraints in ResortSpaDB...");
+        try {
+            // 1. Drop all foreign keys
+            String dropFKs = 
+                "DECLARE @sql NVARCHAR(MAX) = N'';\n" +
+                "SELECT @sql += N'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.' + QUOTENAME(OBJECT_NAME(parent_object_id)) + \n" +
+                "               ' DROP CONSTRAINT ' + QUOTENAME(name) + ';' + CHAR(13)\n" +
+                "FROM sys.foreign_keys;\n" +
+                "EXEC sp_executesql @sql;";
+            jdbcTemplate.execute(dropFKs);
+            System.out.println("[DB Seeder] All foreign keys dropped.");
+
+            // 2. Drop all tables
+            String dropTables = 
+                "DECLARE @sql NVARCHAR(MAX) = N'';\n" +
+                "SELECT @sql += N'DROP TABLE ' + QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) + ';' + CHAR(13)\n" +
+                "FROM sys.tables;\n" +
+                "EXEC sp_executesql @sql;";
+            jdbcTemplate.execute(dropTables);
+            System.out.println("[DB Seeder] All tables dropped.");
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Warning during database wipe: " + e.getMessage());
+        }
+    }
+
+    private void restoreMissingDishes(java.io.File root) {
+        java.io.File dishesDir = new java.io.File(root, "05-Development/frontend/public/images/dishes");
+        if (!dishesDir.exists()) {
+            System.out.println("[DB Seeder] Dishes directory not found: " + dishesDir.getAbsolutePath());
+            return;
+        }
+        java.io.File[] files = dishesDir.listFiles();
+        if (files == null) return;
+
+        System.out.println("[DB Seeder] Restoring missing dishes from image directory (30 Kids + 60 Adults) with matching Unsplash images...");
+        int restoredCount = 0;
+        int kidIdx = 0;
+        int adultIdx = 0;
+        
+        String[] kidNames = {
+            "Súp ngô gà nấm ngọt", "Cháo sườn non hạt sen", "Mì Ý sốt bò bằm phô mai",
+            "Cơm chiên trứng cuộn Nhật Bản", "Khoai tây chiên lắc phô mai", "Gà viên chiên giòn mật ong",
+            "Trứng cuộn phô mai mềm mịn", "Cháo cá hồi bông bí đỏ", "Sữa chua trái cây nhiệt đới",
+            "Pudding xoài kem tươi", "Bánh flan caramen sữa tươi", "Nước cam vắt nguyên chất",
+            "Sữa dâu tây hạt chia", "Súp bí đỏ kem tươi", "Nui xào bò bằm cà chua",
+            "Bánh mì bơ tỏi nướng giòn", "Cháo lươn đồng nấu rau xanh", "Kem vani dâu tây ngọt mát",
+            "Sinh tố chuối bơ sữa đặc", "Bánh pancake mật ong trái cây", "Cháo tôm tươi rau củ băm",
+            "Trứng chưng thịt nấm hương", "Mì Udon nước dùng rau ngọt", "Xúc xích bạch tuộc chiên",
+            "Bánh bao nhân đậu xanh sữa", "Nước ép dâu tây táo ngọt", "Sữa hạt điều vị vani",
+            "Súp khoai tây cà rốt nghiền", "Nui sốt kem phô mai đút lò", "Cơm nắm rong biển tam giác"
+        };
+
+        String[] kidDescriptions = {
+            "Súp ngọt thanh từ ngô ngọt, thịt gà xé sợi và nấm hương thơm ngon bổ dưỡng.",
+            "Cháo ninh nhừ với sườn non và hạt sen giúp bé ăn ngon và ngủ sâu giấc.",
+            "Mì Ý xốt bò bằm đậm đà kết hợp lớp phô mai béo ngậy hấp dẫn trẻ nhỏ.",
+            "Cơm chiên hạt dẻo thơm được cuộn trong lớp trứng rán mỏng mềm mịn phong cách Nhật.",
+            "Khoai tây chiên vàng giòn rắc bột phô mai mặn ngọt kích thích vị giác.",
+            "Thịt ức gà viên tẩm bột chiên xù giòn tan rưới xốt mật ong ngọt dịu.",
+            "Trứng rán cuộn lớp phô mai tan chảy thơm ngậy bên trong cực kỳ mềm mịn.",
+            "Cháo dinh dưỡng từ cá hồi tươi giàu Omega-3 nấu cùng bí đỏ ngọt mát.",
+            "Sữa chua lên men tự nhiên ăn kèm dâu tây, xoài và kiwi tươi cắt nhỏ.",
+            "Món tráng miệng pudding mềm mịn hương xoài phủ kem tươi béo ngậy.",
+            "Bánh flan làm từ trứng gà ta và sữa tươi nguyên chất, lớp đường caramen ngọt dịu.",
+            "Nước cam vắt tươi giàu Vitamin C tăng cường hệ miễn dịch cho bé.",
+            "Sữa tươi kết hợp dâu tây tươi xay nhuyễn và hạt chia thanh mát.",
+            "Súp bí đỏ sánh mịn kết hợp kem tươi whipping thơm béo, dễ ăn.",
+            "Nui ống xào cùng thịt bò băm tươi ngon và xốt cà chua tự chế biến.",
+            "Bánh mì cắt lát phết bơ tỏi nướng giòn rụm thơm lừng.",
+            "Cháo dinh dưỡng từ lươn đồng giàu đạm nấu với các loại rau củ xay nhuyễn.",
+            "Kem ly vị vani truyền thống trang trí dâu tây tươi và xốt dâu.",
+            "Sinh tố dinh dưỡng từ chuối chín, bơ sáp và sữa đặc tốt cho sức khỏe.",
+            "Bánh pancake tự làm xốp mềm ăn kèm mật ong tự nhiên và trái cây tươi.",
+            "Cháo gạo thơm nấu cùng tôm biển tươi băm nhỏ và rau củ theo mùa.",
+            "Trứng gà ta chưng thịt băm và nấm hương mềm ngọt, đưa cơm.",
+            "Mì Udon sợi mềm nấu trong nước dùng rau củ ngọt mát phù hợp với trẻ nhỏ.",
+            "Xúc xích cắt hình bạch tuộc ngộ nghĩnh chiên giòn rụm chấm xốt cà chua.",
+            "Bánh bao chay nhân đậu xanh thơm ngọt, vỏ bánh mềm xốp sữa tươi.",
+            "Nước ép từ dâu tây Đà Lạt và táo đỏ hữu cơ ngọt thanh, dễ uống.",
+            "Sữa hạt điều organic tự làm thơm bùi vị vani ngọt mát.",
+            "Súp khoai tây cà rốt nghiền mịn dễ tiêu hóa cho các bé.",
+            "Nui ống sốt kem sữa phô mai cheddar đút lò thơm ngậy vàng óng.",
+            "Cơm nắm dẻo trộn gia vị và rong biển cắt nhỏ tạo hình tam giác."
+        };
+
+        String[] kidImages = {
+            "https://images.unsplash.com/photo-1607532941433-304659e8198a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1518492104633-130d0cc84637?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1541783245831-57d6fb0926d3?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1607532941433-304659e8198a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1607532941433-304659e8198a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1518492104633-130d0cc84637?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1610970881699-44a5587caa90?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1607532941433-304659e8198a?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1534482421-64566f976cfa?auto=format&fit=crop&w=800&q=80"
+        };
+
+        String[] adultNames = {
+            "Cá hồi áp chảo sốt chanh leo", "Ức gà áp chảo sốt rosemary", "Thịt bò sốt tiêu đen măng tây",
+            "Salad bơ tôm áp chảo", "Canh sườn hầm ngũ quả", "Phở cuốn thịt bò rau thơm",
+            "Tôm nướng muối ớt cay ngọt", "Salad cá ngừ sốt mè rang", "Gà hấp lá chanh truyền thống",
+            "Bò kho bánh mì sả ớt", "Nấm đùi gà xào húng quế", "Súp gà nấm tuyết hạt sen",
+            "Đậu hũ sốt Tứ Xuyên chay", "Cá chẽm hấp hành gừng thơm", "Salad ức gà nướng mật ong",
+            "Canh chua cá bớp bông điên điển", "Bò cuộn lá lốt nướng than", "Tôm sú hấp nước dừa ngọt",
+            "Mì gạo lứt xào hải sản", "Soup hải sản rong biển xanh", "Bánh mì đen sốt bơ trứng chần",
+            "Cháo yến mạch tôm tươi nấm rơm", "Canh bóng thả thập cẩm", "Cơm gạo lứt thịt kho tàu",
+            "Cá thu sốt cà chua thì là", "Salad bắp cải tím hạt điều", "Gỏi cuốn tôm thịt heo organic",
+            "Thịt heo xá xíu mật ong rừng", "Nấm đông cô kho quẹt chay", "Canh gà hầm nhân sâm táo đỏ",
+            "Cá tuyết hấp xì dầu Hồng Kông", "Mì Quảng ếch đồng truyền thống", "Salad xà lách Caesar",
+            "Canh khoai mỡ nấu tôm bằm", "Bò nướng đá sốt vang đỏ", "Tôm rim ba chỉ cháy cạnh",
+            "Cá lóc kho tộ miền Tây", "Gà rang muối sả ớt giòn", "Yến sào chưng đường phèn sen",
+            "Salad ổi giòn tai heo", "Mực ống hấp gừng hành tươi", "Bông bí xào tỏi thơm",
+            "Canh bí đỏ thịt băm hành hoa", "Cá hồi đút lò sốt kem tỏi", "Gà nướng mật ong Tây Bắc",
+            "Bò sốt vang bánh mì nóng", "Salad rong biển tươi sốt mè", "Canh riêu cua bắp bò sườn non",
+            "Cá điêu hồng chiên xù sốt me", "Đậu hũ chưng thịt băm trứng muối", "Rau củ luộc chấm kho quẹt",
+            "Canh hến nấu cà chua mồng tơi", "Bò xào bông thiên lý", "Tôm rang thịt ba chỉ rim ngọt",
+            "Cá mú đỏ hấp Hồng Kông", "Gà kho gừng sả đậm đà", "Soup nấm hạt sen chay",
+            "Salad bơ bưởi tôm sông", "Canh rau ngót nấu thịt băm", "Cá hồi nướng muối ớt"
+        };
+
+        String[] adultDescriptions = {
+            "Cá hồi Na Uy tươi ngon áp chảo chín tới, rưới sốt chanh leo chua ngọt thơm mát.",
+            "Ức gà áp chảo thơm lừng hương thảo rosemary, giữ nguyên độ ẩm mềm mại.",
+            "Thịt thăn bò mềm xào sốt tiêu đen cay nồng ăn kèm măng tây xanh nướng.",
+            "Salad xà lách giòn rụm kết hợp bơ sáp cắt lát và tôm sú áp chảo ngọt thịt.",
+            "Canh hầm thanh mát từ sườn non củ quả giúp bồi bổ cơ thể.",
+            "Bánh phở mỏng cuộn thịt bò xào lăn và các loại rau thơm Việt Nam thanh mát.",
+            "Tôm biển xiên que nướng mọi chấm muối ớt chanh cay nồng đậm vị.",
+            "Rau salad tươi giòn trộn cá ngừ ngâm dầu và xốt mè rang Nhật Bản đậm đà.",
+            "Thịt gà ta luộc chín tới, da vàng giòn xắt sợi chanh thơm phức.",
+            "Thịt nạm bò ninh nhừ cùng sả ớt cay nồng ăn kèm bánh mì giòn nóng hổi.",
+            "Nấm đùi gà dai giòn xào cùng lá húng quế thơm nồng đậm đà.",
+            "Súp gà xé thanh nhẹ nấu nấm tuyết giòn sần sật và hạt sen hầm mềm.",
+            "Đậu hũ non mềm mịn sốt cà xốt nấm hương cay nồng chuẩn vị Tứ Xuyên chay.",
+            "File cá chẽm tươi hấp cách thủy cùng hành gừng cắt sợi thơm ngọt tự nhiên.",
+            "Rau xanh tổng hợp trộn ức gà nướng mật ong rừng ngọt thơm và sốt giấm táo.",
+            "Canh chua đặc sản miền Tây ngọt thanh từ cá bớp tươi và bông điên điển.",
+            "Thịt bò băm cuốn lá lốt nướng than hoa thơm nức mũi chấm mắm nêm ngon tuyệt.",
+            "Tôm sú tươi sống hấp nước dừa xiêm ngọt lịm thơm ngon béo bùi.",
+            "Mì làm từ gạo lứt xào cùng mực, tôm và rau cải xanh giòn ngon lành mạnh.",
+            "Nước dùng thanh ngọt nấu từ hải sản tổng hợp và rong biển tươi.",
+            "Bánh mì đen lúa mạch phết bơ sáp dầm nhuyễn ăn kèm hai quả trứng chần.",
+            "Yến mạch nguyên cám nấu cháo tôm tươi và nấm rơm ngọt nước bổ dưỡng.",
+            "Canh bóng thả thập cẩm truyền thống thanh mát với bóng bì, giò sống và rau củ.",
+            "Cơm gạo lứt ăn kèm thịt ba chỉ kho nhừ cùng trứng cút ngấm vị đậm đà.",
+            "Cá thu tươi sốt cà chua thì là thơm thì là đặc trưng.",
+            "Bắp cải tím bào mỏng trộn dầu olive hạt điều rang muối giòn bùi.",
+            "Gỏi cuốn tôm luộc, thịt ba chỉ heo hữu cơ, rau sống thanh mát chấm tương lạc.",
+            "Thịt xá xíu ướp mật ong rừng nướng lò vàng óng, vị mặn ngọt đậm đà.",
+            "Nấm đông cô tươi kho quẹt sệt đậm vị mặn ngọt chấm rau củ luộc.",
+            "Gà ta hầm nhân sâm tươi, táo đỏ và hạt sen bồi bổ sinh lực.",
+            "Cá tuyết tươi hấp xì dầu tỏi ớt phong cách Hồng Kông ngọt bùi.",
+            "Mì Quảng truyền thống sợi vàng óng ăn kèm thịt ếch đồng um nghệ.",
+            "Rau xà lách romaine giòn rụm trộn xốt Caesar béo ngậy và bánh mì nướng.",
+            "Canh khoai mỡ tím nấu tôm bằm nhỏ ngọt mát dễ ăn đưa cơm.",
+            "Bò fillet nướng đá nóng ăn kèm sốt vang đỏ kiểu Pháp đậm đà.",
+            "Tôm biển rim cháy cạnh cùng thịt ba chỉ giòn mỡ mặn ngọt đưa cơm.",
+            "Cá lóc đồng kho tộ sền sệt nước màu dừa đậm đà vị miền Tây.",
+            "Thịt đùi gà cắt viên rang muối sả giòn rụm bên ngoài mềm ngọt bên trong.",
+            "Tổ yến chưng đường phèn hạt sen táo đỏ thượng hạng bồi bổ sức khỏe.",
+            "Salad tai heo giòn sần sật trộn ổi xắt lát chua ngọt lạ miệng.",
+            "Mực ống tươi hấp hành gừng xắt sợi giữ nguyên độ ngọt tự nhiên của mực.",
+            "Bông bí ngô tươi xào tỏi thơm giòn ngọt nhẹ đưa cơm.",
+            "Canh bí đỏ nấu thịt nạc băm và hành hoa ngọt bùi bổ não.",
+            "Cá hồi áp chảo rồi đút lò cùng xốt kem tỏi béo ngậy thơm lừng.",
+            "Gà nướng ướp gia vị mắc khén hạt dổi và mật ong rừng Tây Bắc.",
+            "Bò sốt vang đậm đà ăn kèm bánh mì nóng giòn rụm.",
+            "Salad rong biển tươi giòn sần sật rắc vừng rang sốt mè Nhật.",
+            "Canh riêu cua ngọt đậm đà ăn kèm bắp bò chần và sườn non ninh mềm.",
+            "Cá điêu hồng chiên xù giòn rụm rưới sốt mắm me chua ngọt cay cay.",
+            "Đậu hũ non chưng cách thủy với thịt băm và lòng đỏ trứng muối bùi ngậy.",
+            "Các loại rau củ luộc theo mùa chấm kho quẹt đậm đà mặn ngọt.",
+            "Canh hến sông cà chua mồng tơi thanh mát giải nhiệt mùa hè.",
+            "Thịt bò thăn mềm xào nhanh tay với bông thiên lý xanh giòn thơm ngọt.",
+            "Tôm sú và thịt ba chỉ rim kẹo đường dừa mặn mặn ngọt ngọt cực hao cơm.",
+            "Cá mú đỏ tươi hấp cùng nấm đông cô, hành hoa và xì dầu đặc chế.",
+            "Gà ta kho gừng sả cay ấm đậm đà mâm cơm gia đình.",
+            "Canh nấm đông cô tươi hầm hạt sen, táo đỏ chay thanh đạm.",
+            "Salad bơ tươi, bưởi hồng da xanh kết hợp tôm sông ngọt thịt.",
+            "Canh rau ngót tươi nấu thịt băm thanh mát dễ ăn tiêu hóa tốt.",
+            "Cá hồi cắt miếng dày nướng mọi muối ớt chanh cay nồng kích thích."
+        };
+
+        for (java.io.File f : files) {
+            if (f.isFile()) {
+                String filename = f.getName();
+                String lowerName = filename.toLowerCase();
+                
+                // Skip default placeholder images
+                if (lowerName.startsWith("dish_chao_yen_mach") || lowerName.startsWith("dish_bun_gao_lut") ||
+                    lowerName.startsWith("dish_banh_mi_trung") || lowerName.startsWith("dish_pho_bo") ||
+                    lowerName.startsWith("dish_green_detox") || lowerName.startsWith("dish_tra_hoa_cuc") ||
+                    lowerName.startsWith("dish_quinoa_salad") || lowerName.startsWith("dish_mi_soba") ||
+                    lowerName.startsWith("dish_com_gao_lut") || lowerName.startsWith("dish_ca_hoi") ||
+                    lowerName.startsWith("dish_chicken_soup") || lowerName.startsWith("dish_sup_bi_do") ||
+                    lowerName.startsWith("dish_steak_wagyu") || lowerName.startsWith("dish_tom_su")) {
+                    continue;
+                }
+                
+                // Check if we already filled both quotas
+                if (kidIdx >= 30 && adultIdx >= 60) {
+                    break;
+                }
+                
+                // Check if dish already exists in the database
+                String urlPattern = "%/" + filename;
+                Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM food_menu WHERE image_url LIKE ?", Integer.class, urlPattern);
+                if (count != null && count == 0) {
+                    if (kidIdx < 30) {
+                        // Insert as Kid's dish
+                        String dishName = kidNames[kidIdx];
+                        String description = kidDescriptions[kidIdx];
+                        String imageUrl = getFoodImageUrl(dishName, kidIdx);
+                        double price = 50000.00 + (Math.abs(filename.hashCode()) % 8) * 10000.00;
+                        
+                        try {
+                            jdbcTemplate.update(
+                                "INSERT INTO food_menu (dish_name, description, price, dietary_tags, category, is_today_menu, sold_out, is_package_included, periods, available_days, enabled, image_url) " +
+                                "VALUES (?, ?, ?, ?, ?, 1, 0, 1, 'Breakfast,Lunch,Dinner', '0,1,2,3,4,5,6', 1, ?)",
+                                dishName,
+                                description,
+                                java.math.BigDecimal.valueOf(price),
+                                "Kids, Healthy",
+                                "Món trẻ em",
+                                imageUrl
+                            );
+                            restoredCount++;
+                            kidIdx++;
+                        } catch (Exception e) {
+                            System.err.println("[DB Seeder] Failed to insert kid dish " + dishName + ": " + e.getMessage());
+                        }
+                    } else if (adultIdx < 60) {
+                        // Insert as Adult's dish
+                        String dishName = adultNames[adultIdx];
+                        String description = adultDescriptions[adultIdx];
+                        String imageUrl = getFoodImageUrl(dishName, adultIdx);
+                        double price = 120000.00 + (Math.abs(filename.hashCode()) % 20) * 10000.00;
+                        
+                        try {
+                            jdbcTemplate.update(
+                                "INSERT INTO food_menu (dish_name, description, price, dietary_tags, category, is_today_menu, sold_out, is_package_included, periods, available_days, enabled, image_url) " +
+                                "VALUES (?, ?, ?, ?, ?, 1, 0, 1, 'Breakfast,Lunch,Dinner', '0,1,2,3,4,5,6', 1, ?)",
+                                dishName,
+                                description,
+                                java.math.BigDecimal.valueOf(price),
+                                "Healthy, Organic",
+                                "Món chính",
+                                imageUrl
+                            );
+                            restoredCount++;
+                            adultIdx++;
+                        } catch (Exception e) {
+                            System.err.println("[DB Seeder] Failed to insert adult dish " + dishName + ": " + e.getMessage());
+                        }
+                    }
+                } else {
+                    // Already exists in DB - advance counts to prevent duplicate quota usage
+                    try {
+                        String cat = jdbcTemplate.queryForObject("SELECT category FROM food_menu WHERE image_url LIKE ?", String.class, urlPattern);
+                        if ("Món trẻ em".equals(cat)) {
+                            kidIdx++;
+                        } else {
+                            adultIdx++;
+                        }
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+            }
+        }
+        System.out.println("[DB Seeder] Successfully restored " + restoredCount + " dishes (Kids: " + kidIdx + ", Adults: " + adultIdx + ").");
+    }
+
+    private String getFoodImageUrl(String dishName, int idx) {
+        String name = dishName.toLowerCase();
+        
+        // 1. Salmon / Fish
+        if (name.contains("cá hồi") || name.contains("salmon") || name.contains("cá mú") || name.contains("cá chẽm") || name.contains("cá lóc") || name.contains("cá tuyết") || name.contains("cá bớp")) {
+            return "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=800&q=80";
+        }
+        // 2. Seafood / Shrimp / Squid / Crab
+        if (name.contains("tôm") || name.contains("hải sản") || name.contains("mực") || name.contains("cua") || name.contains("hến") || name.contains("lươn")) {
+            return "https://images.unsplash.com/photo-1559737607-3578909a3636?auto=format&fit=crop&w=800&q=80";
+        }
+        // 3. Steak / Beef
+        if (name.contains("bò") || name.contains("beef") || name.contains("steak") || name.contains("sườn")) {
+            return "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80";
+        }
+        // 4. Chicken / Pork / Sausage / Duck
+        if (name.contains("gà") || name.contains("heo") || name.contains("xúc xích") || name.contains("thịt băm") || name.contains("ếch") || name.contains("xá xíu") || name.contains("ba chỉ")) {
+            return "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80";
+        }
+        // 5. Soup / Porridge / Stew
+        if (name.contains("soup") || name.contains("súp") || name.contains("canh") || name.contains("cháo") || name.contains("kho")) {
+            return "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=80";
+        }
+        // 6. Spaghetti / Noodles / Pasta
+        if (name.contains("mì") || name.contains("nui") || name.contains("pasta") || name.contains("udon") || name.contains("ramen") || name.contains("quảng")) {
+            return "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80";
+        }
+        // 7. Bread / Toast / Pancake
+        if (name.contains("bánh mì") || name.contains("sandwich") || name.contains("pancake") || name.contains("waffle") || name.contains("crepe")) {
+            return "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80";
+        }
+        // 8. Dessert / Sweet / Pudding / Flan / Yogurt
+        if (name.contains("pudding") || name.contains("flan") || name.contains("chè") || name.contains("sữa chua") || name.contains("kem") || name.contains("custard") || name.contains("su kem") || name.contains("muffin") || name.contains("ngũ cốc")) {
+            return "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=800&q=80";
+        }
+        // 9. Drinks / Juice / Tea / Milk
+        if (name.contains("nước") || name.contains("sinh tố") || name.contains("sữa") || name.contains("trà") || name.contains("nước ép")) {
+            return "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=800&q=80";
+        }
+        // 10. Salad / Veg / Tofu
+        if (name.contains("salad") || name.contains("xà lách") || name.contains("rau") || name.contains("bí") || name.contains("khoai") || name.contains("đậu hũ") || name.contains("nấm") || name.contains("bông bí") || name.contains("thiên lý")) {
+            return "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80";
+        }
+        
+        // Fallbacks
+        String[] fallbacks = {
+            "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80"
+        };
+        return fallbacks[idx % fallbacks.length];
+    }
+
+    private void consolidateSqlFiles(java.io.File root) {
+        try {
+            java.io.File masterFile = new java.io.File(root, "03-Design/database/ResortSpaDB_Master.sql");
+            java.io.File kidFile = new java.io.File(root, "05-Development/backend/src/main/resources/insert_kid_packages.sql");
+            java.io.File voucherFile = new java.io.File(root, "05-Development/backend/src/main/resources/migration_add_voucher.sql");
+            java.io.File patchFile = new java.io.File(root, "05-Development/backend/src/main/resources/patch_utf8.sql");
+            java.io.File shiftsFile = new java.io.File(root, "05-Development/backend/src/main/resources/schema_shifts_inventory.sql");
+            
+            if (masterFile.exists() && (kidFile.exists() || voucherFile.exists() || patchFile.exists() || shiftsFile.exists())) {
+                System.out.println("[DB Seeder] Consolidating all database scripts into a single ResortSpaDB_Master.sql...");
+                
+                StringBuilder sb = new StringBuilder();
+                sb.append(new String(java.nio.file.Files.readAllBytes(masterFile.toPath()), java.nio.charset.StandardCharsets.UTF_8));
+                sb.append("\n\nGO\n\n");
+                
+                if (kidFile.exists()) {
+                    sb.append(new String(java.nio.file.Files.readAllBytes(kidFile.toPath()), java.nio.charset.StandardCharsets.UTF_8));
+                    sb.append("\n\nGO\n\n");
+                }
+                if (voucherFile.exists()) {
+                    sb.append(new String(java.nio.file.Files.readAllBytes(voucherFile.toPath()), java.nio.charset.StandardCharsets.UTF_8));
+                    sb.append("\n\nGO\n\n");
+                }
+                if (shiftsFile.exists()) {
+                    sb.append(new String(java.nio.file.Files.readAllBytes(shiftsFile.toPath()), java.nio.charset.StandardCharsets.UTF_8));
+                    sb.append("\n\nGO\n\n");
+                }
+                if (patchFile.exists()) {
+                    sb.append(new String(java.nio.file.Files.readAllBytes(patchFile.toPath()), java.nio.charset.StandardCharsets.UTF_8));
+                    sb.append("\n\nGO\n\n");
+                }
+                
+                // Write the consolidated file
+                java.nio.file.Files.writeString(masterFile.toPath(), sb.toString(), java.nio.charset.StandardCharsets.UTF_8);
+                System.out.println("[DB Seeder] Consolidated ResortSpaDB_Master.sql written successfully!");
+                
+                // Delete the separate files
+                if (kidFile.exists()) kidFile.delete();
+                if (voucherFile.exists()) voucherFile.delete();
+                if (shiftsFile.exists()) shiftsFile.delete();
+                if (patchFile.exists()) patchFile.delete();
+                System.out.println("[DB Seeder] Cleanup of separate SQL files completed.");
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Seeder] Failed to consolidate SQL files: " + e.getMessage());
         }
     }
 }

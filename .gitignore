@@ -85,3 +85,17 @@ node_modules/.vite/
 **/google-calendar-credentials*.json
 05-Development/backend/credentials/
 credentials/
+
+# ===== Local sync files & dev artifacts (NEVER commit) =====
+CheckOrder.java
+git
+dev-otp.txt
+*otp.txt
+db_debug.txt
+*debug.txt
+logs.txt
+logs_utf8.txt
+boot_err.log
+boot_out.log
+compile.log
+*.log

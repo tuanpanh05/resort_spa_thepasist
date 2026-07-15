@@ -79,9 +79,9 @@ export default function ConfirmationStep({
                   `, ${guestInfo.childrenCount} Trẻ em` + (
                     (guestInfo.childrenUnder5 > 0 || guestInfo.children5to12 > 0)
                       ? ` (${[
-                          guestInfo.childrenUnder5 > 0 ? `${guestInfo.childrenUnder5} dưới 5t` : "",
-                          guestInfo.children5to12 > 0 ? `${guestInfo.children5to12} 5-12t` : ""
-                        ].filter(Boolean).join(", ")})`
+                        guestInfo.childrenUnder5 > 0 ? `${guestInfo.childrenUnder5} dưới 5t` : "",
+                        guestInfo.children5to12 > 0 ? `${guestInfo.children5to12} 5-12t` : ""
+                      ].filter(Boolean).join(", ")})`
                       : ""
                   )
                 ) : ""}
@@ -134,13 +134,13 @@ export default function ConfirmationStep({
               <span className="font-semibold text-amber-700">
                 {selectedAllergies.length > 0 || otherAllergy
                   ? [
-                      ...selectedAllergies.map(
-                        (a) => ALLERGY_OPTIONS.find((opt) => opt.key === a)?.label
-                      ),
-                      otherAllergy,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")
+                    ...selectedAllergies.map(
+                      (a) => ALLERGY_OPTIONS.find((opt) => opt.key === a)?.label
+                    ),
+                    otherAllergy,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")
                   : "Không có"}
               </span>
             </div>
@@ -192,7 +192,7 @@ export default function ConfirmationStep({
               const serviceTitle = s.name || s.title || "Dịch vụ";
               if (pricingType === "per-guest") {
                 itemTotal = s.price * multiplier;
-                descriptionText = isKidService 
+                descriptionText = isKidService
                   ? `${formatCurrency(s.price)}/trẻ × ${multiplier} Trẻ em (5-12 tuổi)`
                   : `${formatCurrency(s.price)}/khách × ${multiplier} Khách`;
               } else if (pricingType === "per-guest-per-night") {
@@ -310,7 +310,7 @@ export default function ConfirmationStep({
           </span>
 
           <div className="flex gap-4 w-full sm:w-auto">
-             <button
+            <button
               type="button"
               onClick={handlePrevStep}
               className="w-full sm:w-auto px-8 py-3.5 border border-[#1a2f23]/30 text-[#1a2f23] text-resort-button tracking-wider hover:bg-[#1a2f23]/5 transition-all uppercase rounded-lg flex items-center justify-center cursor-pointer disabled:opacity-70 font-semibold"

@@ -25,8 +25,10 @@ export default function ManagePayments() {
     setError(null);
     try {
       const data = await paymentApi.getAllInvoices();
+      // Filter out CANCELLED invoices for receptionist staff view, as they only handle check-in/out payments.
+      const activeInvoices = (data || []).filter(i => i.status !== "CANCELLED");
       // Sort invoices so unpaid/newest appear first
-      const sortedData = (data || []).sort((a, b) => {
+      const sortedData = activeInvoices.sort((a, b) => {
         if (a.status !== b.status) {
           return a.status === "UNPAID" ? -1 : 1;
         }
@@ -263,13 +265,12 @@ export default function ManagePayments() {
                       </td>
                       <td className="p-4 text-center">
                         <span
-                          className={`px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider ${
-                            isPaid
+                          className={`px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider ${isPaid
                               ? "bg-green-100 text-green-700"
                               : isPendingDeposit
                                 ? "bg-amber-100 text-amber-800"
                                 : "bg-red-50 text-red-700"
-                          }`}
+                            }`}
                         >
                           {isPaid ? "Đã thu" : isPendingDeposit ? "Chờ cọc" : "Chờ thu"}
                         </span>
@@ -290,11 +291,10 @@ export default function ManagePayments() {
                                 setShowPaymentModal(true);
                               }}
                               disabled={actionLoading === p.invoiceId}
-                              className={`px-2.5 py-1.5 text-white rounded-none text-[10px] font-semibold uppercase tracking-wider cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 ${
-                                isPendingDeposit
+                              className={`px-2.5 py-1.5 text-white rounded-none text-[10px] font-semibold uppercase tracking-wider cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 ${isPendingDeposit
                                   ? "bg-amber-700 hover:bg-amber-800"
                                   : "bg-primary-800 hover:bg-primary-900"
-                              }`}
+                                }`}
                             >
                               {actionLoading === p.invoiceId ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -474,10 +474,10 @@ export default function ManagePayments() {
                         <td className="py-3 px-2 text-right text-sage-600">
                           {formatCurrency(
                             (selectedInvoice.roomSubtotal || 0) +
-                              (selectedInvoice.spaSubtotal || 0) +
-                              (selectedInvoice.foodSubtotal || 0) +
-                              (selectedInvoice.serviceSubtotal || 0) +
-                              (selectedInvoice.taxAndFees || 0)
+                            (selectedInvoice.spaSubtotal || 0) +
+                            (selectedInvoice.foodSubtotal || 0) +
+                            (selectedInvoice.serviceSubtotal || 0) +
+                            (selectedInvoice.taxAndFees || 0)
                           )}
                         </td>
                       </tr>
@@ -539,11 +539,10 @@ export default function ManagePayments() {
                     Trạng Thái Giao Dịch
                   </span>
                   <span
-                    className={`font-bold text-sm mt-0.5 block uppercase ${
-                      selectedInvoice.status?.toUpperCase() === "PAID"
+                    className={`font-bold text-sm mt-0.5 block uppercase ${selectedInvoice.status?.toUpperCase() === "PAID"
                         ? "text-green-700"
                         : "text-red-700"
-                    }`}
+                      }`}
                   >
                     {selectedInvoice.status?.toUpperCase() === "PAID"
                       ? "ĐÃ THANH TOÁN XONG"
@@ -629,9 +628,8 @@ export default function ManagePayments() {
               <div className="space-y-2">
                 <span className="block text-xs font-bold text-sage-800">Phương thức thanh toán:</span>
                 <div className="grid grid-cols-2 gap-3">
-                  <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-primary-300 transition-all ${
-                    paymentMethod === "cash" ? "border-primary-800 bg-primary-50/10" : "border-sage-200"
-                  }`}>
+                  <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-primary-300 transition-all ${paymentMethod === "cash" ? "border-primary-800 bg-primary-50/10" : "border-sage-200"
+                    }`}>
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -643,9 +641,8 @@ export default function ManagePayments() {
                     <span className="text-xs font-semibold text-sage-800">Tiền mặt tại quầy</span>
                   </label>
 
-                  <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-primary-300 transition-all ${
-                    paymentMethod === "vnpay" ? "border-primary-800 bg-primary-50/10" : "border-sage-200"
-                  }`}>
+                  <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-primary-300 transition-all ${paymentMethod === "vnpay" ? "border-primary-800 bg-primary-50/10" : "border-sage-200"
+                    }`}>
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -700,9 +697,8 @@ export default function ManagePayments() {
                   type="button"
                   onClick={handleExecutePayment}
                   disabled={!canConfirm || actionLoading === paymentInvoice.invoiceId}
-                  className={`px-5 py-2 text-white text-xs font-semibold uppercase tracking-wider cursor-pointer disabled:opacity-50 ${
-                    paymentMethod === "vnpay" ? "bg-amber-700 hover:bg-amber-800" : "bg-primary-800 hover:bg-primary-900"
-                  }`}
+                  className={`px-5 py-2 text-white text-xs font-semibold uppercase tracking-wider cursor-pointer disabled:opacity-50 ${paymentMethod === "vnpay" ? "bg-amber-700 hover:bg-amber-800" : "bg-primary-800 hover:bg-primary-900"
+                    }`}
                 >
                   {paymentMethod === "vnpay" ? "Tạo link VNPAY" : "Xác nhận thanh toán"}
                 </button>

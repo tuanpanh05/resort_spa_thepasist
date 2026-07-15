@@ -265,6 +265,26 @@ public class RoomBookingService {
                 details.add(detail);
             }
         }
+        // Validate total capacity of selected rooms against guestsCount + children5to12
+        int totalGuests = (dto.getGuestsCount() != null ? dto.getGuestsCount() : 1)
+                + (dto.getChildren5to12() != null ? dto.getChildren5to12() : 0);
+        int totalCapacity = 0;
+        for (RoomBookingDetail detail : details) {
+            if (detail.getRoom() != null && detail.getRoom().getRoomType() != null) {
+                Integer maxOccupancy = detail.getRoom().getRoomType().getMaxOccupancy();
+                totalCapacity += (maxOccupancy != null ? maxOccupancy : 2);
+            } else {
+                totalCapacity += 2;
+            }
+        }
+
+        if (totalGuests > totalCapacity) {
+            throw new fu.se.smms.exception.BusinessException(
+                    "BOOKING-005", org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Tổng sức chứa của các biệt thự/phòng đã chọn (" + totalCapacity 
+                    + " người) không đủ đáp ứng số lượng khách lưu trú (" + totalGuests + " người).");
+        }
+
         booking.setDetails(details);
 
         RoomBooking savedBooking = roomBookingRepository.save(booking);
@@ -356,9 +376,29 @@ public class RoomBookingService {
                     }
                 }
 
-                foodOrderDetailRepository.saveAll(detailsToSave);
-                foodOrder.setTotalAmount(totalExtraCharges);
-                foodOrderRepository.save(foodOrder);
+                 foodOrderDetailRepository.saveAll(detailsToSave);
+
+                 BigDecimal orderTotal = totalExtraCharges;
+                 if (dto.getSelectedComboId() != null && !dto.getSelectedComboId().isBlank()) {
+                     double dailyComboPrice = 0.0;
+                     if ("detox".equalsIgnoreCase(dto.getSelectedComboId())) {
+                         dailyComboPrice = 150000.0;
+                     } else if ("recovery".equalsIgnoreCase(dto.getSelectedComboId())) {
+                         dailyComboPrice = 200000.0;
+                     } else if ("vip".equalsIgnoreCase(dto.getSelectedComboId())) {
+                         dailyComboPrice = 450000.0;
+                     }
+                     
+                     int totalGuestsCount = (dto.getGuestsCount() != null ? dto.getGuestsCount() : 0)
+                             + (dto.getChildrenUnder5() != null ? dto.getChildrenUnder5() : 0)
+                             + (dto.getChildren5to12() != null ? dto.getChildren5to12() : 0);
+                     if (totalGuestsCount <= 0) totalGuestsCount = 1;
+
+                     orderTotal = BigDecimal.valueOf(dailyComboPrice).multiply(BigDecimal.valueOf(totalGuestsCount));
+                 }
+
+                 foodOrder.setTotalAmount(orderTotal);
+                 foodOrderRepository.save(foodOrder);
             }
         }
 

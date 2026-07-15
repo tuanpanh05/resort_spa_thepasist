@@ -1,11 +1,68 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BedDouble, Sparkles, Dumbbell, Leaf, Clock, BadgeCheck } from "lucide-react";
-import { userApi } from "../../api";
+import { userApi, paymentApi } from "../../api";
 import { fmtDate, fmtDateTime, fmtCurrency } from "../../utils/formatters";
 import StatusBadge, { ROOM_STATUS_MAP, SPA_STATUS_MAP, FOOD_STATUS_MAP } from "./StatusBadge";
 import axiosClient from "../../api/axiosClient";
 import { useLanguage } from "../../context/LanguageContext";
+
+const getRoomDisplayStatus = (booking) => {
+  if (!booking) return "";
+  const isPendingOrConfirmed = ["PENDING", "PENDING_DEPOSIT", "CONFIRMED"].includes(booking.status);
+  if (isPendingOrConfirmed && booking.checkInDate) {
+    const checkInTime = new Date(booking.checkInDate);
+    const now = new Date();
+    if (now > checkInTime) {
+      return "EXPIRED";
+    }
+  }
+  return booking.status;
+};
+
+const getServiceDisplayStatus = (item) => {
+  if (!item) return "";
+  if (item.type === "food") {
+    const isPendingOrPreparingOrReady = ["PENDING", "PREPARING", "READY"].includes(item.status);
+    if (isPendingOrPreparingOrReady && item.startDatetime) {
+      const orderTime = new Date(item.startDatetime);
+      const now = new Date();
+      if (now - orderTime > 24 * 60 * 60 * 1000) {
+        return "EXPIRED";
+      }
+    }
+    return item.status;
+  } else {
+    const isPendingOrConfirmed = ["PENDING", "CONFIRMED"].includes(item.status);
+    if (isPendingOrConfirmed && item.startDatetime) {
+      const startTime = new Date(item.startDatetime);
+      const now = new Date();
+      if (now > startTime) {
+        return "EXPIRED";
+      }
+    }
+    return item.status;
+  }
+};
+
+const getGroupedRooms = (rooms) => {
+  if (!rooms) return [];
+  const groups = {};
+  rooms.forEach(r => {
+    const key = `${r.typeName}_${r.priceAtBooking}`;
+    if (!groups[key]) {
+      groups[key] = {
+        typeName: r.typeName,
+        priceAtBooking: r.priceAtBooking,
+        roomNumbers: [],
+        count: 0,
+      };
+    }
+    groups[key].roomNumbers.push(r.roomNumber);
+    groups[key].count += 1;
+  });
+  return Object.values(groups);
+};
 
 export default function BookingHistory() {
   const { t, language } = useLanguage();
@@ -14,6 +71,20 @@ export default function BookingHistory() {
   const [spaBookings, setSpaBookings]   = useState([]);
   const [foodOrders, setFoodOrders]     = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const handleViewInvoice = async (bookingId) => {
+    try {
+      const res = await paymentApi.createInvoice(bookingId);
+      if (res && res.invoiceId) {
+        window.open(`/payment?invoiceId=${res.invoiceId}`, "_blank");
+      } else {
+        alert("Không thể tìm thấy hóa đơn cho mã đặt phòng này.");
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải hóa đơn:", err);
+      alert("Không thể tìm thấy hóa đơn cho mã đặt phòng này.");
+    }
+  };
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -83,8 +154,19 @@ export default function BookingHistory() {
     </div>
   );
 
+  const [hiddenBookingIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem("hidden_booking_ids");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const displayedRoomBookings = roomBookings.filter(b => !hiddenBookingIds.map(String).includes(String(b.bookingId)));
+
   const tabs = [
-    { key: "rooms", label: t("profile.tabRooms"), icon: BedDouble, count: roomBookings.length },
+    { key: "rooms", label: t("profile.tabRooms"), icon: BedDouble, count: displayedRoomBookings.length },
     { key: "spa", label: t("profile.tabSpa"), icon: Dumbbell, count: mappedSpaBookings.filter(s => s.type === "spa").length },
     { key: "yoga", label: t("profile.tabYoga"), icon: Sparkles, count: mappedSpaBookings.filter(s => s.type === "yoga").length },
     { key: "food", label: t("profile.tabFood"), icon: Leaf, count: foodOrders.length },
@@ -124,11 +206,11 @@ export default function BookingHistory() {
           <div className="w-8 h-8 border-3 border-primary-800 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : activeTab === "rooms" ? (
-        roomBookings.length === 0 ? (
+        displayedRoomBookings.length === 0 ? (
           <EmptyState icon={BedDouble} message={t("profile.emptyRooms")} />
         ) : (
           <div className="space-y-3">
-            {roomBookings.map((b) => (
+            {displayedRoomBookings.map((b) => (
               <div key={b.bookingId} className="bg-white rounded-md border-b border-primary-100 p-5">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
@@ -142,17 +224,17 @@ export default function BookingHistory() {
                       </p>
                     )}
                   </div>
-                  <StatusBadge status={b.status} map={ROOM_STATUS_MAP} />
+                  <StatusBadge status={getRoomDisplayStatus(b)} map={ROOM_STATUS_MAP} />
                 </div>
                 {b.rooms && b.rooms.length > 0 && (
                   <div className="border-t border-primary-50 pt-3 mt-3 space-y-1.5">
-                    {b.rooms.map((r, i) => (
+                    {getGroupedRooms(b.rooms).map((group, i) => (
                       <div key={i} className="flex items-center justify-between text-xs text-sage-600">
                         <span className="flex items-center gap-1.5">
                           <BedDouble className="h-3.5 w-3.5 text-primary-400" />
-                          {t("profile.roomNo")} {r.roomNumber} — {r.typeName}
+                          <span className="font-semibold text-primary-900">{group.count}x</span> {group.typeName} ({t("profile.roomNo")} {group.roomNumbers.join(", ")})
                         </span>
-                        <span className="font-semibold text-sage-800">{fmtCurrency(r.priceAtBooking)}</span>
+                        <span className="font-semibold text-sage-800">{fmtCurrency(group.priceAtBooking * group.count)}</span>
                       </div>
                     ))}
                   </div>
@@ -161,7 +243,17 @@ export default function BookingHistory() {
                   <span className="text-xs text-sage-400 flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" /> {t("profile.bookedDate")} {fmtDate(b.createdAt)}
                   </span>
-                  <span className="text-xs font-bold text-sage-900">{t("profile.depositLabel")}: {fmtCurrency(b.totalDeposit)}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs font-bold text-sage-900">{t("profile.depositLabel")}: {fmtCurrency(b.totalDeposit)}</span>
+                    {["CONFIRMED", "CHECKED_IN", "CHECKED_OUT"].includes(b.status) && (
+                      <button
+                        onClick={() => handleViewInvoice(b.bookingId)}
+                        className="inline-flex items-center justify-center px-3 py-1.5 border border-primary-800 text-primary-800 hover:bg-primary-800 hover:text-white text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        Xem hóa đơn
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -197,7 +289,7 @@ export default function BookingHistory() {
                     )}
 
                   </div>
-                  <StatusBadge status={s.status} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
+                  <StatusBadge status={getServiceDisplayStatus(s)} map={s.type === "food" ? FOOD_STATUS_MAP : SPA_STATUS_MAP} />
                 </div>
                 <div className="flex items-center justify-between text-xs text-sage-500 mt-3 pt-3 border-t border-primary-50">
                   <span className="flex items-center gap-1">

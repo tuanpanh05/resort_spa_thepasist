@@ -28,6 +28,19 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.mail.from-name:Ngu Son Resort}")
     private String fromName;
 
+    private java.nio.file.Path resolveOtpPath() {
+        java.io.File workDir = new java.io.File(System.getProperty("user.dir"));
+        java.io.File root = workDir;
+        while (workDir != null) {
+            if (new java.io.File(workDir, "data_dong_bo").exists() || new java.io.File(workDir, "05-Development").exists()) {
+                root = workDir;
+                break;
+            }
+            workDir = workDir.getParentFile();
+        }
+        return java.nio.file.Path.of(root.getAbsolutePath(), "dev-otp.txt");
+    }
+
     @Override
     public void sendOtpEmail(String toEmail, String otpCode) {
         sendOtpEmail(toEmail, otpCode, false);
@@ -46,7 +59,7 @@ public class EmailServiceImpl implements EmailService {
                              "========================================\n";
             // Write to project root
             try {
-                java.nio.file.Files.writeString(java.nio.file.Path.of("d:/Semester5/P/Project/su26-swp391-se2023-g3/dev-otp.txt"), content);
+                java.nio.file.Files.writeString(resolveOtpPath(), content);
             } catch (Exception ignored) {}
             // Write to relative paths just in case the execution directory differs
             try {
@@ -281,7 +294,7 @@ public class EmailServiceImpl implements EmailService {
                              "========================================\n";
             try {
                 java.nio.file.Files.writeString(
-                    java.nio.file.Path.of("d:/Semester5/P/Project/su26-swp391-se2023-g3/dev-otp.txt"), 
+                    resolveOtpPath(), 
                     content, 
                     java.nio.file.StandardOpenOption.CREATE, 
                     java.nio.file.StandardOpenOption.APPEND
@@ -405,7 +418,7 @@ public class EmailServiceImpl implements EmailService {
                              "========================================\n";
             try {
                 java.nio.file.Files.writeString(
-                    java.nio.file.Path.of("d:/Semester5/P/Project/su26-swp391-se2023-g3/dev-otp.txt"), 
+                    resolveOtpPath(), 
                     content, 
                     java.nio.file.StandardOpenOption.CREATE, 
                     java.nio.file.StandardOpenOption.APPEND

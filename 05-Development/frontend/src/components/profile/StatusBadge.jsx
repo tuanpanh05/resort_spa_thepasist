@@ -8,6 +8,7 @@ export const ROOM_STATUS_MAP = {
   CHECKED_IN:       { labelKey: "profile.statusCheckedIn", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
   CHECKED_OUT:      { labelKey: "profile.statusCheckedOut", color: "bg-gray-100 text-gray-600 border-gray-200" },
   CANCELLED:        { labelKey: "profile.statusCancelled",       color: "bg-red-100 text-red-700 border-red-200" },
+  EXPIRED:          { labelKey: "profile.statusExpired",         color: "bg-rose-100 text-rose-700 border-rose-200" },
 };
 
 export const SPA_STATUS_MAP = {
@@ -16,6 +17,7 @@ export const SPA_STATUS_MAP = {
   COMPLETED:  { labelKey: "profile.statusCompleted",   color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
   CANCELLED:  { labelKey: "profile.statusCancelled",       color: "bg-red-100 text-red-700 border-red-200" },
   NO_SHOW:    { labelKey: "profile.statusNoShow",    color: "bg-gray-100 text-gray-500 border-gray-200" },
+  EXPIRED:    { labelKey: "profile.statusExpired",         color: "bg-rose-100 text-rose-700 border-rose-200" },
 };
 
 export const FOOD_STATUS_MAP = {
@@ -24,6 +26,7 @@ export const FOOD_STATUS_MAP = {
   READY:     { labelKey: "profile.statusReady", color: "bg-purple-100 text-purple-800 border-purple-200 animate-pulse" },
   DELIVERED: { labelKey: "profile.statusDelivered",   color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
   CANCELLED: { labelKey: "profile.statusCancelled",       color: "bg-red-100 text-red-700 border-red-200" },
+  EXPIRED:   { labelKey: "profile.statusExpired",         color: "bg-rose-100 text-rose-700 border-rose-200" },
 };
 
 export default function StatusBadge({ status, map }) {

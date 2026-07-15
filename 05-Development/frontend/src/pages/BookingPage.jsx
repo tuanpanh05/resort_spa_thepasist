@@ -405,23 +405,16 @@ export default function BookingPage() {
   const servicesTotal = servicesTotalBeforeDiscount - childDiscountUnder5 - childDiscount5to12;
 
   const calculateMealTotal = () => {
-    let extra = 0;
-    Object.values(mealSelections).forEach((dateObj) => {
-      Object.values(dateObj).forEach((periodObj) => {
-        Object.entries(periodObj).forEach(([foodId, qty]) => {
-          const item = packageMenuItems.find((m) => m.foodId === Number(foodId));
-          if (item) {
-            if (item.isPackageIncluded) {
-              const chargeableQty = Math.max(0, qty - chargedGuestsCount);
-              extra += item.price * chargeableQty;
-            } else {
-              extra += item.price * qty;
-            }
-          }
-        });
-      });
-    });
-    return extra;
+    if (selectedComboId) {
+      let dailyPrice = 0;
+      if (selectedComboId === "detox") dailyPrice = 150000;
+      else if (selectedComboId === "recovery") dailyPrice = 200000;
+      else if (selectedComboId === "vip") dailyPrice = 450000;
+      
+      const daysCount = mealBookingDays ? mealBookingDays.length : 0;
+      return dailyPrice * chargedGuestsCount * daysCount;
+    }
+    return 0;
   };
   const mealTotal = calculateMealTotal();
 
@@ -597,13 +590,10 @@ export default function BookingPage() {
       });
 
       if (totalGuests > totalCapacity) {
-        const confirmOk = window.confirm(
-          `Không đủ phòng! Sức chứa tối đa của các biệt thự đã chọn (${totalCapacity} người) không đủ cho số lượng khách của bạn (${totalGuests} người).\n\nBạn có chắc chắn muốn tiếp tục đặt đơn này không?\n\nNhấn 'OK' để tiếp tục đặt đơn, hoặc nhấn 'Cancel' để thoát ra trang chủ.`
+        alert(
+          `Không đủ chỗ! Tổng sức chứa tối đa của các biệt thự đã chọn (${totalCapacity} người) không đủ đáp ứng số lượng khách lưu trú (${totalGuests} người).\n\nVui lòng chọn thêm biệt thự hoặc tăng số lượng phòng để tiếp tục.`
         );
-        if (!confirmOk) {
-          navigate("/");
-          return;
-        }
+        return;
       }
       setStep(4);
     } else if (step === 4) {
@@ -648,6 +638,7 @@ export default function BookingPage() {
         allergies: selectedAllergies.join(", ") + (otherAllergy ? ", " + otherAllergy : ""),
         explicitConsentSigned: consentDataProcessing && consentSharing,
         mealSelections: mealSelections,
+        selectedComboId: selectedComboId,
         specialRequests: guestInfo.specialRequest || ""
       };
 
@@ -853,7 +844,7 @@ export default function BookingPage() {
             </div>
 
             {/* Right 4 Columns: Dynamic Booking Bill Summary Stick Widget */}
-            <div className="lg:col-span-4 space-y-6">
+            <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24 self-start">
               <BookingBillSummary
                 nightsCount={nightsCount}
                 villaTotal={villaTotal}
