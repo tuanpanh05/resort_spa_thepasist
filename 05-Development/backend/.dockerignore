@@ -1,0 +1,15 @@
+target/
+*.log
+.mvn/
+.git/
+.vscode/
+.idea/
+Dockerfile
+.dockerignore
+boot_err.log
+boot_out.log
+compile.log
+logs.txt
+logs_utf8.txt
+dev-otp.txt
+db_debug.txt
